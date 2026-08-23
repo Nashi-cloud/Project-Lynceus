@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lynceus.example/schema/carte-analyse/0.1.0",
+  "title": "Carte d'analyse Lynceus",
+  "description": "Résultat complet de l'analyse d'un contenu web. Les champs textuels sont rédigés dans un registre descriptif et pédagogique (cf. docs/ETHIQUE.md §7). La note globale est calculée par le serveur (cf. docs/METHODOLOGIE.md §5).",
+  "type": "object",
+  "required": ["version_schema", "categorie", "note", "dimensions", "techniques_detectees", "points_positifs", "questions_a_se_poser", "resume_neutre", "meta"],
+  "additionalProperties": false,
+  "properties": {
+    "version_schema": { "const": "0.1.0" },
+    "url": { "type": "string", "format": "uri", "description": "URL d'origine (absente pour une analyse de texte brut)" },
+    "titre": { "type": "string", "maxLength": 500 },
+    "domaine": { "type": "string", "description": "Hôte de l'URL, ex. exemple.fr" },
+    "langue": { "type": "string", "pattern": "^[a-z]{2}(-[A-Z]{2})?$", "description": "Code BCP 47 court, ex. fr" },
+    "categorie": {
+      "type": "string",
+      "enum": ["information", "opinion", "analyse_expertise", "satire", "publicite_sponsorise", "temoignage", "contenu_confessionnel", "pseudo_science", "theorie_du_complot", "autre"]
+    },
+    "note": {
+      "type": "object",
+      "required": ["grade", "score", "confiance"],
+      "additionalProperties": false,
+      "properties": {
+        "grade": { "type": "string", "enum": ["A", "B", "C", "D", "E"] },
+        "score": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Calculé par le serveur : 0,30·sources + 0,30·factualite + 0,20·ton + 0,20·transparence" },
+        "confiance": { "type": "number", "minimum": 0, "maximum": 1, "description": "Confiance du modèle dans sa propre analyse — qualifie l'analyse, pas le contenu" }
+      }
+    },
+    "dimensions": {
+      "type": "object",
+      "required": ["sources", "factualite", "ton", "transparence"],
+      "additionalProperties": false,
+      "properties": {
+        "sources": { "$ref": "#/$defs/dimension" },
+        "factualite": { "$ref": "#/$defs/dimension" },
+        "ton": { "$ref": "#/$defs/dimension" },
+        "transparence": { "$ref": "#/$defs/dimension" }
+      }
+    },
+    "techniques_detectees": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": ["id", "extrait", "explication", "gravite"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z_]{2,60}$", "description": "Id du référentiel docs/TAXONOMIE.md — validé par le serveur contre la taxonomie" },
+          "extrait": { "type": "string", "minLength": 10, "maxLength": 600, "description": "Citation VERBATIM du contenu source — vérifiée par le serveur (sous-chaîne du Markdown)" },
+          "explication": { "type": "string", "maxLength": 600, "description": "Mécanisme, en langage pédagogique et non accusateur" },
+          "gravite": { "type": "string", "enum": ["faible", "moyenne", "haute"] }
+        }
+      }
+    },
+    "points_positifs": {
+      "type": "array",
+      "maxItems": 10,
+      "items": { "type": "string", "maxLength": 300 },
+      "description": "Toujours recherchés — une liste vide doit rester exceptionnelle"
+    },
+    "questions_a_se_poser": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": { "type": "string", "maxLength": 300 },
+      "description": "Questions socratiques applicables par le lecteur"
+    },
+    "resume_neutre": { "type": "string", "maxLength": 1000, "description": "2 à 3 phrases descriptives, sans jugement de valeur" },
+    "avertissements": {
+      "type": "array",
+      "items": { "type": "string", "maxLength": 300 },
+      "description": "Ex. : contenu satirique — second degré ; contenu tronqué — confiance réduite"
+    },
+    "meta": {
+      "type": "object",
+      "required": ["modele", "prompt_version", "analyse_le"],
+      "additionalProperties": false,
+      "properties": {
+        "modele": { "type": "string", "description": "Identifiant du modèle, ex. anthropic/claude-sonnet-5" },
+        "fournisseur": { "type": "string", "description": "Ex. openrouter, ollama" },
+        "prompt_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "analyse_le": { "type": "string", "format": "date-time" },
+        "duree_ms": { "type": "integer", "minimum": 0 },
+        "instance": { "type": "string", "description": "Instance d'origine (fédération, phase 4)" }
+      }
+    }
+  },
+  "$defs": {
+    "dimension": {
+      "type": "object",
+      "required": ["score", "detail"],
+      "additionalProperties": false,
+      "properties": {
+        "score": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "detail": { "type": "string", "maxLength": 400, "description": "Justification concise, descriptive" }
+      }
+    }
+  }
+}

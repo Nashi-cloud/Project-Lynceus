@@ -1,0 +1,68 @@
+{
+  "version_schema": "0.1.0",
+  "url": "https://sante-verite-interdite.example/articles/remede-naturel-cancer",
+  "titre": "Le remède naturel contre le cancer que les laboratoires veulent faire interdire",
+  "domaine": "sante-verite-interdite.example",
+  "langue": "fr",
+  "categorie": "pseudo_science",
+  "note": { "grade": "E", "score": 22, "confiance": 0.88 },
+  "dimensions": {
+    "sources": { "score": 10, "detail": "Aucune source vérifiable : « des études américaines » et « un médecin courageux » ne sont jamais nommés ni liés." },
+    "factualite": { "score": 15, "detail": "Affirmation extraordinaire (guérison du cancer par une plante) sans aucune preuve, contredite par le consensus médical." },
+    "ton": { "score": 30, "detail": "Registre dominé par la peur et l'urgence ; le titre promet un secret interdit que le texte ne démontre jamais." },
+    "transparence": { "score": 35, "detail": "Auteur non identifié, pas de mentions légales visibles dans le contenu, boutique de compléments liée en fin d'article." }
+  },
+  "techniques_detectees": [
+    {
+      "id": "verite_cachee",
+      "extrait": "Ce que l'industrie pharmaceutique ne veut surtout pas que vous découvriez…",
+      "explication": "Présenter l'information comme un secret censuré la rend séduisante et la protège de la critique : tout démenti semblera confirmer le complot.",
+      "gravite": "haute"
+    },
+    {
+      "id": "solution_miracle",
+      "extrait": "cette plante ancestrale élimine 97 % des cellules cancéreuses en quelques semaines",
+      "explication": "Promettre une solution simple et totale à un problème complexe exploite l'espoir des personnes malades. Le chiffre précis, sans étude citée, donne une fausse impression de rigueur.",
+      "gravite": "haute"
+    },
+    {
+      "id": "autorite_anonyme",
+      "extrait": "des chercheurs américains l'ont confirmé dans plusieurs études",
+      "explication": "Invoquer des chercheurs et des études sans les nommer emprunte l'autorité de la science tout en rendant toute vérification impossible.",
+      "gravite": "haute"
+    },
+    {
+      "id": "conflit_interet_commercial",
+      "extrait": "Commandez notre extrait concentré avant la rupture de stock",
+      "explication": "L'article alarmiste débouche sur la vente d'un produit : l'auteur a un intérêt financier direct à ce que vous croyiez à la menace comme au remède.",
+      "gravite": "haute"
+    },
+    {
+      "id": "urgence_artificielle",
+      "extrait": "avant que cet article ne soit supprimé, partagez-le au maximum",
+      "explication": "Créer une pression temporelle (censure imminente, stock limité) pousse à agir avant de réfléchir ou de vérifier.",
+      "gravite": "moyenne"
+    }
+  ],
+  "points_positifs": [
+    "Le texte rappelle à juste titre l'importance d'une alimentation équilibrée.",
+    "Les effets secondaires possibles des chimiothérapies, évoqués au début, sont réels et documentés."
+  ],
+  "questions_a_se_poser": [
+    "Pourquoi l'auteur de cet article n'est-il pas identifiable ?",
+    "Si ce remède était efficace à 97 %, pourquoi aucune étude nommée et consultable ne le montre-t-elle ?",
+    "Que vend ce site, et quel lien avec ce qu'il affirme ?",
+    "Qui aurait intérêt à « interdire » un remède qui fonctionne — et comment une interdiction mondiale serait-elle même possible ?"
+  ],
+  "resume_neutre": "Article promettant qu'une plante guérit le cancer, présenté comme une information censurée. Le texte ne cite aucune source vérifiable, s'appuie sur la peur et l'urgence, et conduit à l'achat d'un produit vendu par le site lui-même.",
+  "avertissements": [
+    "Cette analyse est produite par une intelligence artificielle : elle peut comporter des erreurs. Elle décrit des procédés rhétoriques, pas la valeur des personnes qui partagent ce contenu."
+  ],
+  "meta": {
+    "modele": "anthropic/claude-sonnet-5",
+    "fournisseur": "openrouter",
+    "prompt_version": "0.1.0",
+    "analyse_le": "2026-08-23T12:00:00Z",
+    "duree_ms": 14200
+  }
+}
