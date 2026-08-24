@@ -98,6 +98,9 @@ async function lancerAnalyse(tabId: number): Promise<void> {
       rejetees: reponse.detections_rejetees?.length ?? 0,
     });
     poserBadge(tabId, reponse.carte.note.grade);
+    const grade = reponse.carte.note.grade;
+    if (grade === "D" || grade === "E") poserBordure(tabId, COULEURS_GRADE[grade]);
+    else retirerBordure(tabId);
   } catch (erreur) {
     majEtat(tabId, { phase: "erreur", erreur: messageLisible(erreur) });
   }
@@ -113,6 +116,48 @@ function messageLisible(erreur: unknown): string {
     );
   }
   return texte;
+}
+
+// ---------- contour de page (analyse explicite uniquement — pas de permission supplémentaire) ----------
+// Le geste qui déclenche l'analyse (menu contextuel / action) accorde activeTab pour cet onglet :
+// on réutilise ce même accès pour poser un contour discret, jamais pour les pages reconnues
+// passivement par le badge (cela demanderait un accès à toutes les pages, hors de portée ici).
+
+const ID_BORDURE = "lynceus-bordure-risque";
+
+function poserBordure(tabId: number, couleur: string): void {
+  chrome.scripting
+    .executeScript({
+      target: { tabId },
+      func: (id: string, couleur: string) => {
+        let bordure = document.getElementById(id);
+        if (!bordure) {
+          bordure = document.createElement("div");
+          bordure.id = id;
+          document.documentElement.appendChild(bordure);
+        }
+        Object.assign(bordure.style, {
+          position: "fixed",
+          inset: "0",
+          pointerEvents: "none",
+          zIndex: "2147483647",
+          border: `5px solid ${couleur}`,
+          boxSizing: "border-box",
+        });
+      },
+      args: [ID_BORDURE, couleur],
+    })
+    .catch(() => {}); // page protégée (chrome://, Web Store…) : on ignore silencieusement
+}
+
+function retirerBordure(tabId: number): void {
+  chrome.scripting
+    .executeScript({
+      target: { tabId },
+      func: (id: string) => document.getElementById(id)?.remove(),
+      args: [ID_BORDURE],
+    })
+    .catch(() => {});
 }
 
 // ---------- badge passif (opt-in, permission « tabs » optionnelle) ----------
@@ -157,8 +202,16 @@ async function majBadgePassif(tabId: number, url: string | undefined): Promise<v
 
 // Sans la permission optionnelle « tabs », `url` est undefined : le badge reste muet.
 chrome.tabs.onUpdated.addListener((tabId, changement, onglet) => {
+  if (changement.status === "loading") {
+    // Nouvelle navigation ou rechargement : la carte affichée ne concerne plus cette page.
+    // On ne coupe pas une analyse en cours (extraction/analyse) déclenchée juste avant.
+    const etatActuel = etats.get(tabId);
+    if (!etatActuel || (etatActuel.phase !== "extraction" && etatActuel.phase !== "analyse")) {
+      majEtat(tabId, { phase: "repos" });
+      retirerBordure(tabId);
+    }
+  }
   if (changement.status === "complete") void majBadgePassif(tabId, onglet.url);
-  if (changement.url) etats.delete(tabId); // navigation : l'analyse affichée ne vaut plus
 });
 
 chrome.tabs.onActivated.addListener(({ tabId }) => {
