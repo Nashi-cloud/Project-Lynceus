@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .modeles import Analyse, Domaine, Page, Signalement
+from .modeles import Analyse, ConsommationCle, Domaine, Page, Signalement
 
 
 def chercher_analyse(session: Session, content_hash: str, prompt_version: str) -> Analyse | None:
@@ -101,6 +101,37 @@ def enregistrer_signalement(
     session.add(signalement)
     session.flush()
     return signalement
+
+
+def consommer_quota(session: Session, identifiant_cle: str, quota_jour: int) -> tuple[bool, int]:
+    """Incrémente la consommation du jour si le quota le permet.
+
+    Retourne (autorisé, consommation après incrément). Le compteur est journalier : une
+    nouvelle ligne apparaît chaque jour, les précédentes deviennent inutiles."""
+    jour = datetime.now(timezone.utc).date().isoformat()
+    ligne = session.scalar(
+        select(ConsommationCle).where(
+            ConsommationCle.identifiant_cle == identifiant_cle, ConsommationCle.jour == jour
+        )
+    )
+    if ligne is None:
+        ligne = ConsommationCle(identifiant_cle=identifiant_cle, jour=jour, analyses=0)
+        session.add(ligne)
+        session.flush()
+    if ligne.analyses >= quota_jour:
+        return False, ligne.analyses
+    ligne.analyses += 1
+    session.flush()
+    return True, ligne.analyses
+
+
+def purger_consommations(session: Session, avant_le: str) -> int:
+    """Supprime les compteurs antérieurs à une date — ils ne servent plus à rien."""
+    lignes = session.scalars(select(ConsommationCle).where(ConsommationCle.jour < avant_le)).all()
+    for ligne in lignes:
+        session.delete(ligne)
+    session.flush()
+    return len(lignes)
 
 
 STATUTS_SIGNALEMENT = {"nouveau", "examine", "rejete", "sans_objet"}

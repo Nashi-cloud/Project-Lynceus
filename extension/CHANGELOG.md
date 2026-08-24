@@ -2,6 +2,11 @@
 
 Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension — utile pour vérifier qu'un rebuild a bien été rechargé.
 
+## 0.8.0 — 2026-08-24
+
+- **feat** : réglage d'une clé d'accès, pour les instances qui en demandent une. La clé accompagne les analyses ; les consultations d'annuaire restent libres. Une clé Lynceus n'est pas un compte : elle ne contient aucune information sur son porteur, seulement une date d'expiration et un quota journalier.
+- **feat** : le test de connexion indique si l'instance exige une clé, et un refus explique quoi faire plutôt que d'afficher un code d'erreur.
+
 ## 0.7.0 — 2026-08-24
 
 - **feat** : sur une page pas encore analysée, le panneau affiche ce que l'annuaire sait déjà **du site** — nombre de pages analysées, indice moyen, répartition des notes. L'information est immédiate et ne coûte rien. Formulation volontairement prudente : elle décrit d'autres pages du site, jamais celle qu'on lit, dont le contenu n'a pas été examiné.

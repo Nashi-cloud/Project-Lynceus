@@ -43,11 +43,13 @@ async function requete<T>(
   delaiMs: number,
   signalAnnulation?: AbortSignal,
 ): Promise<T> {
-  const { instance } = await chargerReglages();
+  const { instance, cle } = await chargerReglages();
   const { signal, liberer } = signalAvecDelai(delaiMs, signalAnnulation);
+  const entetes: Record<string, string> = { ...(options.headers as Record<string, string>) };
+  if (cle) entetes["X-Lynceus-Cle"] = cle;
   let reponse: Response;
   try {
-    reponse = await fetch(`${instance.replace(/\/+$/, "")}${chemin}`, { ...options, signal });
+    reponse = await fetch(`${instance.replace(/\/+$/, "")}${chemin}`, { ...options, headers: entetes, signal });
   } catch (erreur) {
     if (erreur instanceof DOMException && erreur.name === "TimeoutError") {
       throw new Error(
@@ -71,6 +73,9 @@ async function requete<T>(
       if (corps.detail) detail = corps.detail;
     } catch {
       /* corps non JSON */
+    }
+    if (reponse.status === 401) {
+      detail += " — renseignez votre clé d'accès dans les réglages de l'extension.";
     }
     throw new Error(detail);
   }

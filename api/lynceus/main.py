@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from . import VERSION_SCHEMA, __version__, annuaire, extraction
+from . import VERSION_SCHEMA, __version__, annuaire, cles, extraction
 from .config import Parametres, parametres
 from .migrations import appliquer as appliquer_migrations
 from .modeles import Analyse, Base
@@ -101,6 +101,27 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
     )
 
     # ---------- utilitaires ----------
+
+    revoquees = {c.strip() for c in p.cles_revoquees.split(",") if c.strip()}
+
+    def verifier_cle(requete: Request) -> cles.Droits | None:
+        """Valide la clé d'accès si l'instance en exige une.
+
+        La validation est purement cryptographique : aucune consultation d'annuaire. Une
+        instance sans `cle_publique` reste ouverte — c'est le cas d'un usage personnel."""
+        if not p.cle_publique:
+            return None
+        fournie = requete.headers.get("X-Lynceus-Cle", "")
+        if not fournie:
+            raise HTTPException(
+                401,
+                "Cette instance demande une clé d'accès. Renseignez-la dans les réglages de "
+                "l'extension (en-tête X-Lynceus-Cle).",
+            )
+        try:
+            return cles.valider(fournie, p.cle_publique, revoquees)
+        except cles.CleInvalide as exc:
+            raise HTTPException(401, str(exc)) from exc
 
     def verifier_limite(requete: Request) -> None:
         """Limiteur en mémoire, par IP, sur le travail coûteux (fetch serveur, appel LLM).
@@ -322,6 +343,8 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
         if not demande.url and not demande.contenu_markdown:
             raise HTTPException(400, "Fournir au moins url ou contenu_markdown.")
 
+        droits = verifier_cle(requete)
+
         version = prompt.resoudre_version(p.prompt_version)
 
         # Clés URL (si URL fournie)
@@ -334,14 +357,29 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             except ValueError as exc:
                 raise HTTPException(400, str(exc)) from exc
 
-        # Le travail coûteux (fetch serveur, LLM) n'est décompté qu'une fois par requête
+        # Le travail coûteux (fetch serveur, LLM) n'est décompté qu'une fois par requête.
+        # Une réponse servie depuis l'annuaire ne consomme donc NI limite NI quota : elle
+        # ne coûte rien, et pénaliser sa mutualisation irait contre l'intérêt du réseau.
         limite_verifiee = False
 
         def limiter() -> None:
             nonlocal limite_verifiee
-            if not limite_verifiee:
-                verifier_limite(requete)
-                limite_verifiee = True
+            if limite_verifiee:
+                return
+            verifier_limite(requete)
+            if droits is not None:
+                with fabrique() as session_quota:
+                    autorise, consommees = annuaire.consommer_quota(
+                        session_quota, droits.identifiant, droits.quota_jour
+                    )
+                    session_quota.commit()
+                if not autorise:
+                    raise HTTPException(
+                        429,
+                        f"Quota journalier atteint ({consommees}/{droits.quota_jour} analyses). "
+                        "Les pages déjà présentes dans l'annuaire restent consultables sans limite.",
+                    )
+            limite_verifiee = True
 
         # 1. Contenu : fourni par le client (chemin principal) ou récupéré par le serveur (fallback).
         #    URL seule → on regarde d'abord l'annuaire par URL : pas de fetch si la page est déjà connue.
@@ -443,6 +481,7 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             "taxonomie": {"nb_techniques": len(prompt.charger_taxonomie())},
             "limites": {"contenu_max_cars": p.contenu_max_cars, "analyses_par_minute": p.rate_limit_analyses},
             "capacites": {
+                "cle_requise": bool(p.cle_publique),
                 "lookup_k_anonyme": True,
                 "longueur_prefixe": annuaire.LONGUEUR_PREFIXE,
                 "signalements": True,

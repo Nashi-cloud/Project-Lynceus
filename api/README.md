@@ -63,6 +63,35 @@ Garanties du pipeline (testées) :
 - **Dédup à double clé** : même URL → cache ; même contenu sous une autre URL → même analyse, sans nouvel appel LLM.
 - **Retry encadré** : sortie non conforme → l'erreur est renvoyée une fois au modèle, sinon 502 explicite.
 
+## Protéger l'instance par clés d'accès
+
+Par défaut, une instance est **ouverte** : aucune clé n'est exigée. C'est le bon réglage pour un usage personnel. Pour une instance exposée à d'autres, les clés limitent qui peut déclencher des analyses — elles coûtent de l'argent, contrairement aux consultations d'annuaire, qui restent toujours libres.
+
+**Des clés auto-validantes.** Une clé porte elle-même sa date d'expiration, son quota journalier et une signature Ed25519. L'API vérifie la signature avec la clé publique de l'émetteur : **aucun annuaire de clés, aucune base de comptes**.
+
+```bash
+# 1. Une fois : générer la paire
+lynceus cles-paire
+
+# 2. Sur l'instance : renseigner la PUBLIQUE dans .env, puis redémarrer
+LYNCEUS_CLE_PUBLIQUE=…
+
+# 3. Chez l'émetteur (jamais sur l'instance) : émettre des clés
+LYNCEUS_CLE_PRIVEE=… lynceus cle-emettre --jours 365 --quota 50 --nombre 10
+```
+
+La clé se colle dans les réglages de l'extension. Elle **n'est pas un compte** : ni nom, ni adresse, ni identifiant de son porteur — seulement une date limite et un quota.
+
+| Ce que ça résout | Ce que ça ne résout pas |
+|---|---|
+| Authentifier sans annuaire ni inscription | Une clé partagée reste valide — le quota limite les dégâts |
+| Expiration automatique, sans maintenance | La révocation exige une liste, mais elle ne contient que les clés abusives (`LYNCEUS_CLES_REVOQUEES`) |
+| Séparer émetteur et valideur : compromettre l'instance ne permet pas de forger des clés | |
+
+> **La clé privée ne doit jamais quitter l'émetteur.** La placer dans l'extension reviendrait à la publier : n'importe qui pourrait alors émettre des clés à volonté.
+
+Le quota n'est décompté que pour une **analyse réelle** : resservir une page déjà présente dans l'annuaire ne coûte rien et n'entame pas le quota — pénaliser la mutualisation irait contre l'intérêt du réseau.
+
 ## Modérer les contestations
 
 Les contestations (charte §6) sont enregistrées et **visibles publiquement en nombre** sur chaque analyse, mais leur contenu est réservé à l'opérateur de l'instance — un signalement peut contenir un contact.

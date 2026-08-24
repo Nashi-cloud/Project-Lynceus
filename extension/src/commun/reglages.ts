@@ -10,12 +10,16 @@ export interface Reglages {
    * son propre plafond (LYNCEUS_LLM_TIMEOUT_S, 180 s par défaut, jusqu'à 360 s avec un retry) :
    * garder cette valeur nettement au-dessus pour ne jamais couper une analyse légitime en cours. */
   delaiAnalyseS: number;
+  /** Clé d'accès, si l'instance en exige une. Elle n'est ni un identifiant ni un compte :
+   * elle porte seulement une date d'expiration et un quota, et ne dit rien de son porteur. */
+  cle: string;
 }
 
 export const REGLAGES_DEFAUT: Reglages = {
   instance: "http://localhost:8000",
   badgeActif: false,
   delaiAnalyseS: 300,
+  cle: "",
 };
 
 export async function chargerReglages(): Promise<Reglages> {
