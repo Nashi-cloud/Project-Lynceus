@@ -74,7 +74,7 @@ Résumé de la [charte éthique](docs/ETHIQUE.md) :
 
 - [x] **Phase 0 — Fondations** : charte, méthodologie, taxonomie, schéma de la carte, prompt v0.1
 - [x] **Phase 1 — API MVP** : `/lookup` + `/analyses`, SQLite/PostgreSQL, adapter LLM compatible OpenAI, CLI, Docker Compose
-- [ ] **Phase 2 — Extension Chrome** : side panel, menu contextuel, badge, extraction locale
+- [x] **Phase 2 — Extension Chrome** : side panel, menu contextuel, badge passif opt-in, extraction locale Readability
 - [ ] **Phase 3 — Annuaire public** : instance de référence, profils de domaines, contestation d'analyses, lookup k-anonyme
 - [ ] **Phase 4 — Réseau** : fédération d'annuaires entre instances, i18n, portage Firefox
 
