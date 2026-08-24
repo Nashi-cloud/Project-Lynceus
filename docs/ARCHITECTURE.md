@@ -34,7 +34,9 @@ Trois livrables : **`api/`** (le kit serveur auto-hébergeable, Docker Compose),
 | `POST` | `/v1/analyses` | Corps : `{ url?, contenu_markdown?, titre?, langue? }`. Cache hit → `200` + carte. Sinon analyse (synchrone au MVP, ~10–30 s) → `200` + carte. `url` seul → fetch serveur fallback. |
 | `GET` | `/v1/analyses/{id}` | Récupération d'une carte par id. |
 | `GET` | `/v1/domaines/{domaine}` | Profil agrégé : nb d'analyses, score moyen, distribution des grades. |
-| `POST` | `/v1/signalements` | Contestation d'une analyse (phase 3). |
+| `GET` | `/v1/lookup-prefixe?prefixe={5 hex}` | **Consultation k-anonyme** : le client n'envoie que les 5 premiers caractères du hash et fait la correspondance finale localement. Réponse : suffixes + résumés (grade, catégorie, score, id). Le serveur ne peut pas savoir quelle page est consultée. |
+| `POST` | `/v1/signalements` | Contestation d'une analyse : `{ analyse_id, motif, message, contact? }`. Anonyme par défaut. |
+| `GET` | `/v1/motifs-signalement` | Motifs acceptés — évite aux clients de les coder en dur. |
 | `GET` | `/v1/meta` | Version de l'instance, `prompt_version`, modèle configuré, taxonomie — transparence de l'instance. |
 
 ## Déduplication — le cœur de l'annuaire
@@ -74,7 +76,8 @@ analyses     id PK · content_hash (index) · prompt_version · schema_version
 domaines     domaine PK · nb_analyses · score_moyen · distribution_grades JSONB
              maj_le            -- recalculé à chaque nouvelle analyse du domaine
 
-signalements id PK · analyse_id FK · motif · message · statut · cree_le   (phase 3)
+signalements id PK · analyse_id FK (index) · motif · message · contact (optionnel)
+             statut (index) · cree_le
 ```
 
 Plusieurs `pages` peuvent pointer la même `analyses` (contenu dupliqué). `pgvector` envisagé en phase 3+ pour détecter les quasi-doublons (même article paraphrasé).
@@ -111,7 +114,9 @@ L'étape 5 inclut la **vérification anti-hallucination des extraits** : tout `e
 ## Sécurité, abus, vie privée
 
 - **Rate limiting** sur `/v1/analyses` (le lookup est bon marché, l'analyse non). Clés API optionnelles pour instances publiques.
-- **Pas de journalisation IP + URL** sur `/v1/lookup` (voir [ETHIQUE.md](ETHIQUE.md) §4) ; phase 3 : lookup k-anonyme par préfixe de hash (modèle HaveIBeenPwned).
+- **Pas de journalisation IP + URL** sur `/v1/lookup` (voir [ETHIQUE.md](ETHIQUE.md) §4).
+- **Lookup k-anonyme** (`/v1/lookup-prefixe`, modèle HaveIBeenPwned) : le client envoie 5 caractères hexadécimaux du hash — soit 1 048 576 seaux — et compare les suffixes reçus localement. Le serveur ne voit jamais l'empreinte complète, donc ne peut pas reconstituer l'URL consultée. L'extension le préfère automatiquement quand l'instance l'annonce dans `/v1/meta`, avec repli sur `/v1/lookup` sinon.
+- **Le badge ne coûte rien en confidentialité** : le préfixe suffit à afficher la note et le contour. La carte complète n'est demandée (`/v1/analyses/{id}`) que si le panneau est réellement ouvert.
 - Contenu soumis = donnée non fiable : jamais interprété comme instruction (le prompt le délimite explicitement), taille bornée, HTML refusé (Markdown uniquement).
 - CORS restreint à l'extension + configurable par instance.
 
