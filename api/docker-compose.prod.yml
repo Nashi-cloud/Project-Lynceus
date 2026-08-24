@@ -8,6 +8,11 @@
 #
 # Secrets attendus dans un fichier .env à côté de ce compose (voir DEPLOIEMENT.md) :
 #   POSTGRES_PASSWORD, LYNCEUS_LLM_API_KEY, LYNCEUS_ADMIN_TOKEN, LYNCEUS_CLE_PUBLIQUE
+#   CLOUDFLARE_TUNNEL_TOKEN (si l'exposition passe par Cloudflare Tunnel)
+#
+# Exposition par Cloudflare Tunnel :
+#   docker compose -f docker-compose.prod.yml --profile tunnel up -d
+# Sans le profil, l'API n'écoute que sur LYNCEUS_BIND (127.0.0.1 par défaut).
 
 services:
   db:
@@ -57,6 +62,11 @@ services:
       # installation à l'autre, on ne peut donc pas la restreindre utilement ici.
       # La protection repose sur les clés d'accès, pas sur le CORS.
       LYNCEUS_CORS_ORIGINS: ${LYNCEUS_CORS_ORIGINS:-*}
+      # Derrière Cloudflare Tunnel, toutes les requêtes portent l'adresse du tunnel : sans
+      # cet en-tête, un seul visiteur épuiserait la limite de débit de tout le monde.
+      # À ne définir QUE si l'instance n'est joignable que par le tunnel — un en-tête se
+      # falsifie, et une instance jointe en direct verrait sa limite contournée.
+      LYNCEUS_ENTETE_IP_REELLE: ${LYNCEUS_ENTETE_IP_REELLE:-}
     ports:
       # Écoute sur l'adresse Tailscale uniquement : l'exposition publique passe par
       # Tailscale Serve/Funnel, qui apporte HTTPS (voir DEPLOIEMENT.md).
@@ -67,6 +77,26 @@ services:
       timeout: 10s
       retries: 3
       start_period: 20s
+    restart: unless-stopped
+    networks:
+      - lynceus-net
+
+  # Exposition publique par Cloudflare Tunnel — activée par le profil « tunnel ».
+  # Le conteneur établit une connexion SORTANTE vers Cloudflare : aucun port entrant à
+  # ouvrir, aucune adresse publique à exposer, et le certificat TLS est géré par Cloudflare.
+  #
+  # Le routage (nom d'hôte -> http://api:8000) se configure dans le tableau de bord
+  # Cloudflare Zero Trust, qui fournit en retour le jeton à placer dans .env.
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: lynceus-tunnel
+    profiles: [tunnel]
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?jeton de tunnel requis avec le profil « tunnel »}
+    depends_on:
+      api:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - lynceus-net

@@ -123,10 +123,25 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
         except cles.CleInvalide as exc:
             raise HTTPException(401, str(exc)) from exc
 
+    def adresse_visiteur(requete: Request) -> str:
+        """Adresse servant de clé au compteur de débit.
+
+        Derrière un tunnel ou un proxy, l'adresse de transport est celle du proxy : sans
+        l'en-tête configuré, tous les visiteurs partageraient un même compteur. L'en-tête
+        n'est lu QUE s'il a été explicitement nommé dans la configuration — il est trivial
+        à falsifier, et n'a de valeur que si l'instance n'est joignable que par le proxy."""
+        if p.entete_ip_reelle:
+            valeur = requete.headers.get(p.entete_ip_reelle, "")
+            # Certains proxys chaînent les adresses : la première est celle du visiteur.
+            premiere = valeur.split(",")[0].strip()
+            if premiere:
+                return premiere
+        return requete.client.host if requete.client else "inconnue"
+
     def verifier_limite(requete: Request) -> None:
-        """Limiteur en mémoire, par IP, sur le travail coûteux (fetch serveur, appel LLM).
+        """Limiteur en mémoire, par adresse, sur le travail coûteux (fetch serveur, appel LLM).
         Conformément à la charte (§4), rien n'est journalisé : la structure ne vit qu'en mémoire."""
-        ip = requete.client.host if requete.client else "inconnue"
+        ip = adresse_visiteur(requete)
         maintenant = time.monotonic()
         acces = app.state.acces_analyses.setdefault(ip, [])
         acces[:] = [t for t in acces if maintenant - t < 60]
