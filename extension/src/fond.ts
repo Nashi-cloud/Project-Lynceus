@@ -42,6 +42,12 @@ chrome.contextMenus.onClicked.addListener((info, onglet) => {
 chrome.runtime.onMessage.addListener((message: MessageVersFond, _expediteur, repondre) => {
   if (message.type === "lynceus:etat") {
     repondre(etats.get(message.tabId) ?? { phase: "repos" });
+    // Rafraîchissement passif en tâche de fond : couvre le cas où le panneau s'ouvre sur un
+    // onglet déjà chargé, sans navigation ni changement d'onglet récent pour l'avoir déclenché.
+    chrome.tabs
+      .get(message.tabId)
+      .then((onglet) => majBadgePassif(message.tabId, onglet.url))
+      .catch(() => {});
     return false;
   }
   if (message.type === "lynceus:analyser") {
@@ -127,11 +133,23 @@ async function majBadgePassif(tabId: number, url: string | undefined): Promise<v
     effacerBadge(tabId);
     return;
   }
+  // Une analyse en cours ou déjà affichée (déclenchée par l'utilisateur) ne doit pas être écrasée
+  // par ce rafraîchissement passif, sauf pour reposer le même résultat (idempotent).
+  const etatActuel = etats.get(tabId);
+  if (etatActuel && etatActuel.phase !== "repos" && etatActuel.phase !== "erreur") return;
+
   try {
     // Seul un hash SHA-256 de l'URL normalisée quitte le navigateur — jamais l'URL, jamais le contenu.
     const reponse = await lookupParHash(await hacherUrl(url));
-    if (reponse.statut === "connue" && reponse.carte) poserBadge(tabId, reponse.carte.note.grade);
-    else effacerBadge(tabId);
+    if (reponse.statut === "connue" && reponse.carte) {
+      poserBadge(tabId, reponse.carte.note.grade);
+      // La page est déjà dans l'annuaire : on l'affiche directement dans le panneau, sans
+      // déclencher d'analyse (aucun contenu envoyé — seule une consultation déjà consentie
+      // via l'activation du badge passif, cf. docs/ETHIQUE.md §3-4).
+      majEtat(tabId, { phase: "ok", carte: reponse.carte, enCache: true, rejetees: 0 });
+    } else {
+      effacerBadge(tabId);
+    }
   } catch {
     effacerBadge(tabId); // le badge est un bonus : jamais d'erreur bruyante
   }
