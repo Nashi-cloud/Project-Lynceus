@@ -41,6 +41,16 @@ class Parametres(BaseSettings):
     # abusives : ce n'est pas un annuaire, seulement une liste noire.
     cles_revoquees: str = ""
 
+    # Derrière un proxy ou un tunnel (Cloudflare Tunnel, reverse proxy…), toutes les
+    # requêtes arrivent avec l'adresse du proxy : le compteur par IP deviendrait commun à
+    # tout le monde. Cette option nomme l'en-tête portant l'adresse réelle du visiteur
+    # (« CF-Connecting-IP » pour Cloudflare, « X-Real-IP » pour nginx).
+    #
+    # VIDE PAR DÉFAUT, et c'est important : un en-tête est trivial à falsifier. Ne
+    # l'activer que si l'instance n'est JOIGNABLE QUE par le proxy — sinon n'importe qui
+    # contournerait la limite en forgeant l'en-tête.
+    entete_ip_reelle: str = ""
+
     # Divers
     cors_origins: str = "*"
     prompt_version: str = "latest"
