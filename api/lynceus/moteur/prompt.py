@@ -97,9 +97,12 @@ def prompt_systeme(version: str) -> str:
     return section.strip()
 
 
-def message_utilisateur(url: str | None, titre: str | None, langue: str | None, contenu: str) -> str:
+def message_utilisateur(url: str | None, titre: str | None, langue: str | None, contenu: str,
+                        date_analyse: str | None = None) -> str:
     """Le gabarit du message utilisateur — le contenu est délimité comme donnée, pas instruction."""
+    entete_date = f"Date du jour : {date_analyse}\n" if date_analyse else ""
     return (
+        f"{entete_date}"
         f"URL : {url or '(absente)'}\n"
         f"Titre : {titre or '(absent)'}\n"
         f"Langue déclarée : {langue or '(non précisée)'}\n\n"

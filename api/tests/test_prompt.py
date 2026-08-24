@@ -30,5 +30,16 @@ def test_schema_sortie_llm_sans_champs_serveur():
 
 def test_resolution_versions():
     versions = prompt.versions_disponibles()
-    assert "0.1.0" in versions
+    assert "0.1.0" in versions and "0.1.1" in versions
     assert prompt.resoudre_version("latest") == versions[-1]
+
+
+def test_message_utilisateur_avec_date():
+    message = prompt.message_utilisateur("https://x.fr", "T", "fr", "contenu", date_analyse="2026-08-24")
+    assert message.startswith("Date du jour : 2026-08-24\n")
+    assert "<contenu_page>" in message
+
+
+def test_v011_contient_la_consigne_de_date():
+    systeme = prompt.prompt_systeme("0.1.1")
+    assert "date du jour" in systeme.lower()

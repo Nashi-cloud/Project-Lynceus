@@ -84,7 +84,10 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
         ids_valides = set(prompt.charger_taxonomie())
         messages = [
             {"role": "system", "content": prompt.prompt_systeme(version)},
-            {"role": "user", "content": prompt.message_utilisateur(url, titre, langue, contenu)},
+            {"role": "user", "content": prompt.message_utilisateur(
+                url, titre, langue, contenu,
+                date_analyse=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            )},
         ]
         derniere_erreur: Exception | None = None
         for _ in range(2):
