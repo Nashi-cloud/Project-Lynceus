@@ -1,6 +1,6 @@
 {
   "name": "lynceus-extension",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": true,
   "description": "Lynceus — la vigie de l'information. Extension Chrome (MV3).",
   "license": "AGPL-3.0-or-later",
@@ -8,7 +8,8 @@
   "scripts": {
     "build": "node build.mjs",
     "verifier": "tsc --noEmit",
-    "test": "node test/parite_normalisation.mjs"
+    "test": "node --test test/*.test.mjs && node test/parite_normalisation.mjs",
+    "test:parite": "node test/parite_normalisation.mjs"
   },
   "dependencies": {
     "@mozilla/readability": "^0.5.0",
