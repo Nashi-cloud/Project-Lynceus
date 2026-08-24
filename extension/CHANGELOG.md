@@ -2,6 +2,12 @@
 
 Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension — utile pour vérifier qu'un rebuild a bien été rechargé.
 
+## 0.7.0 — 2026-08-24
+
+- **feat** : sur une page pas encore analysée, le panneau affiche ce que l'annuaire sait déjà **du site** — nombre de pages analysées, indice moyen, répartition des notes. L'information est immédiate et ne coûte rien. Formulation volontairement prudente : elle décrit d'autres pages du site, jamais celle qu'on lit, dont le contenu n'a pas été examiné.
+- **feat** : les articles dépassant la taille analysable de l'instance sont désormais raccourcis (à une frontière de paragraphe quand c'est possible) au lieu d'être refusés. La carte porte la mention que seul le début a été examiné — elle est mise en cache et resservie à d'autres lecteurs, elle doit donc le dire.
+- **refactor** : logique de raccourcissement extraite dans `commun/troncature.ts`, testable sans navigateur.
+
 ## 0.6.0 — 2026-08-24
 
 - **feat** : consultation d'annuaire en **k-anonymat** (technique HaveIBeenPwned). Seuls les 5 premiers caractères de l'empreinte d'URL sont envoyés — soit un seau partagé par plus d'un million d'adresses possibles — et la correspondance finale se fait dans le navigateur. L'instance ne peut plus déterminer quelle page est consultée. Activé automatiquement quand l'instance l'annonce, avec repli sur le mode historique sinon.

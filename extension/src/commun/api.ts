@@ -7,6 +7,7 @@ import type {
   DemandeSignalement,
   MetaInstance,
   ReponseAnalyse,
+  ProfilDomaine,
   ReponseLookup,
   ReponseLookupPrefixe,
 } from "./types";
@@ -94,6 +95,16 @@ export function detailAnalyse(analyseId: number): Promise<{ carte: CarteAnalyse;
     undefined,
     15_000,
   );
+}
+
+/** Profil agrégé d'un domaine — renvoie null si le domaine est inconnu de l'annuaire
+ * (404 attendu, pas une erreur). */
+export async function profilDomaine(domaine: string): Promise<ProfilDomaine | null> {
+  try {
+    return await requete<ProfilDomaine>(`/v1/domaines/${encodeURIComponent(domaine)}`, undefined, 10_000);
+  } catch {
+    return null;
+  }
 }
 
 export function metaInstance(): Promise<MetaInstance> {

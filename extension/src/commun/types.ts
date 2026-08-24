@@ -57,6 +57,10 @@ export interface MetaInstance {
     signalements?: boolean;
     motifs_signalement?: string[];
   };
+  limites?: {
+    contenu_max_cars?: number;
+    analyses_par_minute?: number;
+  };
 }
 
 export interface ProfilDomaine {
@@ -98,11 +102,16 @@ export interface DemandeAnalyse {
   contenu_markdown?: string;
   titre?: string;
   langue?: string;
+  /** Le contenu a été raccourci pour tenir dans la limite de l'instance. La carte en
+   * portera la mention : elle est mise en cache et resservie à d'autres lecteurs. */
+  tronque?: boolean;
 }
 
 /** État d'analyse d'un onglet, tenu par le service worker, affiché par le panneau. */
 export type EtatOnglet =
-  | { phase: "repos" }
+  /** Page non analysée. Le profil du domaine, quand il est connu, informe déjà
+   * l'utilisateur sans rien coûter : « 5 pages de ce site analysées, indice moyen D ». */
+  | { phase: "repos"; domaine?: ProfilDomaine }
   | { phase: "extraction"; depuis: number }
   | { phase: "analyse"; depuis: number }
   /** Page reconnue par le lookup k-anonyme : on connaît la note, pas encore le détail.
