@@ -26,6 +26,12 @@ class Parametres(BaseSettings):
     llm_response_format: str = "none"
 
     # Garde-fous
+    # Analyses menées de front. Chacune mobilise un thread pendant tout l'appel au modèle
+    # (10 à 60 s) ; sans plafond, elles épuiseraient le pool de threads du serveur et les
+    # consultations d'annuaire — normalement instantanées — attendraient derrière elles.
+    # Les demandes au-delà de ce nombre patientent sans consommer de thread.
+    analyses_simultanees: int = 12
+
     contenu_min_cars: int = 200
     contenu_max_cars: int = 60000
     rate_limit_analyses: int = 10  # requêtes / minute / IP sur POST /v1/analyses

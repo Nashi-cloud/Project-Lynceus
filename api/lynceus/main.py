@@ -8,11 +8,14 @@ from __future__ import annotations
 import sys
 import secrets
 import time
+
+import anyio
 from datetime import datetime, timezone
 from urllib.parse import urlsplit
 
 import jsonschema
 from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
@@ -92,6 +95,11 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
     app = FastAPI(title="Lynceus API", version=__version__)
     app.state.parametres = p
     app.state.acces_analyses = {}
+
+    # Plafond d'analyses menées de front. anyio.Semaphore se lie à la boucle d'événements
+    # au premier usage : inutile d'attendre un événement de démarrage pour le créer, ce qui
+    # le rendrait absent des tests qui n'en déclenchent pas.
+    app.state.places_analyses = anyio.Semaphore(max(1, p.analyses_simultanees))
 
     app.add_middleware(
         CORSMiddleware,
@@ -362,7 +370,17 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
         return {"motifs": sorted(MOTIFS_SIGNALEMENT)}
 
     @app.post("/v1/analyses")
-    def analyser(demande: DemandeAnalyse, requete: Request):
+    async def analyser(demande: DemandeAnalyse, requete: Request):
+        """Point d'entrée asynchrone : l'attente d'une place ne mobilise aucun thread.
+
+        Le travail lui-même (appel au modèle, base) est synchrone et s'exécute dans le pool
+        de threads, mais leur nombre est plafonné : les consultations d'annuaire gardent
+        ainsi des threads disponibles et restent instantanées, même quand beaucoup
+        d'analyses sont en cours."""
+        async with app.state.places_analyses:
+            return await run_in_threadpool(_analyser, demande, requete)
+
+    def _analyser(demande: DemandeAnalyse, requete: Request):
         if not demande.url and not demande.contenu_markdown:
             raise HTTPException(400, "Fournir au moins url ou contenu_markdown.")
 
@@ -515,7 +533,11 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             "modele": p.llm_model,
             "fournisseur": urlsplit(p.llm_base_url).hostname or "inconnu",
             "taxonomie": {"nb_techniques": len(prompt.charger_taxonomie())},
-            "limites": {"contenu_max_cars": p.contenu_max_cars, "analyses_par_minute": p.rate_limit_analyses},
+            "limites": {
+                "contenu_max_cars": p.contenu_max_cars,
+                "analyses_par_minute": p.rate_limit_analyses,
+                "analyses_simultanees": p.analyses_simultanees,
+            },
             "capacites": {
                 "cle_requise": bool(p.cle_publique),
                 "lookup_k_anonyme": True,
