@@ -70,6 +70,15 @@ Résumé de la [charte éthique](docs/ETHIQUE.md) :
 - **Extension** : TypeScript, Manifest V3, side panel Chrome, extraction Readability.js.
 - **LLM** : tout endpoint compatible OpenAI (`/chat/completions`) — OpenRouter, Ollama en local, vLLM… Modèle et fournisseur configurables par instance.
 
+## Vérifier le projet
+
+```bash
+./verifier.sh              # tests API + extension, typage, build, cohérence des versions
+./verifier.sh --calibrer   # + calibration du corpus (serveur requis)
+```
+
+97 tests au total : 65 côté API (pytest, couverture 84 %) et 32 côté extension (`node --test`), plus un test de parité garantissant que l'extension et le serveur calculent les mêmes empreintes d'URL.
+
 ## Feuille de route
 
 - [x] **Phase 0 — Fondations** : charte, méthodologie, taxonomie, schéma de la carte, prompt v0.1
