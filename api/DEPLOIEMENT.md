@@ -149,6 +149,31 @@ Le débit arrête les rafales (un script qui boucle) ; le quota protège le budg
 
 > **Un seul processus.** Le compteur de débit vit dans la mémoire du processus : servir l'application avec plusieurs workers multiplierait la limite réelle par leur nombre, silencieusement. L'image lance donc un unique processus. Si le trafic l'exigeait un jour, il faudrait d'abord déplacer ce compteur dans un stockage partagé (Redis ou équivalent) — avant d'ajouter des workers, pas après.
 
+## Capacité et montée en charge
+
+Une analyse mobilise un thread pendant tout l'appel au modèle (10 à 60 s selon le modèle et la longueur de la page). Sans plafond, quelques dizaines d'analyses suffiraient à saturer le serveur, et les consultations d'annuaire — normalement instantanées — attendraient derrière elles.
+
+`LYNCEUS_ANALYSES_SIMULTANEES` (12 par défaut) borne les analyses menées de front. Les demandes au-delà **patientent sans consommer de thread** : elles aboutissent, simplement plus tard.
+
+Mesures sur un serveur réel, modèle simulé à 3 s par analyse :
+
+| Analyses lancées d'un coup | Toutes abouties | Pire latence d'un lookup | Médiane |
+|---|---|---|---|
+| 40 | 40/40 | 0,22 s | 2 ms |
+| 60 | 60/60 | 0,21 s | 2 ms |
+| 200 | 200/200 | 2,2 s | 2 ms |
+
+Avant ce plafond, 40 analyses simultanées suffisaient à faire attendre un lookup **6,2 secondes**. Le badge passif reste désormais réactif sous une charge que votre instance ne connaîtra probablement jamais.
+
+**Débit soutenu** : environ `analyses_simultanees / durée_d_une_analyse`. Avec 12 places et un modèle à 15 s, comptez ~48 analyses par minute — bien au-delà de ce qu'un cercle familial ou associatif produit, d'autant que les pages déjà connues sont resservies **sans analyse**.
+
+Si le trafic l'exigeait vraiment :
+
+1. **augmentez `LYNCEUS_ANALYSES_SIMULTANEES`** — c'est le levier direct, tant que le fournisseur de modèle suit (attention à ses propres limites de débit) ;
+2. **puis seulement**, envisagez plusieurs processus — mais il faudra d'abord déplacer le compteur de débit dans un stockage partagé (voir l'avertissement plus haut).
+
+Une file de tâches (Celery, RQ) n'apporterait rien ici : elle imposerait Redis et un worker séparé, et obligerait les clients à interroger périodiquement l'état de leur analyse au lieu de recevoir directement leur carte. Le plafond de concurrence résout le même problème sans rien de tout cela.
+
 ## Surveiller les coûts
 
 Le vrai risque d'une instance exposée n'est pas l'intrusion, c'est la facture. Trois garde-fous se cumulent : quota par clé, limite de débit par IP, et taille maximale du contenu. Pour estimer la dépense :

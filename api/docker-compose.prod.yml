@@ -57,6 +57,7 @@ services:
 
       # --- Garde-fous ---
       LYNCEUS_RATE_LIMIT_ANALYSES: ${LYNCEUS_RATE_LIMIT_ANALYSES:-10}
+      LYNCEUS_ANALYSES_SIMULTANEES: ${LYNCEUS_ANALYSES_SIMULTANEES:-12}
       LYNCEUS_CONTENU_MAX_CARS: ${LYNCEUS_CONTENU_MAX_CARS:-60000}
       # L'extension appelle depuis chrome-extension://<id> : l'origine varie d'une
       # installation à l'autre, on ne peut donc pas la restreindre utilement ici.
