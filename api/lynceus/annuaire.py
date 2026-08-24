@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .modeles import Analyse, Domaine, Page
+from .modeles import Analyse, Domaine, Page, Signalement
 
 
 def chercher_analyse(session: Session, content_hash: str, prompt_version: str) -> Analyse | None:
@@ -58,6 +58,85 @@ def recalculer_domaine(session: Session, domaine: str) -> None:
     profil.distribution_grades = distribution
     profil.maj_le = datetime.now(timezone.utc)
     session.flush()
+
+
+# Longueur du préfixe pour le lookup k-anonyme (modèle HaveIBeenPwned) : le client
+# n'envoie que ce préfixe et fait la correspondance finale localement, si bien que le
+# serveur ne peut pas savoir quelle page exacte est consultée (cf. docs/ETHIQUE.md §4).
+# 5 caractères hexadécimaux = 1 048 576 seaux : assez pour que le préfixe ne désigne
+# aucune page en particulier, assez fin pour que la réponse reste légère.
+LONGUEUR_PREFIXE = 5
+
+
+def chercher_par_prefixe(session: Session, prefixe: str) -> list[dict]:
+    """Toutes les pages connues dont le hash d'URL commence par ce préfixe.
+
+    Retourne des couples (suffixe du hash, grade, catégorie) : de quoi afficher un badge
+    sans que le serveur apprenne l'URL consultée. La carte complète nécessite un appel
+    explicite à /v1/analyses/{id}."""
+    prefixe = prefixe.lower()
+    lignes = session.execute(
+        select(Page.url_hash, Analyse.id, Analyse.grade, Analyse.categorie, Analyse.score)
+        .join(Analyse, Page.analyse_courante_id == Analyse.id)
+        .where(Page.url_hash.startswith(prefixe))
+    ).all()
+    return [
+        {
+            "suffixe": url_hash[LONGUEUR_PREFIXE:],
+            "analyse_id": analyse_id,
+            "grade": grade,
+            "categorie": categorie,
+            "score": score,
+        }
+        for url_hash, analyse_id, grade, categorie, score in lignes
+    ]
+
+
+def enregistrer_signalement(
+    session: Session, *, analyse_id: int, motif: str, message: str, contact: str | None
+) -> Signalement:
+    signalement = Signalement(
+        analyse_id=analyse_id, motif=motif, message=message, contact=contact
+    )
+    session.add(signalement)
+    session.flush()
+    return signalement
+
+
+STATUTS_SIGNALEMENT = {"nouveau", "examine", "rejete", "sans_objet"}
+
+
+def lister_signalements(
+    session: Session, *, statut: str | None = None, limite: int = 50
+) -> list[Signalement]:
+    """Signalements les plus anciens d'abord : on traite dans l'ordre d'arrivée."""
+    requete = select(Signalement).order_by(Signalement.cree_le)
+    if statut:
+        requete = requete.where(Signalement.statut == statut)
+    return list(session.scalars(requete.limit(limite)))
+
+
+def traiter_signalement(
+    session: Session, signalement_id: int, *, statut: str, decision: str
+) -> Signalement | None:
+    """Enregistre la décision de l'opérateur. La justification est obligatoire : écarter une
+    contestation sans motif reviendrait à l'opacité que Lynceus dénonce (charte §2)."""
+    if statut not in STATUTS_SIGNALEMENT:
+        raise ValueError(f"Statut inconnu : {statut} (attendus : {sorted(STATUTS_SIGNALEMENT)})")
+    signalement = session.get(Signalement, signalement_id)
+    if signalement is None:
+        return None
+    signalement.statut = statut
+    signalement.decision = decision
+    signalement.traite_le = datetime.now(timezone.utc)
+    session.flush()
+    return signalement
+
+
+def compter_signalements(session: Session, analyse_id: int) -> int:
+    return session.scalar(
+        select(func.count(Signalement.id)).where(Signalement.analyse_id == analyse_id)
+    ) or 0
 
 
 def profil_domaine(session: Session, domaine: str) -> dict | None:

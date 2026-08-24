@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -133,49 +134,269 @@ def lookup(url: str):
 
 
 @app.command()
-def calibrer(fichier: Path = typer.Argument(help="corpus YAML (cf. corpus/README.md)")):
-    """Passe le corpus de calibration et vérifie catégories, fourchettes de grades et techniques."""
+def calibrer(
+    fichier: Path = typer.Argument(help="corpus YAML (cf. corpus/README.md)"),
+    json_sortie: Path = typer.Option(None, "--json", help="écrire le rapport détaillé en JSON"),
+    filtre: str = typer.Option(None, "--filtre", help="ne traiter que les entrées dont le titre/chemin contient ce texte"),
+):
+    """Passe le corpus de calibration et vérifie catégories, grades et techniques.
+
+    Chaque entrée porte soit `fichier` (spécimen figé du dépôt, reproductible et hors ligne),
+    soit `url` (page réelle). Les écarts sont classés : un faux positif sur une technique
+    interdite ou une erreur de catégorie sont des échecs GRAVES ; un grade hors fourchette
+    d'un cran est signalé comme un écart mineur.
+    """
     import yaml
 
     entrees = yaml.safe_load(fichier.read_text(encoding="utf-8")) or []
     if not isinstance(entrees, list):
         console.print("[red]Le corpus doit être une liste YAML.[/red]")
         raise typer.Exit(2)
+    if filtre:
+        entrees = [e for e in entrees if filtre.lower() in str(e.get("titre", "") or e.get("fichier", "") or e.get("url", "")).lower()]
 
+    racine = fichier.parent
     table = Table(show_header=True, header_style="bold")
-    for colonne in ("URL", "Attendu", "Obtenu", "Verdict"):
+    for colonne in ("Cas", "Attendu", "Obtenu", "Verdict"):
         table.add_column(colonne, overflow="fold")
-    echecs = 0
+
+    rapport, graves, mineurs = [], 0, 0
 
     for entree in entrees:
-        cible = entree["url"]
-        reponse = httpx.post(f"{_api()}/v1/analyses", json={"url": cible}, timeout=300)
-        if reponse.status_code != 200:
-            echecs += 1
-            table.add_row(cible, "-", f"HTTP {reponse.status_code}", "[red]ERREUR[/red]")
+        etiquette = entree.get("titre") or entree.get("fichier") or entree.get("url") or "(sans titre)"
+        corps = _corps_demande(entree, racine)
+        if corps is None:
+            graves += 1
+            table.add_row(etiquette, "-", "-", "[red]entrée invalide (ni fichier ni url)[/red]")
             continue
+
+        try:
+            reponse = httpx.post(f"{_api()}/v1/analyses", json=corps, timeout=600)
+        except httpx.HTTPError as exc:
+            graves += 1
+            table.add_row(etiquette, "-", f"réseau : {exc}", "[red]ERREUR[/red]")
+            continue
+        if reponse.status_code != 200:
+            graves += 1
+            table.add_row(etiquette, "-", f"HTTP {reponse.status_code}", f"[red]{_erreur_http(reponse)[:80]}[/red]")
+            continue
+
         carte = reponse.json()["carte"]
-        problemes = []
-        if "categorie_attendue" in entree and carte["categorie"] != entree["categorie_attendue"]:
-            problemes.append(f"catégorie {carte['categorie']} ≠ {entree['categorie_attendue']}")
-        if "grade_attendu" in entree and carte["note"]["grade"] not in entree["grade_attendu"]:
-            problemes.append(f"grade {carte['note']['grade']} ∉ {entree['grade_attendu']}")
-        ids = {t["id"] for t in carte["techniques_detectees"]}
-        for attendue in entree.get("techniques_attendues", []):
-            if attendue not in ids:
-                problemes.append(f"technique manquante : {attendue}")
-        for interdite in entree.get("techniques_interdites", []):
-            if interdite in ids:
-                problemes.append(f"faux positif : {interdite}")
-        verdict = "[green]OK[/green]" if not problemes else "[red]" + " · ".join(problemes) + "[/red]"
-        echecs += bool(problemes)
+        ecarts_graves, ecarts_mineurs = _comparer(entree, carte)
+        graves += bool(ecarts_graves)
+        mineurs += bool(ecarts_mineurs and not ecarts_graves)
+
+        if ecarts_graves:
+            verdict = "[red]" + " · ".join(ecarts_graves) + "[/red]"
+        elif ecarts_mineurs:
+            verdict = "[yellow]" + " · ".join(ecarts_mineurs) + "[/yellow]"
+        else:
+            verdict = "[green]OK[/green]"
+
         attendu = f"{entree.get('categorie_attendue', '?')} {entree.get('grade_attendu', '')}"
-        table.add_row(cible, attendu, f"{carte['categorie']} {carte['note']['grade']}", verdict)
+        obtenu = f"{carte['categorie']} {carte['note']['grade']} ({carte['note']['score']})"
+        table.add_row(etiquette, attendu, obtenu, verdict)
+        rapport.append({
+            "cas": etiquette,
+            "attendu": {k: v for k, v in entree.items() if k.endswith(("_attendue", "_attendu", "_attendues", "_interdites", "_min", "_acceptables"))},
+            "obtenu": {
+                "categorie": carte["categorie"],
+                "grade": carte["note"]["grade"],
+                "score": carte["note"]["score"],
+                "confiance": carte["note"]["confiance"],
+                "techniques": [t["id"] for t in carte["techniques_detectees"]],
+            },
+            "ecarts_graves": ecarts_graves,
+            "ecarts_mineurs": ecarts_mineurs,
+        })
 
     console.print(table)
-    console.print(f"{len(entrees) - echecs}/{len(entrees)} conformes.")
-    if echecs:
+    total = len(entrees)
+    conformes = total - graves - mineurs
+    console.print(
+        f"\n[bold]{conformes}/{total} conformes[/bold] · "
+        f"[yellow]{mineurs} écart(s) mineur(s)[/yellow] · [red]{graves} échec(s) grave(s)[/red]"
+    )
+    if rapport:
+        modele = rapport[0] and httpx.get(f"{_api()}/v1/meta", timeout=30).json()
+        console.print(f"[dim]Instance : {modele['modele']} · prompt v{modele['prompt_version']}[/dim]")
+
+    if json_sortie:
+        json_sortie.write_text(json.dumps(rapport, ensure_ascii=False, indent=2), encoding="utf-8")
+        console.print(f"[dim]Rapport détaillé écrit dans {json_sortie}[/dim]")
+
+    if graves:
         raise typer.Exit(1)
+
+
+def _corps_demande(entree: dict, racine: Path) -> dict | None:
+    """Construit le corps POST /v1/analyses depuis une entrée de corpus."""
+    if entree.get("fichier"):
+        chemin = racine / entree["fichier"]
+        contenu = chemin.read_text(encoding="utf-8")
+        # L'en-tête YAML du spécimen documente le cas : il ne fait pas partie du contenu analysé.
+        if contenu.startswith("---"):
+            fin = contenu.find("\n---", 3)
+            if fin != -1:
+                contenu = contenu[fin + 4:].lstrip()
+        return {
+            "contenu_markdown": contenu,
+            "titre": entree.get("titre"),
+            "url": entree.get("url"),
+            "langue": entree.get("langue", "fr"),
+        }
+    if entree.get("url"):
+        return {"url": entree["url"], "titre": entree.get("titre")}
+    return None
+
+
+def _comparer(entree: dict, carte: dict) -> tuple[list[str], list[str]]:
+    """Compare une carte aux attentes. Retourne (écarts graves, écarts mineurs)."""
+    graves, mineurs = [], []
+    grades = ["A", "B", "C", "D", "E"]
+
+    # `categorie_attendue` (exacte) ou `categories_acceptables` (liste) — certains contenus
+    # relèvent légitimement de plusieurs catégories : un article pseudo-médical qui vend un
+    # produit est à la fois pseudo_science et publicite_sponsorise. Exiger une catégorie
+    # unique testerait alors un choix arbitraire, pas la qualité de l'analyse.
+    acceptables = entree.get("categories_acceptables")
+    attendue = entree.get("categorie_attendue")
+    if acceptables:
+        if carte["categorie"] not in acceptables:
+            graves.append(f"catégorie {carte['categorie']} ∉ {acceptables}")
+    elif attendue and carte["categorie"] != attendue:
+        graves.append(f"catégorie {carte['categorie']} ≠ {attendue}")
+
+    fourchette = entree.get("grade_attendu")
+    if fourchette and carte["note"]["grade"] not in fourchette:
+        obtenu = carte["note"]["grade"]
+        # Un cran d'écart = mineur ; au-delà = grave.
+        distance = min(abs(grades.index(obtenu) - grades.index(g)) for g in fourchette if g in grades)
+        (mineurs if distance <= 1 else graves).append(f"grade {obtenu} ∉ {fourchette}")
+
+    ids = {t["id"] for t in carte["techniques_detectees"]}
+    for manquante in [t for t in entree.get("techniques_attendues", []) if t not in ids]:
+        graves.append(f"technique manquante : {manquante}")
+    for faux_positif in [t for t in entree.get("techniques_interdites", []) if t in ids]:
+        graves.append(f"faux positif : {faux_positif}")
+
+    plancher = entree.get("confiance_min")
+    if plancher is not None and carte["note"]["confiance"] < plancher:
+        mineurs.append(f"confiance {carte['note']['confiance']:.2f} < {plancher}")
+
+    return graves, mineurs
+
+
+def _entetes_admin() -> dict:
+    jeton = os.environ.get("LYNCEUS_ADMIN_TOKEN", "")
+    if not jeton:
+        console.print(
+            "[red]LYNCEUS_ADMIN_TOKEN non défini.[/red] Les contestations peuvent contenir un "
+            "contact : leur consultation est réservée à l'opérateur de l'instance.\n"
+            "Définir le même jeton côté serveur (api/.env) et dans cet environnement."
+        )
+        raise typer.Exit(2)
+    return {"X-Lynceus-Admin": jeton}
+
+
+@app.command()
+def signalements(
+    statut: str = typer.Option(None, help="filtrer : nouveau, examine, rejete, sans_objet"),
+    limite: int = typer.Option(50, help="nombre maximum de signalements"),
+):
+    """Liste les contestations reçues par l'instance (opérateur)."""
+    reponse = httpx.get(
+        f"{_api()}/v1/admin/signalements",
+        params={k: v for k, v in {"statut": statut, "limite": limite}.items() if v},
+        headers=_entetes_admin(),
+        timeout=30,
+    )
+    if reponse.status_code != 200:
+        console.print(f"[red]Erreur {reponse.status_code} :[/red] {_erreur_http(reponse)}")
+        raise typer.Exit(1)
+
+    liste = reponse.json()["signalements"]
+    if not liste:
+        console.print("Aucune contestation" + (f" au statut « {statut} »." if statut else "."))
+        return
+
+    table = Table(show_header=True, header_style="bold")
+    for colonne in ("id", "analyse", "motif", "message", "statut", "reçue le"):
+        table.add_column(colonne, overflow="fold")
+    for s in liste:
+        couleur = {"nouveau": "yellow", "examine": "green", "rejete": "dim", "sans_objet": "dim"}
+        table.add_row(
+            str(s["id"]),
+            str(s["analyse_id"]),
+            s["motif"],
+            s["message"][:120] + ("…" if len(s["message"]) > 120 else ""),
+            f"[{couleur.get(s['statut'], 'white')}]{s['statut']}[/]",
+            s["cree_le"][:10],
+        )
+    console.print(table)
+    nouveaux = sum(1 for s in liste if s["statut"] == "nouveau")
+    console.print(f"{len(liste)} contestation(s), dont [yellow]{nouveaux} en attente[/yellow].")
+
+
+@app.command()
+def traiter(
+    signalement_id: int = typer.Argument(help="identifiant du signalement"),
+    statut: str = typer.Option(help="examine (fondé) | rejete (infondé) | sans_objet"),
+    decision: str = typer.Option(help="justification, conservée et auditable"),
+):
+    """Enregistre la décision de l'opérateur sur une contestation.
+
+    La justification est obligatoire : écarter une contestation sans motif reviendrait à
+    l'opacité que Lynceus dénonce (docs/ETHIQUE.md §2)."""
+    reponse = httpx.post(
+        f"{_api()}/v1/admin/signalements/{signalement_id}",
+        json={"statut": statut, "decision": decision},
+        headers=_entetes_admin(),
+        timeout=30,
+    )
+    if reponse.status_code != 200:
+        console.print(f"[red]Erreur {reponse.status_code} :[/red] {_erreur_http(reponse)}")
+        raise typer.Exit(1)
+    console.print(f"[green]Signalement {signalement_id} : {reponse.json()['statut']}.[/green]")
+
+
+@app.command()
+def verifier_page(
+    signalement_id: int = typer.Argument(help="signalement au motif « page_modifiee »"),
+    url: str = typer.Option(help="URL de la page à re-vérifier"),
+):
+    """Vérifie si une page a réellement changé, et relance l'analyse le cas échéant.
+
+    Seul motif de contestation mécaniquement vérifiable : on compare le contenu actuel à
+    celui analysé. Les autres motifs relèvent du jugement humain."""
+    entetes = _entetes_admin()
+    with console.status("Récupération de la page…"):
+        reponse = httpx.post(f"{_api()}/v1/analyses", json={"url": url}, timeout=600)
+    if reponse.status_code != 200:
+        console.print(f"[red]Impossible de récupérer la page :[/red] {_erreur_http(reponse)}")
+        console.print("[dim]Site protégé contre le téléchargement ? Analyser via l'extension.[/dim]")
+        raise typer.Exit(1)
+
+    donnees = reponse.json()
+    carte = donnees["carte"]
+    if donnees["en_cache"]:
+        console.print("[yellow]Le contenu est inchangé[/yellow] — l'analyse en cache correspond toujours.")
+        conclusion = "Contenu inchangé à la re-vérification : l'analyse reste valable."
+        statut = "rejete"
+    else:
+        console.print(f"[green]Page modifiée[/green] — nouvelle analyse : "
+                      f"{carte['categorie']} · grade {carte['note']['grade']} ({carte['note']['score']}/100)")
+        conclusion = (f"Page modifiée depuis l'analyse contestée. Nouvelle analyse : "
+                      f"{carte['categorie']}, grade {carte['note']['grade']}.")
+        statut = "sans_objet"
+
+    httpx.post(
+        f"{_api()}/v1/admin/signalements/{signalement_id}",
+        json={"statut": statut, "decision": conclusion},
+        headers=entetes,
+        timeout=30,
+    )
+    console.print(f"[dim]Signalement {signalement_id} classé « {statut} » : {conclusion}[/dim]")
 
 
 @app.command()
