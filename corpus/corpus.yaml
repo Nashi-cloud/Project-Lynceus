@@ -1,0 +1,133 @@
+# Corpus de calibration Lynceus
+#
+# Lancement :  lynceus calibrer corpus/corpus.yaml
+#
+# Chaque entrée porte SOIT `fichier` (spécimen figé du dépôt — reproductible, hors ligne),
+# SOIT `url` (page réelle — ancre la calibration dans le monde, mais dépend du réseau et de
+# la stabilité de la page). Le socle est local par choix : un corpus d'URL casse dès qu'une
+# page est modifiée, et échoue sur les sites protégés contre le téléchargement automatique.
+#
+# Champs d'attente (tous optionnels) :
+#   categorie_attendue     catégorie exacte attendue
+#   grade_attendu          liste des grades acceptables
+#   techniques_attendues   ids qui DOIVENT être détectés
+#   techniques_interdites  ids dont la détection serait un faux positif grave
+#   confiance_min          plancher de l'indice de confiance
+
+# ---------------------------------------------------------------------------
+# Cas sentinelles — les cinq garde-fous de docs/METHODOLOGIE.md §7
+# ---------------------------------------------------------------------------
+
+- fichier: specimens/04-fictif-satire.md
+  titre: Le conseil municipal vote à l'unanimité contre l'unanimité
+  categorie_attendue: satire
+  grade_attendu: [A, B, C]
+  techniques_interdites: [verite_cachee, hyper_intentionnalisme, eux_contre_nous]
+  notes: |
+    SENTINELLE 1 — La satire ne doit JAMAIS être traitée comme de la désinformation.
+    Un classement en pseudo_science ou theorie_du_complot est un échec grave.
+
+- fichier: specimens/03-fictif-opinion-assumee.md
+  titre: Pourquoi je pense que notre commune se trompe sur le stationnement payant
+  categorie_attendue: opinion
+  grade_attendu: [A, B, C]
+  techniques_interdites: [epouvantail, ad_hominem, proces_d_intention, faux_dilemme]
+  notes: |
+    SENTINELLE 2 — Une opinion tranchée mais argumentée, qui cite les chiffres adverses et
+    reconnaît la légitimité de la position opposée, ne doit pas être pénalisée pour sa position.
+
+- fichier: specimens/01-fictif-pseudo-medecine-marchande.md
+  titre: La racine oubliée que les laboratoires préfèrent vous cacher
+  categories_acceptables: [pseudo_science, publicite_sponsorise]
+  grade_attendu: [D, E]
+  techniques_attendues: [conflit_interet_commercial, solution_miracle]
+  notes: |
+    SENTINELLE 3 — Le conflit d'intérêt commercial (l'article vend le remède qu'il vante)
+    DOIT être détecté : c'est le schéma économique classique de la désinformation santé.
+    Catégorie double assumée : le texte est simultanément un discours pseudo-médical et une
+    publicité déguisée. Le test porte sur les techniques et le grade, pas sur l'arbitrage
+    entre deux étiquettes également défendables.
+
+- fichier: specimens/02-fictif-information-factuelle.md
+  titre: Le pont de la Vieille-Écluse fermé pour travaux du 3 au 28 mars
+  categorie_attendue: information
+  grade_attendu: [A, B]
+  techniques_interdites: [appel_a_la_peur, absence_de_sources, urgence_artificielle]
+  notes: |
+    SENTINELLE 4 — Information factuelle sourcée et vérifiable : doit être bien notée,
+    sans détection de complaisance. Test anti-faux-positif de base.
+
+- fichier: specimens/05-fictif-confessionnel-respectueux.md
+  titre: "Méditation de l'Avent : l'attente comme chemin"
+  categorie_attendue: contenu_confessionnel
+  grade_attendu: [A, B, C]
+  techniques_interdites: [appel_a_la_peur, urgence_artificielle, eux_contre_nous, solution_miracle]
+  notes: |
+    SENTINELLE 5 — La foi ne se note pas (charte §1). Contenu spirituel sans affirmation
+    factuelle vérifiable ni procédé manipulatoire : aucune technique ne doit être relevée.
+
+# ---------------------------------------------------------------------------
+# Cas nets — les procédés doivent être reconnus sans ambiguïté
+# ---------------------------------------------------------------------------
+
+- fichier: specimens/06-fictif-complotisme.md
+  titre: "Coupure électrique de novembre : trois questions qui dérangent"
+  categorie_attendue: theorie_du_complot
+  grade_attendu: [D, E]
+  techniques_attendues: [je_pose_des_questions, hyper_intentionnalisme]
+  notes: |
+    Rhétorique complotiste complète : insinuation par questions, intentionnalité prêtée à
+    tout, « eux » indifférencié, posture du persécuté (article « déjà supprimé deux fois »).
+
+- fichier: specimens/08-fictif-publicite-deguisee.md
+  titre: Cinq habitudes du soir pour mieux dormir
+  categorie_attendue: publicite_sponsorise
+  grade_attendu: [C, D]
+  techniques_attendues: [conflit_interet_commercial]
+  notes: |
+    Conseils globalement justes, mais l'article existe pour vendre un matelas. Le lien
+    partenaire est déclaré : la transparence doit être notée moins sévèrement qu'un
+    conflit dissimulé, sans pour autant être ignorée.
+
+# ---------------------------------------------------------------------------
+# Cas subtils — là où un analyseur médiocre se trompe
+# ---------------------------------------------------------------------------
+
+- fichier: specimens/07-fictif-faux-equilibre.md
+  titre: "Fluoration de l'eau : le débat reste ouvert"
+  grade_attendu: [C, D]
+  techniques_attendues: [faux_equilibre]
+  notes: |
+    PIÈGE — Ton posé, vocabulaire mesuré, apparence de neutralité journalistique : un
+    analyseur qui juge au ton donnera A ou B. Le procédé est pourtant la fabrique du doute
+    par fausse symétrie, doublée d'une attente impossible (preuve d'absence de risque).
+
+- fichier: specimens/09-fictif-vulgarisation-solide.md
+  titre: Pourquoi le ciel est bleu, et pourquoi cette explication est incomplète
+  categorie_attendue: analyse_expertise
+  grade_attendu: [A, B]
+  techniques_interdites: [jargon_pseudo_scientifique, autorite_anonyme]
+  notes: |
+    PIÈGE INVERSE — Vocabulaire scientifique dense (diffusion de Rayleigh, longueurs d'onde,
+    cônes rétiniens) mais rigueur réelle et incertitudes assumées. Détecter du
+    « jargon pseudo-scientifique » ici serait un faux positif grave.
+
+- fichier: specimens/10-fictif-temoignage-emotionnel.md
+  titre: Ce que trois ans d'errance médicale m'ont appris
+  categorie_attendue: temoignage
+  grade_attendu: [B, C, D]
+  techniques_interdites: [conflit_interet_commercial, solution_miracle, faux_expert]
+  notes: |
+    PIÈGE DE BIENVEILLANCE — Récit personnel sincère, sans rien à vendre, qui refuse
+    explicitement de généraliser et disculpe les médecins. Lynceus doit rester doux :
+    accuser ce témoignage de manipulation serait exactement le ton à ne pas avoir.
+
+# ---------------------------------------------------------------------------
+# Pages réelles — à enrichir au fil du temps
+# ---------------------------------------------------------------------------
+# Exemple (décommenter et compléter) :
+#
+# - url: https://fr.wikipedia.org/wiki/Esprit_critique
+#   categorie_attendue: information
+#   grade_attendu: [A, B]
+#   notes: Article encyclopédique sourcé — vérifié le 2026-08-23, grade A obtenu.

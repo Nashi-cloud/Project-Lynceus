@@ -55,11 +55,23 @@ SCORE_ATTENDU, GRADE_ATTENDU = 23, "E"
 
 
 def parametres_test(tmp_path, **surcharges) -> Parametres:
+    """Configuration de test entièrement déterministe.
+
+    Chaque champ sensible est fixé explicitement : sans cela, Parametres() lirait le .env
+    de la machine et les tests dépendraient de la configuration locale (un jeton
+    d'administration réel y suffisait à faire échouer le test de modération fermée)."""
     defauts = dict(
         database_url=f"sqlite:///{tmp_path}/test.sqlite3",
         llm_api_key="cle-test",
+        llm_base_url="https://exemple-fournisseur.test/v1",
         llm_model="test/modele",
+        llm_temperature=0.2,
+        llm_response_format="none",
+        admin_token="",  # modération fermée sauf mention contraire du test
+        prompt_version="latest",
         rate_limit_analyses=100,
+        contenu_min_cars=200,
+        contenu_max_cars=60000,
     )
     defauts.update(surcharges)
     return Parametres(**defauts)

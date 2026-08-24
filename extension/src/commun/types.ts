@@ -44,12 +44,47 @@ export interface ReponseAnalyse {
   detections_rejetees?: { id: string; raison: string }[];
 }
 
+/** Capacités annoncées par l'instance (/v1/meta) — permet de ne pas coder en dur ce que
+ * le serveur sait faire, et de rester compatible avec des instances plus anciennes. */
+export interface MetaInstance {
+  version: string;
+  prompt_version: string;
+  modele: string;
+  fournisseur?: string;
+  capacites?: {
+    lookup_k_anonyme?: boolean;
+    longueur_prefixe?: number;
+    signalements?: boolean;
+    motifs_signalement?: string[];
+  };
+}
+
 export interface ProfilDomaine {
   domaine: string;
   nb_analyses: number;
   score_moyen: number;
   distribution_grades: Record<string, number>;
   maj_le: string;
+}
+
+export interface CorrespondancePrefixe {
+  suffixe: string;
+  analyse_id: number;
+  grade: Grade;
+  categorie: string;
+  score: number;
+}
+
+export interface ReponseLookupPrefixe {
+  prefixe: string;
+  correspondances: CorrespondancePrefixe[];
+}
+
+export interface DemandeSignalement {
+  analyse_id: number;
+  motif: string;
+  message: string;
+  contact?: string;
 }
 
 export interface ReponseLookup {
@@ -70,13 +105,20 @@ export type EtatOnglet =
   | { phase: "repos" }
   | { phase: "extraction"; depuis: number }
   | { phase: "analyse"; depuis: number }
-  | { phase: "ok"; carte: CarteAnalyse; enCache: boolean; rejetees: number }
+  /** Page reconnue par le lookup k-anonyme : on connaît la note, pas encore le détail.
+   * La carte complète n'est chargée que si le panneau est ouvert — inutile de la demander
+   * au serveur pour un simple badge (docs/ETHIQUE.md §4). */
+  | { phase: "resume"; resume: CorrespondancePrefixe }
+  | { phase: "ok"; carte: CarteAnalyse; enCache: boolean; rejetees: number; signalements?: number }
   | { phase: "erreur"; erreur: string };
 
 export type MessageVersFond =
   | { type: "lynceus:etat"; tabId: number }
   | { type: "lynceus:analyser"; tabId: number }
-  | { type: "lynceus:annuler"; tabId: number };
+  | { type: "lynceus:annuler"; tabId: number }
+  /** Le panneau est ouvert sur une page reconnue : charger la carte complète. */
+  | { type: "lynceus:detailler"; tabId: number; analyseId: number }
+  | { type: "lynceus:signaler"; analyseId: number; motif: string; message: string };
 
 export interface MessageVersPanneau {
   type: "lynceus:maj";

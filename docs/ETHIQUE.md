@@ -29,7 +29,7 @@ On ne peut pas dénoncer l'opacité en étant opaque.
 
 - **Le serveur ne stocke aucun historique de navigation.** Les lookups ne sont pas journalisés avec des identifiants (pas de couple IP + URL conservé).
 - Pas de compte requis, pas de traceur, pas de télémétrie cachée.
-- Le lookup passif fonctionne par hash d'URL normalisée ; un mode k-anonyme (préfixe de hash, technique HaveIBeenPwned) est prévu en phase 3.
+- Le lookup passif fonctionne **en k-anonymat** (technique HaveIBeenPwned) : seuls les 5 premiers caractères du hash d'URL sont envoyés, et la correspondance finale est faite dans le navigateur. Le serveur ne peut pas déterminer quelle page est consultée. Le mode historique (hash complet) ne subsiste que pour les instances qui n'annoncent pas cette capacité.
 - L'auto-hébergement complet est un droit de premier ordre : le « kit » serveur est un livrable du projet, pas une option de second rang.
 
 ## 5. Équité de l'analyse
@@ -42,7 +42,9 @@ On ne peut pas dénoncer l'opacité en étant opaque.
 ## 6. Faillibilité assumée
 
 - L'analyse est produite par un modèle de langage : **elle peut se tromper**. Chaque carte affiche un indice de confiance et cet avertissement.
-- Toute analyse est **contestable** : un mécanisme de signalement/droit de réponse est prévu (phase 3), y compris pour les éditeurs des sites analysés.
+- Toute analyse est **contestable** depuis le panneau ou l'API (`POST /v1/signalements`), y compris par les éditeurs des sites analysés (motif `droit_de_reponse`). Un signalement est anonyme par défaut : aucune donnée personnelle n'est exigée. Le nombre de contestations est public sur chaque analyse ; leur contenu est réservé à l'opérateur de l'instance (il peut contenir un contact).
+
+  **Ce que Lynceus promet, et ce qu'il ne promet pas.** Une contestation est enregistrée, rendue visible en nombre, et mise à disposition de l'opérateur de l'instance, qui décide des suites — sa décision et sa justification sont conservées. Le projet étant auto-hébergeable et sans autorité centrale, aucune instance ne peut garantir un examen humain systématique : le message rendu à l'utilisateur le dit explicitement plutôt que de promettre une modération qui n'existerait pas. Seul le motif « page modifiée » est traité automatiquement (re-vérification du contenu et nouvelle analyse le cas échéant).
 - Les analyses sont datées et re-générables : un site qui s'améliore verra sa carte évoluer.
 
 ## 7. Pédagogie plutôt que verdict

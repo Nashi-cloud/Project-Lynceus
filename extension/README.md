@@ -59,6 +59,9 @@ test/parite_normalisation.mjs  # garantit hash TS == hash Python (12 URL de réf
 ## Vérifications
 
 ```bash
-npm run verifier   # tsc --noEmit
-npm test           # parité de normalisation TypeScript ↔ Python
+npm run verifier     # tsc --noEmit
+npm test             # 32 tests unitaires + parité de normalisation TypeScript ↔ Python
+npm run test:parite  # uniquement la parité de hachage avec l'API Python
 ```
+
+Les tests utilisent le lanceur natif de Node (`node --test`), sans dépendance supplémentaire. Ils couvrent la normalisation d'URL, les réglages (dont les défauts qui engagent la vie privée), le client API (délai, annulation, messages d'erreur) et le suivi des analyses en vol. La logique dépendant des API Chrome reste hors couverture : elle se vérifie en usage réel.

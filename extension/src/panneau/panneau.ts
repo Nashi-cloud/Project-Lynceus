@@ -2,7 +2,13 @@
  * Tout le rendu passe par textContent : aucun contenu de page ni de carte
  * n'est jamais interprété comme du HTML. */
 
-import type { CarteAnalyse, EtatOnglet, MessageVersPanneau, Technique } from "../commun/types";
+import type {
+  CarteAnalyse,
+  CorrespondancePrefixe,
+  EtatOnglet,
+  MessageVersPanneau,
+  Technique,
+} from "../commun/types";
 
 const CATEGORIES: Record<string, string> = {
   information: "Information",
@@ -152,7 +158,37 @@ function rendreErreur(message: string): void {
   app.append(bloc);
 }
 
-function rendreCarte(carte: CarteAnalyse, enCache: boolean, rejetees: number): void {
+/** Page reconnue par le lookup k-anonyme : on affiche la note tout de suite et on demande
+ * le détail, qui n'avait pas été chargé tant qu'un badge suffisait. */
+function rendreResume(resume: CorrespondancePrefixe): void {
+  app.replaceChildren();
+
+  const enTete = el("div", "resume-note");
+  enTete.append(el("div", `pastille grade-${resume.grade}`, resume.grade));
+  const infos = el("div", "infos");
+  infos.append(el("div", "categorie", CATEGORIES[resume.categorie] ?? resume.categorie));
+  infos.append(el("div", "sous-info", `Indice ${resume.score}/100`));
+  infos.append(el("div", "badge-cache", "Déjà dans l'annuaire"));
+  enTete.append(infos);
+  app.append(enTete);
+
+  const attente = el("div", "bloc-centre");
+  attente.append(el("div", "spinner"), el("div", undefined, "Chargement du détail…"));
+  app.append(attente);
+
+  if (ongletCourant !== null) {
+    chrome.runtime
+      .sendMessage({ type: "lynceus:detailler", tabId: ongletCourant, analyseId: resume.analyse_id })
+      .catch(() => {});
+  }
+}
+
+function rendreCarte(
+  carte: CarteAnalyse,
+  enCache: boolean,
+  rejetees: number,
+  signalements = 0,
+): void {
   app.replaceChildren();
 
   // En-tête : la lecture en deux secondes
@@ -224,6 +260,100 @@ function rendreCarte(carte: CarteAnalyse, enCache: boolean, rejetees: number): v
   app.append(el("div", "meta",
     `${carte.meta.modele} · prompt v${carte.meta.prompt_version} · ${carte.meta.analyse_le.slice(0, 10)} · ` +
     "méthodologie et prompts publics (AGPL-3.0)"));
+
+  app.append(rendreContestation(carte, signalements));
+}
+
+const MOTIFS: [string, string][] = [
+  ["analyse_erronee", "L'analyse est fausse"],
+  ["extrait_hors_contexte", "Une citation est sortie de son contexte"],
+  ["categorie_erronee", "La catégorie est erronée (ex. satire mal classée)"],
+  ["note_injustifiee", "La note ne correspond pas au contenu"],
+  ["page_modifiee", "La page a changé depuis l'analyse"],
+  ["droit_de_reponse", "Je suis l'éditeur de ce site et je conteste"],
+  ["autre", "Autre"],
+];
+
+/** Contester une analyse — charte §6 : toute analyse est faillible et contestable, y compris
+ * par l'éditeur du site analysé. Le lien reste discret : c'est un recours, pas une invitation
+ * à rejeter ce qui déplaît. */
+function rendreContestation(carte: CarteAnalyse, signalements: number): HTMLElement {
+  const bloc = el("div", "contestation");
+  if (signalements > 0) {
+    bloc.append(el("div", "signalements-info",
+      `${signalements} contestation(s) déjà enregistrée(s) sur cette analyse.`));
+  }
+
+  const lien = el("button", "lien-invitation", "Contester cette analyse");
+  bloc.append(lien);
+
+  const analyseId = extraireIdAnalyse(carte);
+  lien.addEventListener("click", () => {
+    if (analyseId === null) {
+      bloc.replaceChildren(el("div", "signalements-info",
+        "Cette analyse ne peut pas être contestée depuis ce panneau (identifiant absent)."));
+      return;
+    }
+    bloc.replaceChildren(construireFormulaire(analyseId, bloc));
+  });
+  return bloc;
+}
+
+function construireFormulaire(analyseId: number, bloc: HTMLElement): HTMLElement {
+  const formulaire = el("div", "formulaire");
+  formulaire.append(el("div", "formulaire-titre", "Que faut-il corriger ?"));
+
+  const selection = document.createElement("select");
+  selection.className = "champ";
+  for (const [valeur, etiquette] of MOTIFS) {
+    const option = document.createElement("option");
+    option.value = valeur;
+    option.textContent = etiquette;
+    selection.append(option);
+  }
+  formulaire.append(selection);
+
+  const zone = document.createElement("textarea");
+  zone.className = "champ";
+  zone.rows = 4;
+  zone.placeholder = "Expliquez en quelques mots (10 caractères minimum)…";
+  formulaire.append(zone);
+
+  const envoyer = el("button", "bouton", "Envoyer");
+  const annuler = el("button", "bouton bouton-secondaire", "Annuler");
+  const etat = el("div", "signalements-info");
+
+  envoyer.addEventListener("click", () => {
+    const message = zone.value.trim();
+    if (message.length < 10) {
+      etat.textContent = "Merci de préciser un peu : 10 caractères minimum.";
+      return;
+    }
+    envoyer.setAttribute("disabled", "true");
+    etat.textContent = "Envoi…";
+    chrome.runtime
+      .sendMessage({ type: "lynceus:signaler", analyseId, motif: selection.value, message })
+      .then((reponse: { ok: boolean; message: string }) => {
+        bloc.replaceChildren(el("div", "signalements-info",
+          reponse?.ok ? reponse.message : `Échec de l'envoi : ${reponse?.message ?? "erreur inconnue"}`));
+      })
+      .catch(() => {
+        envoyer.removeAttribute("disabled");
+        etat.textContent = "Échec de l'envoi. Réessayez plus tard.";
+      });
+  });
+  annuler.addEventListener("click", () => bloc.replaceChildren(rendreContestation({} as CarteAnalyse, 0)));
+
+  formulaire.append(envoyer, annuler, etat);
+  return formulaire;
+}
+
+/** L'identifiant d'analyse n'est pas dans la carte : il vient du lookup. On le mémorise
+ * lors du rendu pour permettre la contestation. */
+let idAnalyseCourante: number | null = null;
+
+function extraireIdAnalyse(_carte: CarteAnalyse): number | null {
+  return idAnalyseCourante;
 }
 
 function rendreTechnique(technique: Technique): HTMLElement {
@@ -243,10 +373,11 @@ function rendreTechnique(technique: Technique): HTMLElement {
 function rendre(etat: EtatOnglet): void {
   arreterMinuteur(); // ne persiste que le temps d'un rendu "extraction"/"analyse"
   switch (etat.phase) {
-    case "repos": rendreRepos(); break;
+    case "repos": idAnalyseCourante = null; rendreRepos(); break;
     case "extraction":
     case "analyse": rendreAttente(etat.phase, etat.depuis); break;
-    case "ok": rendreCarte(etat.carte, etat.enCache, etat.rejetees); break;
+    case "resume": idAnalyseCourante = etat.resume.analyse_id; rendreResume(etat.resume); break;
+    case "ok": rendreCarte(etat.carte, etat.enCache, etat.rejetees, etat.signalements ?? 0); break;
     case "erreur": rendreErreur(etat.erreur); break;
   }
 }

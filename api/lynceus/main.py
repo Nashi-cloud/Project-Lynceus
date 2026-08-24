@@ -6,6 +6,7 @@ Lancement : uvicorn lynceus.main:creer_application --factory
 from __future__ import annotations
 
 import sys
+import secrets
 import time
 from datetime import datetime, timezone
 from urllib.parse import urlsplit
@@ -19,6 +20,7 @@ from sqlalchemy.orm import sessionmaker
 
 from . import VERSION_SCHEMA, __version__, annuaire, extraction
 from .config import Parametres, parametres
+from .migrations import appliquer as appliquer_migrations
 from .modeles import Analyse, Base
 from .moteur import llm, notation, prompt, validation
 from .normalisation import extraire_domaine, hacher_contenu, hacher_url, normaliser_url
@@ -27,6 +29,29 @@ AVERTISSEMENT_IA = (
     "Cette analyse est produite par une intelligence artificielle : elle peut comporter des erreurs. "
     "Elle décrit des procédés rhétoriques, pas la valeur des personnes qui partagent ce contenu."
 )
+
+
+MOTIFS_SIGNALEMENT = {
+    "analyse_erronee",       # le contenu de l'analyse est faux
+    "extrait_hors_contexte", # la citation existe mais son sens est déformé
+    "categorie_erronee",     # ex. satire classée comme désinformation
+    "note_injustifiee",      # le grade ne correspond pas au contenu
+    "page_modifiee",         # la page a changé depuis l'analyse
+    "droit_de_reponse",      # l'éditeur du site conteste
+    "autre",
+}
+
+
+class DemandeSignalement(BaseModel):
+    analyse_id: int
+    motif: str
+    message: str = Field(min_length=10, max_length=4000)
+    contact: str | None = Field(default=None, max_length=320)
+
+
+class DecisionSignalement(BaseModel):
+    statut: str
+    decision: str = Field(min_length=5, max_length=2000, description="Justification, conservée et auditable")
 
 
 class DemandeAnalyse(BaseModel):
@@ -51,6 +76,7 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
         arguments_moteur["connect_args"] = {"check_same_thread": False}
     moteur_bdd = create_engine(p.database_url, **arguments_moteur)
     Base.metadata.create_all(moteur_bdd)
+    appliquer_migrations(moteur_bdd)  # colonnes apparues depuis : une instance existante ne doit pas casser
     fabrique = sessionmaker(bind=moteur_bdd, expire_on_commit=False)
 
     app = FastAPI(title="Lynceus API", version=__version__)
@@ -180,6 +206,103 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
                 "domaine": annuaire.profil_domaine(session, domaine) if domaine else None,
             }
 
+    @app.get("/v1/lookup-prefixe")
+    def lookup_prefixe(prefixe: str = Query(min_length=annuaire.LONGUEUR_PREFIXE,
+                                            max_length=annuaire.LONGUEUR_PREFIXE,
+                                            pattern="^[0-9a-fA-F]+$")):
+        """Consultation k-anonyme : le client envoie les premiers caractères du hash d'URL
+        et fait la correspondance finale lui-même. Le serveur ne peut donc pas savoir quelle
+        page est consultée — engagement de la charte §4, modèle HaveIBeenPwned."""
+        with fabrique() as session:
+            correspondances = annuaire.chercher_par_prefixe(session, prefixe)
+        return {"prefixe": prefixe.lower(), "correspondances": correspondances}
+
+    @app.post("/v1/signalements")
+    def signaler(demande: DemandeSignalement, requete: Request):
+        """Contestation d'une analyse — ouverte à tous, y compris aux éditeurs des sites
+        analysés (charte §6 : toute analyse est contestable)."""
+        if demande.motif not in MOTIFS_SIGNALEMENT:
+            raise HTTPException(400, f"Motif inconnu. Motifs acceptés : {sorted(MOTIFS_SIGNALEMENT)}")
+        verifier_limite(requete)  # même garde-fou que l'analyse : évite le noyage
+        with fabrique() as session:
+            if session.get(Analyse, demande.analyse_id) is None:
+                raise HTTPException(404, "Analyse inconnue.")
+            signalement = annuaire.enregistrer_signalement(
+                session,
+                analyse_id=demande.analyse_id,
+                motif=demande.motif,
+                message=demande.message,
+                contact=demande.contact,
+            )
+            session.commit()
+            return {
+                "id": signalement.id,
+                "statut": signalement.statut,
+                # Honnêteté : cette instance n'a pas d'équipe de modération. On décrit ce qui
+                # se passe réellement, sans promettre un examen dont rien ne garantit la tenue.
+                "message": "Contestation enregistrée et visible publiquement sur cette analyse. "
+                           "Elle est mise à disposition de l'opérateur de cette instance, qui "
+                           "décide des suites. Si vous signalez que la page a changé, une "
+                           "nouvelle analyse la remplacera automatiquement à la prochaine visite.",
+            }
+
+    def verifier_operateur(requete: Request) -> None:
+        """Les routes de modération exigent le jeton d'administration de l'instance.
+        Sans jeton configuré, elles sont fermées : une instance publique ne doit pas exposer
+        les contestations (elles peuvent contenir un contact) par simple oubli de configuration."""
+        if not p.admin_token:
+            raise HTTPException(
+                403,
+                "Modération désactivée : définir LYNCEUS_ADMIN_TOKEN pour activer ces routes.",
+            )
+        fourni = requete.headers.get("X-Lynceus-Admin", "")
+        if not secrets.compare_digest(fourni, p.admin_token):
+            raise HTTPException(403, "Jeton d'administration invalide.")
+
+    @app.get("/v1/admin/signalements")
+    def lister_signalements(requete: Request, statut: str | None = None, limite: int = Query(default=50, le=200)):
+        """Contestations à examiner — réservé à l'opérateur de l'instance."""
+        verifier_operateur(requete)
+        with fabrique() as session:
+            signalements = annuaire.lister_signalements(session, statut=statut, limite=limite)
+            return {
+                "signalements": [
+                    {
+                        "id": s.id,
+                        "analyse_id": s.analyse_id,
+                        "motif": s.motif,
+                        "message": s.message,
+                        "contact": s.contact,
+                        "statut": s.statut,
+                        "decision": s.decision,
+                        "cree_le": s.cree_le.isoformat(),
+                        "traite_le": s.traite_le.isoformat() if s.traite_le else None,
+                    }
+                    for s in signalements
+                ]
+            }
+
+    @app.post("/v1/admin/signalements/{signalement_id}")
+    def traiter_signalement(signalement_id: int, decision: DecisionSignalement, requete: Request):
+        """Enregistre la décision de l'opérateur, avec sa justification (obligatoire)."""
+        verifier_operateur(requete)
+        with fabrique() as session:
+            try:
+                signalement = annuaire.traiter_signalement(
+                    session, signalement_id, statut=decision.statut, decision=decision.decision
+                )
+            except ValueError as exc:
+                raise HTTPException(400, str(exc)) from exc
+            if signalement is None:
+                raise HTTPException(404, "Signalement inconnu.")
+            session.commit()
+            return {"id": signalement.id, "statut": signalement.statut}
+
+    @app.get("/v1/motifs-signalement")
+    def motifs_signalement():
+        """Motifs acceptés — permet aux clients de construire leur formulaire sans les coder en dur."""
+        return {"motifs": sorted(MOTIFS_SIGNALEMENT)}
+
     @app.post("/v1/analyses")
     def analyser(demande: DemandeAnalyse, requete: Request):
         if not demande.url and not demande.contenu_markdown:
@@ -279,7 +402,11 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             analyse = session.get(Analyse, analyse_id)
             if analyse is None:
                 raise HTTPException(404, "Analyse inconnue.")
-            return {"carte": analyse.carte}
+            # Le nombre de contestations est public : une analyse contestée doit se voir.
+            return {
+                "carte": analyse.carte,
+                "signalements": annuaire.compter_signalements(session, analyse_id),
+            }
 
     @app.get("/v1/domaines/{domaine}")
     def obtenir_domaine(domaine: str):
@@ -301,6 +428,12 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             "fournisseur": urlsplit(p.llm_base_url).hostname or "inconnu",
             "taxonomie": {"nb_techniques": len(prompt.charger_taxonomie())},
             "limites": {"contenu_max_cars": p.contenu_max_cars, "analyses_par_minute": p.rate_limit_analyses},
+            "capacites": {
+                "lookup_k_anonyme": True,
+                "longueur_prefixe": annuaire.LONGUEUR_PREFIXE,
+                "signalements": True,
+                "motifs_signalement": sorted(MOTIFS_SIGNALEMENT),
+            },
         }
 
     return app
