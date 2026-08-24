@@ -2,6 +2,12 @@
 
 Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension — utile pour vérifier qu'un rebuild a bien été rechargé.
 
+## 0.6.0 — 2026-08-24
+
+- **feat** : consultation d'annuaire en **k-anonymat** (technique HaveIBeenPwned). Seuls les 5 premiers caractères de l'empreinte d'URL sont envoyés — soit un seau partagé par plus d'un million d'adresses possibles — et la correspondance finale se fait dans le navigateur. L'instance ne peut plus déterminer quelle page est consultée. Activé automatiquement quand l'instance l'annonce, avec repli sur le mode historique sinon.
+- **feat** : la carte complète n'est chargée que si le panneau est réellement ouvert ; un badge se contente du résumé reçu avec le préfixe. Moins d'informations transmises, et moins de requêtes.
+- **feat** : contestation d'une analyse depuis le panneau (« Contester cette analyse ») avec sept motifs, dont un droit de réponse pour les éditeurs des sites analysés. Le nombre de contestations déjà enregistrées est affiché.
+
 ## 0.5.1 — 2026-08-24
 
 - **fix** : chaque requête réussie laissait un minuteur armé jusqu'à son échéance (jusqu'à 5 minutes), maintenant le service worker éveillé sans raison. Le minuteur est désormais libéré dans tous les cas, succès compris. Défaut révélé par les nouveaux tests, dont le processus refusait de se terminer.

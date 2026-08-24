@@ -56,6 +56,23 @@ class Page(Base):
     derniere_vue: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_maintenant)
 
 
+class Signalement(Base):
+    """Contestation d'une analyse — par un lecteur ou par l'éditeur du site (charte §6).
+
+    Aucune donnée personnelle n'est requise : un signalement est anonyme par défaut.
+    Le champ `contact` reste facultatif, pour un éditeur qui souhaite une réponse."""
+
+    __tablename__ = "signalements"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    analyse_id: Mapped[int] = mapped_column(ForeignKey("analyses.id"), index=True)
+    motif: Mapped[str] = mapped_column(String(40))
+    message: Mapped[str] = mapped_column(Text)
+    contact: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    statut: Mapped[str] = mapped_column(String(20), default="nouveau", index=True)
+    cree_le: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_maintenant)
+
+
 class Domaine(Base):
     """Profil agrégé d'un domaine, recalculé à chaque nouvelle analyse."""
 

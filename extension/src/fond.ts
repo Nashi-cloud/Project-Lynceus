@@ -8,11 +8,17 @@
  *    pour tout, y compris pour ré-analyser après une navigation) ;
  *  - le panneau ne s'ouvre jamais tout seul. */
 
-import { analyser, lookupParHash } from "./commun/api";
+import { analyser, detailAnalyse, lookupParHash, lookupParPrefixe, metaInstance, signaler } from "./commun/api";
 import { hacherUrl } from "./commun/hachage";
 import { SuiviAnalyses } from "./commun/generations";
 import { chargerReglages } from "./commun/reglages";
-import type { EtatOnglet, Extraction, Grade, MessageVersFond } from "./commun/types";
+import type {
+  CorrespondancePrefixe,
+  EtatOnglet,
+  Extraction,
+  Grade,
+  MessageVersFond,
+} from "./commun/types";
 
 const MENU_ANALYSER = "lynceus-analyser";
 
@@ -79,6 +85,29 @@ chrome.runtime.onMessage.addListener((message: MessageVersFond, _expediteur, rep
     void lancerAnalyse(message.tabId);
     repondre({ ok: true });
     return false;
+  }
+  if (message.type === "lynceus:detailler") {
+    // Le panneau est ouvert sur une page reconnue : on charge la carte complète, qui n'avait
+    // pas été demandée tant qu'un badge suffisait.
+    detailAnalyse(message.analyseId)
+      .then((detail) =>
+        majEtat(message.tabId, {
+          phase: "ok",
+          carte: detail.carte,
+          enCache: true,
+          rejetees: 0,
+          signalements: detail.signalements,
+        }),
+      )
+      .catch((erreur) => majEtat(message.tabId, { phase: "erreur", erreur: messageLisible(erreur) }));
+    repondre({ ok: true });
+    return false;
+  }
+  if (message.type === "lynceus:signaler") {
+    signaler({ analyse_id: message.analyseId, motif: message.motif, message: message.message })
+      .then((reponse) => repondre({ ok: true, message: reponse.message }))
+      .catch((erreur) => repondre({ ok: false, message: messageLisible(erreur) }));
+    return true; // réponse asynchrone
   }
   if (message.type === "lynceus:annuler") {
     suivi.annuler(message.tabId); // invalide tout résultat déjà en vol
@@ -225,6 +254,56 @@ function effacerBadge(tabId: number): void {
   chrome.action.setBadgeText({ tabId, text: "" }).catch(() => {});
 }
 
+/** Capacités de l'instance, découvertes une fois puis mémorisées : inutile d'interroger
+ * /v1/meta à chaque page, et une instance plus ancienne (sans k-anonymat) reste utilisable. */
+let capacitesInstance: { kAnonyme: boolean; longueurPrefixe: number } | undefined;
+
+async function capacites(): Promise<{ kAnonyme: boolean; longueurPrefixe: number }> {
+  if (capacitesInstance) return capacitesInstance;
+  try {
+    const meta = await metaInstance();
+    capacitesInstance = {
+      kAnonyme: meta.capacites?.lookup_k_anonyme === true,
+      longueurPrefixe: meta.capacites?.longueur_prefixe ?? 5,
+    };
+  } catch {
+    capacitesInstance = { kAnonyme: false, longueurPrefixe: 5 }; // instance muette : repli prudent
+  }
+  return capacitesInstance;
+}
+
+// Les réglages peuvent pointer une autre instance : on réévalue ses capacités.
+chrome.storage.onChanged.addListener((changements) => {
+  if (changements["instance"]) capacitesInstance = undefined;
+});
+
+/** Ce que la consultation d'annuaire apprend sur une page : rien, un résumé (mode k-anonyme,
+ * la carte complète restant à charger), ou la carte entière (mode historique). */
+type ResultatAnnuaire =
+  | { connue: false }
+  | { connue: true; resume: CorrespondancePrefixe }
+  | { connue: true; carte: EtatOnglet & { phase: "ok" } };
+
+/** Consulte l'annuaire pour une URL, en préférant le mode k-anonyme quand l'instance le
+ * propose : le serveur ne reçoit alors qu'un préfixe de hash partagé par de nombreuses
+ * pages, et la correspondance finale se fait ICI (docs/ETHIQUE.md §4). */
+async function consulterAnnuaire(url: string): Promise<ResultatAnnuaire> {
+  const empreinte = await hacherUrl(url);
+  const { kAnonyme, longueurPrefixe } = await capacites();
+
+  if (!kAnonyme) {
+    // Instance sans k-anonymat : mode historique, hash complet envoyé.
+    const reponse = await lookupParHash(empreinte);
+    if (reponse.statut !== "connue" || !reponse.carte) return { connue: false };
+    return { connue: true, carte: { phase: "ok", carte: reponse.carte, enCache: true, rejetees: 0 } };
+  }
+
+  const reponse = await lookupParPrefixe(empreinte.slice(0, longueurPrefixe));
+  const attendu = empreinte.slice(longueurPrefixe);
+  const trouvee = reponse.correspondances.find((c) => c.suffixe === attendu);
+  return trouvee ? { connue: true, resume: trouvee } : { connue: false };
+}
+
 async function majBadgePassif(tabId: number, url: string | undefined): Promise<void> {
   const reglages = await chargerReglages();
   if (!reglages.badgeActif || !url || !/^https?:/i.test(url)) {
@@ -237,19 +316,20 @@ async function majBadgePassif(tabId: number, url: string | undefined): Promise<v
   if (etatActuel && etatActuel.phase !== "repos" && etatActuel.phase !== "erreur") return;
 
   try {
-    // Seul un hash SHA-256 de l'URL normalisée quitte le navigateur — jamais l'URL, jamais le contenu.
-    const reponse = await lookupParHash(await hacherUrl(url));
-    if (reponse.statut === "connue" && reponse.carte) {
-      poserBadge(tabId, reponse.carte.note.grade);
-      appliquerBordureSelonGrade(tabId, reponse.carte.note.grade);
-      // La page est déjà dans l'annuaire : on l'affiche directement dans le panneau, sans
-      // déclencher d'analyse (aucun contenu envoyé — seule une consultation déjà consentie
-      // via l'activation du badge passif, cf. docs/ETHIQUE.md §3-4).
-      majEtat(tabId, { phase: "ok", carte: reponse.carte, enCache: true, rejetees: 0 });
-    } else {
+    // Seul un hash SHA-256 de l'URL normalisée quitte le navigateur — jamais l'URL, jamais le
+    // contenu — et même ce hash n'est envoyé qu'en partie si l'instance sait faire du k-anonyme.
+    const resultat = await consulterAnnuaire(url);
+    if (!resultat.connue) {
       effacerBadge(tabId);
       retirerBordure(tabId);
+      return;
     }
+    // La page est déjà dans l'annuaire : on l'affiche sans déclencher d'analyse (aucun
+    // contenu envoyé — consultation consentie via l'activation du badge, charte §3-4).
+    const grade = "resume" in resultat ? resultat.resume.grade : resultat.carte.carte.note.grade;
+    poserBadge(tabId, grade);
+    appliquerBordureSelonGrade(tabId, grade);
+    majEtat(tabId, "resume" in resultat ? { phase: "resume", resume: resultat.resume } : resultat.carte);
   } catch {
     effacerBadge(tabId); // le badge est un bonus : jamais d'erreur bruyante
   }
