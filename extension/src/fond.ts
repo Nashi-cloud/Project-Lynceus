@@ -1,8 +1,11 @@
-/** Service worker Lynceus — orchestre menu contextuel, extraction, analyse et badge.
+/** Service worker Lynceus — orchestre menu contextuel, extraction, analyse, badge et contour.
  * Règles de la charte appliquées ici :
- *  - l'analyse (envoi de contenu) n'est déclenchée QUE par un geste explicite ;
- *  - le badge passif n'envoie qu'un hash d'URL, et seulement s'il est activé
- *    (permission « tabs » optionnelle, demandée dans les réglages) ;
+ *  - l'analyse (envoi de contenu) n'est déclenchée QUE par un geste explicite, quelle que
+ *    soit la permission accordée ;
+ *  - le badge et le contour passifs n'envoient/n'affichent qu'à partir d'un hash d'URL, et
+ *    seulement si activés (permission « tabs » + accès aux pages, optionnels, demandés
+ *    ensemble dans les réglages — sans eux, extension au minimum : geste explicite requis
+ *    pour tout, y compris pour ré-analyser après une navigation) ;
  *  - le panneau ne s'ouvre jamais tout seul. */
 
 import { analyser, lookupParHash } from "./commun/api";
@@ -98,9 +101,7 @@ async function lancerAnalyse(tabId: number): Promise<void> {
       rejetees: reponse.detections_rejetees?.length ?? 0,
     });
     poserBadge(tabId, reponse.carte.note.grade);
-    const grade = reponse.carte.note.grade;
-    if (grade === "D" || grade === "E") poserBordure(tabId, COULEURS_GRADE[grade]);
-    else retirerBordure(tabId);
+    appliquerBordureSelonGrade(tabId, reponse.carte.note.grade);
   } catch (erreur) {
     majEtat(tabId, { phase: "erreur", erreur: messageLisible(erreur) });
   }
@@ -110,20 +111,27 @@ function messageLisible(erreur: unknown): string {
   const texte = erreur instanceof Error ? erreur.message : String(erreur);
   if (/cannot access|cannot be scripted|showErrorPage|chrome:\/\//i.test(texte)) {
     return (
-      "Lynceus n'a pas accès à cette page. Les pages internes du navigateur et le Web Store " +
-      "ne sont pas analysables ; pour une page normale, relance via le clic droit → " +
-      "« Analyser cette page avec Lynceus » (c'est ce geste qui autorise l'accès)."
+      "Lynceus n'a pas accès à cette page. Si c'est une page interne du navigateur ou le Web " +
+      "Store, elle n'est pas analysable. Sinon : relancez via le clic droit → « Analyser cette " +
+      "page avec Lynceus » (l'accès expire après un changement de page) — ou activez le badge " +
+      "passif dans les réglages pour que ce bouton fonctionne aussi après une navigation."
     );
   }
   return texte;
 }
 
-// ---------- contour de page (analyse explicite uniquement — pas de permission supplémentaire) ----------
-// Le geste qui déclenche l'analyse (menu contextuel / action) accorde activeTab pour cet onglet :
-// on réutilise ce même accès pour poser un contour discret, jamais pour les pages reconnues
-// passivement par le badge (cela demanderait un accès à toutes les pages, hors de portée ici).
+// ---------- contour de page ----------
+// Après une analyse explicite, l'accès à l'onglet (activeTab) suffit toujours. Pour les pages
+// reconnues passivement par le badge, poser un contour requiert la permission d'hôte optionnelle
+// (accordée ou non avec le badge, cf. options) — sans elle, executeScript échoue et on l'ignore
+// silencieusement (voir les .catch ci-dessous) : aucun contour, aucune erreur visible.
 
 const ID_BORDURE = "lynceus-bordure-risque";
+
+function appliquerBordureSelonGrade(tabId: number, grade: Grade): void {
+  if (grade === "D" || grade === "E") poserBordure(tabId, COULEURS_GRADE[grade]);
+  else retirerBordure(tabId);
+}
 
 function poserBordure(tabId: number, couleur: string): void {
   chrome.scripting
@@ -188,30 +196,38 @@ async function majBadgePassif(tabId: number, url: string | undefined): Promise<v
     const reponse = await lookupParHash(await hacherUrl(url));
     if (reponse.statut === "connue" && reponse.carte) {
       poserBadge(tabId, reponse.carte.note.grade);
+      appliquerBordureSelonGrade(tabId, reponse.carte.note.grade);
       // La page est déjà dans l'annuaire : on l'affiche directement dans le panneau, sans
       // déclencher d'analyse (aucun contenu envoyé — seule une consultation déjà consentie
       // via l'activation du badge passif, cf. docs/ETHIQUE.md §3-4).
       majEtat(tabId, { phase: "ok", carte: reponse.carte, enCache: true, rejetees: 0 });
     } else {
       effacerBadge(tabId);
+      retirerBordure(tabId);
     }
   } catch {
     effacerBadge(tabId); // le badge est un bonus : jamais d'erreur bruyante
   }
 }
 
-// Sans la permission optionnelle « tabs », `url` est undefined : le badge reste muet.
+// Sans permission d'hôte, `changement.url` reste toujours undefined : cette détection SPA
+// (navigation interne sans rechargement, ex. YouTube passant d'une vidéo à l'autre) ne
+// fonctionne qu'avec le badge passif activé. Sans lui, seul un rechargement complet
+// ("loading") est détecté — limite documentée, cf. extension/README.md.
 chrome.tabs.onUpdated.addListener((tabId, changement, onglet) => {
-  if (changement.status === "loading") {
-    // Nouvelle navigation ou rechargement : la carte affichée ne concerne plus cette page.
-    // On ne coupe pas une analyse en cours (extraction/analyse) déclenchée juste avant.
+  const nouvellePage = changement.status === "loading" || changement.url !== undefined;
+  if (nouvellePage) {
+    // La carte affichée ne concerne plus cette page. On ne coupe pas une analyse en cours
+    // (extraction/analyse) déclenchée juste avant.
     const etatActuel = etats.get(tabId);
     if (!etatActuel || (etatActuel.phase !== "extraction" && etatActuel.phase !== "analyse")) {
       majEtat(tabId, { phase: "repos" });
       retirerBordure(tabId);
     }
   }
-  if (changement.status === "complete") void majBadgePassif(tabId, onglet.url);
+  if (changement.status === "complete" || changement.url !== undefined) {
+    void majBadgePassif(tabId, onglet.url);
+  }
 });
 
 chrome.tabs.onActivated.addListener(({ tabId }) => {

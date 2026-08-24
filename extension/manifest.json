@@ -6,6 +6,7 @@
   "minimum_chrome_version": "116",
   "permissions": ["sidePanel", "contextMenus", "activeTab", "storage", "scripting"],
   "optional_permissions": ["tabs"],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
   "background": { "service_worker": "fond.js" },
   "action": {
     "default_title": "Lynceus — analyser cette page",

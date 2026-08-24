@@ -8,22 +8,30 @@ const caseBadge = document.getElementById("badge") as HTMLInputElement;
 const zoneEtat = document.getElementById("etat") as HTMLElement;
 const zoneInfos = document.getElementById("instance-infos") as HTMLElement;
 
+// Les deux permissions sont demandées et retirées ensemble : le badge (connaître l'adresse
+// en continu) et l'accès aux pages (poser/retirer le contour, fiabiliser le bouton Analyser
+// après navigation) n'ont de sens que réunis — cf. l'explication dans options.html.
+const DEMANDE_PERMISSION: chrome.permissions.Permissions = {
+  permissions: ["tabs"],
+  origins: ["http://*/*", "https://*/*"],
+};
+
 async function initialiser(): Promise<void> {
   const reglages = await chargerReglages();
   champInstance.value = reglages.instance;
-  const permission = await chrome.permissions.contains({ permissions: ["tabs"] });
+  const permission = await chrome.permissions.contains(DEMANDE_PERMISSION);
   caseBadge.checked = reglages.badgeActif && permission;
 }
 
 caseBadge.addEventListener("change", async () => {
   if (caseBadge.checked) {
-    const accorde = await chrome.permissions.request({ permissions: ["tabs"] });
+    const accorde = await chrome.permissions.request(DEMANDE_PERMISSION);
     if (!accorde) {
       caseBadge.checked = false;
-      zoneEtat.textContent = "Permission refusée — le badge passif reste désactivé.";
+      zoneEtat.textContent = "Permission refusée — badge et contour passifs restent désactivés.";
     }
   } else {
-    await chrome.permissions.remove({ permissions: ["tabs"] }).catch(() => {});
+    await chrome.permissions.remove(DEMANDE_PERMISSION).catch(() => {});
   }
 });
 
