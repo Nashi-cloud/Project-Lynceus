@@ -135,6 +135,20 @@ L'annuaire est le patrimoine de l'instance : chaque analyse a coûté un appel a
 
 Si une clé est utilisée abusivement, ajoutez son identifiant à `LYNCEUS_CLES_REVOQUEES` (visible dans la sortie de `cle-emettre`, ou en base) et redémarrez. La liste ne contient que les clés écartées — ce n'est pas un annuaire.
 
+## Les trois garde-fous
+
+Ils se cumulent, et **aucun ne s'applique à une page déjà présente dans l'annuaire** : la resservir ne coûte rien, donc n'est ni limitée ni décomptée.
+
+| Garde-fou | Compté par | Fenêtre | Où | Réglage |
+|---|---|---|---|---|
+| Débit | adresse du visiteur | 60 s glissantes | mémoire | `LYNCEUS_RATE_LIMIT_ANALYSES` (10/min) |
+| Quota | identifiant de clé | jour calendaire (UTC) | base | porté par chaque clé (`--quota`) |
+| Taille | — | par requête | — | `LYNCEUS_CONTENU_MAX_CARS` (60 000) |
+
+Le débit arrête les rafales (un script qui boucle) ; le quota protège le budget sur la durée (quelqu'un qui analyserait tranquillement des milliers de pages dans la journée).
+
+> **Un seul processus.** Le compteur de débit vit dans la mémoire du processus : servir l'application avec plusieurs workers multiplierait la limite réelle par leur nombre, silencieusement. L'image lance donc un unique processus. Si le trafic l'exigeait un jour, il faudrait d'abord déplacer ce compteur dans un stockage partagé (Redis ou équivalent) — avant d'ajouter des workers, pas après.
+
 ## Surveiller les coûts
 
 Le vrai risque d'une instance exposée n'est pas l'intrusion, c'est la facture. Trois garde-fous se cumulent : quota par clé, limite de débit par IP, et taille maximale du contenu. Pour estimer la dépense :

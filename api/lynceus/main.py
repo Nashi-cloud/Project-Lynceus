@@ -139,8 +139,16 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
         return requete.client.host if requete.client else "inconnue"
 
     def verifier_limite(requete: Request) -> None:
-        """Limiteur en mémoire, par adresse, sur le travail coûteux (fetch serveur, appel LLM).
-        Conformément à la charte (§4), rien n'est journalisé : la structure ne vit qu'en mémoire."""
+        """Limiteur de débit par adresse, sur le travail coûteux (fetch serveur, appel LLM).
+
+        Fenêtre glissante d'une minute, comptée EN MÉMOIRE : rien n'est journalisé, ce que
+        la charte (§4) impose, et le compteur repart de zéro à chaque redémarrage — sans
+        conséquence, puisque le quota par clé, lui, est persistant.
+
+        ATTENTION : ce compteur est propre au processus. Servir l'application avec
+        plusieurs workers multiplierait la limite réelle par leur nombre, sans que rien ne
+        le signale. Le Dockerfile lance donc volontairement un seul processus ; monter en
+        charge demanderait un compteur partagé (Redis ou équivalent)."""
         ip = adresse_visiteur(requete)
         maintenant = time.monotonic()
         acces = app.state.acces_analyses.setdefault(ip, [])
