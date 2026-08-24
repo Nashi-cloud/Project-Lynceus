@@ -10,7 +10,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Parametres(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="LYNCEUS_", env_file=".env", extra="ignore")
+    # env_file en tuple : trouvé qu'on lance depuis api/ (« .env ») ou depuis la racine (« api/.env »)
+    model_config = SettingsConfigDict(env_prefix="LYNCEUS_", env_file=(".env", "api/.env"), extra="ignore")
 
     # Base de données (SQLite par défaut : zéro config pour essayer)
     database_url: str = "sqlite:///./lynceus.sqlite3"

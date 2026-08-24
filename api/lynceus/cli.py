@@ -27,6 +27,14 @@ def _api() -> str:
     return os.environ.get("LYNCEUS_API_URL", "http://localhost:8000").rstrip("/")
 
 
+def _erreur_http(reponse: httpx.Response) -> str:
+    """Le détail de l'erreur API, en clair (sinon le corps brut)."""
+    try:
+        return reponse.json().get("detail", reponse.text)
+    except Exception:
+        return reponse.text
+
+
 def _afficher_carte(carte: dict, en_cache: bool | None = None) -> None:
     note = carte["note"]
     couleur = COULEURS_GRADE.get(note["grade"], "white")
@@ -92,7 +100,7 @@ def analyser(
     with console.status("Analyse en cours…"):
         reponse = httpx.post(f"{_api()}/v1/analyses", json=corps, timeout=300)
     if reponse.status_code != 200:
-        console.print(f"[red]Erreur {reponse.status_code} :[/red] {reponse.text}")
+        console.print(f"[red]Erreur {reponse.status_code} :[/red] {_erreur_http(reponse)}")
         raise typer.Exit(1)
     donnees = reponse.json()
     _afficher_carte(donnees["carte"], en_cache=donnees.get("en_cache"))
@@ -105,7 +113,7 @@ def lookup(url: str):
     """Consulte l'annuaire sans déclencher d'analyse."""
     reponse = httpx.get(f"{_api()}/v1/lookup", params={"url": url}, timeout=30)
     if reponse.status_code != 200:
-        console.print(f"[red]Erreur {reponse.status_code} :[/red] {reponse.text}")
+        console.print(f"[red]Erreur {reponse.status_code} :[/red] {_erreur_http(reponse)}")
         raise typer.Exit(1)
     donnees = reponse.json()
     if donnees["statut"] == "connue":
