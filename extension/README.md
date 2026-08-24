@@ -56,6 +56,14 @@ src/
 test/parite_normalisation.mjs  # garantit hash TS == hash Python (12 URL de référence)
 ```
 
+## Distribuer l'extension
+
+```bash
+npm run paquet     # → lynceus-extension-v<version>.zip
+```
+
+Archive prête à être partagée ou soumise au Chrome Web Store. Elle est **reproductible** : deux constructions des mêmes sources produisent un fichier identique (horodatages fixés), ce qui permet de vérifier qu'un paquet distribué correspond bien au code publié.
+
 ## Vérifications
 
 ```bash

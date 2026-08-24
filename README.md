@@ -6,6 +6,10 @@ Lynceus analyse le contenu d'une page web et explique à son lecteur, **sans le 
 
 **Projet à but humanitaire, 100 % libre (AGPL-3.0), gratuit, auto-hébergeable.**
 
+## Installer
+
+**[→ Guide d'installation pas à pas](INSTALLATION.md)** — extension seule ou kit complet (serveur + extension), avec ou sans Docker.
+
 ## Pourquoi ?
 
 Nous avons toutes et tous dans notre entourage des personnes exposées à la désinformation : pseudo-médecine, théories du complot, manipulation sectaire, articles fabriqués. Les contredire frontalement ne fonctionne pas — la recherche montre même que cela renforce les croyances (réactance).
@@ -85,6 +89,7 @@ Résumé de la [charte éthique](docs/ETHIQUE.md) :
 - [x] **Phase 1 — API MVP** : `/lookup` + `/analyses`, SQLite/PostgreSQL, adapter LLM compatible OpenAI, CLI, Docker Compose
 - [x] **Phase 2 — Extension Chrome** : side panel, menu contextuel, badge passif opt-in, extraction locale Readability
 - [x] **Phase 3 — Annuaire public** : lookup k-anonyme (technique HaveIBeenPwned), contestation d'analyses et droit de réponse, profils de domaines
+- [x] **Publication** : guide d'installation, empaquetage de l'extension, migrations Alembic
 - [ ] **Phase 3b** : instance de référence hébergée publiquement
 - [ ] **Phase 4 — Réseau** : fédération d'annuaires entre instances, i18n, portage Firefox
 
