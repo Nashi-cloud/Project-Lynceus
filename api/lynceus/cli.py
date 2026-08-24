@@ -493,6 +493,79 @@ def capturer(
     )
 
 
+@app.command("cles-paire")
+def cles_paire():
+    """Génère une paire de clés Ed25519 pour émettre des clés d'accès.
+
+    La PRIVÉE reste chez l'émetteur (elle seule permet d'émettre) ; la PUBLIQUE va dans la
+    configuration de chaque instance qui doit accepter ces clés. Compromettre une instance
+    ne permet donc jamais de forger des clés."""
+    from .cles import generer_paire
+
+    privee, publique = generer_paire()
+    console.print("[bold red]Clé PRIVÉE[/bold red] — à garder secrète, chez l'émetteur uniquement :")
+    console.print(f"  LYNCEUS_CLE_PRIVEE={privee}\n", soft_wrap=True)
+    console.print("[bold green]Clé PUBLIQUE[/bold green] — à mettre dans le .env de chaque instance :")
+    console.print(f"  LYNCEUS_CLE_PUBLIQUE={publique}\n", soft_wrap=True)
+    console.print(
+        "[dim]Tant que LYNCEUS_CLE_PUBLIQUE est vide, l'instance reste ouverte et n'exige "
+        "aucune clé — c'est le défaut pour un usage personnel.[/dim]"
+    )
+
+
+@app.command("cle-emettre")
+def cle_emettre(
+    jours: int = typer.Option(365, help="durée de validité"),
+    quota: int = typer.Option(50, help="analyses autorisées par jour"),
+    nombre: int = typer.Option(1, help="nombre de clés à émettre"),
+):
+    """Émet une ou plusieurs clés d'accès signées.
+
+    Nécessite LYNCEUS_CLE_PRIVEE dans l'environnement. À n'exécuter que côté émetteur :
+    la clé privée ne doit jamais être distribuée, sinon n'importe qui pourrait émettre."""
+    from .cles import emettre
+
+    privee = os.environ.get("LYNCEUS_CLE_PRIVEE", "")
+    if not privee:
+        console.print(
+            "[red]LYNCEUS_CLE_PRIVEE non définie.[/red] Générez une paire avec "
+            "[bold]lynceus cles-paire[/bold], puis exportez la clé privée."
+        )
+        raise typer.Exit(2)
+
+    for _ in range(max(1, nombre)):
+        try:
+            cle, droits = emettre(privee, jours=jours, quota_jour=quota)
+        except Exception as exc:
+            console.print(f"[red]Émission impossible :[/red] {exc}")
+            raise typer.Exit(1) from exc
+        console.print(cle, soft_wrap=True)  # jamais de retour à la ligne : la clé se copie-colle
+        console.print(
+            f"[dim]  id {droits.identifiant} · expire le {droits.expire_le} · "
+            f"{droits.quota_jour} analyses/jour[/dim]"
+        )
+
+
+@app.command("cle-verifier")
+def cle_verifier(cle: str = typer.Argument(help="clé à vérifier")):
+    """Vérifie une clé avec la clé publique configurée (LYNCEUS_CLE_PUBLIQUE)."""
+    from .cles import CleInvalide, valider
+
+    publique = os.environ.get("LYNCEUS_CLE_PUBLIQUE", "")
+    if not publique:
+        console.print("[red]LYNCEUS_CLE_PUBLIQUE non définie.[/red]")
+        raise typer.Exit(2)
+    try:
+        droits = valider(cle, publique)
+    except CleInvalide as exc:
+        console.print(f"[red]Clé refusée :[/red] {exc}")
+        raise typer.Exit(1) from exc
+    console.print(
+        f"[green]Clé valide[/green] · id {droits.identifiant} · émise le {droits.emise_le} · "
+        f"expire le {droits.expire_le} · {droits.quota_jour} analyses/jour"
+    )
+
+
 @app.command()
 def meta():
     """Transparence de l'instance interrogée."""

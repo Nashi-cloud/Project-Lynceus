@@ -44,15 +44,31 @@ def test_base_neuve_est_suivie(chemin_base):
 
 # ---------- instance antérieure à Alembic ----------
 
-def test_instance_existante_adoptee(chemin_base):
-    """Cas rencontré en production : tables créées par create_all(), sans suivi Alembic.
-    Alembic doit les adopter, pas tenter de les recréer."""
-    Base.metadata.create_all(_moteur(chemin_base))  # ancienne méthode de création
+def test_instance_complete_adoptee(chemin_base):
+    """Base créée par create_all() avec les modèles actuels : toutes les tables existent,
+    seul le suivi manque. Alembic doit l'adopter sans rejouer les migrations, qui
+    tenteraient de recréer des tables présentes."""
+    Base.metadata.create_all(_moteur(chemin_base))
     assert "alembic_version" not in _tables(chemin_base)
 
     resultat = appliquer(_moteur(chemin_base))
-    assert resultat == "estampillee_puis_migree"
+    assert resultat == "adoptee"
     assert "alembic_version" in _tables(chemin_base)
+
+
+def test_instance_partielle_migree(chemin_base):
+    """Base d'une version antérieure : les tables initiales existent, les plus récentes
+    manquent. Il faut estampiller au début puis appliquer la suite."""
+    moteur = _moteur(chemin_base)
+    # On ne crée que les tables du schéma initial.
+    tables_initiales = [t for t in Base.metadata.sorted_tables
+                        if t.name in {"analyses", "pages", "domaines", "signalements"}]
+    Base.metadata.create_all(moteur, tables=tables_initiales)
+    assert "consommations_cles" not in _tables(chemin_base)
+
+    resultat = appliquer(moteur)
+    assert resultat == "estampillee_puis_migree"
+    assert "consommations_cles" in _tables(chemin_base), "la migration suivante doit s'appliquer"
 
 
 def test_donnees_preservees_lors_de_l_adoption(chemin_base):

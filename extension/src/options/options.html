@@ -13,7 +13,7 @@
     main { max-width: 640px; margin: 0 auto; padding: 32px 20px; }
     h1 { font-size: 20px; } h2 { font-size: 15px; margin-top: 28px; }
     .aide { color: var(--douce); font-size: 12.5px; }
-    input[type="url"] { width: 100%; padding: 8px 10px; border: 1px solid var(--trait); border-radius: 6px;
+    input[type="url"], input[type="text"] { width: 100%; padding: 8px 10px; border: 1px solid var(--trait); border-radius: 6px;
                         background: var(--fond); color: var(--encre); font: inherit; }
     label.interrupteur { display: flex; gap: 10px; align-items: flex-start; margin-top: 8px; }
     button { appearance: none; border: 0; border-radius: 6px; cursor: pointer; background: var(--accent);
@@ -55,6 +55,14 @@
         (clic droit) est nécessaire à chaque page.
       </span></span>
   </label>
+
+  <h2>Clé d'accès</h2>
+  <p class="aide">Certaines instances demandent une clé pour lancer des analyses (les
+    consultations de l'annuaire restent libres). Une clé Lynceus <strong>n'est pas un
+    compte</strong> : elle ne contient ni nom, ni adresse, ni identifiant vous concernant —
+    seulement une date d'expiration et un nombre d'analyses par jour. Laissez vide si votre
+    instance n'en demande pas.</p>
+  <input type="text" id="cle" placeholder="LYNC1.… (facultatif)" autocomplete="off">
 
   <h2>Filet de sécurité réseau</h2>
   <p class="aide">Délai maximum d'une analyse avant abandon automatique. Un chronomètre et un

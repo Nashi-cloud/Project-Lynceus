@@ -5,6 +5,7 @@ import { chargerReglages, enregistrerReglages } from "../commun/reglages";
 
 const champInstance = document.getElementById("instance") as HTMLInputElement;
 const champDelai = document.getElementById("delai") as HTMLInputElement;
+const champCle = document.getElementById("cle") as HTMLInputElement;
 const caseBadge = document.getElementById("badge") as HTMLInputElement;
 const zoneEtat = document.getElementById("etat") as HTMLElement;
 const zoneInfos = document.getElementById("instance-infos") as HTMLElement;
@@ -21,6 +22,7 @@ async function initialiser(): Promise<void> {
   const reglages = await chargerReglages();
   champInstance.value = reglages.instance;
   champDelai.value = String(reglages.delaiAnalyseS);
+  champCle.value = reglages.cle;
   const permission = await chrome.permissions.contains(DEMANDE_PERMISSION);
   caseBadge.checked = reglages.badgeActif && permission;
 }
@@ -41,7 +43,12 @@ document.getElementById("enregistrer")?.addEventListener("click", async () => {
   const instance = champInstance.value.trim().replace(/\/+$/, "") || "http://localhost:8000";
   const delaiAnalyseS = Math.min(1800, Math.max(30, Number(champDelai.value) || 300));
   champDelai.value = String(delaiAnalyseS);
-  await enregistrerReglages({ instance, badgeActif: caseBadge.checked, delaiAnalyseS });
+  await enregistrerReglages({
+    instance,
+    badgeActif: caseBadge.checked,
+    delaiAnalyseS,
+    cle: champCle.value.trim(),
+  });
   zoneEtat.textContent = "Réglages enregistrés.";
   setTimeout(() => (zoneEtat.textContent = ""), 2500);
 });
@@ -56,12 +63,17 @@ document.getElementById("tester")?.addEventListener("click", async () => {
     const meta = (await reponse.json()) as {
       nom: string; version: string; prompt_version: string; modele: string;
       fournisseur: string; taxonomie?: { nb_techniques?: number };
+      capacites?: { cle_requise?: boolean };
     };
+    const cleRequise = meta.capacites?.cle_requise === true;
     zoneInfos.textContent =
       `✓ ${meta.nom} v${meta.version}\n` +
       `Modèle : ${meta.modele} (via ${meta.fournisseur})\n` +
       `Prompt d'analyse : v${meta.prompt_version} · ${meta.taxonomie?.nb_techniques ?? "?"} techniques au référentiel\n` +
-      "Cette instance publie sa méthodologie — c'est le contrat de transparence Lynceus.";
+      (cleRequise
+        ? "Cette instance demande une clé d'accès pour les analyses.\n"
+        : "Cette instance n'exige aucune clé.\n") +
+      "Elle publie sa méthodologie — c'est le contrat de transparence Lynceus.";
   } catch (erreur) {
     zoneInfos.textContent =
       `✗ Instance injoignable (${erreur instanceof Error ? erreur.message : String(erreur)}). ` +

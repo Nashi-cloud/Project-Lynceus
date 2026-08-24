@@ -30,6 +30,8 @@ from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from sqlalchemy import Engine, inspect
 
+from .modeles import Base
+
 logger = logging.getLogger(__name__)
 
 RACINE_API = Path(__file__).resolve().parent.parent
@@ -55,11 +57,22 @@ def appliquer(moteur: Engine) -> str:
         tables = set(inspect(connexion).get_table_names())
 
     if revision_actuelle is None and TABLES_INITIALES <= tables:
-        # Instance d'avant Alembic : ses tables existent déjà. On l'estampille à la révision
-        # initiale plutôt que de la rejouer — sinon Alembic tenterait de recréer ces tables.
+        # Instance d'avant Alembic : ses tables existent déjà, il faut l'adopter sans rejouer
+        # les migrations qui les créeraient une seconde fois. Reste à savoir OÙ l'estampiller.
+        attendues = {table.name for table in Base.metadata.sorted_tables}
+        if attendues <= tables:
+            # Toutes les tables des modèles sont là (base créée par create_all avec une
+            # version récente) : le schéma est à jour, il lui manque seulement le suivi.
+            command.stamp(config, "head")
+            logger.info("Base complète adoptée : estampillée à head.")
+            return "adoptee"
+        # Schéma partiel : on repart de la révision initiale et on applique la suite.
         revision_initiale = ScriptDirectory.from_config(config).get_base()
         command.stamp(config, revision_initiale)
-        logger.info("Base existante estampillée à la révision initiale (%s).", revision_initiale)
+        logger.info(
+            "Base antérieure estampillée à la révision initiale (%s) ; tables manquantes : %s.",
+            revision_initiale, ", ".join(sorted(attendues - tables)),
+        )
         command.upgrade(config, "head")
         return "estampillee_puis_migree"
 

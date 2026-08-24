@@ -56,6 +56,23 @@ class Page(Base):
     derniere_vue: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_maintenant)
 
 
+class ConsommationCle(Base):
+    """Compteur d'usage journalier d'une clé.
+
+    Ce n'est PAS un annuaire de clés : aucune clé n'est enregistrée ici à l'émission, et
+    une ligne ne vaut que pour un jour. Les clés restent auto-validantes ; ce compteur sert
+    uniquement à faire respecter le quota qu'elles portent. Les lignes anciennes peuvent
+    être purgées sans rien casser."""
+
+    __tablename__ = "consommations_cles"
+    __table_args__ = (UniqueConstraint("identifiant_cle", "jour", name="uq_cle_jour"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    identifiant_cle: Mapped[str] = mapped_column(String(32), index=True)
+    jour: Mapped[str] = mapped_column(String(10), index=True)  # AAAA-MM-JJ
+    analyses: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class Signalement(Base):
     """Contestation d'une analyse — par un lecteur ou par l'éditeur du site (charte §6).
 

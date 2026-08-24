@@ -33,6 +33,14 @@ class Parametres(BaseSettings):
     # Modération : sans jeton, les routes /v1/admin/* restent fermées (défaut sûr).
     admin_token: str = ""
 
+    # Clés d'accès (Ed25519). Vide = instance ouverte, aucune clé exigée : c'est le défaut
+    # pour un usage personnel ou auto-hébergé. Renseigner la clé PUBLIQUE de l'émetteur
+    # ferme les analyses aux seuls porteurs d'une clé valide.
+    cle_publique: str = ""
+    # Identifiants de clés révoquées, séparés par des virgules. Ne contient que les clés
+    # abusives : ce n'est pas un annuaire, seulement une liste noire.
+    cles_revoquees: str = ""
+
     # Divers
     cors_origins: str = "*"
     prompt_version: str = "latest"
