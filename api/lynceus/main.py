@@ -5,6 +5,7 @@ Lancement : uvicorn lynceus.main:creer_application --factory
 
 from __future__ import annotations
 
+import sys
 import time
 from datetime import datetime, timezone
 from urllib.parse import urlsplit
@@ -37,6 +38,13 @@ class DemandeAnalyse(BaseModel):
 
 def creer_application(p: Parametres | None = None) -> FastAPI:
     p = p or parametres()
+
+    if not p.llm_api_key and not any(h in p.llm_base_url for h in ("localhost", "127.0.0.1")):
+        print(
+            "⚠  LYNCEUS_LLM_API_KEY est vide : toute analyse échouera (502). "
+            "Renseigner api/.env puis redémarrer le serveur (le .env est lu au démarrage).",
+            file=sys.stderr,
+        )
 
     arguments_moteur: dict = {}
     if p.database_url.startswith("sqlite"):

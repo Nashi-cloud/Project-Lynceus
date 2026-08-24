@@ -15,6 +15,16 @@ class ErreurLLM(Exception):
     """Échec de l'appel au fournisseur LLM."""
 
 
+# Erreurs fréquentes du fournisseur → cause probable et remède, en clair
+_AIDES = {
+    401: "clé refusée ou absente — vérifier LYNCEUS_LLM_API_KEY dans api/.env, puis REDÉMARRER le serveur (le .env est lu au démarrage)",
+    402: "crédit insuffisant chez le fournisseur — recharger le compte",
+    403: "accès refusé par le fournisseur (clé restreinte à certains modèles ?)",
+    404: "modèle introuvable chez le fournisseur — vérifier LYNCEUS_LLM_MODEL (slugs : openrouter.ai/models)",
+    429: "limite de débit du fournisseur atteinte — réessayer dans quelques instants",
+}
+
+
 def appeler(messages: list[dict], p: Parametres, schema_json: dict | None = None) -> str:
     """Retourne le texte de la réponse du modèle. Lève ErreurLLM en cas d'échec."""
     charge: dict = {
@@ -45,7 +55,9 @@ def appeler(messages: list[dict], p: Parametres, schema_json: dict | None = None
         raise ErreurLLM(f"Fournisseur LLM injoignable : {exc}") from exc
 
     if reponse.status_code >= 400:
-        raise ErreurLLM(f"Fournisseur LLM : HTTP {reponse.status_code} — {reponse.text[:300]}")
+        aide = _AIDES.get(reponse.status_code)
+        precision = f" ({aide})" if aide else ""
+        raise ErreurLLM(f"Fournisseur LLM : HTTP {reponse.status_code}{precision} — {reponse.text[:300]}")
 
     try:
         return reponse.json()["choices"][0]["message"]["content"]
