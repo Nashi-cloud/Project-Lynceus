@@ -31,7 +31,8 @@ def test_analyse_complete(appli):
     # Champs posés par le serveur
     assert carte["url"] == URL_TEST
     assert carte["domaine"] == "sante.exemple"
-    assert carte["meta"]["prompt_version"] == "0.1.0"
+    from lynceus.moteur import prompt as module_prompt
+    assert carte["meta"]["prompt_version"] == module_prompt.resoudre_version("latest")
     assert AVERTISSEMENT_IA in carte["avertissements"]
     assert compteur["appels"] == 1
 
@@ -92,7 +93,8 @@ def test_domaines_et_analyses(appli):
 def test_meta(appli):
     client, _ = appli
     meta = client.get("/v1/meta").json()
-    assert meta["prompt_version"] == "0.1.0"
+    from lynceus.moteur import prompt as module_prompt
+    assert meta["prompt_version"] == module_prompt.resoudre_version("latest")
     assert meta["taxonomie"]["nb_techniques"] == 31
     assert meta["modele"] == "test/modele"
 
