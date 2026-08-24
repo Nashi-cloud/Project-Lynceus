@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 import httpx
@@ -82,13 +83,16 @@ def _afficher_carte(carte: dict, en_cache: bool | None = None) -> None:
 
 @app.command()
 def analyser(
-    cible: str = typer.Argument(help="URL à analyser, ou chemin d'un fichier Markdown"),
+    cible: str = typer.Argument(help="URL à analyser, chemin d'un fichier Markdown, ou - pour lire l'entrée standard"),
     url: str = typer.Option(None, help="URL d'origine si la cible est un fichier"),
     titre: str = typer.Option(None, help="Titre de la page"),
 ):
     """Analyse une page (URL) ou un contenu local (fichier .md) via l'API."""
     corps: dict = {"titre": titre}
-    if Path(cible).is_file():
+    if cible == "-":
+        corps["contenu_markdown"] = sys.stdin.read()
+        corps["url"] = url
+    elif Path(cible).is_file():
         corps["contenu_markdown"] = Path(cible).read_text(encoding="utf-8")
         corps["url"] = url
     elif cible.startswith(("http://", "https://")):
