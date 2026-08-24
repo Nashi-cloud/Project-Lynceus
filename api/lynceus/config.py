@@ -30,6 +30,9 @@ class Parametres(BaseSettings):
     contenu_max_cars: int = 60000
     rate_limit_analyses: int = 10  # requêtes / minute / IP sur POST /v1/analyses
 
+    # Modération : sans jeton, les routes /v1/admin/* restent fermées (défaut sûr).
+    admin_token: str = ""
+
     # Divers
     cors_origins: str = "*"
     prompt_version: str = "latest"

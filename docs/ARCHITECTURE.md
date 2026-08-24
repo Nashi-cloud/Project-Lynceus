@@ -37,6 +37,8 @@ Trois livrables : **`api/`** (le kit serveur auto-hébergeable, Docker Compose),
 | `GET` | `/v1/lookup-prefixe?prefixe={5 hex}` | **Consultation k-anonyme** : le client n'envoie que les 5 premiers caractères du hash et fait la correspondance finale localement. Réponse : suffixes + résumés (grade, catégorie, score, id). Le serveur ne peut pas savoir quelle page est consultée. |
 | `POST` | `/v1/signalements` | Contestation d'une analyse : `{ analyse_id, motif, message, contact? }`. Anonyme par défaut. |
 | `GET` | `/v1/motifs-signalement` | Motifs acceptés — évite aux clients de les coder en dur. |
+| `GET` | `/v1/admin/signalements` | **Opérateur** (en-tête `X-Lynceus-Admin`) : contestations reçues, filtrables par statut. |
+| `POST` | `/v1/admin/signalements/{id}` | **Opérateur** : enregistre la décision (`statut` + `decision` justifiée, obligatoire). |
 | `GET` | `/v1/meta` | Version de l'instance, `prompt_version`, modèle configuré, taxonomie — transparence de l'instance. |
 
 ## Déduplication — le cœur de l'annuaire
@@ -77,10 +79,16 @@ domaines     domaine PK · nb_analyses · score_moyen · distribution_grades JSO
              maj_le            -- recalculé à chaque nouvelle analyse du domaine
 
 signalements id PK · analyse_id FK (index) · motif · message · contact (optionnel)
-             statut (index) · cree_le
+             statut (index) · decision · traite_le · cree_le
 ```
 
 Plusieurs `pages` peuvent pointer la même `analyses` (contenu dupliqué). `pgvector` envisagé en phase 3+ pour détecter les quasi-doublons (même article paraphrasé).
+
+## Évolution du schéma
+
+`Base.metadata.create_all()` crée les tables manquantes mais ne touche jamais à celles qui existent : une instance déjà déployée casserait à chaque ajout de colonne. `lynceus/migrations.py` complète donc le démarrage en ajoutant les colonnes déclarées dans les modèles mais absentes en base (`ALTER TABLE ADD COLUMN`, supporté par SQLite comme PostgreSQL), sans toucher aux données existantes.
+
+**Limite assumée** : seuls les *ajouts* de colonnes sont couverts. Un renommage, un changement de type ou une contrainte nouvelle demanderont **Alembic**, à introduire avant que des instances tierces ne soient déployées largement. Une colonne obligatoire sans valeur par défaut est signalée dans les journaux plutôt qu'appliquée — elle échouerait sur une table déjà peuplée.
 
 ## Cycle de vie d'une analyse
 

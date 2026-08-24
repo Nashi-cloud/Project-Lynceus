@@ -287,6 +287,118 @@ def _comparer(entree: dict, carte: dict) -> tuple[list[str], list[str]]:
     return graves, mineurs
 
 
+def _entetes_admin() -> dict:
+    jeton = os.environ.get("LYNCEUS_ADMIN_TOKEN", "")
+    if not jeton:
+        console.print(
+            "[red]LYNCEUS_ADMIN_TOKEN non défini.[/red] Les contestations peuvent contenir un "
+            "contact : leur consultation est réservée à l'opérateur de l'instance.\n"
+            "Définir le même jeton côté serveur (api/.env) et dans cet environnement."
+        )
+        raise typer.Exit(2)
+    return {"X-Lynceus-Admin": jeton}
+
+
+@app.command()
+def signalements(
+    statut: str = typer.Option(None, help="filtrer : nouveau, examine, rejete, sans_objet"),
+    limite: int = typer.Option(50, help="nombre maximum de signalements"),
+):
+    """Liste les contestations reçues par l'instance (opérateur)."""
+    reponse = httpx.get(
+        f"{_api()}/v1/admin/signalements",
+        params={k: v for k, v in {"statut": statut, "limite": limite}.items() if v},
+        headers=_entetes_admin(),
+        timeout=30,
+    )
+    if reponse.status_code != 200:
+        console.print(f"[red]Erreur {reponse.status_code} :[/red] {_erreur_http(reponse)}")
+        raise typer.Exit(1)
+
+    liste = reponse.json()["signalements"]
+    if not liste:
+        console.print("Aucune contestation" + (f" au statut « {statut} »." if statut else "."))
+        return
+
+    table = Table(show_header=True, header_style="bold")
+    for colonne in ("id", "analyse", "motif", "message", "statut", "reçue le"):
+        table.add_column(colonne, overflow="fold")
+    for s in liste:
+        couleur = {"nouveau": "yellow", "examine": "green", "rejete": "dim", "sans_objet": "dim"}
+        table.add_row(
+            str(s["id"]),
+            str(s["analyse_id"]),
+            s["motif"],
+            s["message"][:120] + ("…" if len(s["message"]) > 120 else ""),
+            f"[{couleur.get(s['statut'], 'white')}]{s['statut']}[/]",
+            s["cree_le"][:10],
+        )
+    console.print(table)
+    nouveaux = sum(1 for s in liste if s["statut"] == "nouveau")
+    console.print(f"{len(liste)} contestation(s), dont [yellow]{nouveaux} en attente[/yellow].")
+
+
+@app.command()
+def traiter(
+    signalement_id: int = typer.Argument(help="identifiant du signalement"),
+    statut: str = typer.Option(help="examine (fondé) | rejete (infondé) | sans_objet"),
+    decision: str = typer.Option(help="justification, conservée et auditable"),
+):
+    """Enregistre la décision de l'opérateur sur une contestation.
+
+    La justification est obligatoire : écarter une contestation sans motif reviendrait à
+    l'opacité que Lynceus dénonce (docs/ETHIQUE.md §2)."""
+    reponse = httpx.post(
+        f"{_api()}/v1/admin/signalements/{signalement_id}",
+        json={"statut": statut, "decision": decision},
+        headers=_entetes_admin(),
+        timeout=30,
+    )
+    if reponse.status_code != 200:
+        console.print(f"[red]Erreur {reponse.status_code} :[/red] {_erreur_http(reponse)}")
+        raise typer.Exit(1)
+    console.print(f"[green]Signalement {signalement_id} : {reponse.json()['statut']}.[/green]")
+
+
+@app.command()
+def verifier_page(
+    signalement_id: int = typer.Argument(help="signalement au motif « page_modifiee »"),
+    url: str = typer.Option(help="URL de la page à re-vérifier"),
+):
+    """Vérifie si une page a réellement changé, et relance l'analyse le cas échéant.
+
+    Seul motif de contestation mécaniquement vérifiable : on compare le contenu actuel à
+    celui analysé. Les autres motifs relèvent du jugement humain."""
+    entetes = _entetes_admin()
+    with console.status("Récupération de la page…"):
+        reponse = httpx.post(f"{_api()}/v1/analyses", json={"url": url}, timeout=600)
+    if reponse.status_code != 200:
+        console.print(f"[red]Impossible de récupérer la page :[/red] {_erreur_http(reponse)}")
+        console.print("[dim]Site protégé contre le téléchargement ? Analyser via l'extension.[/dim]")
+        raise typer.Exit(1)
+
+    donnees = reponse.json()
+    carte = donnees["carte"]
+    if donnees["en_cache"]:
+        console.print("[yellow]Le contenu est inchangé[/yellow] — l'analyse en cache correspond toujours.")
+        conclusion = "Contenu inchangé à la re-vérification : l'analyse reste valable."
+        statut = "rejete"
+    else:
+        console.print(f"[green]Page modifiée[/green] — nouvelle analyse : "
+                      f"{carte['categorie']} · grade {carte['note']['grade']} ({carte['note']['score']}/100)")
+        conclusion = (f"Page modifiée depuis l'analyse contestée. Nouvelle analyse : "
+                      f"{carte['categorie']}, grade {carte['note']['grade']}.")
+        statut = "sans_objet"
+
+    httpx.post(
+        f"{_api()}/v1/admin/signalements/{signalement_id}",
+        json={"statut": statut, "decision": conclusion},
+        headers=entetes,
+        timeout=30,
+    )
+    console.print(f"[dim]Signalement {signalement_id} classé « {statut} » : {conclusion}[/dim]")
+
+
 @app.command()
 def meta():
     """Transparence de l'instance interrogée."""

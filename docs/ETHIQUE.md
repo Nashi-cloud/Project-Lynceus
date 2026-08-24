@@ -42,7 +42,9 @@ On ne peut pas dénoncer l'opacité en étant opaque.
 ## 6. Faillibilité assumée
 
 - L'analyse est produite par un modèle de langage : **elle peut se tromper**. Chaque carte affiche un indice de confiance et cet avertissement.
-- Toute analyse est **contestable** depuis le panneau ou l'API (`POST /v1/signalements`), y compris par les éditeurs des sites analysés (motif `droit_de_reponse`). Un signalement est anonyme par défaut : aucune donnée personnelle n'est exigée. Le nombre de contestations est public sur chaque analyse.
+- Toute analyse est **contestable** depuis le panneau ou l'API (`POST /v1/signalements`), y compris par les éditeurs des sites analysés (motif `droit_de_reponse`). Un signalement est anonyme par défaut : aucune donnée personnelle n'est exigée. Le nombre de contestations est public sur chaque analyse ; leur contenu est réservé à l'opérateur de l'instance (il peut contenir un contact).
+
+  **Ce que Lynceus promet, et ce qu'il ne promet pas.** Une contestation est enregistrée, rendue visible en nombre, et mise à disposition de l'opérateur de l'instance, qui décide des suites — sa décision et sa justification sont conservées. Le projet étant auto-hébergeable et sans autorité centrale, aucune instance ne peut garantir un examen humain systématique : le message rendu à l'utilisateur le dit explicitement plutôt que de promettre une modération qui n'existerait pas. Seul le motif « page modifiée » est traité automatiquement (re-vérification du contenu et nouvelle analyse le cas échéant).
 - Les analyses sont datées et re-générables : un site qui s'améliore verra sa carte évoluer.
 
 ## 7. Pédagogie plutôt que verdict
