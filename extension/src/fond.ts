@@ -43,7 +43,7 @@ function estGenerationCourante(tabId: number, generation: number): boolean {
   return generations.get(tabId) === generation;
 }
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener((details) => {
   chrome.contextMenus.create({
     id: MENU_ANALYSER,
     title: "🔭 Analyser cette page avec Lynceus",
@@ -51,6 +51,24 @@ chrome.runtime.onInstalled.addListener(() => {
   });
   // Un clic sur l'icône ouvre le panneau latéral (sans déclencher d'analyse).
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+
+  // À la première installation seulement : page d'accueil expliquant le choix d'activation
+  // (Chrome interdit de demander une permission sans clic utilisateur — d'où la page).
+  if (details.reason === "install") {
+    chrome.tabs.create({ url: chrome.runtime.getURL("accueil/accueil.html") }).catch(() => {});
+  }
+});
+
+// La permission peut aussi être accordée ou retirée depuis Chrome lui-même, hors de nos pages :
+// on garde le réglage aligné pour que le badge suive sans intervention de l'utilisateur.
+chrome.permissions.onAdded.addListener((permissions) => {
+  if (permissions.origins?.length) void chargerReglages().then((r) => {
+    if (!r.badgeActif) void chrome.storage.sync.set({ badgeActif: true });
+  });
+});
+
+chrome.permissions.onRemoved.addListener((permissions) => {
+  if (permissions.origins?.length) void chrome.storage.sync.set({ badgeActif: false });
 });
 
 chrome.contextMenus.onClicked.addListener((info, onglet) => {

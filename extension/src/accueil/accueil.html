@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Bienvenue — Lynceus</title>
+  <style>
+    :root { --encre: #1c2733; --douce: #5b6b7b; --trait: #e3e8ee; --accent: #16324f;
+            --fond: #fff; --carte: #f7f9fb; --vert: #1a7f37; }
+    @media (prefers-color-scheme: dark) {
+      :root { --encre: #e6ebf0; --douce: #93a1af; --trait: #2a323b; --accent: #9fc2e0;
+              --fond: #14181d; --carte: #1b2129; --vert: #4ac26b; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--fond); color: var(--encre);
+           font: 15px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 620px; margin: 0 auto; padding: 44px 22px 60px; }
+    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .logo img { width: 34px; height: 34px; }
+    h1 { font-size: 23px; margin: 0; }
+    .accroche { color: var(--douce); margin: 0 0 30px; }
+    h2 { font-size: 16px; margin: 0 0 4px; }
+    .carte { background: var(--carte); border: 1px solid var(--trait);
+             border-radius: 10px; padding: 18px 20px; margin-bottom: 14px; }
+    .carte.retenue { border-color: var(--accent); }
+    ul { margin: 10px 0 0; padding-left: 20px; color: var(--douce); font-size: 14px; }
+    li { margin: 5px 0; }
+    button { appearance: none; border: 0; border-radius: 7px; cursor: pointer;
+             font: inherit; font-weight: 600; padding: 10px 18px; margin-top: 14px; }
+    .principal { background: var(--accent); color: var(--fond); }
+    .secondaire { background: transparent; color: var(--accent); border: 1px solid var(--trait); }
+    .confidentialite { border-left: 3px solid var(--accent); padding-left: 14px;
+                       margin: 26px 0; color: var(--douce); font-size: 13.5px; }
+    .confidentialite strong { color: var(--encre); }
+    #etat { margin-top: 18px; font-weight: 600; }
+    #etat.ok { color: var(--vert); }
+    .pied { margin-top: 34px; border-top: 1px solid var(--trait); padding-top: 16px;
+            color: var(--douce); font-size: 13px; }
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+<main>
+  <div class="logo">
+    <img src="../icones/lynceus-128.png" alt="">
+    <h1>Bienvenue dans Lynceus</h1>
+  </div>
+  <p class="accroche">La vigie de l'information. Lynceus décrit les techniques de persuasion
+    employées par une page — sans juger, à vous de conclure.</p>
+
+  <div class="carte retenue">
+    <h2>Vous préférez être prévenu automatiquement ?</h2>
+    <p style="margin:6px 0 0;color:var(--douce);font-size:14px;">
+      Lynceus peut reconnaître les pages déjà analysées par la communauté, sans aucune action
+      de votre part :</p>
+    <ul>
+      <li>la note s'affiche <strong>sur l'icône</strong> dès l'ouverture d'une page connue ;</li>
+      <li>le panneau montre <strong>directement la carte</strong>, sans cliquer sur « Analyser » ;</li>
+      <li>un <strong>contour discret</strong> entoure les pages jugées à risque (D ou E) ;</li>
+      <li>fonctionne aussi sur les sites qui changent de contenu sans recharger (YouTube…).</li>
+    </ul>
+    <button class="principal" id="activer">Activer la reconnaissance automatique</button>
+    <button class="secondaire" id="plus-tard">Plus tard</button>
+    <div id="etat" role="status"></div>
+  </div>
+
+  <div class="confidentialite">
+    <strong>Ce que Lynceus envoie — dans les deux cas.</strong>
+    Pour reconnaître une page, seule une <strong>empreinte</strong> (hash) de son adresse est
+    envoyée : ni l'adresse elle-même, ni son contenu, et rien n'est journalisé.
+    Le contenu d'une page n'est transmis que lorsque <strong>vous</strong> cliquez sur
+    « Analyser cette page ». Chrome vous demandera l'accès à vos pages : c'est la permission
+    technique nécessaire pour lire l'adresse en continu et dessiner le contour — elle ne change
+    rien à ce qui circule sur le réseau. Réversible à tout moment dans les réglages.
+  </div>
+
+  <div class="carte">
+    <h2>Sans activer : Lynceus fonctionne quand même</h2>
+    <p style="margin:6px 0 0;color:var(--douce);font-size:14px;">
+      Clic droit sur une page → « 🔭 Analyser cette page avec Lynceus ». Permissions réduites au
+      strict minimum, mais chaque page demande ce geste — y compris après un changement de page.</p>
+  </div>
+
+  <div class="pied">
+    <p><strong>Une dernière étape :</strong> vérifiez l'adresse de votre instance Lynceus
+      (le serveur qui analyse) dans les <a href="#" id="lien-reglages">réglages</a>.
+      Par défaut&nbsp;: <code>http://localhost:8000</code>.</p>
+    <p id="version"></p>
+  </div>
+</main>
+<script src="accueil.js"></script>
+</body>
+</html>

@@ -14,6 +14,12 @@ Puis dans Chrome : `chrome://extensions` → activer le **Mode développeur** �
 
 > **Chrome sur le poste local, API sur une VM de dev distante (Tailscale) :** rapatriez `dist/` en local (`rsync -a vm:…/extension/dist/ ~/lynceus-extension/`), puis dans les réglages de l'extension mettez l'instance sur l'**adresse Tailscale de la VM** (ex. `http://100.x.y.z:8000`, visible avec `tailscale status` sur la VM) — pas de tunnel SSH nécessaire, le tailnet est déjà chiffré et le pare-feu de la VM n'autorise que `tailscale0`. Sur la VM, lancez uvicorn en écoutant sur toutes les interfaces pour que le tailnet y accède : `uvicorn lynceus.main:creer_application --factory --host 0.0.0.0`. **Ne jamais exposer l'API sur une IP publique** : elle n'a pas d'authentification et porte une clé LLM facturée à l'usage.
 
+## Premier lancement
+
+À l'installation, une page d'accueil s'ouvre et propose d'activer la **reconnaissance automatique** (badge sur l'icône, panneau pré-rempli, contour sur les pages à risque). Refuser laisse l'extension au strict minimum : tout passe alors par le clic droit. Le choix reste modifiable à tout moment dans les réglages, et une invitation discrète est proposée dans le panneau tant que la permission n'est pas accordée.
+
+> Chrome impose qu'une demande de permission parte d'un clic utilisateur : l'activation ne peut pas être automatique, seulement proposée clairement.
+
 ## Utilisation
 
 1. **Analyser** : clic droit sur une page → « 🔭 Analyser cette page avec Lynceus » (ou clic sur l'icône puis bouton). Le panneau latéral affiche la carte : indice A–E, catégorie, techniques relevées avec extraits, points positifs, questions à se poser.
