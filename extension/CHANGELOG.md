@@ -2,6 +2,12 @@
 
 Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension — utile pour vérifier qu'un rebuild a bien été rechargé.
 
+## 0.5.0 — 2026-08-24
+
+- **feat** : page d'accueil à l'installation, proposant explicitement la reconnaissance automatique (badge, panneau pré-rempli, contour) avec un bouton d'activation — jusqu'ici il fallait deviner l'existence des réglages et y cocher une case. Chrome exige qu'une demande de permission parte d'un clic réel : l'activation reste donc un geste, mais elle est désormais proposée au bon moment.
+- **feat** : invitation discrète dans le panneau (écran « Analyser cette page ? ») pour activer la reconnaissance automatique, affichée uniquement si la permission n'est pas déjà accordée.
+- **feat** : le réglage suit désormais les permissions accordées ou retirées depuis Chrome lui-même (`permissions.onAdded` / `onRemoved`) — plus de désynchronisation entre l'état réel et la case des réglages.
+
 ## 0.4.0 — 2026-08-24
 
 - **fix** : aucun délai limite sur l'appel réseau d'une analyse — une connexion bloquée faisait tourner le panneau indéfiniment, sans retour ni moyen d'agir. Signalé après un cas réel sur YouTube.

@@ -10,6 +10,7 @@ await build({
     "src/extracteur.ts",      // injecté dans la page (Readability + Turndown)
     "src/panneau/panneau.ts", // side panel
     "src/options/options.ts", // page de réglages
+    "src/accueil/accueil.ts",  // page d'accueil (installation)
   ],
   bundle: true,
   format: "iife",
@@ -23,5 +24,6 @@ cpSync("manifest.json", "dist/manifest.json");
 cpSync("src/panneau/panneau.html", "dist/panneau/panneau.html");
 cpSync("src/panneau/panneau.css", "dist/panneau/panneau.css");
 cpSync("src/options/options.html", "dist/options/options.html");
+cpSync("src/accueil/accueil.html", "dist/accueil/accueil.html");
 cpSync("icones", "dist/icones", { recursive: true });
 console.log("→ dist/ prêt (chrome://extensions → Charger l'extension non empaquetée)");

@@ -85,6 +85,36 @@ function rendreRepos(): void {
     "Rien n'est envoyé sans ce geste : le contenu de la page part vers votre instance Lynceus " +
     "uniquement quand vous demandez l'analyse."));
   app.append(bloc);
+  void proposerReconnaissanceAuto(bloc);
+}
+
+/** Invitation discrète : sans la permission d'hôte, l'utilisateur ignore souvent que Lynceus
+ * peut reconnaître seul les pages déjà analysées. On propose, on n'impose pas — et la demande
+ * de permission part d'un clic, comme Chrome l'exige. */
+async function proposerReconnaissanceAuto(bloc: HTMLElement): Promise<void> {
+  const dejaAccorde = await chrome.permissions.contains({
+    permissions: ["tabs"],
+    origins: ["http://*/*", "https://*/*"],
+  });
+  if (dejaAccorde) return;
+
+  const invitation = el("div", "invitation");
+  invitation.append(el("div", undefined,
+    "Lynceus peut aussi reconnaître seul les pages déjà analysées, et afficher leur note " +
+    "sans que vous ayez à cliquer."));
+  const lien = el("button", "lien-invitation", "Activer la reconnaissance automatique");
+  lien.addEventListener("click", async () => {
+    const accorde = await chrome.permissions.request({
+      permissions: ["tabs"],
+      origins: ["http://*/*", "https://*/*"],
+    });
+    if (accorde) {
+      await chrome.storage.sync.set({ badgeActif: true });
+      invitation.replaceChildren(el("div", undefined, "✓ Reconnaissance automatique activée."));
+    }
+  });
+  invitation.append(lien);
+  bloc.append(invitation);
 }
 
 function rendreAttente(phase: "extraction" | "analyse", depuis: number): void {

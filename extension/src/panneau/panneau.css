@@ -39,6 +39,11 @@ main { padding: 14px; }
 }
 @media (prefers-color-scheme: dark) { .bouton { color: #10151a; } }
 .note-vie-privee { font-size: 12px; margin-top: 12px; }
+.invitation { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--trait);
+              color: var(--encre-douce); font-size: 12.5px; }
+.lien-invitation { appearance: none; background: none; border: 0; padding: 6px 0 0;
+                   color: var(--accent); font: inherit; font-weight: 600; cursor: pointer;
+                   text-decoration: underline; }
 .minuteur { font-variant-numeric: tabular-nums; color: var(--encre-douce); font-size: 13px; margin-top: 10px; }
 .bouton-secondaire { background: transparent; color: var(--accent); border: 1px solid var(--trait); }
 .spinner {
