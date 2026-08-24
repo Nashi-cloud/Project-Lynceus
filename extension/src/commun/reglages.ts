@@ -4,11 +4,18 @@
 export interface Reglages {
   instance: string;
   badgeActif: boolean;
+  /** Filet de sécurité réseau (secondes) : au-delà, une analyse est abandonnée automatiquement.
+   * Un chronomètre et un bouton « Annuler » restent disponibles dans le panneau en attendant —
+   * ce délai n'est qu'un dernier recours contre une connexion réellement bloquée. Le serveur a
+   * son propre plafond (LYNCEUS_LLM_TIMEOUT_S, 180 s par défaut, jusqu'à 360 s avec un retry) :
+   * garder cette valeur nettement au-dessus pour ne jamais couper une analyse légitime en cours. */
+  delaiAnalyseS: number;
 }
 
 export const REGLAGES_DEFAUT: Reglages = {
   instance: "http://localhost:8000",
   badgeActif: false,
+  delaiAnalyseS: 300,
 };
 
 export async function chargerReglages(): Promise<Reglages> {

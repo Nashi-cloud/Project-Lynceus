@@ -56,6 +56,15 @@
       </span></span>
   </label>
 
+  <h2>Filet de sécurité réseau</h2>
+  <p class="aide">Délai maximum d'une analyse avant abandon automatique. Un chronomètre et un
+    bouton « Annuler » restent de toute façon disponibles dans le panneau pendant l'attente —
+    ce délai n'est qu'un dernier recours si la connexion reste bloquée sans jamais répondre.
+    Le serveur a son propre plafond (par défaut 180 s, jusqu'à 360 s avec une nouvelle tentative
+    automatique) : gardez cette valeur nettement au-dessus pour ne jamais couper une analyse
+    légitime en cours.</p>
+  <input type="number" id="delai" min="30" max="1800" step="10"> secondes
+
   <button id="enregistrer">Enregistrer</button>
   <div id="etat" role="status"></div>
 
