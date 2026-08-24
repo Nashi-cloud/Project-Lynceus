@@ -19,18 +19,20 @@ Puis dans Chrome : `chrome://extensions` → activer le **Mode développeur** �
 1. **Analyser** : clic droit sur une page → « 🔭 Analyser cette page avec Lynceus » (ou clic sur l'icône puis bouton). Le panneau latéral affiche la carte : indice A–E, catégorie, techniques relevées avec extraits, points positifs, questions à se poser.
 2. **Badge passif** (optionnel, désactivé par défaut) : à activer dans les réglages. Quand une page visitée est déjà dans l'annuaire, sa note s'affiche sur l'icône — seul un hash SHA-256 de l'URL normalisée est envoyé, jamais l'URL ni le contenu.
 3. **Réglages** : adresse de l'instance (auto-hébergement de premier ordre), test de connexion affichant la transparence de l'instance (modèle, version du prompt, taille du référentiel).
-4. **Contour de page** : après une analyse explicite jugée D ou E, un contour discret (couleur reprise de la pastille — orange sourd/rouge sourd, pas de rouge criard) signale visuellement la page. Retiré automatiquement à la navigation ou si une ré-analyse donne un meilleur grade. Ne s'applique jamais aux pages reconnues seulement par le badge passif (cela demanderait un accès à toutes les pages, hors du périmètre de permissions actuel).
+4. **Contour de page** : sur une page jugée D ou E (analysée explicitement, ou reconnue via le badge passif si activé), un contour discret (couleur reprise de la pastille — orange sourd/rouge sourd, pas de rouge criard) signale visuellement la page. Retiré automatiquement à la navigation ou si une ré-analyse donne un meilleur grade.
 
 ## Permissions — philosophie
 
 | Permission | Pourquoi | Quand |
 |---|---|---|
-| `activeTab` + `scripting` | extraire le contenu de la page analysée | uniquement sur geste explicite |
+| `activeTab` + `scripting` | extraire le contenu de la page analysée | uniquement sur geste explicite (menu contextuel) ; accès ponctuel, expire à la navigation |
 | `sidePanel`, `contextMenus` | l'interface | — |
 | `storage` | les réglages | — |
-| `tabs` | **optionnelle** — connaître l'URL des pages pour le badge passif | demandée seulement si le badge est activé, rendue s'il est désactivé |
+| `tabs` + `http://*/*`, `https://*/*` | **optionnelles, demandées ensemble** — connaître l'URL en continu (badge), poser/retirer le contour sur les pages reconnues passivement, fiabiliser le bouton « Analyser » du panneau après une navigation | uniquement si le badge passif est activé dans les réglages ; rendues si désactivé |
 
-Aucune `host_permission` : les appels à l'instance passent par le CORS de l'API. Le panneau ne s'ouvre jamais tout seul (charte §3), le rendu passe intégralement par `textContent` (aucune injection possible depuis le contenu analysé).
+Sans le badge passif activé, aucune `host_permission` n'est détenue : les appels à l'instance passent par le CORS de l'API, et tout accès à une page reste ponctuel (geste explicite). Le panneau ne s'ouvre jamais tout seul (charte §3), le rendu passe intégralement par `textContent` (aucune injection possible depuis le contenu analysé).
+
+**Limite connue sans le badge activé** : les sites à navigation interne (SPA — YouTube, X/Twitter, apps single-page) ne rechargent pas la page en changeant de contenu ; sans la permission d'hôte, l'extension ne peut pas détecter ce changement et le panneau peut afficher une carte périmée. Activer le badge passif corrige ce cas (l'adresse redevient visible en continu).
 
 ## Structure
 

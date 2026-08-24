@@ -35,13 +35,25 @@
   <button class="secondaire" id="tester">Tester la connexion</button>
   <div id="instance-infos" class="cache"></div>
 
-  <h2>Badge passif</h2>
+  <h2>Badge et contour passifs</h2>
   <label class="interrupteur">
     <input type="checkbox" id="badge">
-    <span>Afficher la note sur l'icône quand une page visitée est déjà dans l'annuaire.<br>
-      <span class="aide">Nécessite d'autoriser l'extension à connaître l'adresse des pages visitées.
-      Seul un hash (empreinte) de l'adresse est envoyé à l'instance — jamais l'adresse elle-même,
-      jamais le contenu, et rien n'est journalisé. Désactivé par défaut.</span></span>
+    <span>Afficher la note sur l'icône, et un contour discret sur les pages jugées à risque (D/E),
+      quand une page visitée est déjà dans l'annuaire — sans avoir à cliquer sur « Analyser ».<br>
+      <span class="aide">
+        Ce que Lynceus <strong>envoie au réseau</strong> ne change pas : uniquement un hash
+        (empreinte) de l'adresse de la page, jamais l'adresse elle-même ni son contenu, et rien
+        n'est journalisé. Le contenu d'une page n'est envoyé que lorsque vous cliquez sur
+        « Analyser cette page ».<br><br>
+        Ce que change ce réglage : Chrome vous demandera d'autoriser Lynceus à
+        <strong>accéder à toutes vos pages</strong> (permission technique du navigateur) — c'est
+        ce qui permet de connaître l'adresse en continu (pour le badge) et de poser/retirer le
+        contour, y compris sur les sites à navigation interne comme YouTube. Cette permission
+        rend aussi le bouton « Analyser cette page » du panneau fiable après un changement de page
+        (l'accès ponctuel accordé par le clic droit expire à chaque navigation).<br><br>
+        Désactivé par défaut. Sans ce réglage, tout reste au minimum : un geste explicite
+        (clic droit) est nécessaire à chaque page.
+      </span></span>
   </label>
 
   <button id="enregistrer">Enregistrer</button>
