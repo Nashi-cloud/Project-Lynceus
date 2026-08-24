@@ -65,4 +65,7 @@ document.getElementById("tester")?.addEventListener("click", async () => {
   }
 });
 
+const zoneVersion = document.getElementById("version") as HTMLElement;
+zoneVersion.textContent = `Lynceus — extension v${chrome.runtime.getManifest().version}`;
+
 void initialiser();
