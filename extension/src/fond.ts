@@ -10,6 +10,7 @@
 
 import { analyser, lookupParHash } from "./commun/api";
 import { hacherUrl } from "./commun/hachage";
+import { SuiviAnalyses } from "./commun/generations";
 import { chargerReglages } from "./commun/reglages";
 import type { EtatOnglet, Extraction, Grade, MessageVersFond } from "./commun/types";
 
@@ -26,22 +27,8 @@ const COULEURS_GRADE: Record<Grade, string> = {
 /** État d'analyse par onglet (mémoire du service worker). */
 const etats = new Map<number, EtatOnglet>();
 
-// Annulation : chaque lancement d'analyse incrémente sa génération ; un résultat qui arrive
-// après une annulation (ou un nouveau lancement) se reconnaît en comparant sa génération à la
-// dernière connue, et est silencieusement ignoré — nécessaire car chrome.scripting.executeScript
-// ne peut pas être interrompu en cours de route, contrairement à un fetch.
-const generations = new Map<number, number>();
-const controleurs = new Map<number, AbortController>();
-
-function nouvelleGeneration(tabId: number): number {
-  const generation = (generations.get(tabId) ?? 0) + 1;
-  generations.set(tabId, generation);
-  return generation;
-}
-
-function estGenerationCourante(tabId: number, generation: number): boolean {
-  return generations.get(tabId) === generation;
-}
+/** Analyses en vol (générations + annulation) — logique testable, cf. commun/generations.ts. */
+const suivi = new SuiviAnalyses();
 
 chrome.runtime.onInstalled.addListener((details) => {
   chrome.contextMenus.create({
@@ -94,9 +81,7 @@ chrome.runtime.onMessage.addListener((message: MessageVersFond, _expediteur, rep
     return false;
   }
   if (message.type === "lynceus:annuler") {
-    nouvelleGeneration(message.tabId); // invalide silencieusement tout résultat déjà en vol
-    controleurs.get(message.tabId)?.abort();
-    controleurs.delete(message.tabId);
+    suivi.annuler(message.tabId); // invalide tout résultat déjà en vol
     majEtat(message.tabId, { phase: "repos" });
     repondre({ ok: true });
     return false;
@@ -106,8 +91,7 @@ chrome.runtime.onMessage.addListener((message: MessageVersFond, _expediteur, rep
 
 chrome.tabs.onRemoved.addListener((tabId) => {
   etats.delete(tabId);
-  generations.delete(tabId);
-  controleurs.delete(tabId);
+  suivi.oublier(tabId);
 });
 
 // ---------- analyse ----------
@@ -123,19 +107,17 @@ async function lancerAnalyse(tabId: number): Promise<void> {
   const etatCourant = etats.get(tabId);
   if (etatCourant?.phase === "extraction" || etatCourant?.phase === "analyse") return; // déjà en cours
 
-  const generation = nouvelleGeneration(tabId);
-  const controleur = new AbortController();
-  controleurs.set(tabId, controleur);
+  const { generation, controleur } = suivi.demarrer(tabId);
 
   majEtat(tabId, { phase: "extraction", depuis: Date.now() });
   try {
     await chrome.scripting.executeScript({ target: { tabId }, files: ["extracteur.js"] });
-    if (!estGenerationCourante(tabId, generation)) return; // annulé pendant l'injection du script
+    if (!suivi.estCourante(tabId, generation)) return; // annulé pendant l'injection du script
     const resultats = await chrome.scripting.executeScript({
       target: { tabId },
       func: () => (globalThis as { __lynceusExtraire?: () => unknown }).__lynceusExtraire?.(),
     });
-    if (!estGenerationCourante(tabId, generation)) return; // annulé pendant l'extraction
+    if (!suivi.estCourante(tabId, generation)) return; // annulé pendant l'extraction
 
     const extraction = resultats[0]?.result as Extraction | undefined;
     if (!extraction) throw new Error("L'extraction n'a rien renvoyé.");
@@ -151,7 +133,7 @@ async function lancerAnalyse(tabId: number): Promise<void> {
       },
       controleur.signal,
     );
-    if (!estGenerationCourante(tabId, generation)) return; // annulé pendant l'appel réseau
+    if (!suivi.estCourante(tabId, generation)) return; // annulé pendant l'appel réseau
 
     majEtat(tabId, {
       phase: "ok",
@@ -162,11 +144,11 @@ async function lancerAnalyse(tabId: number): Promise<void> {
     poserBadge(tabId, reponse.carte.note.grade);
     appliquerBordureSelonGrade(tabId, reponse.carte.note.grade);
   } catch (erreur) {
-    if (!estGenerationCourante(tabId, generation)) return; // résultat d'une génération annulée
+    if (!suivi.estCourante(tabId, generation)) return; // résultat d'une génération annulée
     if (erreur instanceof DOMException && erreur.name === "AbortError") return; // annulation volontaire, silencieuse
     majEtat(tabId, { phase: "erreur", erreur: messageLisible(erreur) });
   } finally {
-    if (controleurs.get(tabId) === controleur) controleurs.delete(tabId);
+    suivi.terminer(tabId, controleur);
   }
 }
 

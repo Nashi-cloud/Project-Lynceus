@@ -5,19 +5,27 @@ import type { DemandeAnalyse, ReponseAnalyse, ReponseLookup } from "./types";
 
 /** Combine un délai (filet de sécurité) et une annulation externe (bouton « Annuler ») en un
  * seul signal — implémenté à la main plutôt qu'avec AbortSignal.any/timeout pour rester
- * indépendant des lacunes de typage DOM d'une version de TypeScript donnée. */
-function signalAvecDelai(delaiMs: number, externe?: AbortSignal): AbortSignal {
+ * indépendant des lacunes de typage DOM d'une version de TypeScript donnée.
+ *
+ * Retourne aussi `liberer()` : à appeler dès que la requête est terminée, succès compris.
+ * Sans cela le minuteur reste armé jusqu'à son échéance (jusqu'à plusieurs minutes) et
+ * maintient le service worker éveillé pour rien. */
+function signalAvecDelai(
+  delaiMs: number,
+  externe?: AbortSignal,
+): { signal: AbortSignal; liberer: () => void } {
   const controleur = new AbortController();
   const minuteur = setTimeout(
     () => controleur.abort(new DOMException("Délai dépassé", "TimeoutError")),
     delaiMs,
   );
-  controleur.signal.addEventListener("abort", () => clearTimeout(minuteur), { once: true });
+  const liberer = () => clearTimeout(minuteur);
+  controleur.signal.addEventListener("abort", liberer, { once: true });
   if (externe) {
     if (externe.aborted) controleur.abort(externe.reason);
     else externe.addEventListener("abort", () => controleur.abort(externe.reason), { once: true });
   }
-  return controleur.signal;
+  return { signal: controleur.signal, liberer };
 }
 
 async function requete<T>(
@@ -27,12 +35,10 @@ async function requete<T>(
   signalAnnulation?: AbortSignal,
 ): Promise<T> {
   const { instance } = await chargerReglages();
+  const { signal, liberer } = signalAvecDelai(delaiMs, signalAnnulation);
   let reponse: Response;
   try {
-    reponse = await fetch(`${instance.replace(/\/+$/, "")}${chemin}`, {
-      ...options,
-      signal: signalAvecDelai(delaiMs, signalAnnulation),
-    });
+    reponse = await fetch(`${instance.replace(/\/+$/, "")}${chemin}`, { ...options, signal });
   } catch (erreur) {
     if (erreur instanceof DOMException && erreur.name === "TimeoutError") {
       throw new Error(
@@ -46,6 +52,8 @@ async function requete<T>(
       `Instance Lynceus injoignable (${instance}). Le serveur est-il démarré ? ` +
         "L'adresse se règle dans les options de l'extension.",
     );
+  } finally {
+    liberer(); // succès comme échec : ne jamais laisser un minuteur armé derrière soi
   }
   if (!reponse.ok) {
     let detail = `HTTP ${reponse.status}`;

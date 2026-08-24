@@ -2,6 +2,12 @@
 
 Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension — utile pour vérifier qu'un rebuild a bien été rechargé.
 
+## 0.5.1 — 2026-08-24
+
+- **fix** : chaque requête réussie laissait un minuteur armé jusqu'à son échéance (jusqu'à 5 minutes), maintenant le service worker éveillé sans raison. Le minuteur est désormais libéré dans tous les cas, succès compris. Défaut révélé par les nouveaux tests, dont le processus refusait de se terminer.
+- **test** : 32 tests unitaires ajoutés (lanceur natif `node --test`) couvrant la normalisation d'URL, les réglages, le client API (délai, annulation, messages d'erreur) et le suivi des analyses en vol.
+- **refactor** : la logique d'annulation par génération quitte `fond.ts` pour `commun/generations.ts` (`SuiviAnalyses`), testable sans navigateur.
+
 ## 0.5.0 — 2026-08-24
 
 - **feat** : page d'accueil à l'installation, proposant explicitement la reconnaissance automatique (badge, panneau pré-rempli, contour) avec un bouton d'activation — jusqu'ici il fallait deviner l'existence des réglages et y cocher une case. Chrome exige qu'une demande de permission parte d'un clic réel : l'activation reste donc un geste, mais elle est désormais proposée au bon moment.
