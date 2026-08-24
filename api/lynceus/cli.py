@@ -19,6 +19,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from .normalisation import hacher_contenu
+
 app = typer.Typer(help="Lynceus — la vigie de l'information.", no_args_is_help=True)
 console = Console()
 
@@ -160,11 +162,16 @@ def calibrer(
     for colonne in ("Cas", "Attendu", "Obtenu", "Verdict"):
         table.add_column(colonne, overflow="fold")
 
-    rapport, graves, mineurs = [], 0, 0
+    rapport, graves, mineurs, ignores = [], 0, 0, 0
 
     for entree in entrees:
         etiquette = entree.get("titre") or entree.get("fichier") or entree.get("url") or "(sans titre)"
-        corps = _corps_demande(entree, racine)
+        try:
+            corps = _corps_demande(entree, racine)
+        except CaptureManquante as exc:
+            ignores += 1
+            table.add_row(etiquette, "-", "-", f"[yellow]ignoré : {exc}[/yellow]")
+            continue
         if corps is None:
             graves += 1
             table.add_row(etiquette, "-", "-", "[red]entrée invalide (ni fichier ni url)[/red]")
@@ -212,10 +219,12 @@ def calibrer(
 
     console.print(table)
     total = len(entrees)
-    conformes = total - graves - mineurs
+    mesures = total - ignores
+    conformes = mesures - graves - mineurs
     console.print(
-        f"\n[bold]{conformes}/{total} conformes[/bold] · "
+        f"\n[bold]{conformes}/{mesures} conformes[/bold] · "
         f"[yellow]{mineurs} écart(s) mineur(s)[/yellow] · [red]{graves} échec(s) grave(s)[/red]"
+        + (f" · [dim]{ignores} cas ignoré(s) faute de capture locale[/dim]" if ignores else "")
     )
     if rapport:
         modele = rapport[0] and httpx.get(f"{_api()}/v1/meta", timeout=30).json()
@@ -229,8 +238,44 @@ def calibrer(
         raise typer.Exit(1)
 
 
+class CaptureManquante(Exception):
+    """Capture absente ou divergente : le cas ne peut pas être mesuré de façon fiable."""
+
+
+def _lire_capture(entree: dict, racine: Path) -> str:
+    """Lit une capture locale et vérifie son empreinte.
+
+    Les captures de pages réelles ne sont pas versionnées (droit d'auteur) : seul le
+    manifeste l'est. L'empreinte garantit que tout le monde mesure bien le même contenu —
+    sans elle, deux contributeurs compareraient des résultats incomparables."""
+    chemin = racine / entree["capture"]
+    if not chemin.is_file():
+        raise CaptureManquante(
+            f"capture absente : {entree['capture']} — la recréer depuis {entree.get('url', '?')} "
+            "(voir corpus/README.md)"
+        )
+    contenu = chemin.read_text(encoding="utf-8")
+    attendu = entree.get("content_hash")
+    if attendu:
+        reel = hacher_contenu(contenu)
+        if reel != attendu:
+            raise CaptureManquante(
+                f"capture divergente : {entree['capture']} — empreinte {reel[:12]}… "
+                f"au lieu de {attendu[:12]}…. La page a changé depuis la capture de référence : "
+                "recapturer et réexaminer les attentes plutôt que de les ajuster à l'aveugle."
+            )
+    return contenu
+
+
 def _corps_demande(entree: dict, racine: Path) -> dict | None:
     """Construit le corps POST /v1/analyses depuis une entrée de corpus."""
+    if entree.get("capture"):
+        return {
+            "contenu_markdown": _lire_capture(entree, racine),
+            "titre": entree.get("titre"),
+            "url": entree.get("url"),
+            "langue": entree.get("langue", "fr"),
+        }
     if entree.get("fichier"):
         chemin = racine / entree["fichier"]
         contenu = chemin.read_text(encoding="utf-8")
@@ -397,6 +442,55 @@ def verifier_page(
         timeout=30,
     )
     console.print(f"[dim]Signalement {signalement_id} classé « {statut} » : {conclusion}[/dim]")
+
+
+@app.command()
+def capturer(
+    fichier: Path = typer.Argument(help="fichier Markdown contenant le texte de la page (ou - pour l'entrée standard)"),
+    url: str = typer.Option(help="URL d'origine de la page"),
+    titre: str = typer.Option(None, help="titre de la page"),
+    vers: Path = typer.Option(Path("corpus/captures"), help="dossier des captures"),
+    nom: str = typer.Option(None, help="nom du fichier de capture (déduit de l'URL sinon)"),
+):
+    """Enregistre une capture de page réelle pour le corpus, et affiche l'entrée à ajouter.
+
+    Les captures ne sont pas versionnées : reproduire des pages entières dans le dépôt
+    poserait un problème de droit d'auteur. Seul le manifeste (URL, date, empreinte,
+    attentes) l'est — l'empreinte garantissant que tous mesurent le même contenu."""
+    from datetime import date
+
+    contenu = sys.stdin.read() if str(fichier) == "-" else fichier.read_text(encoding="utf-8")
+    contenu = contenu.strip()
+    if len(contenu) < 200:
+        console.print("[red]Contenu trop court[/red] (200 caractères minimum) pour une analyse fiable.")
+        raise typer.Exit(2)
+
+    if not nom:
+        morceaux = [m for m in url.split("/") if m and "." not in m[:4]]
+        base = (morceaux[-1] if morceaux else "page")[:60]
+        nom = "".join(c if c.isalnum() or c in "-_" else "-" for c in base).strip("-") or "page"
+    if not nom.endswith(".md"):
+        nom += ".md"
+
+    vers.mkdir(parents=True, exist_ok=True)
+    chemin = vers / nom
+    chemin.write_text(contenu, encoding="utf-8")
+    empreinte = hacher_contenu(contenu)
+
+    console.print(f"[green]Capture enregistrée :[/green] {chemin} ({len(contenu)} caractères)")
+    console.print("\n[bold]Entrée à ajouter dans corpus/corpus.yaml[/bold] "
+                  "[dim](compléter les attentes APRÈS avoir analysé la page)[/dim] :\n")
+    console.print(
+        f"- capture: captures/{nom}\n"
+        f"  url: {url}\n"
+        + (f"  titre: {titre}\n" if titre else "")
+        + f"  content_hash: {empreinte}\n"
+        f"  capture_le: {date.today().isoformat()}\n"
+        f"  # categorie_attendue: …\n"
+        f"  # grade_attendu: [?, ?]\n"
+        f"  # techniques_attendues: []\n"
+        f"  # notes: pourquoi ce cas figure au corpus\n"
+    )
 
 
 @app.command()

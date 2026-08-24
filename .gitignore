@@ -27,3 +27,7 @@ lynceus-extension-v*.zip
 # Données locales
 *.sqlite3
 postgres-data/
+
+# Captures de pages réelles : non versionnées (droit d'auteur).
+# Seul le manifeste corpus/corpus.yaml l'est ; recréez-les avec `lynceus capturer`.
+corpus/captures/*.md

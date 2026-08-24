@@ -123,11 +123,40 @@
     accuser ce témoignage de manipulation serait exactement le ton à ne pas avoir.
 
 # ---------------------------------------------------------------------------
-# Pages réelles — à enrichir au fil du temps
+# Pages réelles capturées
 # ---------------------------------------------------------------------------
-# Exemple (décommenter et compléter) :
-#
-# - url: https://fr.wikipedia.org/wiki/Esprit_critique
-#   categorie_attendue: information
-#   grade_attendu: [A, B]
-#   notes: Article encyclopédique sourcé — vérifié le 2026-08-23, grade A obtenu.
+# Les captures ne sont PAS versionnées (droit d'auteur) : seul ce manifeste l'est.
+# Recréez-les avec `lynceus capturer` (voir README) ; l'empreinte content_hash garantit
+# que tout le monde mesure le même contenu. Un cas sans capture locale est ignoré, jamais
+# compté comme un échec.
+
+- capture: captures/wikipedia-biais-confirmation.md
+  url: https://fr.wikipedia.org/wiki/Biais_de_confirmation
+  titre: Biais de confirmation — Wikipédia
+  content_hash: c9efee992b48b58c714a92272e011caef73c140b9312532ee580d2c8356d6a49
+  capture_le: 2026-08-24
+  categorie_attendue: information
+  grade_attendu: [A, B]
+  techniques_interdites: [absence_de_sources, jargon_pseudo_scientifique, autorite_anonyme]
+  notes: |
+    Référence haute : article encyclopédique dense, sourcé, au vocabulaire scientifique.
+    Doit être bien noté sans qu'aucune technique ne soit relevée. Contenu sous licence
+    libre (CC BY-SA), donc reproductible sans réserve — contrairement aux autres captures.
+    Mesuré le 2026-08-24 (glm-5.2, prompt 0.1.1) : information, A (83), 0 technique.
+
+- capture: captures/sott-changements-terrestres.md
+  url: https://fr.sott.net/article/44562-Resume-SOTT-des-changements-terrestres-Juin-2026-Conditions-meteorologiques-extremes-revolte-de-la-planete-et-boules-de-feu
+  titre: Résumé SOTT des changements terrestres - Juin 2026
+  content_hash: 2b6f5d49e2384b0d8d928661368d45369dfde42454254ade549d481b5e4719a6
+  capture_le: 2026-08-24
+  categories_acceptables: [theorie_du_complot, pseudo_science]
+  grade_attendu: [D, E]
+  techniques_attendues: [verite_cachee]
+  notes: |
+    Cas réel le plus précieux du corpus : accumulation de faits vérifiables (séismes,
+    éruptions solaires, sources NOAA et USGS réelles) reliés par un récit implicite qui
+    contredit le consensus climatique. Un analyseur naïf verrait des sources sérieuses et
+    noterait bien ; la difficulté est de reconnaître le procédé sans nier les faits cités.
+    Une seule technique exigée — `verite_cachee`, la plus stable : deux modèles différents
+    (sonnet-5 puis glm-5.2) l'ont relevée, tandis que le reste de leurs détections variait.
+    Mesuré le 2026-08-24 (glm-5.2, prompt 0.1.1) : theorie_du_complot, D (35), 6 techniques.
