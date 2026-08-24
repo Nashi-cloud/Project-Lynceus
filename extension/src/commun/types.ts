@@ -68,14 +68,15 @@ export interface DemandeAnalyse {
 /** État d'analyse d'un onglet, tenu par le service worker, affiché par le panneau. */
 export type EtatOnglet =
   | { phase: "repos" }
-  | { phase: "extraction" }
-  | { phase: "analyse" }
+  | { phase: "extraction"; depuis: number }
+  | { phase: "analyse"; depuis: number }
   | { phase: "ok"; carte: CarteAnalyse; enCache: boolean; rejetees: number }
   | { phase: "erreur"; erreur: string };
 
 export type MessageVersFond =
   | { type: "lynceus:etat"; tabId: number }
-  | { type: "lynceus:analyser"; tabId: number };
+  | { type: "lynceus:analyser"; tabId: number }
+  | { type: "lynceus:annuler"; tabId: number };
 
 export interface MessageVersPanneau {
   type: "lynceus:maj";

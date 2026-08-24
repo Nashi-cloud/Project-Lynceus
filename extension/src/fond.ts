@@ -26,6 +26,23 @@ const COULEURS_GRADE: Record<Grade, string> = {
 /** État d'analyse par onglet (mémoire du service worker). */
 const etats = new Map<number, EtatOnglet>();
 
+// Annulation : chaque lancement d'analyse incrémente sa génération ; un résultat qui arrive
+// après une annulation (ou un nouveau lancement) se reconnaît en comparant sa génération à la
+// dernière connue, et est silencieusement ignoré — nécessaire car chrome.scripting.executeScript
+// ne peut pas être interrompu en cours de route, contrairement à un fetch.
+const generations = new Map<number, number>();
+const controleurs = new Map<number, AbortController>();
+
+function nouvelleGeneration(tabId: number): number {
+  const generation = (generations.get(tabId) ?? 0) + 1;
+  generations.set(tabId, generation);
+  return generation;
+}
+
+function estGenerationCourante(tabId: number, generation: number): boolean {
+  return generations.get(tabId) === generation;
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: MENU_ANALYSER,
@@ -58,10 +75,22 @@ chrome.runtime.onMessage.addListener((message: MessageVersFond, _expediteur, rep
     repondre({ ok: true });
     return false;
   }
+  if (message.type === "lynceus:annuler") {
+    nouvelleGeneration(message.tabId); // invalide silencieusement tout résultat déjà en vol
+    controleurs.get(message.tabId)?.abort();
+    controleurs.delete(message.tabId);
+    majEtat(message.tabId, { phase: "repos" });
+    repondre({ ok: true });
+    return false;
+  }
   return false;
 });
 
-chrome.tabs.onRemoved.addListener((tabId) => etats.delete(tabId));
+chrome.tabs.onRemoved.addListener((tabId) => {
+  etats.delete(tabId);
+  generations.delete(tabId);
+  controleurs.delete(tabId);
+});
 
 // ---------- analyse ----------
 
@@ -76,24 +105,36 @@ async function lancerAnalyse(tabId: number): Promise<void> {
   const etatCourant = etats.get(tabId);
   if (etatCourant?.phase === "extraction" || etatCourant?.phase === "analyse") return; // déjà en cours
 
-  majEtat(tabId, { phase: "extraction" });
+  const generation = nouvelleGeneration(tabId);
+  const controleur = new AbortController();
+  controleurs.set(tabId, controleur);
+
+  majEtat(tabId, { phase: "extraction", depuis: Date.now() });
   try {
     await chrome.scripting.executeScript({ target: { tabId }, files: ["extracteur.js"] });
+    if (!estGenerationCourante(tabId, generation)) return; // annulé pendant l'injection du script
     const resultats = await chrome.scripting.executeScript({
       target: { tabId },
       func: () => (globalThis as { __lynceusExtraire?: () => unknown }).__lynceusExtraire?.(),
     });
+    if (!estGenerationCourante(tabId, generation)) return; // annulé pendant l'extraction
+
     const extraction = resultats[0]?.result as Extraction | undefined;
     if (!extraction) throw new Error("L'extraction n'a rien renvoyé.");
     if (!extraction.ok) throw new Error(extraction.erreur);
 
-    majEtat(tabId, { phase: "analyse" });
-    const reponse = await analyser({
-      url: extraction.url,
-      contenu_markdown: extraction.markdown,
-      titre: extraction.titre ?? undefined,
-      langue: extraction.langue ?? undefined,
-    });
+    majEtat(tabId, { phase: "analyse", depuis: Date.now() });
+    const reponse = await analyser(
+      {
+        url: extraction.url,
+        contenu_markdown: extraction.markdown,
+        titre: extraction.titre ?? undefined,
+        langue: extraction.langue ?? undefined,
+      },
+      controleur.signal,
+    );
+    if (!estGenerationCourante(tabId, generation)) return; // annulé pendant l'appel réseau
+
     majEtat(tabId, {
       phase: "ok",
       carte: reponse.carte,
@@ -103,7 +144,11 @@ async function lancerAnalyse(tabId: number): Promise<void> {
     poserBadge(tabId, reponse.carte.note.grade);
     appliquerBordureSelonGrade(tabId, reponse.carte.note.grade);
   } catch (erreur) {
+    if (!estGenerationCourante(tabId, generation)) return; // résultat d'une génération annulée
+    if (erreur instanceof DOMException && erreur.name === "AbortError") return; // annulation volontaire, silencieuse
     majEtat(tabId, { phase: "erreur", erreur: messageLisible(erreur) });
+  } finally {
+    if (controleurs.get(tabId) === controleur) controleurs.delete(tabId);
   }
 }
 

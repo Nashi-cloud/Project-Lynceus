@@ -26,6 +26,20 @@ const DIMENSIONS: [keyof CarteAnalyse["dimensions"], string][] = [
 
 const app = document.getElementById("app") as HTMLElement;
 let ongletCourant: number | null = null;
+let intervalleMinuteur: ReturnType<typeof setInterval> | undefined;
+
+function arreterMinuteur(): void {
+  if (intervalleMinuteur !== undefined) {
+    clearInterval(intervalleMinuteur);
+    intervalleMinuteur = undefined;
+  }
+}
+
+function formaterDuree(ms: number): string {
+  const secondes = Math.max(0, Math.floor(ms / 1000));
+  const minutes = Math.floor(secondes / 60);
+  return `${minutes}:${String(secondes % 60).padStart(2, "0")}`;
+}
 
 // ---------- fabrique DOM (sûre par construction) ----------
 
@@ -73,15 +87,29 @@ function rendreRepos(): void {
   app.append(bloc);
 }
 
-function rendreAttente(phase: "extraction" | "analyse"): void {
+function rendreAttente(phase: "extraction" | "analyse", depuis: number): void {
   app.replaceChildren();
   const bloc = el("div", "bloc-centre");
   bloc.append(el("div", "spinner"));
   bloc.append(el("div", undefined,
     phase === "extraction"
       ? "Extraction du contenu, localement dans votre navigateur…"
-      : "Analyse en cours — le modèle lit la page (10 à 60 secondes)…"));
+      : "Analyse en cours — le modèle lit la page…"));
+  const minuteur = el("div", "minuteur", formaterDuree(Date.now() - depuis));
+  bloc.append(minuteur);
+
+  const boutonAnnuler = el("button", "bouton bouton-secondaire", "Annuler");
+  boutonAnnuler.addEventListener("click", () => {
+    if (ongletCourant !== null) {
+      chrome.runtime.sendMessage({ type: "lynceus:annuler", tabId: ongletCourant }).catch(() => {});
+    }
+  });
+  bloc.append(boutonAnnuler);
   app.append(bloc);
+
+  intervalleMinuteur = setInterval(() => {
+    minuteur.textContent = formaterDuree(Date.now() - depuis);
+  }, 1000);
 }
 
 function rendreErreur(message: string): void {
@@ -183,10 +211,11 @@ function rendreTechnique(technique: Technique): HTMLElement {
 // ---------- orchestration ----------
 
 function rendre(etat: EtatOnglet): void {
+  arreterMinuteur(); // ne persiste que le temps d'un rendu "extraction"/"analyse"
   switch (etat.phase) {
     case "repos": rendreRepos(); break;
     case "extraction":
-    case "analyse": rendreAttente(etat.phase); break;
+    case "analyse": rendreAttente(etat.phase, etat.depuis); break;
     case "ok": rendreCarte(etat.carte, etat.enCache, etat.rejetees); break;
     case "erreur": rendreErreur(etat.erreur); break;
   }

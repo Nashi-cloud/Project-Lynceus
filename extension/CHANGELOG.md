@@ -2,6 +2,13 @@
 
 Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension — utile pour vérifier qu'un rebuild a bien été rechargé.
 
+## 0.4.0 — 2026-08-24
+
+- **fix** : aucun délai limite sur l'appel réseau d'une analyse — une connexion bloquée faisait tourner le panneau indéfiniment, sans retour ni moyen d'agir. Signalé après un cas réel sur YouTube.
+- **feat** : délai configurable dans les réglages (défaut 300 s, filet de sécurité — le serveur a son propre plafond à 360 s au pire avec retry), au-delà duquel une analyse bloquée est abandonnée automatiquement avec un message explicite.
+- **feat** : chronomètre visible dans le panneau pendant l'extraction et l'analyse, et bouton « Annuler » à tout moment — plus besoin d'attendre en aveugle.
+- Aucun risque de coût incontrôlé côté fournisseur LLM : le serveur ne retente jamais plus d'une fois une analyse (180 s × 2 maximum), documenté dans `api/.env.example` (`LYNCEUS_LLM_TIMEOUT_S`).
+
 ## 0.3.0 — 2026-08-24
 
 - **fix** : le titre affiché pouvait rester celui de la page précédente sur un site à navigation interne (SPA — YouTube…), le contenu du corps de page et le `<title>` du document n'étant pas mis à jour au même instant par le site. L'extraction attend désormais que le titre se stabilise avant de lire la page.

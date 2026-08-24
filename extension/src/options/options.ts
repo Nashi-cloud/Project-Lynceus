@@ -4,6 +4,7 @@
 import { chargerReglages, enregistrerReglages } from "../commun/reglages";
 
 const champInstance = document.getElementById("instance") as HTMLInputElement;
+const champDelai = document.getElementById("delai") as HTMLInputElement;
 const caseBadge = document.getElementById("badge") as HTMLInputElement;
 const zoneEtat = document.getElementById("etat") as HTMLElement;
 const zoneInfos = document.getElementById("instance-infos") as HTMLElement;
@@ -19,6 +20,7 @@ const DEMANDE_PERMISSION: chrome.permissions.Permissions = {
 async function initialiser(): Promise<void> {
   const reglages = await chargerReglages();
   champInstance.value = reglages.instance;
+  champDelai.value = String(reglages.delaiAnalyseS);
   const permission = await chrome.permissions.contains(DEMANDE_PERMISSION);
   caseBadge.checked = reglages.badgeActif && permission;
 }
@@ -37,7 +39,9 @@ caseBadge.addEventListener("change", async () => {
 
 document.getElementById("enregistrer")?.addEventListener("click", async () => {
   const instance = champInstance.value.trim().replace(/\/+$/, "") || "http://localhost:8000";
-  await enregistrerReglages({ instance, badgeActif: caseBadge.checked });
+  const delaiAnalyseS = Math.min(1800, Math.max(30, Number(champDelai.value) || 300));
+  champDelai.value = String(delaiAnalyseS);
+  await enregistrerReglages({ instance, badgeActif: caseBadge.checked, delaiAnalyseS });
   zoneEtat.textContent = "Réglages enregistrés.";
   setTimeout(() => (zoneEtat.textContent = ""), 2500);
 });
