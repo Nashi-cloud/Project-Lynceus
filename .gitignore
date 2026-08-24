@@ -12,6 +12,7 @@ venv/
 node_modules/
 dist/
 *.tsbuildinfo
+lynceus-extension-v*.zip
 
 # Environnement & secrets
 .env
