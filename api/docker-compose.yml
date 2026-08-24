@@ -1,0 +1,34 @@
+# Le « kit » Lynceus auto-hébergé : API + PostgreSQL.
+#   cd api && LYNCEUS_LLM_API_KEY=sk-or-... docker compose up --build
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: lynceus
+      POSTGRES_PASSWORD: lynceus
+      POSTGRES_DB: lynceus
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lynceus"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
+  api:
+    build:
+      context: ..
+      dockerfile: api/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      LYNCEUS_DATABASE_URL: postgresql+psycopg://lynceus:lynceus@db:5432/lynceus
+      LYNCEUS_LLM_API_KEY: ${LYNCEUS_LLM_API_KEY:?définir la clé du fournisseur LLM}
+      LYNCEUS_LLM_BASE_URL: ${LYNCEUS_LLM_BASE_URL:-https://openrouter.ai/api/v1}
+      LYNCEUS_LLM_MODEL: ${LYNCEUS_LLM_MODEL:-anthropic/claude-sonnet-5}
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres-data:

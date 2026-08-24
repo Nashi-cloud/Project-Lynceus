@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Réglages — Lynceus</title>
+  <style>
+    :root { --encre: #1c2733; --douce: #5b6b7b; --trait: #e3e8ee; --accent: #16324f; --fond: #fff; --carte: #f7f9fb; }
+    @media (prefers-color-scheme: dark) {
+      :root { --encre: #e6ebf0; --douce: #93a1af; --trait: #2a323b; --accent: #9fc2e0; --fond: #14181d; --carte: #1b2129; }
+    }
+    body { margin: 0; background: var(--fond); color: var(--encre);
+           font: 14px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 640px; margin: 0 auto; padding: 32px 20px; }
+    h1 { font-size: 20px; } h2 { font-size: 15px; margin-top: 28px; }
+    .aide { color: var(--douce); font-size: 12.5px; }
+    input[type="url"] { width: 100%; padding: 8px 10px; border: 1px solid var(--trait); border-radius: 6px;
+                        background: var(--fond); color: var(--encre); font: inherit; }
+    label.interrupteur { display: flex; gap: 10px; align-items: flex-start; margin-top: 8px; }
+    button { appearance: none; border: 0; border-radius: 6px; cursor: pointer; background: var(--accent);
+             color: var(--fond); font: inherit; font-weight: 600; padding: 8px 16px; margin-top: 16px; }
+    button.secondaire { background: transparent; color: var(--accent); border: 1px solid var(--trait); }
+    #etat, #instance-infos { margin-top: 12px; font-size: 13px; }
+    #instance-infos { background: var(--carte); border: 1px solid var(--trait); border-radius: 8px; padding: 10px 12px; white-space: pre-line; }
+    .cache { display: none; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>🔭 Lynceus — réglages</h1>
+
+  <h2>Instance Lynceus</h2>
+  <p class="aide">L'adresse du serveur qui analyse et tient l'annuaire. Vous pouvez utiliser la vôtre :
+    le kit serveur est libre et auto-hébergeable.</p>
+  <input type="url" id="instance" placeholder="http://localhost:8000">
+  <button class="secondaire" id="tester">Tester la connexion</button>
+  <div id="instance-infos" class="cache"></div>
+
+  <h2>Badge et contour passifs</h2>
+  <label class="interrupteur">
+    <input type="checkbox" id="badge">
+    <span>Afficher la note sur l'icône, et un contour discret sur les pages jugées à risque (D/E),
+      quand une page visitée est déjà dans l'annuaire — sans avoir à cliquer sur « Analyser ».<br>
+      <span class="aide">
+        Ce que Lynceus <strong>envoie au réseau</strong> ne change pas : uniquement un hash
+        (empreinte) de l'adresse de la page, jamais l'adresse elle-même ni son contenu, et rien
+        n'est journalisé. Le contenu d'une page n'est envoyé que lorsque vous cliquez sur
+        « Analyser cette page ».<br><br>
+        Ce que change ce réglage : Chrome vous demandera d'autoriser Lynceus à
+        <strong>accéder à toutes vos pages</strong> (permission technique du navigateur) — c'est
+        ce qui permet de connaître l'adresse en continu (pour le badge) et de poser/retirer le
+        contour, y compris sur les sites à navigation interne comme YouTube. Cette permission
+        rend aussi le bouton « Analyser cette page » du panneau fiable après un changement de page
+        (l'accès ponctuel accordé par le clic droit expire à chaque navigation).<br><br>
+        Désactivé par défaut. Sans ce réglage, tout reste au minimum : un geste explicite
+        (clic droit) est nécessaire à chaque page.
+      </span></span>
+  </label>
+
+  <h2>Filet de sécurité réseau</h2>
+  <p class="aide">Délai maximum d'une analyse avant abandon automatique. Un chronomètre et un
+    bouton « Annuler » restent de toute façon disponibles dans le panneau pendant l'attente —
+    ce délai n'est qu'un dernier recours si la connexion reste bloquée sans jamais répondre.
+    Le serveur a son propre plafond (par défaut 180 s, jusqu'à 360 s avec une nouvelle tentative
+    automatique) : gardez cette valeur nettement au-dessus pour ne jamais couper une analyse
+    légitime en cours.</p>
+  <input type="number" id="delai" min="30" max="1800" step="10"> secondes
+
+  <button id="enregistrer">Enregistrer</button>
+  <div id="etat" role="status"></div>
+
+  <p class="aide" id="version" style="margin-top:32px;border-top:1px solid var(--trait);padding-top:12px;"></p>
+</main>
+<script src="options.js"></script>
+</body>
+</html>
