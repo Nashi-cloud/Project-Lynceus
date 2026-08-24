@@ -18,6 +18,7 @@ lynceus-extension-v*.zip
 .env
 .env.*
 !.env.example
+!.env.prod.example
 
 # IDE / OS
 .idea/

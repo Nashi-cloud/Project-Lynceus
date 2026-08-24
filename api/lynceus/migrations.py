@@ -42,7 +42,8 @@ TABLES_INITIALES = {"analyses", "pages", "domaines"}
 
 
 def _configuration(url_base: str) -> Config:
-    config = Config(str(FICHIER_ALEMBIC))
+    # Config() sans fichier reste valide : toutes les options utiles sont posées ci-dessous.
+    config = Config(str(FICHIER_ALEMBIC) if FICHIER_ALEMBIC.is_file() else None)
     config.set_main_option("script_location", str(RACINE_API / "lynceus" / "migrations_alembic"))
     config.set_main_option("sqlalchemy.url", url_base.replace("%", "%%"))
     return config

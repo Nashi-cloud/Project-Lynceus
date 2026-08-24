@@ -1,0 +1,78 @@
+# Déploiement de production de Lynceus.
+#
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# L'image vient du registre de la forge, comme les autres services : c'est l'artefact
+# exact que la CI a validé, et l'étiquette `v<VERSION>` rend le retour arrière possible.
+# Étiquettes disponibles : `dev`, `next`, `latest`, `v<VERSION>`.
+#
+# Secrets attendus dans un fichier .env à côté de ce compose (voir DEPLOIEMENT.md) :
+#   POSTGRES_PASSWORD, LYNCEUS_LLM_API_KEY, LYNCEUS_ADMIN_TOKEN, LYNCEUS_CLE_PUBLIQUE
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: lynceus-db
+    environment:
+      POSTGRES_DB: lynceus
+      POSTGRES_USER: lynceus
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?mot de passe PostgreSQL requis}
+    volumes:
+      - lynceus-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lynceus"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - lynceus-net
+
+  api:
+    image: ${LYNCEUS_IMAGE:-votre-registre.exemple/lynceus-api:latest}
+    pull_policy: always
+    container_name: lynceus-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      LYNCEUS_DATABASE_URL: postgresql+psycopg://lynceus:${POSTGRES_PASSWORD}@db:5432/lynceus
+
+      # --- Modèle d'analyse ---
+      LYNCEUS_LLM_BASE_URL: ${LYNCEUS_LLM_BASE_URL:-https://openrouter.ai/api/v1}
+      LYNCEUS_LLM_API_KEY: ${LYNCEUS_LLM_API_KEY:?clé du fournisseur LLM requise}
+      LYNCEUS_LLM_MODEL: ${LYNCEUS_LLM_MODEL:-z-ai/glm-5.2}
+
+      # --- Accès ---
+      # Instance exposée : une clé publique DOIT être définie, sinon n'importe qui
+      # pourrait déclencher des analyses facturées sur la clé LLM ci-dessus.
+      LYNCEUS_CLE_PUBLIQUE: ${LYNCEUS_CLE_PUBLIQUE:?clé publique requise pour une instance exposée}
+      LYNCEUS_CLES_REVOQUEES: ${LYNCEUS_CLES_REVOQUEES:-}
+      LYNCEUS_ADMIN_TOKEN: ${LYNCEUS_ADMIN_TOKEN:-}
+
+      # --- Garde-fous ---
+      LYNCEUS_RATE_LIMIT_ANALYSES: ${LYNCEUS_RATE_LIMIT_ANALYSES:-10}
+      LYNCEUS_CONTENU_MAX_CARS: ${LYNCEUS_CONTENU_MAX_CARS:-60000}
+      # L'extension appelle depuis chrome-extension://<id> : l'origine varie d'une
+      # installation à l'autre, on ne peut donc pas la restreindre utilement ici.
+      # La protection repose sur les clés d'accès, pas sur le CORS.
+      LYNCEUS_CORS_ORIGINS: ${LYNCEUS_CORS_ORIGINS:-*}
+    ports:
+      # Écoute sur l'adresse Tailscale uniquement : l'exposition publique passe par
+      # Tailscale Serve/Funnel, qui apporte HTTPS (voir DEPLOIEMENT.md).
+      - "${LYNCEUS_BIND:-127.0.0.1}:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/sante', timeout=5).status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - lynceus-net
+
+volumes:
+  lynceus-db-data:
+
+networks:
+  lynceus-net:
