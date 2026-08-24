@@ -21,6 +21,7 @@ dependencies = [
     "trafilatura>=1.9",
     "pyyaml>=6.0",
     "alembic>=1.13",
+    "cryptography>=42",
 ]
 
 [project.optional-dependencies]
@@ -31,6 +32,9 @@ lynceus = "lynceus.cli:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["lynceus"]
+# alembic.ini accompagne le paquet pour que la commande `alembic` reste utilisable dans
+# une installation ou une image ; l'application, elle, sait s'en passer.
+force-include = { "alembic.ini" = "alembic.ini" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -2,6 +2,7 @@
 (LYNCEUS_DATABASE_URL), jamais une URL codée en dur dans alembic.ini."""
 
 from logging.config import fileConfig
+from pathlib import Path
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
@@ -10,7 +11,9 @@ from lynceus.config import parametres
 from lynceus.modeles import Base
 
 config = context.config
-if config.config_file_name is not None:
+# alembic.ini n'est pas toujours présent (installation en paquet, image Docker) : il ne
+# porte que la configuration du journal, son absence ne doit rien empêcher.
+if config.config_file_name is not None and Path(config.config_file_name).is_file():
     fileConfig(config.config_file_name)
 
 # L'appelant (lynceus/migrations.py) fournit déjà l'URL du moteur de l'application : ne

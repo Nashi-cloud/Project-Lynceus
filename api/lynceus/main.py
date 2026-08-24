@@ -15,7 +15,7 @@ import jsonschema
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from . import VERSION_SCHEMA, __version__, annuaire, cles, extraction
@@ -467,6 +467,19 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             if profil is None:
                 raise HTTPException(404, "Domaine inconnu de l'annuaire.")
             return profil
+
+    @app.get("/sante")
+    def sante():
+        """Point de santé pour l'orchestrateur — vérifie la base, pas seulement le processus.
+
+        Un serveur qui répond mais dont la base est injoignable doit être signalé en panne,
+        sinon l'orchestrateur le laisserait recevoir du trafic qu'il ne peut pas servir."""
+        try:
+            with fabrique() as session:
+                session.execute(text("SELECT 1"))
+        except Exception as exc:  # noqa: BLE001 — on veut signaler toute panne, quelle qu'elle soit
+            raise HTTPException(503, f"Base de données injoignable : {exc}") from exc
+        return {"statut": "ok", "version": __version__}
 
     @app.get("/v1/meta")
     def meta():

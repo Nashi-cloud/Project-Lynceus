@@ -186,3 +186,32 @@ def test_contenu_complet_sans_avertissement_de_troncature(appli):
         "url": "https://exemple.fr/article-court", "contenu_markdown": CONTENU_TEST,
     })
     assert AVERTISSEMENT_TRONQUE not in reponse.json()["carte"]["avertissements"]
+
+
+def test_point_de_sante(appli):
+    """L'orchestrateur s'en sert pour savoir si l'instance peut servir du trafic."""
+    client, _ = appli
+    reponse = client.get("/sante")
+    assert reponse.status_code == 200
+    assert reponse.json()["statut"] == "ok"
+
+
+def test_point_de_sante_signale_une_base_injoignable(tmp_path, monkeypatch):
+    """Un processus vivant mais sans base doit être signalé en panne : sinon
+    l'orchestrateur lui enverrait du trafic qu'il ne peut pas servir."""
+    import json as json_
+
+    from lynceus.main import creer_application
+    from lynceus.moteur import llm
+    from tests.conftest import SORTIE_LLM, parametres_test
+
+    monkeypatch.setattr(llm, "appeler", lambda m, p, schema_json=None: json_.dumps(SORTIE_LLM))
+    client = TestClient(creer_application(parametres_test(tmp_path)))
+
+    # On coupe la base après démarrage, comme une panne en cours d'exploitation.
+    def base_hs(*args, **kwargs):
+        raise RuntimeError("connexion perdue")
+
+    monkeypatch.setattr("sqlalchemy.orm.Session.execute", base_hs)
+    reponse = client.get("/sante")
+    assert reponse.status_code == 503
