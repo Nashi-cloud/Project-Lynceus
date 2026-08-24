@@ -25,6 +25,11 @@ from .modeles import Analyse, Base
 from .moteur import llm, notation, prompt, validation
 from .normalisation import extraire_domaine, hacher_contenu, hacher_url, normaliser_url
 
+AVERTISSEMENT_TRONQUE = (
+    "Cet article dépassait la taille analysable : seul son début a été examiné. "
+    "La suite du texte peut contenir des éléments non pris en compte ici."
+)
+
 AVERTISSEMENT_IA = (
     "Cette analyse est produite par une intelligence artificielle : elle peut comporter des erreurs. "
     "Elle décrit des procédés rhétoriques, pas la valeur des personnes qui partagent ce contenu."
@@ -59,6 +64,10 @@ class DemandeAnalyse(BaseModel):
     contenu_markdown: str | None = None
     titre: str | None = Field(default=None, max_length=500)
     langue: str | None = Field(default=None, max_length=10)
+    # Déclaré par le client quand la page dépassait la limite de l'instance. La carte étant
+    # mise en cache et resservie à d'autres, elle DOIT porter la mention : sans quoi une
+    # analyse partielle circulerait comme si elle couvrait tout l'article.
+    tronque: bool = False
 
 
 def creer_application(p: Parametres | None = None) -> FastAPI:
@@ -137,7 +146,7 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
         raise HTTPException(502, f"Sortie du modèle invalide après retry : {derniere_erreur}")
 
     def assembler_carte(sortie: dict, *, url: str | None, titre: str | None, langue: str | None,
-                        version: str, duree_ms: int) -> dict:
+                        version: str, duree_ms: int, tronque: bool = False) -> dict:
         """La carte finale : matière du LLM + note calculée par le SERVEUR + métadonnées de transparence."""
         dimensions = sortie["dimensions"]
         score = notation.calculer_score(dimensions)
@@ -154,7 +163,11 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             "points_positifs": sortie["points_positifs"],
             "questions_a_se_poser": sortie["questions_a_se_poser"],
             "resume_neutre": sortie["resume_neutre"],
-            "avertissements": list(dict.fromkeys([*sortie.get("avertissements", []), AVERTISSEMENT_IA])),
+            "avertissements": list(dict.fromkeys([
+                *sortie.get("avertissements", []),
+                *([AVERTISSEMENT_TRONQUE] if tronque else []),
+                AVERTISSEMENT_IA,
+            ])),
             "meta": {
                 "modele": p.llm_model,
                 "fournisseur": urlsplit(p.llm_base_url).hostname or "inconnu",
@@ -370,7 +383,7 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             sortie, rejets = appeler_moteur(url_brute, titre, demande.langue, contenu, version)
             duree_ms = int((time.monotonic() - debut) * 1000)
             carte = assembler_carte(sortie, url=url_brute, titre=titre, langue=demande.langue,
-                                    version=version, duree_ms=duree_ms)
+                                    version=version, duree_ms=duree_ms, tronque=demande.tronque)
 
             analyse = Analyse(
                 content_hash=content_hash,

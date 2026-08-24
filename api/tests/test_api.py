@@ -161,3 +161,28 @@ def test_retry_sur_json_invalide(tmp_path, monkeypatch):
     reponse = client.post("/v1/analyses", json={"url": URL_TEST, "contenu_markdown": CONTENU_TEST})
     assert reponse.status_code == 200
     assert tentatives["n"] == 2  # l'erreur a été renvoyée au modèle, qui a corrigé
+
+
+def test_contenu_tronque_signale_dans_la_carte(appli):
+    """La carte est mise en cache et resservie à d'autres lecteurs : une analyse portant sur
+    un texte partiel doit le dire, sinon elle circulerait comme si elle couvrait tout."""
+    from lynceus.main import AVERTISSEMENT_TRONQUE
+
+    client, _ = appli
+    reponse = client.post("/v1/analyses", json={
+        "url": "https://exemple.fr/long-article",
+        "contenu_markdown": CONTENU_TEST,
+        "tronque": True,
+    })
+    assert reponse.status_code == 200
+    assert AVERTISSEMENT_TRONQUE in reponse.json()["carte"]["avertissements"]
+
+
+def test_contenu_complet_sans_avertissement_de_troncature(appli):
+    from lynceus.main import AVERTISSEMENT_TRONQUE
+
+    client, _ = appli
+    reponse = client.post("/v1/analyses", json={
+        "url": "https://exemple.fr/article-court", "contenu_markdown": CONTENU_TEST,
+    })
+    assert AVERTISSEMENT_TRONQUE not in reponse.json()["carte"]["avertissements"]

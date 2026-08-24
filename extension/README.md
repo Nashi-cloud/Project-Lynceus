@@ -25,7 +25,8 @@ Puis dans Chrome : `chrome://extensions` → activer le **Mode développeur** �
 1. **Analyser** : clic droit sur une page → « 🔭 Analyser cette page avec Lynceus » (ou clic sur l'icône puis bouton). Le panneau latéral affiche la carte : indice A–E, catégorie, techniques relevées avec extraits, points positifs, questions à se poser.
 2. **Badge passif** (optionnel, désactivé par défaut) : à activer dans les réglages. Quand une page visitée est déjà dans l'annuaire, sa note s'affiche sur l'icône — seul un hash SHA-256 de l'URL normalisée est envoyé, jamais l'URL ni le contenu.
 3. **Réglages** : adresse de l'instance (auto-hébergement de premier ordre), test de connexion affichant la transparence de l'instance (modèle, version du prompt, taille du référentiel).
-4. **Contour de page** : sur une page jugée D ou E (analysée explicitement, ou reconnue via le badge passif si activé), un contour discret (couleur reprise de la pastille — orange sourd/rouge sourd, pas de rouge criard) signale visuellement la page. Retiré automatiquement à la navigation ou si une ré-analyse donne un meilleur grade.
+4. **Profil du site** : sur une page pas encore analysée, le panneau indique ce que l'annuaire sait déjà du domaine (nombre de pages analysées, indice moyen, répartition). L'information est gratuite et immédiate ; elle est présentée comme portant sur *le site*, jamais sur la page en cours, dont le contenu n'a pas été lu.
+5. **Contour de page** : sur une page jugée D ou E (analysée explicitement, ou reconnue via le badge passif si activé), un contour discret (couleur reprise de la pastille — orange sourd/rouge sourd, pas de rouge criard) signale visuellement la page. Retiré automatiquement à la navigation ou si une ré-analyse donne un meilleur grade.
 
 ## Permissions — philosophie
 
