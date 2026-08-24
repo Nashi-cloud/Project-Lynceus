@@ -86,9 +86,23 @@ Plusieurs `pages` peuvent pointer la même `analyses` (contenu dupliqué). `pgve
 
 ## Évolution du schéma
 
-`Base.metadata.create_all()` crée les tables manquantes mais ne touche jamais à celles qui existent : une instance déjà déployée casserait à chaque ajout de colonne. `lynceus/migrations.py` complète donc le démarrage en ajoutant les colonnes déclarées dans les modèles mais absentes en base (`ALTER TABLE ADD COLUMN`, supporté par SQLite comme PostgreSQL), sans toucher aux données existantes.
+Les migrations sont gérées par **Alembic** et appliquées **au démarrage** : une instance auto-hébergée se met à jour sans commande manuelle. Trois situations sont couvertes et testées :
 
-**Limite assumée** : seuls les *ajouts* de colonnes sont couverts. Un renommage, un changement de type ou une contrainte nouvelle demanderont **Alembic**, à introduire avant que des instances tierces ne soient déployées largement. Une colonne obligatoire sans valeur par défaut est signalée dans les journaux plutôt qu'appliquée — elle échouerait sur une table déjà peuplée.
+| Situation | Comportement |
+|---|---|
+| Base neuve | toutes les migrations sont appliquées depuis le début |
+| Instance antérieure à Alembic (tables créées par `create_all`) | la base est estampillée à la révision initiale sans la rejouer — sinon Alembic tenterait de recréer des tables existantes — puis les migrations suivantes s'appliquent |
+| Instance déjà suivie | seules les migrations en attente sont appliquées |
+
+Après toute modification de `modeles.py` :
+
+```bash
+cd api && .venv/bin/alembic revision --autogenerate -m "description"
+```
+
+**Relire systématiquement le fichier généré.** L'autogénération ne devine pas les renommages (qu'elle traduit en suppression + création, donc en perte de données) ni les migrations de contenu, et produit parfois du code incorrect — la migration initiale contenait un import manquant. Un test (`test_schema_conforme_aux_modeles`) vérifie que le schéma produit correspond aux modèles, ce qui détecte une migration oubliée.
+
+`render_as_batch` est activé : SQLite ne sait pas modifier une colonne en place, Alembic recrée donc la table proprement. Sans effet sur PostgreSQL.
 
 ## Cycle de vie d'une analyse
 

@@ -75,8 +75,9 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
     if p.database_url.startswith("sqlite"):
         arguments_moteur["connect_args"] = {"check_same_thread": False}
     moteur_bdd = create_engine(p.database_url, **arguments_moteur)
-    Base.metadata.create_all(moteur_bdd)
-    appliquer_migrations(moteur_bdd)  # colonnes apparues depuis : une instance existante ne doit pas casser
+    # Alembic fait autorité sur le schéma (création comprise) : create_all() créerait des
+    # tables hors de son suivi, que les migrations suivantes ne retrouveraient pas.
+    appliquer_migrations(moteur_bdd)
     fabrique = sessionmaker(bind=moteur_bdd, expire_on_commit=False)
 
     app = FastAPI(title="Lynceus API", version=__version__)

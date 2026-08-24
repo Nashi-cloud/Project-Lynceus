@@ -1,52 +1,67 @@
-"""Migrations légères de schéma.
+"""Application des migrations de schéma au démarrage.
 
-Le projet est auto-hébergeable : une instance existante ne doit pas casser quand le schéma
-évolue. `Base.metadata.create_all()` crée les tables manquantes mais ne touche jamais à
-celles qui existent — d'où ce complément, qui ajoute les colonnes apparues depuis.
+Le projet est auto-hébergeable : une instance ne doit ni casser quand le schéma évolue, ni
+exiger une commande manuelle après chaque mise à jour. Alembic est appelé au démarrage et
+gère trois situations :
 
-Portée volontairement limitée aux AJOUTS de colonnes, seul cas rencontré jusqu'ici et le
-seul qui soit sûr sans outillage dédié. Tout changement plus lourd (renommage, changement
-de type, contrainte) demandera Alembic — voir docs/ARCHITECTURE.md.
+1. **Base neuve** — toutes les migrations sont appliquées depuis le début.
+2. **Instance antérieure à Alembic** (tables créées par `create_all()`) — la base est
+   estampillée à la révision initiale sans rejouer sa migration, qui échouerait sur des
+   tables déjà présentes ; les migrations suivantes s'appliquent normalement.
+3. **Instance déjà suivie par Alembic** — seules les migrations en attente sont appliquées.
+
+Pour créer une migration après avoir modifié `modeles.py` :
+
+    cd api && .venv/bin/alembic revision --autogenerate -m "description"
+
+Relire systématiquement le fichier généré : l'autogénération ne devine ni les renommages
+(qu'elle traduit en suppression + création, donc en perte de données) ni les migrations de
+contenu.
 """
 
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
-from sqlalchemy import Engine, inspect, text
-
-from .modeles import Base
+from alembic import command
+from alembic.config import Config
+from alembic.runtime.migration import MigrationContext
+from alembic.script import ScriptDirectory
+from sqlalchemy import Engine, inspect
 
 logger = logging.getLogger(__name__)
 
+RACINE_API = Path(__file__).resolve().parent.parent
+FICHIER_ALEMBIC = RACINE_API / "alembic.ini"
 
-def appliquer(moteur: Engine) -> list[str]:
-    """Ajoute les colonnes déclarées dans les modèles mais absentes en base.
+# Tables du schéma initial : leur présence signale une instance antérieure à Alembic.
+TABLES_INITIALES = {"analyses", "pages", "domaines"}
 
-    Retourne la liste des modifications appliquées (vide si le schéma était à jour)."""
-    inspecteur = inspect(moteur)
-    tables_existantes = set(inspecteur.get_table_names())
-    appliquees: list[str] = []
 
-    for table in Base.metadata.sorted_tables:
-        if table.name not in tables_existantes:
-            continue  # create_all s'en charge
-        colonnes_en_base = {c["name"] for c in inspecteur.get_columns(table.name)}
-        for colonne in table.columns:
-            if colonne.name in colonnes_en_base:
-                continue
-            if not colonne.nullable and colonne.default is None and colonne.server_default is None:
-                # Ajouter une colonne obligatoire sans valeur par défaut échouerait sur une
-                # table déjà peuplée : on le signale plutôt que de planter au premier accès.
-                logger.warning(
-                    "Colonne %s.%s obligatoire et sans défaut : migration manuelle requise.",
-                    table.name, colonne.name,
-                )
-                continue
-            type_sql = colonne.type.compile(moteur.dialect)
-            with moteur.begin() as connexion:
-                connexion.execute(text(f'ALTER TABLE {table.name} ADD COLUMN {colonne.name} {type_sql}'))
-            appliquees.append(f"{table.name}.{colonne.name}")
-            logger.info("Colonne ajoutée : %s.%s", table.name, colonne.name)
+def _configuration(url_base: str) -> Config:
+    config = Config(str(FICHIER_ALEMBIC))
+    config.set_main_option("script_location", str(RACINE_API / "lynceus" / "migrations_alembic"))
+    config.set_main_option("sqlalchemy.url", url_base.replace("%", "%%"))
+    return config
 
-    return appliquees
+
+def appliquer(moteur: Engine) -> str:
+    """Met le schéma à jour. Retourne un mot décrivant ce qui a été fait."""
+    config = _configuration(str(moteur.url.render_as_string(hide_password=False)))
+
+    with moteur.connect() as connexion:
+        revision_actuelle = MigrationContext.configure(connexion).get_current_revision()
+        tables = set(inspect(connexion).get_table_names())
+
+    if revision_actuelle is None and TABLES_INITIALES <= tables:
+        # Instance d'avant Alembic : ses tables existent déjà. On l'estampille à la révision
+        # initiale plutôt que de la rejouer — sinon Alembic tenterait de recréer ces tables.
+        revision_initiale = ScriptDirectory.from_config(config).get_base()
+        command.stamp(config, revision_initiale)
+        logger.info("Base existante estampillée à la révision initiale (%s).", revision_initiale)
+        command.upgrade(config, "head")
+        return "estampillee_puis_migree"
+
+    command.upgrade(config, "head")
+    return "creee" if revision_actuelle is None else "migree"
