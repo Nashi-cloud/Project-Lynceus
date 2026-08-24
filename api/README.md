@@ -63,6 +63,26 @@ Garanties du pipeline (testées) :
 - **Dédup à double clé** : même URL → cache ; même contenu sous une autre URL → même analyse, sans nouvel appel LLM.
 - **Retry encadré** : sortie non conforme → l'erreur est renvoyée une fois au modèle, sinon 502 explicite.
 
+## Modérer les contestations
+
+Les contestations (charte §6) sont enregistrées et **visibles publiquement en nombre** sur chaque analyse, mais leur contenu est réservé à l'opérateur de l'instance — un signalement peut contenir un contact.
+
+Activer la modération : définir `LYNCEUS_ADMIN_TOKEN` côté serveur **et** dans l'environnement du CLI.
+
+```bash
+export LYNCEUS_ADMIN_TOKEN=…                          # le même que côté serveur
+.venv/bin/lynceus signalements                        # les contestations reçues
+.venv/bin/lynceus signalements --statut nouveau       # celles en attente
+.venv/bin/lynceus traiter 3 --statut examine --decision "Catégorie corrigée, analyse relancée."
+.venv/bin/lynceus verifier-page 4 --url https://…     # motif « page modifiée » : vérification automatique
+```
+
+`verifier-page` est le seul traitement automatisable : il re-télécharge la page, compare son contenu à celui analysé, relance l'analyse si elle a changé, et classe le signalement en conséquence. Les autres motifs relèvent du jugement humain.
+
+Statuts : `nouveau` → `examine` (fondé, action prise) · `rejete` (infondé) · `sans_objet` (page modifiée, analyse remplacée). **La justification est obligatoire** et conservée : écarter une contestation sans motif reviendrait à l'opacité que Lynceus dénonce.
+
+> Sans opérateur pour les traiter, les contestations restent stockées et consultables — c'est ce que le message rendu à l'utilisateur annonce, ni plus ni moins.
+
 ## Tests
 
 ```bash

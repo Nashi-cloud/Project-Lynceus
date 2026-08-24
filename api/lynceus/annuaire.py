@@ -103,6 +103,36 @@ def enregistrer_signalement(
     return signalement
 
 
+STATUTS_SIGNALEMENT = {"nouveau", "examine", "rejete", "sans_objet"}
+
+
+def lister_signalements(
+    session: Session, *, statut: str | None = None, limite: int = 50
+) -> list[Signalement]:
+    """Signalements les plus anciens d'abord : on traite dans l'ordre d'arrivée."""
+    requete = select(Signalement).order_by(Signalement.cree_le)
+    if statut:
+        requete = requete.where(Signalement.statut == statut)
+    return list(session.scalars(requete.limit(limite)))
+
+
+def traiter_signalement(
+    session: Session, signalement_id: int, *, statut: str, decision: str
+) -> Signalement | None:
+    """Enregistre la décision de l'opérateur. La justification est obligatoire : écarter une
+    contestation sans motif reviendrait à l'opacité que Lynceus dénonce (charte §2)."""
+    if statut not in STATUTS_SIGNALEMENT:
+        raise ValueError(f"Statut inconnu : {statut} (attendus : {sorted(STATUTS_SIGNALEMENT)})")
+    signalement = session.get(Signalement, signalement_id)
+    if signalement is None:
+        return None
+    signalement.statut = statut
+    signalement.decision = decision
+    signalement.traite_le = datetime.now(timezone.utc)
+    session.flush()
+    return signalement
+
+
 def compter_signalements(session: Session, analyse_id: int) -> int:
     return session.scalar(
         select(func.count(Signalement.id)).where(Signalement.analyse_id == analyse_id)

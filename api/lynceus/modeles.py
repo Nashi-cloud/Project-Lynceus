@@ -69,7 +69,12 @@ class Signalement(Base):
     motif: Mapped[str] = mapped_column(String(40))
     message: Mapped[str] = mapped_column(Text)
     contact: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    # nouveau -> examine (fondé, action prise) | rejete (infondé) | sans_objet (page modifiée,
+    # analyse déjà remplacée). La décision et sa justification sont conservées : un opérateur
+    # qui écarte une contestation doit pouvoir en rendre compte (charte §2).
     statut: Mapped[str] = mapped_column(String(20), default="nouveau", index=True)
+    decision: Mapped[str | None] = mapped_column(Text, nullable=True)
+    traite_le: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     cree_le: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_maintenant)
 
 
