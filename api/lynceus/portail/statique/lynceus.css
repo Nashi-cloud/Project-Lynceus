@@ -136,12 +136,17 @@ label { display: block; font-size: 14px; color: var(--encre-douce); margin: 16px
 .recit .chapo { color: var(--pale); }
 
 /* Le dégradé complet est porté par le conteneur, sur toute la hauteur du récit :
-   il progresse donc naturellement au défilement, sans une ligne de JavaScript. */
+   il progresse donc naturellement au défilement, sans une ligne de JavaScript.
+   Les paliers clairs sont repoussés en fin de course : un texte pâle sur l'orange de
+   l'aube tombait sous le seuil de contraste lisible. La dernière scène, elle, pose son
+   propre fond clair — c'est la seule qui écrit en encre sombre. */
 .recit {
   background: linear-gradient(180deg,
-    var(--nuit) 0%, var(--nuit-2) 14%, var(--indigo) 32%,
-    var(--violet) 50%, var(--pourpre) 63%, var(--braise) 74%,
-    var(--orange) 84%, var(--or) 92%, var(--pale) 100%);
+    var(--nuit) 0%, var(--nuit-2) 20%, var(--indigo) 42%,
+    var(--violet) 60%, var(--pourpre) 76%, var(--braise) 88%, var(--orange) 100%);
+}
+.recit .scene.jour {
+  background: linear-gradient(180deg, rgba(250, 244, 232, 0) 0%, #f8eeda 30%, #fbf5ea 100%);
 }
 
 /* Champ d'étoiles : trois couches de tailles différentes, dessinées en dégradés
@@ -194,8 +199,14 @@ label { display: block; font-size: 14px; color: var(--encre-douce); margin: 16px
 .citation cite { display: block; font: 400 14px/1.6 var(--sans); color: var(--pale);
                  opacity: 0.7; font-style: normal; margin-top: 18px; }
 
-.paire { display: grid; width: 100%; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
-.paire > div { background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.14);
+/* Deux dispositions explicites plutôt qu'un auto-fit : avec quatre cartes, il produisait
+   une rangée de trois et une orpheline. */
+.paire { display: grid; width: 100%; gap: 18px; margin-inline: auto; }
+.paire.trois { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); max-width: 58rem; }
+.paire.deux { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); max-width: 44rem; }
+/* Voile sombre plutôt que clair : il rehausse le texte pâle aussi bien sur l'indigo de la
+   nuit que sur les teintes chaudes de l'aube, où un voile blanc l'effaçait. */
+.paire > div { background: rgba(8, 10, 18, 0.28); border: 1px solid rgba(255, 255, 255, 0.15);
                border-radius: 14px; padding: 18px 20px; }
 .paire h3 { margin-top: 0; color: #fff; }
 .paire p { font-size: 15.5px; line-height: 1.6; margin-bottom: 0; }
