@@ -26,6 +26,12 @@ financement/
 !.env.prod.example
 !.env.portail.example
 
+# Rapports de couverture : artefacts de test, jamais versionnés. La base .coverage
+# enregistre les chemins absolus de la machine qui a lancé les tests.
+.coverage
+htmlcov/
+coverage.xml
+
 # IDE / OS
 .idea/
 .vscode/
