@@ -1,0 +1,278 @@
+/* Portail Lynceus — feuille unique, aucune ressource tierce.
+ *
+ * Deux régimes visuels assumés :
+ *   · l'accueil raconte, et va de la nuit au jour ;
+ *   · les pages de référence se lisent, et restent en plein jour.
+ * Personne ne veut déchiffrer une taxonomie de 31 entrées par-dessus un dégradé. */
+
+:root {
+  --nuit: #05070d; --nuit-2: #0a1020; --indigo: #131b34;
+  --violet: #2b2447; --pourpre: #4a2f47; --braise: #8c4a3c;
+  --orange: #c9743f; --or: #e6b271; --pale: #f2e6d2;
+
+  --fond: #faf8f4; --encre: #1c2733; --encre-douce: #5b6b7b;
+  --trait: #e0e5ec; --carte: #ffffff; --accent: #16324f;
+  --a: #1a7f37; --b: #5a8f29; --c: #b58900; --d: #c9662a; --e: #b3261e;
+
+  --prose: 34rem;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, ui-serif, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--fond); color: var(--encre);
+  font: 16px/1.65 var(--sans); -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; height: auto; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+
+/* ------------------------------------------------------------ ossature */
+
+.bandeau {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 4px 22px; flex-wrap: wrap;
+  padding: 12px 24px;
+  background: color-mix(in srgb, var(--fond) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--trait);
+}
+.bandeau .marque {
+  font: 600 17px/1 var(--serif); letter-spacing: 0.02em;
+  color: var(--encre); text-decoration: none; margin-right: auto;
+  display: flex; align-items: center; gap: 9px;
+}
+.bandeau nav { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14.5px; }
+.bandeau nav a { color: var(--encre-douce); text-decoration: none; }
+.bandeau nav a:hover, .bandeau nav a[aria-current="page"] { color: var(--encre); text-decoration: underline; }
+
+main { padding: 0 24px 72px; }
+/* L'accueil est en pleine largeur : ses scènes portent leur propre marge. */
+.pleine-largeur main { padding: 0; }
+/* Le bandeau y surplombe une nuit : il reste sombre quel que soit le thème du système,
+   sinon une barre blanche viendrait s'écraser sur le ciel étoilé. */
+.pleine-largeur .bandeau {
+  background: rgba(5, 7, 13, 0.62); border-color: rgba(255, 255, 255, 0.09);
+}
+.pleine-largeur .bandeau .marque { color: #fff; }
+.pleine-largeur .bandeau nav a { color: rgba(242, 230, 210, 0.72); }
+.pleine-largeur .bandeau nav a:hover { color: #fff; }
+.contenu { max-width: var(--prose); margin: 0 auto; }
+.contenu.large { max-width: 60rem; }
+
+.pied {
+  border-top: 1px solid var(--trait); padding: 28px 24px 48px;
+  color: var(--encre-douce); font-size: 14px;
+}
+.pied .contenu { display: flex; gap: 10px 26px; flex-wrap: wrap; align-items: baseline; }
+.pied a { color: var(--encre-douce); }
+
+h1 { font: 600 clamp(28px, 5vw, 40px)/1.15 var(--serif); margin: 40px 0 10px; letter-spacing: -0.01em; }
+h2 { font: 600 24px/1.25 var(--serif); margin: 44px 0 10px; }
+h3 { font: 600 18px/1.35 var(--sans); margin: 28px 0 6px; }
+.chapo { font: 400 19px/1.6 var(--serif); color: var(--encre-douce); margin: 0 0 30px; }
+
+code, kbd { font: 0.88em var(--mono); background: #eef1f5; padding: 1px 5px; border-radius: 4px; }
+pre { background: #11161d; color: #e6ebf0; padding: 14px 16px; border-radius: 10px; overflow-x: auto; }
+pre code { background: none; color: inherit; padding: 0; }
+blockquote { margin: 18px 0; padding: 2px 0 2px 16px; border-left: 3px solid var(--trait);
+             color: var(--encre-douce); font-style: italic; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--trait); }
+th { color: var(--encre-douce); font-weight: 600; }
+.deroulant { overflow-x: auto; }
+
+/* ------------------------------------------------------------ éléments */
+
+.bouton {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 11px 20px; border-radius: 10px; border: 1px solid transparent;
+  background: var(--accent); color: #fff; font: 600 15px/1 var(--sans);
+  text-decoration: none; cursor: pointer; transition: transform 0.12s, filter 0.12s;
+}
+.bouton:hover { filter: brightness(1.12); transform: translateY(-1px); }
+.bouton.clair { background: var(--or); color: #2a1a0c; }
+.bouton.creux { background: transparent; color: inherit; border-color: currentColor; opacity: 0.85; }
+
+.encart {
+  background: var(--carte); border: 1px solid var(--trait); border-radius: 12px;
+  padding: 18px 20px; margin: 22px 0;
+}
+.encart h3:first-child, .encart h2:first-child { margin-top: 0; }
+.encart.attention { border-left: 4px solid var(--d); }
+.discret { color: var(--encre-douce); font-size: 14px; }
+
+.pastille {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 9px; color: #fff;
+  font: 700 17px/1 var(--sans); flex: none;
+}
+.grade-A { background: var(--a); } .grade-B { background: var(--b); }
+.grade-C { background: var(--c); } .grade-D { background: var(--d); }
+.grade-E { background: var(--e); }
+
+.champ {
+  width: 100%; padding: 10px 12px; font: inherit;
+  border: 1px solid var(--trait); border-radius: 9px;
+  background: var(--carte); color: var(--encre);
+}
+.champ:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+label { display: block; font-size: 14px; color: var(--encre-douce); margin: 16px 0 5px; }
+
+/* ------------------------------------------------------------- accueil */
+
+.recit { color: var(--pale); }
+.recit .scene {
+  position: relative; padding: clamp(60px, 11vh, 120px) 24px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.recit .scene > .contenu { position: relative; z-index: 1; }
+.recit h1, .recit h2 { color: #fff; }
+.recit p { font: 400 clamp(17px, 2.2vw, 19.5px)/1.75 var(--serif); }
+.recit .chapo { color: var(--pale); }
+
+/* Le dégradé complet est porté par le conteneur, sur toute la hauteur du récit :
+   il progresse donc naturellement au défilement, sans une ligne de JavaScript. */
+.recit {
+  background: linear-gradient(180deg,
+    var(--nuit) 0%, var(--nuit-2) 14%, var(--indigo) 32%,
+    var(--violet) 50%, var(--pourpre) 63%, var(--braise) 74%,
+    var(--orange) 84%, var(--or) 92%, var(--pale) 100%);
+}
+
+/* Champ d'étoiles : trois couches de tailles différentes, dessinées en dégradés
+   radiaux — aucune image à télécharger. Elles s'effacent quand le jour se lève. */
+.etoiles {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  opacity: calc(1 - var(--progression, 0) * 1.9);
+  background-repeat: repeat;
+  background-image:
+    radial-gradient(1.5px 1.5px at 20% 30%, #ffffff, transparent),
+    radial-gradient(1.2px 1.2px at 70% 15%, #dfe9ff, transparent),
+    radial-gradient(1.1px 1.1px at 45% 70%, #ffffff, transparent),
+    radial-gradient(1.6px 1.6px at 85% 55%, #eaf1ff, transparent),
+    radial-gradient(1px 1px at 10% 85%, #ffffff, transparent),
+    radial-gradient(1.3px 1.3px at 60% 90%, #cfe0ff, transparent),
+    radial-gradient(0.9px 0.9px at 32% 12%, #ffffff, transparent),
+    radial-gradient(1.1px 1.1px at 92% 78%, #ffffff, transparent);
+  /* Tailles premières entre elles : les huit couches ne se resynchronisent jamais,
+     ce qui évite le quadrillage régulier qui trahirait la répétition. */
+  background-size: 421px 379px, 383px 419px, 307px 331px, 463px 401px,
+                   347px 293px, 503px 449px, 263px 293px, 317px 359px;
+}
+
+/* L'horizon : la lueur qui monte. Elle grandit avec la progression. */
+.horizon {
+  position: fixed; left: 50%; bottom: -32vh; z-index: 0; pointer-events: none;
+  width: 140vw; height: 60vh; transform: translateX(-50%);
+  opacity: calc(var(--progression, 0) * 1.15);
+  background: radial-gradient(ellipse at center,
+    rgba(255, 205, 140, 0.55) 0%, rgba(220, 130, 70, 0.28) 38%, transparent 70%);
+}
+
+.oeil { display: block; margin: 0 auto 26px; }
+
+.titre-nu {
+  font: 600 clamp(44px, 11vw, 92px)/1 var(--serif);
+  letter-spacing: 0.01em; margin: 0; color: #fff;
+}
+.sous-titre {
+  font: 400 clamp(16px, 2.6vw, 21px)/1.5 var(--serif);
+  color: var(--pale); opacity: 0.86; margin: 16px 0 0;
+}
+.souffle { text-align: center; }
+.souffle .actions { margin-top: 38px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+.citation {
+  font: italic 400 clamp(19px, 3vw, 26px)/1.55 var(--serif);
+  color: #fff; text-align: center; margin: 0;
+}
+.citation cite { display: block; font: 400 14px/1.6 var(--sans); color: var(--pale);
+                 opacity: 0.7; font-style: normal; margin-top: 18px; }
+
+.paire { display: grid; width: 100%; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.paire > div { background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.14);
+               border-radius: 14px; padding: 18px 20px; }
+.paire h3 { margin-top: 0; color: #fff; }
+.paire p { font-size: 15.5px; line-height: 1.6; margin-bottom: 0; }
+
+/* Le jour : dernière scène, encre sombre sur fond clair.
+   Couleurs littérales et non variables de thème : ce fond est clair même quand le
+   système est en mode sombre, où var(--encre) deviendrait un texte pâle illisible. */
+.recit .scene.jour, .recit .scene.jour h2,
+.recit .scene.jour .titre-nu, .recit .scene.jour .paire h3 { color: #241a10; }
+.recit .scene.jour .chapo, .recit .scene.jour p { color: #4a3a28; }
+.recit .scene.jour .paire > div { background: rgba(255, 255, 255, 0.55); border-color: rgba(90, 60, 30, 0.16); }
+.recit .scene.jour .bouton { background: #16324f; color: #fff; }
+.recit .scene.jour .bouton.creux { background: transparent; color: #3a2b1c;
+                                   border-color: rgba(58, 43, 28, 0.42); opacity: 1; }
+
+/* Le pied de l'accueil prolonge l'aube au lieu de la couper net. */
+.pleine-largeur .pied { background: var(--pale); border-top-color: rgba(90, 71, 54, 0.22); color: #5f4c39; }
+.pleine-largeur .pied a { color: #5f4c39; }
+
+/* Apparition au défilement — n'existe que si le script s'exécute et que le
+   mouvement n'est pas refusé : sans JavaScript, tout est visible d'emblée. */
+.js-anime .revele { opacity: 0; transform: translateY(26px); }
+.js-anime .revele.vu { opacity: 1; transform: none; transition: opacity 0.8s ease, transform 0.8s cubic-bezier(.2,.7,.3,1); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .js-anime .revele { opacity: 1; transform: none; }
+}
+
+/* ---------------------------------------------------------- taxonomie */
+
+.famille { margin: 34px 0; }
+.technique-carte {
+  border: 1px solid var(--trait); border-radius: 11px; background: var(--carte);
+  padding: 14px 16px; margin-bottom: 10px;
+}
+.technique-carte h3 { margin: 0 0 4px; font-size: 16px; display: flex; gap: 10px;
+                      align-items: baseline; flex-wrap: wrap; }
+.technique-carte p { margin: 0; color: var(--encre-douce); font-size: 15px; }
+.identifiant { font: 12.5px var(--mono); color: var(--encre-douce); }
+.gravite { font-size: 11.5px; padding: 2px 8px; border-radius: 20px;
+           border: 1px solid var(--trait); color: var(--encre-douce); white-space: nowrap; }
+.gravite-haute { border-color: var(--d); color: var(--d); }
+
+/* ------------------------------------------------------ méthodologie */
+
+.barres { margin: 18px 0; }
+.barre { display: grid; grid-template-columns: 1fr 46px; gap: 12px; align-items: center;
+         margin-bottom: 10px; }
+.barre .nom { font-size: 15px; }
+.barre .jauge { grid-column: 1 / -1; height: 8px; border-radius: 5px; background: var(--trait); }
+.barre .jauge > div { height: 100%; border-radius: 5px; background: var(--accent); }
+.barre .poids { text-align: right; font-variant-numeric: tabular-nums; color: var(--encre-douce); }
+
+.echelle { display: flex; gap: 8px; flex-wrap: wrap; margin: 18px 0; }
+.echelle div { flex: 1 1 90px; text-align: center; padding: 10px 6px; border-radius: 10px;
+               color: #fff; font-size: 13px; }
+
+/* --------------------------------------------------------- annuaire */
+
+.recherche { display: flex; gap: 10px; margin: 22px 0; flex-wrap: wrap; }
+.recherche .champ { flex: 1 1 260px; }
+.resultat { margin-top: 20px; }
+.entete-carte { display: flex; gap: 14px; align-items: center; }
+.entete-carte .pastille { width: 46px; height: 46px; font-size: 21px; border-radius: 12px; }
+.liste-nue { list-style: none; padding: 0; margin: 10px 0; }
+.liste-nue li { padding: 7px 0; border-bottom: 1px solid var(--trait); font-size: 15px; }
+.attente { color: var(--encre-douce); font-size: 14px; }
+.htmx-request .attente-cachee { display: inline; }
+.attente-cachee { display: none; }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #12161c; --encre: #e6ebf0; --encre-douce: #94a2b1;
+    --trait: #262e38; --carte: #181e26; --accent: #9fc2e0;
+  }
+  code, kbd { background: #232b35; }
+  .bouton { color: #0d1117; }
+  .pied, .bandeau { background: color-mix(in srgb, var(--fond) 90%, transparent); }
+}

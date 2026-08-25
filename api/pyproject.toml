@@ -22,6 +22,13 @@ dependencies = [
     "pyyaml>=6.0",
     "alembic>=1.13",
     "cryptography>=42",
+    # Portail public (lynceus.portail) — servi par la même image, sur un autre point
+    # d'entrée. Déclarés explicitement plutôt que laissés au hasard d'une dépendance
+    # transitive : markdown-it-py n'arrivait jusqu'ici que par rich, et python-multipart
+    # est requis dès qu'une route lit un formulaire.
+    "jinja2>=3.1",
+    "markdown-it-py>=3.0",
+    "python-multipart>=0.0.9",
 ]
 
 [project.optional-dependencies]

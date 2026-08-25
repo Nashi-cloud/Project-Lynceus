@@ -1,6 +1,13 @@
 import { build } from "esbuild";
 import { cpSync, mkdirSync, rmSync } from "node:fs";
 
+// Portail proposé par défaut dans l'extension : `node build.mjs --portail=https://…`.
+// Un portail qui distribue le paquet le construit avec sa propre adresse, si bien que
+// l'utilisateur n'a rien à saisir pour obtenir sa clé. Vide par défaut — un paquet
+// construit sans cette option ne pointe vers personne, ce qui est le bon défaut.
+const portailParDefaut =
+  process.argv.find((a) => a.startsWith("--portail="))?.slice("--portail=".length) ?? "";
+
 rmSync("dist", { recursive: true, force: true });
 mkdirSync("dist", { recursive: true });
 
@@ -17,6 +24,7 @@ await build({
   target: "chrome116",
   outdir: "dist",
   outbase: "src",
+  define: { PORTAIL_PAR_DEFAUT: JSON.stringify(portailParDefaut) },
   logLevel: "info",
 });
 

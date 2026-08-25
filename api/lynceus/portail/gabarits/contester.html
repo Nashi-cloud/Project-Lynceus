@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block titre %}Contester une analyse — {{ nom }}{% endblock %}
+{% block corps %}
+<article class="contenu">
+  <h1>Contester une analyse</h1>
+  <p class="chapo">Toute analyse est contestable, par n'importe qui, y compris — et
+  surtout — par l'éditeur du site concerné. C'est l'engagement §6 de la charte.</p>
+
+  <div class="encart">
+    <h3 style="margin-top:0">Ce qui se passe ensuite, exactement</h3>
+    <p>Votre contestation est enregistrée dans la base de l'instance avec son motif et
+    son message, et le <strong>compteur de contestations devient public</strong> : il
+    s'affiche sous l'analyse, pour tout le monde, avant même qu'elle soit examinée.</p>
+    <p>Elle est ensuite mise à disposition de l'opérateur de cette instance, qui
+    dispose d'un outil de modération : retirer l'analyse, la faire refaire, ou la
+    maintenir en justifiant. Toute décision prise est conservée et auditable.</p>
+    <p>Un cas se règle sans intervention humaine : si vous signalez que
+    <strong>la page a changé</strong>, la prochaine visite produira une nouvelle
+    analyse qui remplacera l'ancienne.</p>
+    <p style="margin-bottom:0"><strong>Ce que nous ne promettons pas :</strong> un
+    délai. Cette instance est tenue par des personnes, pas par un service client. Si
+    ce délai vous semble déraisonnable pour un droit de réponse, l'auto-hébergement
+    reste ouvert : le code est libre.</p>
+  </div>
+
+  <form hx-post="/contester" hx-target="#retour" hx-indicator="#envoi">
+    <label for="analyse_id">Numéro de l'analyse</label>
+    <input class="champ" type="number" id="analyse_id" name="analyse_id" required min="1"
+           value="{{ analyse_id or '' }}">
+    <p class="discret">Il figure en bas de chaque analyse, dans le panneau de
+    l'extension comme dans <a href="/annuaire">l'annuaire public</a>.</p>
+
+    <label for="motif">Motif</label>
+    <select class="champ" id="motif" name="motif" required>
+      {% for valeur, libelle in motifs %}<option value="{{ valeur }}">{{ libelle }}</option>{% endfor %}
+    </select>
+
+    <label for="message">Ce qui vous paraît faux</label>
+    <textarea class="champ" id="message" name="message" rows="6" required minlength="10"
+              maxlength="4000" placeholder="Soyez précis : quel passage, et pourquoi."></textarea>
+
+    <label for="contact">Contact (facultatif)</label>
+    <input class="champ" type="text" id="contact" name="contact" maxlength="320"
+           autocomplete="off">
+    <p class="discret">Uniquement si vous souhaitez une réponse. Laissez vide pour
+    contester anonymement — c'est traité de la même façon.</p>
+
+    <p style="margin-top: 22px">
+      <button class="bouton" type="submit">Envoyer la contestation</button>
+      <span class="attente" id="envoi"><span class="attente-cachee">Envoi…</span></span>
+    </p>
+  </form>
+
+  <div id="retour"></div>
+</article>
+{% endblock %}

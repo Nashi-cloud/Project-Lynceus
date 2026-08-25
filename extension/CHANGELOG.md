@@ -2,6 +2,13 @@
 
 Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension — utile pour vérifier qu'un rebuild a bien été rechargé.
 
+## 0.9.0 — 2026-08-25
+
+- **feat** : **inscription en un clic**. Un bouton « Obtenir une clé d'accès » interroge un portail Lynceus, qui renvoie une clé *et* l'adresse de l'instance à laquelle elle donne accès : l'extension se configure seule. Aucun compte, aucune adresse électronique, aucun identifiant — la clé ne porte qu'une date d'expiration et un quota. Proposé sur la page d'accueil dès l'installation, et disponible à tout moment dans les réglages.
+- **feat** : nouveau réglage « portail », distinct de l'instance. Le portail délivre les clés, l'instance analyse ; un auto-hébergeur n'a besoin d'aucun portail.
+- **feat** : un paquet peut être construit avec l'adresse de son portail (`node build.mjs --paquet --portail=https://…`), si bien qu'une extension téléchargée depuis un portail arrive déjà configurée sur lui.
+- **security** : la réponse d'un portail est vérifiée avant d'être appliquée — c'est elle qui décide de l'instance vers laquelle partiront les pages analysées. Une clé mal formée ou une instance dont l'adresse n'est pas en http(s) est refusée, et l'interface affiche l'instance retenue au lieu de la configurer en silence.
+
 ## 0.8.0 — 2026-08-24
 
 - **feat** : réglage d'une clé d'accès, pour les instances qui en demandent une. La clé accompagne les analyses ; les consultations d'annuaire restent libres. Une clé Lynceus n'est pas un compte : elle ne contient aucune information sur son porteur, seulement une date d'expiration et un quota journalier.

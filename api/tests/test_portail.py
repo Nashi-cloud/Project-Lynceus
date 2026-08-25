@@ -1,0 +1,284 @@
+"""Portail public — pages, inscription, annuaire, contestation.
+
+Deux propriétés comptent plus que l'affichage et sont testées comme telles :
+  · une clé émise par le portail est acceptée par une vraie instance (bout en bout) ;
+  · une recherche par adresse ne transmet à l'instance qu'un préfixe d'empreinte.
+"""
+
+import json as json_
+
+import httpx
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from lynceus.annuaire import LONGUEUR_PREFIXE
+from lynceus.cles import generer_paire
+from lynceus.main import creer_application
+from lynceus.moteur import llm, notation, prompt
+from lynceus.normalisation import hacher_url
+from lynceus.portail import creer_portail
+from lynceus.portail.config import ParametresPortail
+from lynceus.portail.contenu import paquet_le_plus_recent
+from tests.conftest import CONTENU_TEST, SORTIE_LLM, parametres_test
+
+URL = "https://exemple.fr/article"
+
+
+def parametres_portail_test(**surcharges) -> ParametresPortail:
+    """Comme pour l'API : configuration explicite, pour ne pas hériter du .env de la machine."""
+    defauts = dict(nom="Lynceus", contact="", cle_privee="", instance="",
+                   instance_interne="", paquets="", cles_par_ip_jour=0)
+    defauts.update(surcharges)
+    return ParametresPortail(**defauts)
+
+
+@pytest.fixture
+def portail():
+    """Portail émettant des clés, sans instance joignable."""
+    privee, publique = generer_paire()
+    p = parametres_portail_test(cle_privee=privee, instance="https://instance.test")
+    with TestClient(creer_portail(p)) as client:
+        yield client, publique
+
+
+def brancher_sur(client_portail: TestClient, application: FastAPI) -> None:
+    """Fait passer les appels sortants du portail par une application ASGI en mémoire.
+
+    Le portail parle à l'instance par HTTP, jamais par la base : on peut donc lui
+    substituer n'importe quelle application, y compris une vraie API."""
+    client_portail.app.state.client = httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=application), base_url="http://instance.test"
+    )
+
+
+# ------------------------------------------------------------------ pages
+
+@pytest.mark.parametrize("chemin", ["/", "/installer", "/methodologie", "/taxonomie",
+                                    "/charte", "/auto-hebergement", "/annuaire", "/contester"])
+def test_les_pages_se_rendent(portail, chemin):
+    client, _ = portail
+    reponse = client.get(chemin)
+    assert reponse.status_code == 200
+    assert reponse.headers["content-type"].startswith("text/html")
+
+
+def test_la_taxonomie_affichee_est_celle_du_moteur():
+    """La page ne recopie pas le référentiel : elle l'affiche. Aucune technique ne doit
+    manquer, sans quoi le site promettrait une liste fermée qu'il ne montre pas en entier."""
+    p = parametres_portail_test()
+    with TestClient(creer_portail(p)) as client:
+        html = client.get("/taxonomie").text
+    for identifiant in prompt.charger_taxonomie():
+        assert identifiant in html, f"{identifiant} absent de la page publique"
+
+
+def test_la_methodologie_affiche_les_vraies_ponderations():
+    """Publier des pondérations différentes de celles appliquées serait le pire des
+    manquements à la transparence : la page serait fausse tout en s'en réclamant."""
+    p = parametres_portail_test()
+    with TestClient(creer_portail(p)) as client:
+        html = client.get("/methodologie").text
+    for poids in notation.POIDS.values():
+        assert f"{int(poids * 100)} %" in html
+    for seuil, grade in notation.SEUILS:
+        assert f">{grade}<" in html and str(seuil) in html
+
+
+def test_le_recit_ne_masque_rien_sans_javascript(portail):
+    """Le contenu de l'accueil ne doit dépendre d'aucun script : c'est la classe posée
+    par le navigateur qui active l'apparition, pas le CSS seul."""
+    client, _ = portail
+    html = client.get("/").text
+    assert "Un homme à la proue" in html and "js-anime" in html
+
+
+# ------------------------------------------------------------ inscription
+
+def test_une_cle_emise_par_le_portail_est_acceptee_par_une_instance(portail, tmp_path, monkeypatch):
+    """Le test qui compte : portail et instance ne partagent aucun secret, seulement la
+    clé publique. Si l'émission et la validation divergeaient, l'inscription délivrerait
+    des clés inutilisables — et personne ne s'en apercevrait avant les utilisateurs."""
+    client, publique = portail
+    billet = client.post("/v1/inscription").json()
+
+    monkeypatch.setattr(llm, "appeler", lambda m, p, schema_json=None: json_.dumps(SORTIE_LLM))
+    api = TestClient(creer_application(parametres_test(tmp_path, cle_publique=publique)))
+
+    sans_cle = api.post("/v1/analyses", json={"url": URL, "contenu_markdown": CONTENU_TEST})
+    assert sans_cle.status_code == 401
+
+    avec_cle = api.post("/v1/analyses", json={"url": URL, "contenu_markdown": CONTENU_TEST},
+                        headers={"X-Lynceus-Cle": billet["cle"]})
+    assert avec_cle.status_code == 200
+    assert billet["instance"] == "https://instance.test"
+    assert billet["quota_jour"] > 0
+
+
+def test_le_billet_ne_contient_aucune_donnee_personnelle(portail):
+    """Une clé anonyme qui porterait un identifiant stable de son porteur n'aurait
+    d'anonyme que le nom."""
+    client, _ = portail
+    billet = client.post("/v1/inscription").json()
+    assert set(billet) == {"instance", "cle", "quota_jour", "expire_le", "portail"}
+    premier = client.post("/v1/inscription").json()["cle"]
+    assert premier != billet["cle"]  # deux clés distinctes, aucun identifiant réutilisé
+
+
+def test_sans_cle_privee_l_inscription_le_dit_clairement():
+    p = parametres_portail_test(instance="https://instance.test")
+    with TestClient(creer_portail(p)) as client:
+        reponse = client.post("/v1/inscription")
+    assert reponse.status_code == 503
+    assert "ne délivre pas de clés" in reponse.json()["detail"]
+
+
+def test_sans_instance_declaree_l_inscription_refuse():
+    """Délivrer une clé sans dire où l'utiliser produirait un billet inexploitable."""
+    privee, _ = generer_paire()
+    p = parametres_portail_test(cle_privee=privee)
+    with TestClient(creer_portail(p)) as client:
+        assert client.post("/v1/inscription").status_code == 503
+
+
+def test_l_inscription_est_illimitee_par_defaut(portail):
+    """Choix assumé : l'inscription est libre. Le plafond existe mais reste à zéro."""
+    client, _ = portail
+    for _ in range(5):
+        assert client.post("/v1/inscription").status_code == 200
+
+
+def test_le_plafond_par_adresse_s_applique_quand_il_est_actif():
+    privee, _ = generer_paire()
+    p = parametres_portail_test(cle_privee=privee, instance="https://instance.test",
+                                cles_par_ip_jour=2)
+    with TestClient(creer_portail(p)) as client:
+        assert client.post("/v1/inscription").status_code == 200
+        assert client.post("/v1/inscription").status_code == 200
+        refus = client.post("/v1/inscription")
+        assert refus.status_code == 429
+        assert "hébergez votre propre instance" in refus.json()["detail"]
+
+
+# --------------------------------------------------------------- annuaire
+
+class _InstanceEspionne:
+    """Instance minimale qui note ce qu'on lui a demandé."""
+
+    def __init__(self) -> None:
+        self.prefixes: list[str] = []
+        self.app = FastAPI()
+
+        @self.app.get("/v1/lookup-prefixe")
+        def lookup_prefixe(prefixe: str):
+            self.prefixes.append(prefixe)
+            return {"prefixe": prefixe, "correspondances": []}
+
+        @self.app.get("/v1/domaines/{domaine}")
+        def domaines(domaine: str):
+            return {"domaine": domaine, "nb_analyses": 3, "score_moyen": 72.0,
+                    "distribution_grades": {"A": 1, "B": 2}, "maj_le": "2026-08-25T00:00:00"}
+
+
+def test_la_recherche_par_adresse_n_envoie_qu_un_prefixe(portail):
+    """Charte §4 : l'instance ne doit pas pouvoir savoir quelle page est consultée. Cette
+    garantie vaut aussi lorsque la demande passe par le portail — c'est justement le cas
+    où il serait tentant de transmettre l'empreinte entière « puisque c'est un serveur »."""
+    client, _ = portail
+    espionne = _InstanceEspionne()
+    brancher_sur(client, espionne.app)
+
+    url = "https://exemple.fr/un/article/precis"
+    reponse = client.get("/annuaire/recherche", params={"q": url})
+
+    assert reponse.status_code == 200
+    assert espionne.prefixes == [hacher_url(url)[:LONGUEUR_PREFIXE]]
+    assert len(espionne.prefixes[0]) == LONGUEUR_PREFIXE
+    assert hacher_url(url) not in reponse.request.url.query.decode()
+
+
+def test_la_recherche_par_domaine_affiche_le_profil(portail):
+    client, _ = portail
+    brancher_sur(client, _InstanceEspionne().app)
+    html = client.get("/annuaire/recherche", params={"q": "Exemple.FR"}).text
+    assert "exemple.fr" in html and "3 pages analysées" in html
+
+
+def test_une_instance_injoignable_degrade_sans_planter(portail):
+    """Le portail sert ses pages sans l'instance : une panne de l'une ne doit pas
+    produire une erreur 500 sur l'autre."""
+    client, _ = portail
+    client.app.state.client = httpx.AsyncClient(base_url="http://instance-eteinte.invalid")
+    reponse = client.get("/annuaire/recherche", params={"q": "exemple.fr"})
+    assert reponse.status_code == 200
+    assert "injoignable" in reponse.text
+
+
+def test_la_sante_distingue_le_portail_de_l_instance(portail):
+    client, _ = portail
+    client.app.state.client = httpx.AsyncClient(base_url="http://instance-eteinte.invalid")
+    sante = client.get("/sante").json()
+    assert sante["statut"] == "ok"           # le portail va bien…
+    assert sante["instance"] == "injoignable"  # …et le dit de l'instance, sans confondre
+    assert sante["emission_de_cles"] is True
+
+
+# ----------------------------------------------------------- contestation
+
+def test_la_contestation_est_transmise_a_l_instance(portail, tmp_path, monkeypatch):
+    """Charte §6 de bout en bout : contester depuis le site, sans extension."""
+    client, _ = portail
+    monkeypatch.setattr(llm, "appeler", lambda m, p, schema_json=None: json_.dumps(SORTIE_LLM))
+    api = creer_application(parametres_test(tmp_path))
+    with TestClient(api) as api_client:
+        api_client.post("/v1/analyses", json={"url": URL, "contenu_markdown": CONTENU_TEST})
+    brancher_sur(client, api)
+
+    reponse = client.post("/contester", data={
+        "analyse_id": 1, "motif": "droit_de_reponse",
+        "message": "Je suis l'éditeur de ce site et cette analyse me paraît fausse.",
+    })
+    assert reponse.status_code == 200
+    assert "enregistrée" in reponse.text
+
+
+def test_une_contestation_refusee_est_annoncee_comme_telle(portail, tmp_path):
+    """Le pire retour possible serait « merci » alors que rien n'a été enregistré."""
+    client, _ = portail
+    brancher_sur(client, creer_application(parametres_test(tmp_path)))
+    reponse = client.post("/contester", data={
+        "analyse_id": 99999, "motif": "autre", "message": "Analyse qui n'existe pas.",
+    })
+    assert "refusée" in reponse.text and "Analyse inconnue" in reponse.text
+
+
+# ------------------------------------------------------------ paquet zip
+
+def test_le_paquet_propose_est_la_version_la_plus_haute(tmp_path):
+    """Tri par version, pas par date de fichier : restaurer une sauvegarde ne doit pas
+    faire régresser ce qui est distribué."""
+    for nom in ("lynceus-extension-v0.9.0.zip", "lynceus-extension-v0.10.0.zip",
+                "lynceus-extension-v0.2.0.zip", "brouillon.zip"):
+        (tmp_path / nom).write_bytes(b"PK\x03\x04")
+    (tmp_path / "lynceus-extension-v0.9.0.zip").touch()  # la plus récente sur le disque
+
+    paquet = paquet_le_plus_recent(str(tmp_path))
+    assert paquet["version"] == "0.10.0"
+
+
+def test_sans_paquet_le_telechargement_explique_quoi_faire(portail):
+    client, _ = portail
+    reponse = client.get("/telecharger")
+    assert reponse.status_code == 503
+    assert "npm run paquet" in reponse.json()["detail"]
+
+
+def test_le_telechargement_sert_l_archive(tmp_path):
+    (tmp_path / "lynceus-extension-v1.2.3.zip").write_bytes(b"PK\x03\x04 contenu")
+    p = parametres_portail_test(paquets=str(tmp_path))
+    with TestClient(creer_portail(p)) as client:
+        assert "1.2.3" in client.get("/installer").text
+        reponse = client.get("/telecharger")
+    assert reponse.status_code == 200
+    assert reponse.headers["content-type"] == "application/zip"
+    assert reponse.content.startswith(b"PK")

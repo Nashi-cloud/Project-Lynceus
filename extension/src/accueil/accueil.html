@@ -32,7 +32,7 @@
                        margin: 26px 0; color: var(--douce); font-size: 13.5px; }
     .confidentialite strong { color: var(--encre); }
     #etat { margin-top: 18px; font-weight: 600; }
-    #etat.ok { color: var(--vert); }
+    #etat.ok, #etat-inscription.ok { color: var(--vert); font-weight: 600; }
     .pied { margin-top: 34px; border-top: 1px solid var(--trait); padding-top: 16px;
             color: var(--douce); font-size: 13px; }
     a { color: var(--accent); }
@@ -46,6 +46,28 @@
   </div>
   <p class="accroche">La vigie de l'information. Lynceus décrit les techniques de persuasion
     employées par une page — sans juger, à vous de conclure.</p>
+
+  <div class="carte retenue" id="carte-inscription">
+    <h2>D'abord : connecter Lynceus à une instance</h2>
+    <p style="margin:6px 0 0;color:var(--douce);font-size:14px;">
+      Lynceus ne fonctionne pas seul : il a besoin d'une instance qui analyse les pages.
+      Un portail peut vous en indiquer une et vous délivrer une clé d'accès —
+      <strong>sans compte, sans adresse électronique, en un clic</strong>.</p>
+    <label for="portail" style="display:block;font-size:13px;color:var(--douce);margin-top:14px;">
+      Adresse du portail</label>
+    <input type="url" id="portail" placeholder="https://…" autocomplete="off"
+           style="width:100%;padding:8px 10px;margin-top:4px;border:1px solid var(--trait);
+                  border-radius:6px;background:var(--fond);color:var(--encre);font:inherit;">
+    <button class="principal" id="obtenir-cle">Obtenir une clé d'accès</button>
+    <button class="secondaire" id="deja-instance">J'ai déjà une instance</button>
+    <div id="etat-inscription" role="status" style="margin-top:14px;font-size:14px;"></div>
+    <ul>
+      <li>la clé ne contient <strong>ni nom, ni adresse, ni identifiant de compte</strong> :
+        seulement une date d'expiration et un nombre d'analyses par jour ;</li>
+      <li>si vous hébergez votre propre instance, vous n'avez besoin d'aucune clé —
+        indiquez simplement son adresse dans les réglages.</li>
+    </ul>
+  </div>
 
   <div class="carte retenue">
     <h2>Vous préférez être prévenu automatiquement ?</h2>
@@ -81,9 +103,8 @@
   </div>
 
   <div class="pied">
-    <p><strong>Une dernière étape :</strong> vérifiez l'adresse de votre instance Lynceus
-      (le serveur qui analyse) dans les <a href="#" id="lien-reglages">réglages</a>.
-      Par défaut&nbsp;: <code>http://localhost:8000</code>.</p>
+    <p>L'adresse de l'instance et la clé sont modifiables à tout moment dans les
+      <a href="#" id="lien-reglages">réglages</a>.</p>
     <p id="version"></p>
   </div>
 </main>

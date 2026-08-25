@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block titre %}{{ nom }} — la vigie de l'information{% endblock %}
+{% block tete %}
+<script>
+  /* Posée avant le premier rendu : sinon les scènes seraient peintes puis masquées. */
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches)
+    document.documentElement.classList.add('js-anime');
+</script>
+<script src="/statique/parallaxe.js" defer></script>
+{% endblock %}
+
+{% block classe_corps %} class="pleine-largeur"{% endblock %}
+
+{% block corps %}
+<div class="recit">
+  <div class="etoiles" aria-hidden="true"></div>
+  <div class="horizon" aria-hidden="true"></div>
+
+  <!-- ------------------------------------------------------------ la nuit -->
+  <section class="scene" style="min-height: 88vh">
+    <div class="contenu souffle">
+      <svg class="oeil" width="64" height="64" viewBox="0 0 24 24" aria-hidden="true"
+           fill="none" stroke="#e6b271" stroke-width="1.1">
+        <path d="M1.6 12S5.4 5.2 12 5.2 22.4 12 22.4 12 18.6 18.8 12 18.8 1.6 12 1.6 12Z"/>
+        <circle cx="12" cy="12" r="3.2"/>
+      </svg>
+      <h1 class="titre-nu">Lynceus</h1>
+      <p class="sous-titre">L'œil met du temps à s'habituer à l'obscurité.<br>Ensuite, il voit.</p>
+      <div class="actions">
+        <a class="bouton clair" href="/installer">Installer l'extension</a>
+        <a class="bouton creux" href="#recit">Lire d'abord</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------- le récit -->
+  <section class="scene revele" id="recit">
+    <div class="contenu">
+      <h2>Un homme à la proue</h2>
+      <p>Les Argonautes avaient à leur bord un homme dont la vue passait pour
+      surnaturelle. Lyncée voyait, disait-on, à travers la pierre et jusque sous la mer.</p>
+      <p>On ne l'a pourtant jamais mis à la barre. Sa place était à l'avant du navire,
+      et son rôle tenait en une phrase : <strong>annoncer les écueils</strong>. Il ne
+      choisissait pas la route. Il disait ce qu'il y avait devant, et l'équipage
+      décidait.</p>
+    </div>
+  </section>
+
+  <section class="scene revele">
+    <div class="contenu">
+      <p class="citation">« Il ne décidait pas du cap.<br>Il disait seulement ce qu'il
+      y avait devant. »<cite>Le rôle que ce projet s'est donné.</cite></p>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------- le retournement -->
+  <section class="scene revele">
+    <div class="contenu">
+      <h2>La légende a un défaut</h2>
+      <p>Elle laisse croire qu'il existerait deux sortes de gens : ceux qui voient,
+      et ceux qui se trompent. C'est faux, et c'est même le début du problème.</p>
+      <p><strong>Personne ne se croit crédule.</strong> Nous nous laissons tous
+      convaincre par ce qui nous ressemble, par ce qui nous rassure, par ce qui arrive
+      au moment où nous en avions besoin. Un texte bien construit désarme la vigilance
+      de n'importe qui — la vôtre, la mienne.</p>
+      <p>Ce qui se travaille, ce n'est donc pas la lucidité. C'est une chose beaucoup
+      plus modeste : <em>reconnaître un procédé quand on le croise</em>. Une fois qu'on
+      a vu comment fonctionne l'urgence fabriquée, on la voit partout — et elle cesse
+      d'agir.</p>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------- ce qu'il fait -->
+  <section class="scene revele">
+    <div class="contenu">
+      <h2>Ce que fait Lynceus</h2>
+      <p>Il lit la page que vous lisez et vous montre <strong>comment elle est
+      construite</strong>. Il cite le passage exact — jamais un résumé, jamais une
+      reformulation — puis nomme le procédé employé : l'autorité anonyme, la question
+      qui n'en est pas une, la solution miracle, le faux dilemme.</p>
+      <p class="discret" style="color: inherit; opacity: 0.8">{{ nb_techniques }} procédés
+      au référentiel. Une liste fermée, publiée, que
+      <a href="/taxonomie" style="color: inherit">vous pouvez lire en entier</a> avant
+      d'installer quoi que ce soit.</p>
+
+    </div>
+    <div class="contenu large">
+      <div class="paire" style="margin-top: 30px">
+        <div>
+          <h3>Une note, pas un verdict</h3>
+          <p>De A à E, comme un Nutri-Score. Elle est calculée par le serveur avec des
+          pondérations publiées — pas décidée par le modèle de langage, qui ne fait
+          que décrire.</p>
+        </div>
+        <div>
+          <h3>Ce qui va bien aussi</h3>
+          <p>Chaque analyse relève systématiquement les points positifs de la page.
+          Un article n'est pas un camp : il a des qualités et des faiblesses.</p>
+        </div>
+        <div>
+          <h3>Des questions, pas des ordres</h3>
+          <p>À la fin, quelques questions à se poser soi-même. C'est vous qui
+          concluez. L'extension ne conclut jamais à votre place.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------- ce qu'il ne fait pas -->
+  <section class="scene revele">
+    <div class="contenu">
+      <h2>Et surtout, ce qu'il ne fait pas</h2>
+      <p>Ces limites ne sont pas des précautions de façade : elles sont écrites dans
+      la <a href="/charte" style="color: inherit">charte</a>, et le code s'y tient.</p>
+
+    </div>
+    <div class="contenu large">
+      <div class="paire" style="margin-top: 26px">
+        <div>
+          <h3>Il ne dit pas ce qui est vrai</h3>
+          <p>Il décrit la façon dont un texte cherche à convaincre. Établir les faits
+          est un autre métier, et il demande des humains.</p>
+        </div>
+        <div>
+          <h3>Il ne note pas les croyances</h3>
+          <p>Une conviction religieuse, politique ou philosophique ne reçoit pas de
+          note. Ce qui s'analyse, c'est un procédé rhétorique — pas une foi.</p>
+        </div>
+        <div>
+          <h3>Il ne vous suit pas</h3>
+          <p>La consultation de l'annuaire est anonyme par construction : le serveur
+          reçoit quelques caractères d'empreinte, jamais l'adresse de la page.</p>
+        </div>
+        <div>
+          <h3>Il peut se tromper</h3>
+          <p>C'est une IA : elle produit des erreurs. Chaque analyse est contestable
+          en deux clics, y compris par l'éditeur du site concerné.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------- le jour -->
+  <section class="scene jour revele" style="min-height: 78vh">
+    <div class="contenu souffle">
+      <h2 style="font-size: clamp(28px, 6vw, 44px)">Le jour se lève</h2>
+      <p class="chapo">Gratuit, libre, sans compte et sans publicité. Vous pouvez
+      l'installer en trois minutes — ou héberger votre propre instance et n'avoir
+      de comptes à rendre à personne, pas même à nous.</p>
+      <div class="actions">
+        <a class="bouton" href="/installer">Installer l'extension</a>
+        <a class="bouton creux" href="/auto-hebergement">Héberger une instance</a>
+      </div>
+      <p class="discret" style="margin-top: 34px; color: #6b5a48">
+        Code source sous AGPL-3.0 · méthodologie publiée · analyses contestables
+      </p>
+    </div>
+  </section>
+</div>
+{% endblock %}

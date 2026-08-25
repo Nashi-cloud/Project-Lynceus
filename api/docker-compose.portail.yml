@@ -1,0 +1,87 @@
+# Portail public Lynceus — le site : récit, méthodologie, annuaire, téléchargement,
+# inscription.
+#
+#   docker compose -f docker-compose.portail.yml up -d
+#
+# Fichier SÉPARÉ du compose de l'instance, et c'est délibéré : le portail détient la clé
+# privée qui signe les clés d'accès, l'instance ne connaît que la publique. Les déployer
+# sur deux machines distinctes fait qu'une instance compromise — celle qui est exposée aux
+# analyses, celle qui parle à un modèle, celle qui stocke — ne permet toujours pas de
+# forger des clés. Les réunir sur un seul hôte fonctionne, mais annule cette garantie :
+# c'est un choix, pas un détail de déploiement.
+#
+# Le portail n'a PAS de base de données. Il ne conserve rien : ni les clés qu'il délivre,
+# ni les recherches, ni les contestations (transmises à l'instance). Un conteneur suffit,
+# et le perdre ne perd aucune donnée.
+#
+# Secrets attendus dans un fichier .env à côté de ce compose :
+#   LYNCEUS_PORTAIL_CLE_PRIVEE, LYNCEUS_PORTAIL_INSTANCE
+#   CLOUDFLARE_TUNNEL_TOKEN (si l'exposition passe par Cloudflare Tunnel)
+
+services:
+  portail:
+    image: ${LYNCEUS_IMAGE:-votre-registre.exemple/lynceus-api:latest}
+    pull_policy: always
+    container_name: lynceus-portail
+    command: ["uvicorn", "lynceus.portail:creer_portail", "--factory",
+              "--host", "0.0.0.0", "--port", "8080"]
+    environment:
+      LYNCEUS_PORTAIL_NOM: ${LYNCEUS_PORTAIL_NOM:-Lynceus}
+      LYNCEUS_PORTAIL_CONTACT: ${LYNCEUS_PORTAIL_CONTACT:-}
+
+      # --- Émission de clés ---
+      # Clé PRIVÉE Ed25519 (lynceus cles-paire). Sans elle, le portail sert ses pages mais
+      # l'inscription répond 503 en le disant : utile pour une vitrine sans distribution.
+      LYNCEUS_PORTAIL_CLE_PRIVEE: ${LYNCEUS_PORTAIL_CLE_PRIVEE:-}
+      # Adresse de l'instance annoncée aux extensions. Doit être joignable depuis le
+      # navigateur des visiteurs — pas un nom de service interne.
+      LYNCEUS_PORTAIL_INSTANCE: ${LYNCEUS_PORTAIL_INSTANCE:?adresse publique de l'instance requise}
+      # Adresse par laquelle le portail interroge lui-même l'instance (annuaire,
+      # contestations). Vide = identique à la précédente.
+      LYNCEUS_PORTAIL_INSTANCE_INTERNE: ${LYNCEUS_PORTAIL_INSTANCE_INTERNE:-}
+      LYNCEUS_PORTAIL_QUOTA_JOUR: ${LYNCEUS_PORTAIL_QUOTA_JOUR:-20}
+      LYNCEUS_PORTAIL_VALIDITE_JOURS: ${LYNCEUS_PORTAIL_VALIDITE_JOURS:-365}
+      # 0 = inscription libre (défaut). Passer à 2 ou 3 si l'inscription ouverte attire
+      # des scripts : la valeur se change sans reconstruire l'image.
+      LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR: ${LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR:-0}
+
+      # --- Distribution de l'extension ---
+      LYNCEUS_PORTAIL_PAQUETS: /paquets
+
+      # --- Réseau ---
+      # Derrière Cloudflare Tunnel, sans cet en-tête toutes les requêtes portent l'adresse
+      # du tunnel. À ne définir QUE si le portail n'est joignable que par le tunnel.
+      LYNCEUS_PORTAIL_ENTETE_IP_REELLE: ${LYNCEUS_PORTAIL_ENTETE_IP_REELLE:-}
+    volumes:
+      # Les archives lynceus-extension-v*.zip produites par `npm run paquet`. La version
+      # la plus haute est proposée au téléchargement ; déposer un nouveau zip suffit à
+      # publier une mise à jour, sans redémarrage d'image.
+      - ./paquets:/paquets:ro
+    ports:
+      - "${LYNCEUS_PORTAIL_BIND:-127.0.0.1}:8080:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8080/sante', timeout=5).status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - lynceus-portail-net
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: lynceus-portail-tunnel
+    profiles: [tunnel]
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?jeton de tunnel requis avec le profil « tunnel »}
+    depends_on:
+      portail:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - lynceus-portail-net
+
+networks:
+  lynceus-portail-net:

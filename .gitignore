@@ -19,6 +19,7 @@ lynceus-extension-v*.zip
 .env.*
 !.env.example
 !.env.prod.example
+!.env.portail.example
 
 # IDE / OS
 .idea/
@@ -28,6 +29,10 @@ lynceus-extension-v*.zip
 # Données locales
 *.sqlite3
 postgres-data/
+
+# Paquets d'extension déposés pour le portail : artefacts de build, jamais versionnés.
+api/paquets/*
+!api/paquets/.gitkeep
 
 # Captures de pages réelles : non versionnées (droit d'auteur).
 # Seul le manifeste corpus/corpus.yaml l'est ; recréez-les avec `lynceus capturer`.
