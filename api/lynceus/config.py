@@ -57,6 +57,15 @@ class Parametres(BaseSettings):
     # contournerait la limite en forgeant l'en-tête.
     entete_ip_reelle: str = ""
 
+    # Connexions à la base gardées ouvertes. Le défaut de SQLAlchemy (5 + 10 de débord)
+    # est inférieur au nombre de threads du serveur : sous charge, des requêtes attendraient
+    # une connexion libre alors que la base, elle, n'est pas saturée.
+    bdd_pool_size: int = 20
+    bdd_max_overflow: int = 20
+    # Recycle les connexions inactives : certains pare-feux et proxys coupent silencieusement
+    # les connexions longues, ce qui produit des erreurs déroutantes après une accalmie.
+    bdd_pool_recycle_s: int = 1800
+
     # Divers
     cors_origins: str = "*"
     prompt_version: str = "latest"

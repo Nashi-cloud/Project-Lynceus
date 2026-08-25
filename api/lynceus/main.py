@@ -86,6 +86,15 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
     arguments_moteur: dict = {}
     if p.database_url.startswith("sqlite"):
         arguments_moteur["connect_args"] = {"check_same_thread": False}
+    else:
+        # Dimensionné sur le nombre de threads du serveur : un pool plus petit ferait
+        # attendre des requêtes pour une connexion, sans que la base soit en cause.
+        arguments_moteur.update(
+            pool_size=p.bdd_pool_size,
+            max_overflow=p.bdd_max_overflow,
+            pool_recycle=p.bdd_pool_recycle_s,
+            pool_pre_ping=True,  # écarte les connexions coupées côté serveur
+        )
     moteur_bdd = create_engine(p.database_url, **arguments_moteur)
     # Alembic fait autorité sur le schéma (création comprise) : create_all() créerait des
     # tables hors de son suivi, que les migrations suivantes ne retrouveraient pas.

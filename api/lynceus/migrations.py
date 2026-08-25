@@ -28,7 +28,7 @@ from alembic import command
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
-from sqlalchemy import Engine, inspect
+from sqlalchemy import Engine, inspect, text
 
 from .modeles import Base
 
@@ -49,10 +49,36 @@ def _configuration(url_base: str) -> Config:
     return config
 
 
+# Identifiant du verrou consultatif PostgreSQL. Arbitraire mais stable : deux instances
+# qui démarrent ensemble doivent choisir le MÊME verrou pour se coordonner.
+VERROU_MIGRATION = 8_154_733_201
+
+
 def appliquer(moteur: Engine) -> str:
-    """Met le schéma à jour. Retourne un mot décrivant ce qui a été fait."""
+    """Met le schéma à jour. Retourne un mot décrivant ce qui a été fait.
+
+    Plusieurs répliques peuvent démarrer en même temps : sans coordination, elles
+    appliqueraient les mêmes migrations de front, avec des erreurs (« table déjà
+    existante ») ou, pire, des migrations partielles. Sur PostgreSQL, un verrou consultatif
+    sérialise l'opération : la première réplique migre, les autres attendent puis
+    constatent qu'il n'y a plus rien à faire. SQLite n'est pas concerné (mono-processus)."""
     config = _configuration(str(moteur.url.render_as_string(hide_password=False)))
 
+    if moteur.dialect.name == "postgresql":
+        # Le verrou est tenu par la connexion : on la garde ouverte pendant toute la
+        # migration, et il se libère à sa fermeture, y compris si le processus meurt.
+        with moteur.connect() as verrou:
+            verrou.execute(text("SELECT pg_advisory_lock(:cle)"), {"cle": VERROU_MIGRATION})
+            verrou.commit()
+            try:
+                return _appliquer_sans_verrou(moteur, config)
+            finally:
+                verrou.execute(text("SELECT pg_advisory_unlock(:cle)"), {"cle": VERROU_MIGRATION})
+                verrou.commit()
+    return _appliquer_sans_verrou(moteur, config)
+
+
+def _appliquer_sans_verrou(moteur: Engine, config: Config) -> str:
     with moteur.connect() as connexion:
         revision_actuelle = MigrationContext.configure(connexion).get_current_revision()
         tables = set(inspect(connexion).get_table_names())
