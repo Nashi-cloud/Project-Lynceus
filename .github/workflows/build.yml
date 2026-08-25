@@ -19,7 +19,10 @@ on:
   push:
     branches: [main, next, dev]
 
-permissions: {}
+# Lecture du dépôt seule : le jeton ne sert qu'au checkout. Sans permission du tout, il
+# ne peut pas cloner un dépôt privé ; avec davantage, il pourrait écrire.
+permissions:
+  contents: read
 
 jobs:
   build-and-push:

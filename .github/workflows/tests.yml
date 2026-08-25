@@ -18,8 +18,10 @@ concurrency:
   group: tests-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
-# Aucune écriture n'est nécessaire depuis ces travaux.
-permissions: {}
+# Lecture du dépôt seule : c'est tout ce dont actions/checkout a besoin, et le dépôt
+# étant privé, un jeton sans aucune permission ne peut même pas le cloner.
+permissions:
+  contents: read
 
 jobs:
   api:
