@@ -22,7 +22,7 @@ services:
   portail:
     image: ${LYNCEUS_IMAGE:?adresse de l'image requise, voir .env.portail.example}
     pull_policy: always
-    container_name: lynceus-portail
+    container_name: lynceus-portail${LYNCEUS_SUFFIXE:-}
     command: ["uvicorn", "lynceus.portail:creer_portail", "--factory",
               "--host", "0.0.0.0", "--port", "8080"]
     environment:
@@ -93,7 +93,7 @@ services:
 
   tunnel:
     image: cloudflare/cloudflared:latest
-    container_name: lynceus-portail-tunnel
+    container_name: lynceus-portail-tunnel${LYNCEUS_SUFFIXE:-}
     profiles: [tunnel]
     command: tunnel --no-autoupdate run
     environment:

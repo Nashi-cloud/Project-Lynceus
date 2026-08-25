@@ -2,7 +2,7 @@
  * les mêmes résultats que api/lynceus/normalisation.py — sinon le lookup annuaire échoue. */
 
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { buildSync } from "esbuild";
@@ -42,9 +42,29 @@ print(json.dumps([[normaliser_url(u), hacher_url(u)] for u in urls]))
 `;
 const cheminScript = join(dossier, "reference.py");
 writeFileSync(cheminScript, scriptPython);
-const resultatsPy = JSON.parse(
-  execFileSync("../api/.venv/bin/python", [cheminScript], { input: JSON.stringify(URLS), encoding: "utf-8" }),
-);
+
+// L'implémentation de référence n'utilise que la bibliothèque standard : n'importe quel
+// Python 3 fait l'affaire. On préfère l'environnement de l'API quand il existe, sinon
+// celui du système, ce qui permet de lancer ce test dans un conteneur de CI ou juste
+// après un clone, sans avoir créé le venv de l'API au préalable.
+const interpreteur =
+  process.env.LYNCEUS_PYTHON ||
+  (existsSync("../api/.venv/bin/python") ? "../api/.venv/bin/python" : "python3");
+
+let resultatsPy;
+try {
+  resultatsPy = JSON.parse(
+    execFileSync(interpreteur, [cheminScript], { input: JSON.stringify(URLS), encoding: "utf-8" }),
+  );
+} catch (erreur) {
+  console.error(
+    `✗ Impossible de lancer l'implémentation de référence avec « ${interpreteur} ».\n` +
+    "  Ce test compare le hachage TypeScript à celui de l'API : il lui faut un Python 3.\n" +
+    "  Indiquez-en un avec LYNCEUS_PYTHON=/chemin/vers/python si besoin.",
+  );
+  console.error(erreur instanceof Error ? erreur.message : String(erreur));
+  process.exit(1);
+}
 
 // 4. Comparaison
 let echecs = 0;

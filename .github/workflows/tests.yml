@@ -1,0 +1,73 @@
+# Vérification à chaque poussée : ce que `./verifier.sh` fait en local, mais sur le
+# runner de la forge et sans rien installer sur la machine.
+#
+# Tout tourne dans des conteneurs jetables, avec le dépôt monté en LECTURE SEULE puis
+# recopié à l'intérieur. C'est délibéré : un `npm ci` lancé en root dans un dossier monté
+# en écriture laisse un node_modules que le checkout suivant ne peut plus effacer, et le
+# runner se bloque sur un EACCES. En ne montant qu'en lecture, le cas ne peut pas se
+# produire.
+name: Tests
+
+on:
+  push:
+    branches: [main, next, dev, "feat/**", "fix/**", "docs/**", "perf/**"]
+  pull_request:
+
+# Le runner est unique : deux exécutions de la même branche se marcheraient dessus.
+concurrency:
+  group: tests-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
+# Aucune écriture n'est nécessaire depuis ces travaux.
+permissions: {}
+
+jobs:
+  api:
+    name: API (pytest)
+    runs-on: [self-hosted, forge]
+    # Le dépôt a vocation à devenir public, et un runner auto-hébergé exécute le code
+    # qu'on lui donne. Les propositions venues d'un fork ne tournent donc pas ici : elles
+    # se relisent, et leur auteur lance `./verifier.sh` chez lui.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: pytest
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/depot:ro" \
+            python:3.12-slim \
+            sh -c "cp -a /depot /travail && cd /travail/api \
+                   && pip install --quiet --no-cache-dir -e '.[dev]' \
+                   && python -m pytest -q"
+
+  extension:
+    name: Extension (typage, tests, parité de hachage)
+    runs-on: [self-hosted, forge]
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+
+      # Le dépôt entier est recopié, pas seulement extension/ : test/identite.test.mjs
+      # compare la palette, le logotype et les polices embarquées à ceux du portail, qui
+      # vivent sous api/.
+      # Python est installé dans le conteneur Node parce que `npm test` inclut le test de
+      # parité : il rejoue les douze URL de référence à travers l'implémentation Python de
+      # l'API et compare les empreintes. C'est le test qui garantit qu'un lookup lancé par
+      # l'extension tombe bien sur l'entrée écrite par le serveur. Le faire tourner sans
+      # Python reviendrait à ne pas le faire tourner.
+      - name: npm ci, tsc, node --test
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/depot:ro" \
+            node:22-slim \
+            sh -c "apt-get update -qq \
+                   && apt-get install -y -qq --no-install-recommends python3 > /dev/null \
+                   && cp -a /depot /travail && cd /travail/extension \
+                   && npm ci --no-audit --no-fund \
+                   && npm run verifier \
+                   && npm test"

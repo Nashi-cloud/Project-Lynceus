@@ -36,13 +36,62 @@ L'image est construite une fois et déployée telle quelle, sans compilation sur
 # Depuis la racine du dépôt
 REGISTRE=votre-registre.exemple/lynceus-api      # votre registre d'images
 
-docker build -f api/Dockerfile -t $REGISTRE:v0.3.0 .
-docker tag  $REGISTRE:v0.3.0 $REGISTRE:latest
-docker push $REGISTRE:v0.3.0
+docker build -f api/Dockerfile -t $REGISTRE:v$(cat VERSION) .
+docker tag  $REGISTRE:v$(cat VERSION) $REGISTRE:latest
+docker push $REGISTRE:v$(cat VERSION)
 docker push $REGISTRE:latest
 ```
 
-L'étiquette de version permet de revenir en arrière : `LYNCEUS_IMAGE=…:v0.2.0` puis `docker compose up -d`.
+Le contexte de construction est la **racine du dépôt**, pas `api/` : l'image embarque `prompts/`, `docs/` et `schema/`, et son premier étage construit le paquet de l'extension depuis `extension/`. Une seule image sert l'instance et le portail, qui n'en sont que deux commandes d'entrée.
+
+L'étiquette de version permet de revenir en arrière : `LYNCEUS_IMAGE=…:v0.2.0` puis `docker compose up -d`. Elle vient du fichier `VERSION`, dont `verifier.sh` vérifie qu'il s'accorde avec `pyproject.toml` et `__init__.py`. Un décalage produirait une instance qui annonce sur `/v1/meta` une version que personne ne saurait redéployer.
+
+### Automatiser : la chaîne d'intégration
+
+Le dépôt contient deux workflows compatibles GitHub Actions, prévus pour un **runner auto-hébergé** étiqueté `self-hosted, forge` :
+
+| Fichier | Déclenchement | Effet |
+|---|---|---|
+| `.github/workflows/tests.yml` | poussée sur `main`, `next`, `dev`, `feat/**`, `fix/**`, `docs/**` | rejoue `pytest` et la suite de l'extension dans des conteneurs jetables |
+| `.github/workflows/build.yml` | poussée sur `main`, `next`, `dev` | construit l'image, la publie, et déclenche le redéploiement |
+
+Correspondance entre branche et étiquette d'image :
+
+| Branche | Étiquette | Redéploiement |
+|---|---|---|
+| `dev` | `:dev` | aucun (construction seule) |
+| `next` | `:next` | staging, par webhook |
+| `main` | `:latest` et `:v<VERSION>` | production, par webhook |
+
+À configurer dans le dépôt, côté forge :
+
+- variable `REGISTRE_FORGE` : adresse du registre **vue depuis le runner**, `127.0.0.1:5000` par défaut. Les hôtes de déploiement, eux, joignent ce registre par son nom réseau, renseigné dans le `LYNCEUS_IMAGE` de chaque stack ;
+- secrets `WEBHOOK_STAGING_INSTANCE`, `WEBHOOK_STAGING_PORTAIL`, `WEBHOOK_PROD` : les URL de redéploiement. Une étape sans secret passe avec un avertissement plutôt que d'échouer, pour qu'un dépôt cloné puisse construire ses images sans rien configurer.
+
+Ces URL ne sont pas dans les fichiers de workflow, et ne doivent pas y entrer : **une URL de webhook Portainer est un jeton de déploiement déguisé**, qui suffit à faire redéployer une stack à quiconque la connaît. Le dépôt étant destiné à devenir public, elles restent des secrets.
+
+Deux détails qui coûtent cher quand on les découvre en production :
+
+- l'appel de webhook utilise `curl --fail`. Sans ce drapeau, `curl` sort en 0 sur un HTTP 404 et l'étape passe au vert alors que l'appel a tapé dans le vide. Une stack supprimée puis recréée change d'identifiant de webhook : c'est exactement le cas qu'il faut voir échouer ;
+- les travaux de test ne s'exécutent **pas** pour une proposition venue d'un fork. Un runner auto-hébergé exécute le code qu'on lui donne : sur un dépôt public, l'ouvrir aux forks reviendrait à offrir la machine. Les contributions se relisent, et leur auteur lance `./verifier.sh` chez lui.
+
+### Une instance de staging à côté de la production
+
+`docker-compose.prod.yml` sert les deux : c'est la même définition, avec un autre `.env`.
+
+```ini
+LYNCEUS_IMAGE=<registre>/lynceus-api:next
+LYNCEUS_SUFFIXE=-staging          # évite que les deux stacks se disputent « lynceus-api »
+LYNCEUS_BIND=127.0.0.1
+```
+
+Le suffixe ne porte que sur le nom des conteneurs ; les volumes, eux, sont déjà isolés par le nom du projet Compose. Lancer la stack de staging avec son propre nom de projet suffit donc à séparer les bases :
+
+```bash
+docker compose -p lynceus-staging -f docker-compose.prod.yml up -d
+```
+
+Le staging a besoin de ses **propres secrets** : autre mot de passe PostgreSQL, autre jeton d'administration, et surtout **une autre paire de clés**. Réutiliser la clé publique de production ferait accepter par la production les clés émises pour le staging.
 
 ## 3. Démarrer
 
