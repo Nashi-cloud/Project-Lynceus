@@ -34,7 +34,7 @@ services:
       - lynceus-net
 
   api:
-    image: ${LYNCEUS_IMAGE:-votre-registre.exemple/lynceus-api:latest}
+    image: ${LYNCEUS_IMAGE:?adresse de l'image requise, voir .env.prod.example}
     pull_policy: always
     container_name: lynceus-api
     depends_on:
@@ -65,7 +65,7 @@ services:
       LYNCEUS_CORS_ORIGINS: ${LYNCEUS_CORS_ORIGINS:-*}
       # Derrière Cloudflare Tunnel, toutes les requêtes portent l'adresse du tunnel : sans
       # cet en-tête, un seul visiteur épuiserait la limite de débit de tout le monde.
-      # À ne définir QUE si l'instance n'est joignable que par le tunnel — un en-tête se
+      # À ne définir QUE si l'instance n'est joignable que par le tunnel : un en-tête se
       # falsifie, et une instance jointe en direct verrait sa limite contournée.
       LYNCEUS_ENTETE_IP_REELLE: ${LYNCEUS_ENTETE_IP_REELLE:-}
     ports:
@@ -82,7 +82,7 @@ services:
     networks:
       - lynceus-net
 
-  # Exposition publique par Cloudflare Tunnel — activée par le profil « tunnel ».
+  # Exposition publique par Cloudflare Tunnel, activée par le profil « tunnel ».
   # Le conteneur établit une connexion SORTANTE vers Cloudflare : aucun port entrant à
   # ouvrir, aucune adresse publique à exposer, et le certificat TLS est géré par Cloudflare.
   #

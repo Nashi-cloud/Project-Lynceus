@@ -34,11 +34,12 @@ L'image est construite une fois et déployée telle quelle, sans compilation sur
 
 ```bash
 # Depuis la racine du dépôt
-docker build -f api/Dockerfile -t votre-registre.exemple/lynceus-api:v0.3.0 .
-docker tag  votre-registre.exemple/lynceus-api:v0.3.0 \
-            votre-registre.exemple/lynceus-api:latest
-docker push votre-registre.exemple/lynceus-api:v0.3.0
-docker push votre-registre.exemple/lynceus-api:latest
+REGISTRE=votre-registre.exemple/lynceus-api      # votre registre d'images
+
+docker build -f api/Dockerfile -t $REGISTRE:v0.3.0 .
+docker tag  $REGISTRE:v0.3.0 $REGISTRE:latest
+docker push $REGISTRE:v0.3.0
+docker push $REGISTRE:latest
 ```
 
 L'étiquette de version permet de revenir en arrière : `LYNCEUS_IMAGE=…:v0.2.0` puis `docker compose up -d`.

@@ -1,12 +1,12 @@
-# Portail public Lynceus — le site : récit, méthodologie, annuaire, téléchargement,
-# inscription.
+# Portail public Lynceus : le site (récit, méthodologie, annuaire, téléchargement,
+# inscription).
 #
 #   docker compose -f docker-compose.portail.yml up -d
 #
 # Fichier SÉPARÉ du compose de l'instance, et c'est délibéré : le portail détient la clé
 # privée qui signe les clés d'accès, l'instance ne connaît que la publique. Les déployer
-# sur deux machines distinctes fait qu'une instance compromise — celle qui est exposée aux
-# analyses, celle qui parle à un modèle, celle qui stocke — ne permet toujours pas de
+# sur deux machines distinctes fait qu'une instance compromise, celle qui est exposée aux
+# analyses, qui parle à un modèle et qui stocke, ne permet toujours pas de
 # forger des clés. Les réunir sur un seul hôte fonctionne, mais annule cette garantie :
 # c'est un choix, pas un détail de déploiement.
 #
@@ -20,7 +20,7 @@
 
 services:
   portail:
-    image: ${LYNCEUS_IMAGE:-votre-registre.exemple/lynceus-api:latest}
+    image: ${LYNCEUS_IMAGE:?adresse de l'image requise, voir .env.portail.example}
     pull_policy: always
     container_name: lynceus-portail
     command: ["uvicorn", "lynceus.portail:creer_portail", "--factory",
@@ -34,7 +34,7 @@ services:
       # l'inscription répond 503 en le disant : utile pour une vitrine sans distribution.
       LYNCEUS_PORTAIL_CLE_PRIVEE: ${LYNCEUS_PORTAIL_CLE_PRIVEE:-}
       # Adresse de l'instance annoncée aux extensions. Doit être joignable depuis le
-      # navigateur des visiteurs — pas un nom de service interne.
+      # navigateur des visiteurs, pas un nom de service interne.
       LYNCEUS_PORTAIL_INSTANCE: ${LYNCEUS_PORTAIL_INSTANCE:?adresse publique de l'instance requise}
       # Adresse par laquelle le portail interroge lui-même l'instance (annuaire,
       # contestations). Vide = identique à la précédente.
