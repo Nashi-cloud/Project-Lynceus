@@ -98,7 +98,12 @@ services:
     profiles: [tunnel]
     command: tunnel --no-autoupdate run
     environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?jeton de tunnel requis avec le profil « tunnel »}
+      # Volontairement SANS garde « :? ». Compose interpole tout le fichier au chargement,
+      # y compris les services d'un profil non activé : un garde ici empêcherait de
+      # démarrer la stack à quiconque n'utilise pas Cloudflare, alors que le tunnel n'est
+      # qu'une option d'exposition parmi d'autres. Avec le profil activé et sans jeton,
+      # cloudflared s'arrête de lui-même et le dit dans ses journaux.
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
     depends_on:
       api:
         condition: service_healthy
