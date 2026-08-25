@@ -174,6 +174,36 @@ Si le trafic l'exigeait vraiment :
 
 Une file de tâches (Celery, RQ) n'apporterait rien ici : elle imposerait Redis et un worker séparé, et obligerait les clients à interroger périodiquement l'état de leur analyse au lieu de recevoir directement leur carte. Le plafond de concurrence résout le même problème sans rien de tout cela.
 
+## Monter à plusieurs milliers d'utilisateurs
+
+Ce qui cède en premier, dans l'ordre — et ce qui est déjà traité.
+
+### Déjà en place
+
+**L'index de recherche par préfixe.** Le lookup k-anonyme (`LIKE 'abcde%'`) est la requête la plus fréquente : une par page visitée, badge activé. PostgreSQL n'utilise un index B-tree ordinaire pour ce filtre que si la collation est `C` — sans opérateur adapté, la requête balaie toute la table. Mesuré : **22 ms sur 500 000 pages**, contre **0,08 ms** avec l'index `varchar_pattern_ops`, et **0,25 ms sur 5 millions**. La migration le crée automatiquement.
+
+**Le pool de connexions.** Le défaut de SQLAlchemy (5 + 10) était inférieur au nombre de threads du serveur : sous charge, des requêtes auraient attendu une connexion libre sans que la base soit en cause. Porté à 20 + 20, avec `pool_pre_ping` (écarte les connexions coupées par un pare-feu) et recyclage à 30 minutes.
+
+**Le démarrage simultané de plusieurs répliques.** Sans coordination, elles appliqueraient les mêmes migrations de front — erreurs, voire schéma à moitié migré. Un verrou consultatif PostgreSQL sérialise l'opération : vérifié avec 6 répliques lancées ensemble sur une base vierge, une seule migre, les autres attendent puis constatent qu'il n'y a rien à faire.
+
+**Le plafond d'analyses simultanées**, qui préserve la réactivité des consultations (section précédente).
+
+### Ce qu'il faudra faire pour aller plus loin
+
+Deux verrous empêchent aujourd'hui d'ajouter des répliques, et ils doivent être levés **avant**, pas après :
+
+1. **Le compteur de débit vit en mémoire.** Avec N processus, la limite réelle est multipliée par N. Il faut le déplacer dans un stockage partagé (Redis) — le quota par clé, lui, est déjà en base et se comporte correctement en multi-instances.
+2. **Le plafond de concurrence est également par processus.** Même remarque : N répliques enverraient N × 12 analyses simultanées au fournisseur de modèle, avec ses propres limites de débit à la clé.
+
+### Le vrai plafond n'est pas technique
+
+Le débit d'analyses est borné par le fournisseur de modèle et par le budget, pas par ce serveur. Deux effets jouent en votre faveur :
+
+- **le cache est mutualisé** : plus il y a d'utilisateurs, plus la proportion de pages déjà connues augmente, et une page connue ne coûte rien ;
+- **les consultations sont quasi gratuites** : 0,25 ms sur 5 millions de pages, sans appel au modèle.
+
+Autrement dit, un millier d'utilisateurs qui lisent les mêmes sites d'actualité coûtent bien moins qu'un millier d'utilisateurs qui exploreraient chacun des pages inédites. Surveillez le nombre d'analyses **réelles** (section suivante), pas le nombre de requêtes.
+
 ## Surveiller les coûts
 
 Le vrai risque d'une instance exposée n'est pas l'intrusion, c'est la facture. Trois garde-fous se cumulent : quota par clé, limite de débit par IP, et taille maximale du contenu. Pour estimer la dépense :
