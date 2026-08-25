@@ -1,0 +1,20 @@
+Polices auto-hébergées, sous licence SIL Open Font License 1.1 (OFL).
+
+  Fraunces   : Copyright 2020 The Fraunces Project Authors
+               https://github.com/undercasetype/Fraunces
+  Newsreader : Copyright 2019 The Newsreader Project Authors
+               https://github.com/productiontype/Newsreader
+
+L'OFL autorise l'usage, la modification et la redistribution, y compris
+commerciale, à condition que les fichiers de police ne soient pas vendus seuls
+et que la présente notice accompagne leur redistribution. Texte complet :
+https://openfontlicense.org
+
+Fichiers identiques à ceux du portail (api/lynceus/portail/statique/polices).
+Ils sont copiés ici parce que l'extension est empaquetée seule : un .zip chargé
+dans Chrome n'a accès à rien d'autre qu'à lui-même. Les embarquer plutôt que de
+les charger depuis un CDN évite qu'une page de l'extension signale son ouverture
+à une société extérieure, ce qu'une extension qui promet la vie privée ne peut
+pas se permettre. Seul le sous-ensemble latin est présent : il couvre le
+français, et les deux fichiers sont des polices variables, donc toutes les
+graisses en une seule ressource.

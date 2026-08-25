@@ -199,8 +199,8 @@ function messageLisible(erreur: unknown): string {
     return (
       "Lynceus n'a pas accès à cette page. Si c'est une page interne du navigateur ou le Web " +
       "Store, elle n'est pas analysable. Sinon : relancez via le clic droit → « Analyser cette " +
-      "page avec Lynceus » (l'accès expire après un changement de page) — ou activez le badge " +
-      "passif dans les réglages pour que ce bouton fonctionne aussi après une navigation."
+      "page avec Lynceus » (l'accès expire après un changement de page). Vous pouvez aussi activer " +
+      "le badge passif dans les réglages pour que ce bouton fonctionne aussi après une navigation."
     );
   }
   return texte;
