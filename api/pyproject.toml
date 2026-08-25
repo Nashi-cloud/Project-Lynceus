@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lynceus-api"
-version = "0.1.0"
+version = "0.3.0"
 description = "Lynceus — API annuaire et moteur d'analyse de fiabilité de contenus web"
 license = "AGPL-3.0-or-later"
 requires-python = ">=3.11"
@@ -20,6 +20,15 @@ dependencies = [
     "rich>=13.7",
     "trafilatura>=1.9",
     "pyyaml>=6.0",
+    "alembic>=1.13",
+    "cryptography>=42",
+    # Portail public (lynceus.portail) — servi par la même image, sur un autre point
+    # d'entrée. Déclarés explicitement plutôt que laissés au hasard d'une dépendance
+    # transitive : markdown-it-py n'arrivait jusqu'ici que par rich, et python-multipart
+    # est requis dès qu'une route lit un formulaire.
+    "jinja2>=3.1",
+    "markdown-it-py>=3.0",
+    "python-multipart>=0.0.9",
 ]
 
 [project.optional-dependencies]
@@ -30,6 +39,9 @@ lynceus = "lynceus.cli:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["lynceus"]
+# alembic.ini accompagne le paquet pour que la commande `alembic` reste utilisable dans
+# une installation ou une image ; l'application, elle, sait s'en passer.
+force-include = { "alembic.ini" = "alembic.ini" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

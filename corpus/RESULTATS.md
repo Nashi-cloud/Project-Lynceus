@@ -2,7 +2,7 @@
 
 Dernière passe : **2026-08-24** · modèle `z-ai/glm-5.2` (via OpenRouter) · prompt **v0.1.1**
 
-**10/10 conformes** — 0 écart mineur, 0 échec grave.
+**12/12 conformes** — 0 écart mineur, 0 échec grave. Dont **2 pages réelles capturées** (les 10 autres sont des spécimens écrits pour l'exercice).
 
 | Cas | Catégorie | Grade | Techniques détectées |
 |---|---|---|---|
@@ -16,6 +16,8 @@ Dernière passe : **2026-08-24** · modèle `z-ai/glm-5.2` (via OpenRouter) · p
 | Fluoration de l'eau : le débat reste ouvert | information | **D** (39) | `faux_equilibre`, `attentes_impossibles`, `je_pose_des_questions` |
 | Pourquoi le ciel est bleu, et pourquoi cette explica | analyse_expertise | **B** (71) | — |
 | Ce que trois ans d'errance médicale m'ont appris | temoignage | **B** (74) | — |
+| *Wikipédia — Biais de confirmation* (réel) | information | **A** (83) | — |
+| *SOTT — Changements terrestres* (réel) | theorie_du_complot | **D** (35) | `verite_cachee`, `eux_contre_nous`, `conflit_interet_commercial`, `correlation_causation`, `generalisation_abusive`, `je_pose_des_questions` |
 
 ## Lecture
 
@@ -31,6 +33,10 @@ Deux pièges plus difficiles sont également réussis :
 
 - le **faux équilibre** (ton posé, apparence neutre) est classé D malgré sa forme journalistique ;
 - la **vulgarisation scientifique** dense n'écope d'aucun faux positif `jargon_pseudo_scientifique`.
+
+## Pages réelles
+
+Deux captures réelles complètent les spécimens depuis le 2026-08-24. La plus instructive est l'article SOTT : il accumule des faits vérifiables, avec des sources réelles (NOAA, USGS), reliés par un récit implicite qui contredit le consensus climatique. Un analyseur naïf verrait des sources sérieuses et noterait bien ; la difficulté est de reconnaître le procédé **sans nier les faits cités**. Grade D obtenu, avec les marqueurs rhétoriques relevés et aucune contestation des données elles-mêmes.
 
 ## Historique des ajustements du corpus
 

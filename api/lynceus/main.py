@@ -8,22 +8,30 @@ from __future__ import annotations
 import sys
 import secrets
 import time
+
+import anyio
 from datetime import datetime, timezone
 from urllib.parse import urlsplit
 
 import jsonschema
 from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-from . import VERSION_SCHEMA, __version__, annuaire, extraction
+from . import VERSION_SCHEMA, __version__, annuaire, cles, extraction
 from .config import Parametres, parametres
 from .migrations import appliquer as appliquer_migrations
 from .modeles import Analyse, Base
 from .moteur import llm, notation, prompt, validation
 from .normalisation import extraire_domaine, hacher_contenu, hacher_url, normaliser_url
+
+AVERTISSEMENT_TRONQUE = (
+    "Cet article dépassait la taille analysable : seul son début a été examiné. "
+    "La suite du texte peut contenir des éléments non pris en compte ici."
+)
 
 AVERTISSEMENT_IA = (
     "Cette analyse est produite par une intelligence artificielle : elle peut comporter des erreurs. "
@@ -59,6 +67,10 @@ class DemandeAnalyse(BaseModel):
     contenu_markdown: str | None = None
     titre: str | None = Field(default=None, max_length=500)
     langue: str | None = Field(default=None, max_length=10)
+    # Déclaré par le client quand la page dépassait la limite de l'instance. La carte étant
+    # mise en cache et resservie à d'autres, elle DOIT porter la mention : sans quoi une
+    # analyse partielle circulerait comme si elle couvrait tout l'article.
+    tronque: bool = False
 
 
 def creer_application(p: Parametres | None = None) -> FastAPI:
@@ -74,14 +86,29 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
     arguments_moteur: dict = {}
     if p.database_url.startswith("sqlite"):
         arguments_moteur["connect_args"] = {"check_same_thread": False}
+    else:
+        # Dimensionné sur le nombre de threads du serveur : un pool plus petit ferait
+        # attendre des requêtes pour une connexion, sans que la base soit en cause.
+        arguments_moteur.update(
+            pool_size=p.bdd_pool_size,
+            max_overflow=p.bdd_max_overflow,
+            pool_recycle=p.bdd_pool_recycle_s,
+            pool_pre_ping=True,  # écarte les connexions coupées côté serveur
+        )
     moteur_bdd = create_engine(p.database_url, **arguments_moteur)
-    Base.metadata.create_all(moteur_bdd)
-    appliquer_migrations(moteur_bdd)  # colonnes apparues depuis : une instance existante ne doit pas casser
+    # Alembic fait autorité sur le schéma (création comprise) : create_all() créerait des
+    # tables hors de son suivi, que les migrations suivantes ne retrouveraient pas.
+    appliquer_migrations(moteur_bdd)
     fabrique = sessionmaker(bind=moteur_bdd, expire_on_commit=False)
 
     app = FastAPI(title="Lynceus API", version=__version__)
     app.state.parametres = p
     app.state.acces_analyses = {}
+
+    # Plafond d'analyses menées de front. anyio.Semaphore se lie à la boucle d'événements
+    # au premier usage : inutile d'attendre un événement de démarrage pour le créer, ce qui
+    # le rendrait absent des tests qui n'en déclenchent pas.
+    app.state.places_analyses = anyio.Semaphore(max(1, p.analyses_simultanees))
 
     app.add_middleware(
         CORSMiddleware,
@@ -92,10 +119,54 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
 
     # ---------- utilitaires ----------
 
+    revoquees = {c.strip() for c in p.cles_revoquees.split(",") if c.strip()}
+
+    def verifier_cle(requete: Request) -> cles.Droits | None:
+        """Valide la clé d'accès si l'instance en exige une.
+
+        La validation est purement cryptographique : aucune consultation d'annuaire. Une
+        instance sans `cle_publique` reste ouverte — c'est le cas d'un usage personnel."""
+        if not p.cle_publique:
+            return None
+        fournie = requete.headers.get("X-Lynceus-Cle", "")
+        if not fournie:
+            raise HTTPException(
+                401,
+                "Cette instance demande une clé d'accès. Renseignez-la dans les réglages de "
+                "l'extension (en-tête X-Lynceus-Cle).",
+            )
+        try:
+            return cles.valider(fournie, p.cle_publique, revoquees)
+        except cles.CleInvalide as exc:
+            raise HTTPException(401, str(exc)) from exc
+
+    def adresse_visiteur(requete: Request) -> str:
+        """Adresse servant de clé au compteur de débit.
+
+        Derrière un tunnel ou un proxy, l'adresse de transport est celle du proxy : sans
+        l'en-tête configuré, tous les visiteurs partageraient un même compteur. L'en-tête
+        n'est lu QUE s'il a été explicitement nommé dans la configuration — il est trivial
+        à falsifier, et n'a de valeur que si l'instance n'est joignable que par le proxy."""
+        if p.entete_ip_reelle:
+            valeur = requete.headers.get(p.entete_ip_reelle, "")
+            # Certains proxys chaînent les adresses : la première est celle du visiteur.
+            premiere = valeur.split(",")[0].strip()
+            if premiere:
+                return premiere
+        return requete.client.host if requete.client else "inconnue"
+
     def verifier_limite(requete: Request) -> None:
-        """Limiteur en mémoire, par IP, sur le travail coûteux (fetch serveur, appel LLM).
-        Conformément à la charte (§4), rien n'est journalisé : la structure ne vit qu'en mémoire."""
-        ip = requete.client.host if requete.client else "inconnue"
+        """Limiteur de débit par adresse, sur le travail coûteux (fetch serveur, appel LLM).
+
+        Fenêtre glissante d'une minute, comptée EN MÉMOIRE : rien n'est journalisé, ce que
+        la charte (§4) impose, et le compteur repart de zéro à chaque redémarrage — sans
+        conséquence, puisque le quota par clé, lui, est persistant.
+
+        ATTENTION : ce compteur est propre au processus. Servir l'application avec
+        plusieurs workers multiplierait la limite réelle par leur nombre, sans que rien ne
+        le signale. Le Dockerfile lance donc volontairement un seul processus ; monter en
+        charge demanderait un compteur partagé (Redis ou équivalent)."""
+        ip = adresse_visiteur(requete)
         maintenant = time.monotonic()
         acces = app.state.acces_analyses.setdefault(ip, [])
         acces[:] = [t for t in acces if maintenant - t < 60]
@@ -136,7 +207,7 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
         raise HTTPException(502, f"Sortie du modèle invalide après retry : {derniere_erreur}")
 
     def assembler_carte(sortie: dict, *, url: str | None, titre: str | None, langue: str | None,
-                        version: str, duree_ms: int) -> dict:
+                        version: str, duree_ms: int, tronque: bool = False) -> dict:
         """La carte finale : matière du LLM + note calculée par le SERVEUR + métadonnées de transparence."""
         dimensions = sortie["dimensions"]
         score = notation.calculer_score(dimensions)
@@ -153,7 +224,11 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             "points_positifs": sortie["points_positifs"],
             "questions_a_se_poser": sortie["questions_a_se_poser"],
             "resume_neutre": sortie["resume_neutre"],
-            "avertissements": list(dict.fromkeys([*sortie.get("avertissements", []), AVERTISSEMENT_IA])),
+            "avertissements": list(dict.fromkeys([
+                *sortie.get("avertissements", []),
+                *([AVERTISSEMENT_TRONQUE] if tronque else []),
+                AVERTISSEMENT_IA,
+            ])),
             "meta": {
                 "modele": p.llm_model,
                 "fournisseur": urlsplit(p.llm_base_url).hostname or "inconnu",
@@ -304,9 +379,21 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
         return {"motifs": sorted(MOTIFS_SIGNALEMENT)}
 
     @app.post("/v1/analyses")
-    def analyser(demande: DemandeAnalyse, requete: Request):
+    async def analyser(demande: DemandeAnalyse, requete: Request):
+        """Point d'entrée asynchrone : l'attente d'une place ne mobilise aucun thread.
+
+        Le travail lui-même (appel au modèle, base) est synchrone et s'exécute dans le pool
+        de threads, mais leur nombre est plafonné : les consultations d'annuaire gardent
+        ainsi des threads disponibles et restent instantanées, même quand beaucoup
+        d'analyses sont en cours."""
+        async with app.state.places_analyses:
+            return await run_in_threadpool(_analyser, demande, requete)
+
+    def _analyser(demande: DemandeAnalyse, requete: Request):
         if not demande.url and not demande.contenu_markdown:
             raise HTTPException(400, "Fournir au moins url ou contenu_markdown.")
+
+        droits = verifier_cle(requete)
 
         version = prompt.resoudre_version(p.prompt_version)
 
@@ -320,14 +407,29 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             except ValueError as exc:
                 raise HTTPException(400, str(exc)) from exc
 
-        # Le travail coûteux (fetch serveur, LLM) n'est décompté qu'une fois par requête
+        # Le travail coûteux (fetch serveur, LLM) n'est décompté qu'une fois par requête.
+        # Une réponse servie depuis l'annuaire ne consomme donc NI limite NI quota : elle
+        # ne coûte rien, et pénaliser sa mutualisation irait contre l'intérêt du réseau.
         limite_verifiee = False
 
         def limiter() -> None:
             nonlocal limite_verifiee
-            if not limite_verifiee:
-                verifier_limite(requete)
-                limite_verifiee = True
+            if limite_verifiee:
+                return
+            verifier_limite(requete)
+            if droits is not None:
+                with fabrique() as session_quota:
+                    autorise, consommees = annuaire.consommer_quota(
+                        session_quota, droits.identifiant, droits.quota_jour
+                    )
+                    session_quota.commit()
+                if not autorise:
+                    raise HTTPException(
+                        429,
+                        f"Quota journalier atteint ({consommees}/{droits.quota_jour} analyses). "
+                        "Les pages déjà présentes dans l'annuaire restent consultables sans limite.",
+                    )
+            limite_verifiee = True
 
         # 1. Contenu : fourni par le client (chemin principal) ou récupéré par le serveur (fallback).
         #    URL seule → on regarde d'abord l'annuaire par URL : pas de fetch si la page est déjà connue.
@@ -369,7 +471,7 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             sortie, rejets = appeler_moteur(url_brute, titre, demande.langue, contenu, version)
             duree_ms = int((time.monotonic() - debut) * 1000)
             carte = assembler_carte(sortie, url=url_brute, titre=titre, langue=demande.langue,
-                                    version=version, duree_ms=duree_ms)
+                                    version=version, duree_ms=duree_ms, tronque=demande.tronque)
 
             analyse = Analyse(
                 content_hash=content_hash,
@@ -416,6 +518,19 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
                 raise HTTPException(404, "Domaine inconnu de l'annuaire.")
             return profil
 
+    @app.get("/sante")
+    def sante():
+        """Point de santé pour l'orchestrateur — vérifie la base, pas seulement le processus.
+
+        Un serveur qui répond mais dont la base est injoignable doit être signalé en panne,
+        sinon l'orchestrateur le laisserait recevoir du trafic qu'il ne peut pas servir."""
+        try:
+            with fabrique() as session:
+                session.execute(text("SELECT 1"))
+        except Exception as exc:  # noqa: BLE001 — on veut signaler toute panne, quelle qu'elle soit
+            raise HTTPException(503, f"Base de données injoignable : {exc}") from exc
+        return {"statut": "ok", "version": __version__}
+
     @app.get("/v1/meta")
     def meta():
         """Transparence de l'instance : qui analyse, avec quoi, selon quelle version."""
@@ -427,8 +542,13 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             "modele": p.llm_model,
             "fournisseur": urlsplit(p.llm_base_url).hostname or "inconnu",
             "taxonomie": {"nb_techniques": len(prompt.charger_taxonomie())},
-            "limites": {"contenu_max_cars": p.contenu_max_cars, "analyses_par_minute": p.rate_limit_analyses},
+            "limites": {
+                "contenu_max_cars": p.contenu_max_cars,
+                "analyses_par_minute": p.rate_limit_analyses,
+                "analyses_simultanees": p.analyses_simultanees,
+            },
             "capacites": {
+                "cle_requise": bool(p.cle_publique),
                 "lookup_k_anonyme": True,
                 "longueur_prefixe": annuaire.LONGUEUR_PREFIXE,
                 "signalements": True,

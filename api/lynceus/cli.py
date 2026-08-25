@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import json
 import os
+import time
+from concurrent.futures import ThreadPoolExecutor
 import sys
 from pathlib import Path
 
@@ -18,6 +20,8 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+from .normalisation import hacher_contenu
 
 app = typer.Typer(help="Lynceus — la vigie de l'information.", no_args_is_help=True)
 console = Console()
@@ -138,6 +142,7 @@ def calibrer(
     fichier: Path = typer.Argument(help="corpus YAML (cf. corpus/README.md)"),
     json_sortie: Path = typer.Option(None, "--json", help="écrire le rapport détaillé en JSON"),
     filtre: str = typer.Option(None, "--filtre", help="ne traiter que les entrées dont le titre/chemin contient ce texte"),
+    parallele: int = typer.Option(4, "--parallele", help="cas analysés de front (le serveur plafonne aussi de son côté)"),
 ):
     """Passe le corpus de calibration et vérifie catégories, grades et techniques.
 
@@ -160,29 +165,59 @@ def calibrer(
     for colonne in ("Cas", "Attendu", "Obtenu", "Verdict"):
         table.add_column(colonne, overflow="fold")
 
-    rapport, graves, mineurs = [], 0, 0
+    rapport, graves, mineurs, ignores = [], 0, 0, 0
 
-    for entree in entrees:
+    def mesurer(entree: dict) -> dict:
+        """Analyse un cas et le compare à ses attentes. Ne lève pas : tout écart, y compris
+        une panne réseau, revient sous forme de résultat pour figurer au rapport."""
         etiquette = entree.get("titre") or entree.get("fichier") or entree.get("url") or "(sans titre)"
-        corps = _corps_demande(entree, racine)
-        if corps is None:
-            graves += 1
-            table.add_row(etiquette, "-", "-", "[red]entrée invalide (ni fichier ni url)[/red]")
-            continue
-
         try:
-            reponse = httpx.post(f"{_api()}/v1/analyses", json=corps, timeout=600)
-        except httpx.HTTPError as exc:
-            graves += 1
-            table.add_row(etiquette, "-", f"réseau : {exc}", "[red]ERREUR[/red]")
-            continue
+            corps = _corps_demande(entree, racine)
+        except CaptureManquante as exc:
+            return {"etiquette": etiquette, "ignore": str(exc)}
+        if corps is None:
+            return {"etiquette": etiquette, "erreur": "entrée invalide (ni fichier, ni capture, ni url)"}
+
+        # Le serveur limite le débit par adresse : une passe parallèle le heurte forcément.
+        # On patiente et on reprend plutôt que de déclarer le cas en échec, ce qui
+        # signalerait un problème de qualité là où il n'y a qu'une file d'attente.
+        for tentative in range(6):
+            try:
+                reponse = httpx.post(f"{_api()}/v1/analyses", json=corps, timeout=600)
+            except httpx.HTTPError as exc:
+                return {"etiquette": etiquette, "erreur": f"réseau : {exc}"}
+            if reponse.status_code != 429:
+                break
+            time.sleep(min(2 ** tentative, 20))
         if reponse.status_code != 200:
-            graves += 1
-            table.add_row(etiquette, "-", f"HTTP {reponse.status_code}", f"[red]{_erreur_http(reponse)[:80]}[/red]")
-            continue
+            return {"etiquette": etiquette, "erreur": f"HTTP {reponse.status_code} — {_erreur_http(reponse)[:80]}"}
 
         carte = reponse.json()["carte"]
         ecarts_graves, ecarts_mineurs = _comparer(entree, carte)
+        return {
+            "etiquette": etiquette, "entree": entree, "carte": carte,
+            "graves": ecarts_graves, "mineurs": ecarts_mineurs,
+        }
+
+    # Les analyses sont indépendantes : les mener de front divise l'attente d'autant.
+    # Le serveur plafonne de toute façon sa propre concurrence — inutile de le noyer.
+    with console.status(f"Calibration de {len(entrees)} cas ({parallele} de front)…"):
+        with ThreadPoolExecutor(max_workers=max(1, parallele)) as pool:
+            resultats = list(pool.map(mesurer, entrees))
+
+    for resultat in resultats:
+        etiquette = resultat["etiquette"]
+        if "ignore" in resultat:
+            ignores += 1
+            table.add_row(etiquette, "-", "-", f"[yellow]ignoré : {resultat['ignore']}[/yellow]")
+            continue
+        if "erreur" in resultat:
+            graves += 1
+            table.add_row(etiquette, "-", "-", f"[red]{resultat['erreur']}[/red]")
+            continue
+
+        entree, carte = resultat["entree"], resultat["carte"]
+        ecarts_graves, ecarts_mineurs = resultat["graves"], resultat["mineurs"]
         graves += bool(ecarts_graves)
         mineurs += bool(ecarts_mineurs and not ecarts_graves)
 
@@ -193,12 +228,13 @@ def calibrer(
         else:
             verdict = "[green]OK[/green]"
 
-        attendu = f"{entree.get('categorie_attendue', '?')} {entree.get('grade_attendu', '')}"
+        attendu = f"{entree.get('categorie_attendue') or entree.get('categories_acceptables', '?')} {entree.get('grade_attendu', '')}"
         obtenu = f"{carte['categorie']} {carte['note']['grade']} ({carte['note']['score']})"
         table.add_row(etiquette, attendu, obtenu, verdict)
         rapport.append({
             "cas": etiquette,
-            "attendu": {k: v for k, v in entree.items() if k.endswith(("_attendue", "_attendu", "_attendues", "_interdites", "_min", "_acceptables"))},
+            "attendu": {k: v for k, v in entree.items()
+                        if k.endswith(("_attendue", "_attendu", "_attendues", "_interdites", "_min", "_acceptables"))},
             "obtenu": {
                 "categorie": carte["categorie"],
                 "grade": carte["note"]["grade"],
@@ -212,10 +248,12 @@ def calibrer(
 
     console.print(table)
     total = len(entrees)
-    conformes = total - graves - mineurs
+    mesures = total - ignores
+    conformes = mesures - graves - mineurs
     console.print(
-        f"\n[bold]{conformes}/{total} conformes[/bold] · "
+        f"\n[bold]{conformes}/{mesures} conformes[/bold] · "
         f"[yellow]{mineurs} écart(s) mineur(s)[/yellow] · [red]{graves} échec(s) grave(s)[/red]"
+        + (f" · [dim]{ignores} cas ignoré(s) faute de capture locale[/dim]" if ignores else "")
     )
     if rapport:
         modele = rapport[0] and httpx.get(f"{_api()}/v1/meta", timeout=30).json()
@@ -229,8 +267,44 @@ def calibrer(
         raise typer.Exit(1)
 
 
+class CaptureManquante(Exception):
+    """Capture absente ou divergente : le cas ne peut pas être mesuré de façon fiable."""
+
+
+def _lire_capture(entree: dict, racine: Path) -> str:
+    """Lit une capture locale et vérifie son empreinte.
+
+    Les captures de pages réelles ne sont pas versionnées (droit d'auteur) : seul le
+    manifeste l'est. L'empreinte garantit que tout le monde mesure bien le même contenu —
+    sans elle, deux contributeurs compareraient des résultats incomparables."""
+    chemin = racine / entree["capture"]
+    if not chemin.is_file():
+        raise CaptureManquante(
+            f"capture absente : {entree['capture']} — la recréer depuis {entree.get('url', '?')} "
+            "(voir corpus/README.md)"
+        )
+    contenu = chemin.read_text(encoding="utf-8")
+    attendu = entree.get("content_hash")
+    if attendu:
+        reel = hacher_contenu(contenu)
+        if reel != attendu:
+            raise CaptureManquante(
+                f"capture divergente : {entree['capture']} — empreinte {reel[:12]}… "
+                f"au lieu de {attendu[:12]}…. La page a changé depuis la capture de référence : "
+                "recapturer et réexaminer les attentes plutôt que de les ajuster à l'aveugle."
+            )
+    return contenu
+
+
 def _corps_demande(entree: dict, racine: Path) -> dict | None:
     """Construit le corps POST /v1/analyses depuis une entrée de corpus."""
+    if entree.get("capture"):
+        return {
+            "contenu_markdown": _lire_capture(entree, racine),
+            "titre": entree.get("titre"),
+            "url": entree.get("url"),
+            "langue": entree.get("langue", "fr"),
+        }
     if entree.get("fichier"):
         chemin = racine / entree["fichier"]
         contenu = chemin.read_text(encoding="utf-8")
@@ -397,6 +471,128 @@ def verifier_page(
         timeout=30,
     )
     console.print(f"[dim]Signalement {signalement_id} classé « {statut} » : {conclusion}[/dim]")
+
+
+@app.command()
+def capturer(
+    fichier: Path = typer.Argument(help="fichier Markdown contenant le texte de la page (ou - pour l'entrée standard)"),
+    url: str = typer.Option(help="URL d'origine de la page"),
+    titre: str = typer.Option(None, help="titre de la page"),
+    vers: Path = typer.Option(Path("corpus/captures"), help="dossier des captures"),
+    nom: str = typer.Option(None, help="nom du fichier de capture (déduit de l'URL sinon)"),
+):
+    """Enregistre une capture de page réelle pour le corpus, et affiche l'entrée à ajouter.
+
+    Les captures ne sont pas versionnées : reproduire des pages entières dans le dépôt
+    poserait un problème de droit d'auteur. Seul le manifeste (URL, date, empreinte,
+    attentes) l'est — l'empreinte garantissant que tous mesurent le même contenu."""
+    from datetime import date
+
+    contenu = sys.stdin.read() if str(fichier) == "-" else fichier.read_text(encoding="utf-8")
+    contenu = contenu.strip()
+    if len(contenu) < 200:
+        console.print("[red]Contenu trop court[/red] (200 caractères minimum) pour une analyse fiable.")
+        raise typer.Exit(2)
+
+    if not nom:
+        morceaux = [m for m in url.split("/") if m and "." not in m[:4]]
+        base = (morceaux[-1] if morceaux else "page")[:60]
+        nom = "".join(c if c.isalnum() or c in "-_" else "-" for c in base).strip("-") or "page"
+    if not nom.endswith(".md"):
+        nom += ".md"
+
+    vers.mkdir(parents=True, exist_ok=True)
+    chemin = vers / nom
+    chemin.write_text(contenu, encoding="utf-8")
+    empreinte = hacher_contenu(contenu)
+
+    console.print(f"[green]Capture enregistrée :[/green] {chemin} ({len(contenu)} caractères)")
+    console.print("\n[bold]Entrée à ajouter dans corpus/corpus.yaml[/bold] "
+                  "[dim](compléter les attentes APRÈS avoir analysé la page)[/dim] :\n")
+    console.print(
+        f"- capture: captures/{nom}\n"
+        f"  url: {url}\n"
+        + (f"  titre: {titre}\n" if titre else "")
+        + f"  content_hash: {empreinte}\n"
+        f"  capture_le: {date.today().isoformat()}\n"
+        f"  # categorie_attendue: …\n"
+        f"  # grade_attendu: [?, ?]\n"
+        f"  # techniques_attendues: []\n"
+        f"  # notes: pourquoi ce cas figure au corpus\n"
+    )
+
+
+@app.command("cles-paire")
+def cles_paire():
+    """Génère une paire de clés Ed25519 pour émettre des clés d'accès.
+
+    La PRIVÉE reste chez l'émetteur (elle seule permet d'émettre) ; la PUBLIQUE va dans la
+    configuration de chaque instance qui doit accepter ces clés. Compromettre une instance
+    ne permet donc jamais de forger des clés."""
+    from .cles import generer_paire
+
+    privee, publique = generer_paire()
+    console.print("[bold red]Clé PRIVÉE[/bold red] — à garder secrète, chez l'émetteur uniquement :")
+    console.print(f"  LYNCEUS_CLE_PRIVEE={privee}\n", soft_wrap=True)
+    console.print("[bold green]Clé PUBLIQUE[/bold green] — à mettre dans le .env de chaque instance :")
+    console.print(f"  LYNCEUS_CLE_PUBLIQUE={publique}\n", soft_wrap=True)
+    console.print(
+        "[dim]Tant que LYNCEUS_CLE_PUBLIQUE est vide, l'instance reste ouverte et n'exige "
+        "aucune clé — c'est le défaut pour un usage personnel.[/dim]"
+    )
+
+
+@app.command("cle-emettre")
+def cle_emettre(
+    jours: int = typer.Option(365, help="durée de validité"),
+    quota: int = typer.Option(50, help="analyses autorisées par jour"),
+    nombre: int = typer.Option(1, help="nombre de clés à émettre"),
+):
+    """Émet une ou plusieurs clés d'accès signées.
+
+    Nécessite LYNCEUS_CLE_PRIVEE dans l'environnement. À n'exécuter que côté émetteur :
+    la clé privée ne doit jamais être distribuée, sinon n'importe qui pourrait émettre."""
+    from .cles import emettre
+
+    privee = os.environ.get("LYNCEUS_CLE_PRIVEE", "")
+    if not privee:
+        console.print(
+            "[red]LYNCEUS_CLE_PRIVEE non définie.[/red] Générez une paire avec "
+            "[bold]lynceus cles-paire[/bold], puis exportez la clé privée."
+        )
+        raise typer.Exit(2)
+
+    for _ in range(max(1, nombre)):
+        try:
+            cle, droits = emettre(privee, jours=jours, quota_jour=quota)
+        except Exception as exc:
+            console.print(f"[red]Émission impossible :[/red] {exc}")
+            raise typer.Exit(1) from exc
+        console.print(cle, soft_wrap=True)  # jamais de retour à la ligne : la clé se copie-colle
+        console.print(
+            f"[dim]  id {droits.identifiant} · expire le {droits.expire_le} · "
+            f"{droits.quota_jour} analyses/jour[/dim]"
+        )
+
+
+@app.command("cle-verifier")
+def cle_verifier(cle: str = typer.Argument(help="clé à vérifier")):
+    """Vérifie une clé avec la clé publique configurée (LYNCEUS_CLE_PUBLIQUE)."""
+    from .cles import CleInvalide, valider
+
+    publique = os.environ.get("LYNCEUS_CLE_PUBLIQUE", "")
+    if not publique:
+        console.print("[red]LYNCEUS_CLE_PUBLIQUE non définie.[/red]")
+        raise typer.Exit(2)
+    try:
+        droits = valider(cle, publique)
+    except CleInvalide as exc:
+        console.print(f"[red]Clé refusée :[/red] {exc}")
+        raise typer.Exit(1) from exc
+    console.print(
+        f"[green]Clé valide[/green] · id {droits.identifiant} · émise le {droits.emise_le} · "
+        f"expire le {droits.expire_le} · {droits.quota_jour} analyses/jour"
+    )
 
 
 @app.command()

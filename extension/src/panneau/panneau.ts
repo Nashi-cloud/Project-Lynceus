@@ -7,6 +7,7 @@ import type {
   CorrespondancePrefixe,
   EtatOnglet,
   MessageVersPanneau,
+  ProfilDomaine,
   Technique,
 } from "../commun/types";
 
@@ -14,7 +15,7 @@ const CATEGORIES: Record<string, string> = {
   information: "Information",
   opinion: "Opinion",
   analyse_expertise: "Analyse / expertise",
-  satire: "Satire — second degré",
+  satire: "Satire, second degré",
   publicite_sponsorise: "Contenu commercial",
   temoignage: "Témoignage",
   contenu_confessionnel: "Contenu confessionnel",
@@ -72,14 +73,53 @@ function section(titre: string, ouvert: boolean, compteur?: string): [HTMLDetail
 
 // ---------- rendus par phase ----------
 
-function rendreRepos(): void {
+/** Grade correspondant à un score, selon le même barème que le serveur
+ * (docs/METHODOLOGIE.md §5). Sert uniquement à colorer le profil d'un domaine. */
+function gradeDuScore(score: number): string {
+  if (score >= 80) return "A";
+  if (score >= 65) return "B";
+  if (score >= 50) return "C";
+  if (score >= 30) return "D";
+  return "E";
+}
+
+/** Profil du domaine, affiché sur une page pas encore analysée.
+ *
+ * Formulation prudente et volontaire : on décrit ce que l'annuaire sait DU SITE, jamais ce
+ * que vaut LA page — elle n'a pas été lue. Préjuger d'un article à partir de son domaine
+ * serait exactement le raccourci que Lynceus cherche à défaire. */
+function rendreProfilDomaine(profil: ProfilDomaine): HTMLElement {
+  const bloc = el("div", "profil-domaine");
+  const moyenne = Math.round(profil.score_moyen);
+  const grade = gradeDuScore(moyenne);
+
+  const entete = el("div", "profil-entete");
+  entete.append(el("span", `pastille-mini grade-${grade}`, grade));
+  const pages = profil.nb_analyses > 1 ? "pages analysées" : "page analysée";
+  entete.append(el("span", undefined, `${profil.nb_analyses} ${pages} sur ${profil.domaine}`));
+  bloc.append(entete);
+
+  bloc.append(el("div", "profil-detail", `Indice moyen du site : ${moyenne}/100.`));
+
+  const distribution = Object.entries(profil.distribution_grades ?? {}).sort();
+  if (distribution.length > 1) {
+    bloc.append(el("div", "profil-detail",
+      "Répartition : " + distribution.map(([g, n]) => `${n} en ${g}`).join(", ") + "."));
+  }
+
+  bloc.append(el("div", "profil-avertissement",
+    "Cela décrit d'autres pages de ce site, pas celle-ci : son contenu n'a pas encore été lu."));
+  return bloc;
+}
+
+function rendreRepos(domaine?: ProfilDomaine): void {
   app.replaceChildren();
   const bloc = el("div", "bloc-centre");
   bloc.append(
     el("h2", undefined, "Analyser cette page ?"),
     el("div", undefined,
-      "Lynceus lit le contenu, puis décrit les techniques de persuasion qu'il emploie " +
-      "— avec extraits, explications et points positifs. À vous de conclure."),
+      "Lynceus lit le contenu, puis décrit les techniques de persuasion qu'il emploie : " +
+      "extraits, explications et points positifs. À vous de conclure."),
   );
   const bouton = el("button", "bouton", "🔭 Analyser cette page");
   bouton.addEventListener("click", () => {
@@ -91,6 +131,7 @@ function rendreRepos(): void {
     "Rien n'est envoyé sans ce geste : le contenu de la page part vers votre instance Lynceus " +
     "uniquement quand vous demandez l'analyse."));
   app.append(bloc);
+  if (domaine) app.append(rendreProfilDomaine(domaine));
   void proposerReconnaissanceAuto(bloc);
 }
 
@@ -130,7 +171,7 @@ function rendreAttente(phase: "extraction" | "analyse", depuis: number): void {
   bloc.append(el("div", undefined,
     phase === "extraction"
       ? "Extraction du contenu, localement dans votre navigateur…"
-      : "Analyse en cours — le modèle lit la page…"));
+      : "Analyse en cours, le modèle lit la page…"));
   const minuteur = el("div", "minuteur", formaterDuree(Date.now() - depuis));
   bloc.append(minuteur);
 
@@ -153,7 +194,8 @@ function rendreErreur(message: string): void {
   const bloc = el("div", "erreur");
   bloc.append(el("strong", undefined, "Analyse impossible"), el("p", undefined, message));
   const bouton = el("button", "bouton", "Réessayer");
-  bouton.addEventListener("click", rendreRepos);
+  // () => : sans cela, l'événement de clic serait passé comme profil de domaine.
+  bouton.addEventListener("click", () => rendreRepos());
   bloc.append(bouton);
   app.append(bloc);
 }
@@ -373,7 +415,7 @@ function rendreTechnique(technique: Technique): HTMLElement {
 function rendre(etat: EtatOnglet): void {
   arreterMinuteur(); // ne persiste que le temps d'un rendu "extraction"/"analyse"
   switch (etat.phase) {
-    case "repos": idAnalyseCourante = null; rendreRepos(); break;
+    case "repos": idAnalyseCourante = null; rendreRepos(etat.domaine); break;
     case "extraction":
     case "analyse": rendreAttente(etat.phase, etat.depuis); break;
     case "resume": idAnalyseCourante = etat.resume.analyse_id; rendreResume(etat.resume); break;

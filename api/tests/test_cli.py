@@ -6,7 +6,8 @@ import json
 import pytest
 from typer.testing import CliRunner
 
-from lynceus.cli import _comparer, _corps_demande, _erreur_http, app
+from lynceus.cli import CaptureManquante, _comparer, _corps_demande, _erreur_http, app
+from lynceus.normalisation import hacher_contenu
 
 runner = CliRunner()
 
@@ -240,4 +241,85 @@ def test_calibrer_refuse_un_corpus_mal_forme(tmp_path, monkeypatch):
     mauvais = tmp_path / "mauvais.yaml"
     mauvais.write_text("ceci: n'est pas une liste\n", encoding="utf-8")
     resultat = runner.invoke(app, ["calibrer", str(mauvais)])
+    assert resultat.exit_code == 2
+
+
+# ---------- captures de pages réelles ----------
+
+def _capture(tmp_path, contenu="Contenu capturé d'une page réelle, assez long pour être analysé."):
+    (tmp_path / "captures").mkdir(exist_ok=True)
+    (tmp_path / "captures" / "page.md").write_text(contenu, encoding="utf-8")
+    return contenu
+
+
+def test_capture_lue_avec_empreinte_conforme(tmp_path):
+    contenu = _capture(tmp_path)
+    corps = _corps_demande(
+        {"capture": "captures/page.md", "url": "https://exemple.fr/a", "content_hash": hacher_contenu(contenu)},
+        tmp_path,
+    )
+    assert corps["contenu_markdown"] == contenu
+    assert corps["url"] == "https://exemple.fr/a"
+
+
+def test_capture_absente_signalee_clairement(tmp_path):
+    """Cas du contributeur qui clone le dépôt : les captures ne sont pas versionnées."""
+    with pytest.raises(CaptureManquante) as exc:
+        _corps_demande({"capture": "captures/absente.md", "url": "https://exemple.fr/a"}, tmp_path)
+    assert "recréer" in str(exc.value)
+
+
+def test_capture_divergente_refusee(tmp_path):
+    """Une page qui a changé doit être signalée, jamais mesurée en silence : sinon on
+    comparerait des résultats obtenus sur des contenus différents."""
+    _capture(tmp_path)
+    with pytest.raises(CaptureManquante) as exc:
+        _corps_demande(
+            {"capture": "captures/page.md", "content_hash": "0" * 64},
+            tmp_path,
+        )
+    assert "divergente" in str(exc.value)
+    assert "recapturer" in str(exc.value)
+
+
+def test_capture_sans_empreinte_acceptee(tmp_path):
+    """L'empreinte est recommandée mais pas obligatoire (capture en cours de constitution)."""
+    contenu = _capture(tmp_path)
+    corps = _corps_demande({"capture": "captures/page.md"}, tmp_path)
+    assert corps["contenu_markdown"] == contenu
+
+
+def test_calibrer_ignore_les_captures_absentes(tmp_path, monkeypatch):
+    """Un cas non mesurable ne doit pas compter comme un échec : le contributeur qui n'a
+    pas recréé les captures verrait sinon un corpus artificiellement rouge."""
+    (tmp_path / "corpus.yaml").write_text(
+        "- capture: captures/absente.md\n"
+        "  titre: Page non capturée\n"
+        "  url: https://exemple.fr/a\n"
+        "  categorie_attendue: information\n",
+        encoding="utf-8",
+    )
+    resultat = runner.invoke(app, ["calibrer", str(tmp_path / "corpus.yaml")])
+    assert resultat.exit_code == 0, "une capture absente ne doit pas faire échouer la calibration"
+    assert "ignoré" in resultat.stdout
+
+
+def test_capturer_ecrit_et_affiche_l_entree(tmp_path):
+    source = tmp_path / "source.md"
+    source.write_text("Un contenu de page suffisamment long pour passer le seuil minimal. " * 5, encoding="utf-8")
+    resultat = runner.invoke(app, [
+        "capturer", str(source), "--url", "https://exemple.fr/article",
+        "--vers", str(tmp_path / "captures"), "--nom", "test",
+    ])
+    assert resultat.exit_code == 0
+    assert (tmp_path / "captures" / "test.md").is_file()
+    assert "content_hash:" in resultat.stdout
+    assert "capture: captures/test.md" in resultat.stdout
+
+
+def test_capturer_refuse_un_contenu_trop_court(tmp_path):
+    source = tmp_path / "source.md"
+    source.write_text("trop court", encoding="utf-8")
+    resultat = runner.invoke(app, ["capturer", str(source), "--url", "https://exemple.fr/a",
+                                   "--vers", str(tmp_path / "captures")])
     assert resultat.exit_code == 2

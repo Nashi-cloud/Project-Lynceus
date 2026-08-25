@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block titre %}Installer · {{ nom }}{% endblock %}
+{% block corps %}
+<header class="entete-page">
+  <div class="contenu">
+    <span class="surtitre">Trois minutes</span>
+    <h1>Installer l'extension</h1>
+    <p class="chapo">Aucun compte à créer, aucune adresse électronique à donner.
+    L'extension demande sa clé d'accès toute seule au premier lancement.</p>
+  </div>
+</header>
+
+<article class="contenu corps-page">
+  {% if paquet %}
+  <div class="encart">
+    <h3 style="margin-top:0">1. Télécharger</h3>
+    <p>Version {{ paquet.version }}, {{ paquet.taille_ko }} Ko, archive ZIP.</p>
+    <p><a class="bouton" href="/telecharger" download>Télécharger l'extension</a></p>
+    <p class="discret">Lien direct, à transmettre tel quel :
+    <code>{{ adresse_portail }}/telecharger</code>. Il sert toujours la version la plus
+    récente publiée ici, sans qu'il faille le mettre à jour.</p>
+    <p class="discret" style="margin-bottom:0">L'archive que vous recevez contient un
+    fichier <code>portail.json</code> portant l'adresse de ce portail, et rien d'autre :
+    c'est ce qui permet à l'extension de demander sa clé sans que vous ayez à recopier
+    quoi que ce soit. Tout le reste est reconstructible depuis les sources
+    (<code>npm run paquet</code>) : rien de ce qui est distribué ici n'est opaque.</p>
+  </div>
+  {% else %}
+  <div class="encart attention">
+    <h3 style="margin-top:0">1. Construire l'extension depuis les sources</h3>
+    <p>Ce portail ne distribue pas d'archive pour le moment.</p>
+    <pre><code>cd extension
+npm install
+npm run paquet</code></pre>
+  </div>
+  {% endif %}
+
+  <h2>2. Charger l'extension dans Chrome</h2>
+  <ol>
+    <li>Décompressez l'archive dans un dossier que vous garderez, par exemple
+    <code>Documents/lynceus</code>. Si vous le supprimez, l'extension disparaîtra.</li>
+    <li>Ouvrez <code>chrome://extensions</code> dans la barre d'adresse.</li>
+    <li>Activez <strong>Mode développeur</strong>, en haut à droite.</li>
+    <li>Cliquez <strong>Charger l'extension non empaquetée</strong> et choisissez le
+    dossier décompressé.</li>
+  </ol>
+  <p class="discret">Ce détour par le mode développeur est le prix de la distribution
+  directe. Nous le disons plutôt que de le cacher : tant que l'extension n'est pas sur le
+  magasin de Chrome, c'est la seule façon de l'installer sans intermédiaire.</p>
+
+  <h2>3. Obtenir la clé d'accès</h2>
+  {% if inscription_ouverte %}
+  <p>La page d'accueil de l'extension propose un bouton <strong>« Obtenir une clé »</strong>.
+  Un clic suffit : elle interroge ce portail, reçoit une clé et l'adresse de l'instance,
+  puis se configure seule.</p>
+  <div class="encart">
+    <h3 style="margin-top:0">Ce que contient la clé</h3>
+    <p>Une date d'expiration et un nombre d'analyses par jour. Rien d'autre.</p>
+    <p style="margin-bottom:0">Pas de nom, pas d'adresse électronique, pas d'identifiant
+    de compte, puisqu'il n'y a pas de compte. Ce portail ne conserve aucune trace des clés
+    qu'il délivre : il serait incapable de dire qui a obtenu quoi.</p>
+  </div>
+  <p class="discret">Si le bouton échoue, l'adresse du portail à saisir manuellement dans
+  les réglages est celle de cette page.</p>
+  {% else %}
+  <div class="encart attention">
+    <p style="margin:0">Ce portail ne délivre pas de clés d'accès, faute de clé d'émission
+    configurée. Renseignez à la main, dans les réglages de l'extension, l'adresse de
+    l'instance que vous comptez utiliser, ou
+    <a href="/auto-hebergement">hébergez la vôtre</a> : une instance personnelle n'exige
+    aucune clé.</p>
+  </div>
+  {% endif %}
+
+  <h2>4. Premiers pas</h2>
+  <p>Par défaut, l'extension <strong>ne fait rien tant que vous ne le demandez pas</strong> :
+  clic droit sur une page, puis « Analyser cette page ». Le badge qui signale les pages
+  déjà connues de l'annuaire est facultatif, et demande explicitement la permission avant
+  de s'activer.</p>
+  <p>Ce choix vient de la charte : le scan est volontaire, et la vie privée est le réglage
+  d'usine.</p>
+</article>
+{% endblock %}

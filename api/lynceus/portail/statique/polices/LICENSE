@@ -1,0 +1,17 @@
+Polices auto-hébergées, sous licence SIL Open Font License 1.1 (OFL).
+
+  Fraunces   — Copyright 2020 The Fraunces Project Authors
+               https://github.com/undercasetype/Fraunces
+  Newsreader — Copyright 2019 The Newsreader Project Authors
+               https://github.com/productiontype/Newsreader
+
+L'OFL autorise l'usage, la modification et la redistribution, y compris
+commerciale, à condition que les fichiers de police ne soient pas vendus seuls
+et que la présente notice accompagne leur redistribution. Texte complet :
+https://openfontlicense.org
+
+Copie locale volontaire : le portail ne charge aucune ressource depuis un tiers.
+Servir ces polices depuis un CDN reviendrait à signaler chaque visite du site à
+une société extérieure, ce que la charte §3 exclut. Seul le sous-ensemble latin
+est embarqué : il couvre le français, et les fichiers sont des polices variables
+(une seule requête par famille, toutes les graisses).

@@ -1,0 +1,19 @@
+{# Fragment htmx : retour d'envoi d'une contestation. #}
+{% if injoignable %}
+<div class="encart attention">
+  <h3 style="margin-top:0">Instance injoignable</h3>
+  <p style="margin-bottom:0">La contestation n'a pas pu être transmise et n'est
+  <strong>pas</strong> enregistrée. Conservez votre texte et réessayez plus tard.</p>
+</div>
+{% elif erreur %}
+<div class="encart attention">
+  <h3 style="margin-top:0">Contestation refusée</h3>
+  <p style="margin-bottom:0">{{ erreur }}</p>
+</div>
+{% else %}
+<div class="encart">
+  <h3 style="margin-top:0">Contestation enregistrée{% if recu.id %} (n° {{ recu.id }}){% endif %}</h3>
+  <p>Elle est en base, et le compteur public de cette analyse vient d'augmenter.</p>
+  <p style="margin-bottom:0">{{ recu.message or "Un opérateur de cette instance l'examinera. Aucun délai ne vous est promis." }}</p>
+</div>
+{% endif %}
