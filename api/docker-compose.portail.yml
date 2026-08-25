@@ -76,9 +76,16 @@ services:
       LYNCEUS_PORTAIL_ENTETE_IP_REELLE: ${LYNCEUS_PORTAIL_ENTETE_IP_REELLE:-}
     volumes:
       # Facultatif : des archives lynceus-extension-v*.zip produites par `npm run paquet`.
-      # L'image en embarque déjà une ; ce volume ne sert qu'à publier une version plus
+      # L'image en embarque déjà une ; ce dossier ne sert qu'à publier une version plus
       # récente que celle de l'image, ou une variante à soi.
-      - ./paquets:/paquets:ro
+      #
+      # Chemin ABSOLU, et c'est important : un chemin relatif se résout par rapport au
+      # répertoire de travail de celui qui lance Compose. Déployée depuis Portainer, la
+      # stack ne tourne pas dans ce dossier-ci, et « ./paquets » désigne alors un
+      # répertoire de travail interne à Portainer, que Docker crée vide au premier
+      # démarrage. Le portail servirait le paquet de l'image sans que rien ne signale
+      # que le dossier attendu n'a jamais été monté.
+      - ${LYNCEUS_PAQUETS:-/opt/lynceus/paquets}:/paquets:ro
     ports:
       - "${LYNCEUS_PORTAIL_BIND:-127.0.0.1}:8080:8080"
     healthcheck:
@@ -97,7 +104,12 @@ services:
     profiles: [tunnel]
     command: tunnel --no-autoupdate run
     environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?jeton de tunnel requis avec le profil « tunnel »}
+      # Volontairement SANS garde « :? ». Compose interpole tout le fichier au chargement,
+      # y compris les services d'un profil non activé : un garde ici empêcherait de
+      # démarrer la stack à quiconque n'utilise pas Cloudflare, alors que le tunnel n'est
+      # qu'une option d'exposition parmi d'autres. Avec le profil activé et sans jeton,
+      # cloudflared s'arrête de lui-même et le dit dans ses journaux.
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
     depends_on:
       portail:
         condition: service_healthy
