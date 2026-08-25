@@ -64,6 +64,10 @@
   --encre-2: #6b6357;
   --trait: #e6ded0;
   --accent: #14415e;
+  /* Couleur du texte posé sur --accent. En thème sombre, l'accent devient un bleu
+     pâle : y laisser du blanc donnerait un rapport de contraste d'environ 1,9 pour 1,
+     soit un bouton illisible. */
+  --sur-accent: #ffffff;
   --laiton: #9a6b25;
   --ombre: 0 1px 2px rgba(40, 32, 20, 0.05), 0 8px 24px -12px rgba(40, 32, 20, 0.18);
   --ombre-levee: 0 2px 4px rgba(40, 32, 20, 0.06), 0 18px 40px -18px rgba(40, 32, 20, 0.32);
@@ -91,6 +95,7 @@
     --encre-2: #a99e8d;
     --trait: #2f2a22;
     --accent: #8fbcd9;
+    --sur-accent: #16130f;
     --laiton: #d5a45f;
     --ombre: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
     --ombre-levee: 0 2px 4px rgba(0, 0, 0, 0.5), 0 18px 40px -18px rgba(0, 0, 0, 0.75);
@@ -309,7 +314,7 @@ main { display: block; }
   border: 1px solid transparent;
   border-radius: 11px;
   background: var(--accent);
-  color: #fff;
+  color: var(--sur-accent);
   font: 600 0.98rem/1 var(--ui);
   text-decoration: none;
   cursor: pointer;
