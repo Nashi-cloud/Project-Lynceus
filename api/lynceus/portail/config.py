@@ -53,6 +53,29 @@ class ParametresPortail(BaseSettings):
     # pas X-Forwarded-Proto.
     adresse: str = ""
 
+    # --- Identité légale de l'exploitant ---
+    # Obligatoire dès qu'une instance est ouverte au public en France : la loi pour la
+    # confiance dans l'économie numérique impose d'identifier l'éditeur d'un service de
+    # communication au public en ligne. Ces champs sont configurables et non codés en dur
+    # parce que chaque instance a son propre exploitant : le projet est auto-hébergeable,
+    # et publier l'identité de quelqu'un d'autre serait faux.
+    #
+    # Non renseignés, les pages légales le disent au lieu d'inventer, et le portail
+    # avertit au démarrage. Un usage strictement personnel n'a pas à les remplir.
+    editeur_nom: str = ""
+    editeur_statut: str = ""          # ex. « entrepreneur individuel (EI) »
+    editeur_adresse: str = ""
+    editeur_identifiant: str = ""     # SIREN, numéro d'entreprise, équivalent local
+    editeur_directeur: str = ""       # directeur de la publication
+    editeur_contact: str = ""         # adresse électronique de contact
+
+    hebergeur_nom: str = ""
+    hebergeur_adresse: str = ""
+    hebergeur_site: str = ""
+
+    # Juridiction dont relèvent les conditions d'utilisation. Vide = non précisée.
+    droit_applicable: str = ""
+
     # --- Réseau ---
     # L'extension appelle /v1/inscription depuis chrome-extension://<id>, identifiant qui
     # change à chaque installation non empaquetée : le CORS ne peut pas servir de filtre ici.

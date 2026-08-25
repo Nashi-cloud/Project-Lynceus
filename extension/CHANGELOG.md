@@ -2,6 +2,10 @@
 
 Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension : utile pour vérifier qu'un rebuild a bien été rechargé.
 
+## 0.9.3 (2026-08-25)
+
+- **docs** : la page d'accueil et les réglages annoncent désormais que le texte d'une page analysée est transmis par l'instance au fournisseur de modèle de langage qu'elle utilise, parfois hors de l'Union européenne. L'extension promettait la vie privée sans mentionner le seul transfert que son utilisateur ne peut pas éviter. Le remède est indiqué dans la même phrase : une instance auto-hébergée avec un modèle local n'envoie rien au dehors.
+
 ## 0.9.2 (2026-08-25)
 
 - **feat** : l'extension lit l'adresse du portail dans `portail.json`, fichier que le portail glisse dans l'archive au moment du téléchargement. Une extension téléchargée depuis un portail propose donc « Obtenir une clé » sans qu'on ait rien à saisir, alors même que le paquet publié est neutre et valable pour n'importe quel portail. L'option de compilation `--portail=` reste prioritaire, pour un paquet qu'on construit soi-même.

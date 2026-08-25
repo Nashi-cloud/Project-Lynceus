@@ -195,6 +195,41 @@ L'inscription est **libre par défaut** (`LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR=0`). 
 
 Surveillez le nombre d'analyses **réelles** (section « Surveiller les coûts ») plutôt que le nombre de clés : mille clés inutilisées ne coûtent rien.
 
+### Obligations légales d'une instance ouverte au public
+
+Dès que le portail est accessible à d'autres que vous, trois pages deviennent nécessaires,
+et le portail les sert : `/mentions-legales`, `/confidentialite` et `/conditions`.
+
+Leur contenu vient de la configuration, pas du code, parce que chaque instance a son propre
+exploitant :
+
+```ini
+LYNCEUS_PORTAIL_EDITEUR_NOM=…
+LYNCEUS_PORTAIL_EDITEUR_STATUT=…
+LYNCEUS_PORTAIL_EDITEUR_ADRESSE=…
+LYNCEUS_PORTAIL_EDITEUR_IDENTIFIANT=…     # SIREN ou équivalent
+LYNCEUS_PORTAIL_EDITEUR_DIRECTEUR=…
+LYNCEUS_PORTAIL_EDITEUR_CONTACT=…
+LYNCEUS_PORTAIL_HEBERGEUR_NOM=…
+LYNCEUS_PORTAIL_HEBERGEUR_ADRESSE=…
+LYNCEUS_PORTAIL_DROIT_APPLICABLE=…
+```
+
+Non renseignées, les pages **indiquent qu'elles ne le sont pas** au lieu d'afficher des
+mentions inventées, et le portail l'écrit sur la sortie d'erreur au démarrage. Un usage
+strictement personnel n'a rien à remplir.
+
+> **Le point à ne pas manquer.** La politique de confidentialité annonce en tête que le
+> texte des pages analysées est transmis au fournisseur de modèle, qui peut être hors de
+> l'Union européenne. Elle **nomme le fournisseur réellement configuré**, lu dans
+> `/v1/meta` de l'instance : changer de fournisseur met la page à jour toute seule, ce qui
+> évite qu'elle devienne fausse sans que personne s'en aperçoive. Si ce transfert pose
+> problème dans votre cas, choisissez un fournisseur établi dans l'Union, ou un modèle
+> local via Ollama : le texte ne sort alors pas de la machine.
+
+L'analyse complète, avec les traitements, les bases légales retenues et les durées de
+conservation, est dans [docs/CONFORMITE.md](../docs/CONFORMITE.md).
+
 ### Le portail sans clé privée
 
 Laisser `LYNCEUS_PORTAIL_CLE_PRIVEE` vide est un mode valide : les pages restent servies, l'annuaire reste consultable, et l'inscription répond `503` en expliquant qu'aucune clé n'est délivrée ici. C'est ce qu'il faut pour une vitrine, ou pour un portail qui ne distribue que la documentation.

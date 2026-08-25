@@ -30,7 +30,9 @@ On ne peut pas dénoncer l'opacité en étant opaque.
 - **Le serveur ne stocke aucun historique de navigation.** Les lookups ne sont pas journalisés avec des identifiants (pas de couple IP + URL conservé).
 - Pas de compte requis, pas de traceur, pas de télémétrie cachée.
 - Le lookup passif fonctionne **en k-anonymat** (technique HaveIBeenPwned) : seuls les 5 premiers caractères du hash d'URL sont envoyés, et la correspondance finale est faite dans le navigateur. Le serveur ne peut pas déterminer quelle page est consultée. Le mode historique (hash complet) ne subsiste que pour les instances qui n'annoncent pas cette capacité.
-- L'auto-hébergement complet est un droit de premier ordre : le « kit » serveur est un livrable du projet, pas une option de second rang.
+- **Ce que cette promesse ne couvre pas, et qu'il faut dire.** Analyser une page suppose de transmettre son texte au fournisseur de modèle configuré par l'instance, qui peut être établi hors de l'Union européenne. C'est le transfert de données le plus important du système, et le seul qu'un utilisateur du service hébergé ne peut pas éviter. Une charte qui vanterait le k-anonymat sans mentionner ce flux serait trompeuse par omission, exactement le procédé que ce projet apprend à repérer.
+- **Le remède existe et fait partie du livrable** : une instance auto-hébergée avec un modèle local ne fait sortir aucun texte de la machine. L'auto-hébergement complet est un droit de premier ordre, le « kit » serveur est un livrable du projet, pas une option de second rang.
+- Toute instance ouverte au public doit publier une politique de confidentialité nommant le fournisseur de modèle réellement utilisé. Le portail la génère à partir de ce que l'instance déclare, pour qu'elle ne puisse pas devenir obsolète en silence.
 
 ## 5. Équité de l'analyse
 

@@ -54,6 +54,29 @@ Détail des étapes, si besoin de les lancer séparément :
 - **Ids de taxonomie** : stables et définitifs, jamais renommés (l'annuaire les référence).
 - **Charte** : toute PR doit être compatible avec [docs/ETHIQUE.md](docs/ETHIQUE.md) : c'est le critère de revue numéro un.
 
+## Droits sur les contributions
+
+Le projet applique le **Developer Certificate of Origin** ([DCO.txt](DCO.txt)), le même
+mécanisme que le noyau Linux et Git. Rien à signer, rien à renvoyer : vous ajoutez une
+ligne à chaque commit.
+
+```bash
+git commit -s -m "feat: ..."      # -s ajoute la ligne Signed-off-by
+```
+
+```
+Signed-off-by: Prénom Nom <adresse@exemple.fr>
+```
+
+Par cette ligne, vous certifiez avoir le droit d'apporter ce code sous licence AGPL-3.0.
+Vous **conservez vos droits d'auteur** sur votre contribution : le projet ne vous demande
+aucune cession.
+
+Conséquence assumée : le projet ne pourra jamais être relicencié sans l'accord de chaque
+contributeur, et ne pourra donc pas vendre d'exceptions à l'AGPL. C'est le prix d'une
+contribution sans paperasse, et le choix a été fait en connaissance de cause. Ajoutez-vous
+à [AUTHORS.md](AUTHORS.md) lors de votre première contribution.
+
 ## Développement local
 
 Voir [api/README.md](api/README.md) (serveur + CLI) et [extension/README.md](extension/README.md).
