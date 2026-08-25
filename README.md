@@ -19,22 +19,29 @@ Ce qui fonctionne, c'est **l'inoculation** : apprendre à reconnaître les *tech
 ## Comment ça marche ?
 
 ```
-┌─ Navigateur ────────────────────┐        ┌─ Serveur Lynceus (auto-hébergeable) ─┐
+┌─ Navigateur ────────────────────┐        ┌─ Instance Lynceus (auto-hébergeable) ┐
 │ Extension Chrome (MV3)          │        │  API annuaire (FastAPI)              │
 │  · badge passif ────────────────┼─GET──▶ │  /lookup (hash URL) ──▶ Annuaire     │
 │  · clic droit « Analyser »      │        │                         (PostgreSQL) │
-│  · extraction LOCALE            │        │  /analyze                            │
+│  · extraction LOCALE            │        │  /v1/analyses                        │
 │    Readability.js → Markdown ───┼─POST─▶ │    │ si absent de l'annuaire         │
 │  · side panel (carte) ◀─────────┼─JSON── │    ▼                                 │
-└─────────────────────────────────┘        │  Moteur d'analyse (LLM configurable) │
-              CLI ────────────────┼──────▶ │  endpoint compatible OpenAI :        │
-                                           │  OpenRouter │ Ollama │ vLLM │ etc.   │
-                                           └──────────────────────────────────────┘
+└───────────┬─────────────────────┘        │  Moteur d'analyse (LLM configurable) │
+            │                              │  endpoint compatible OpenAI :        │
+            │ « Obtenir une clé »          │  OpenRouter │ Ollama │ vLLM │ etc.   │
+            ▼                              └───────────────▲──────────────────────┘
+┌─ Portail (site public) ─────────┐                        │
+│  récit · méthodologie · procédés│──── annuaire, ─────────┘
+│  annuaire · téléchargement      │     contestations
+│  /v1/inscription → clé signée   │
+│  détient la clé PRIVÉE          │   sans base de données : il ne conserve rien
+└─────────────────────────────────┘
 ```
 
 1. **Badge passif** — à chaque page, l'extension interroge l'annuaire (hash de l'URL, aucun contenu envoyé). Page déjà analysée → la note s'affiche sur l'icône. Désactivable.
 2. **Analyse volontaire** — clic droit → « Analyser cette page ». Le texte est extrait *localement* (Readability), converti en Markdown et envoyé à l'API. Le panneau latéral affiche la carte d'analyse.
 3. **Annuaire mutualisé** — chaque page n'est analysée qu'une fois pour tout le monde. Le même contenu copié-collé sur un autre site est reconnu (hash de contenu). Domaine par domaine, un profil de fiabilité se construit.
+4. **Portail** — le site public. Il présente le projet, publie la méthodologie, laisse consulter l'annuaire sans rien installer, distribue l'extension, et délivre une clé d'accès en un clic — sans compte ni adresse électronique. C'est un service **séparé de l'instance** : lui seul détient la clé privée qui signe les clés, si bien qu'une instance compromise ne permet pas d'en forger.
 
 ## La carte d'analyse
 
@@ -67,11 +74,13 @@ Résumé de la [charte éthique](docs/ETHIQUE.md) :
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | API, modèle de données, déduplication, couche LLM, fédération |
 | [prompts/](prompts/) | Prompts d'analyse versionnés (publics, comme tout le reste) |
 | [corpus/](corpus/) | Corpus de calibration des prompts |
+| [api/DEPLOIEMENT.md](api/DEPLOIEMENT.md) | Héberger une instance et un portail : secrets, exposition, clés, coûts, montée en charge |
 
 ## Stack
 
 - **API / serveur** : Python, FastAPI, PostgreSQL — le « kit » auto-hébergeable (Docker Compose).
 - **Extension** : TypeScript, Manifest V3, side panel Chrome, extraction Readability.js.
+- **Portail** : le même paquet Python, second point d'entrée (`lynceus.portail`) — Jinja2 + htmx, aucune ressource chargée depuis un tiers, lisible sans JavaScript.
 - **LLM** : tout endpoint compatible OpenAI (`/chat/completions`) — OpenRouter, Ollama en local, vLLM… Modèle et fournisseur configurables par instance.
 
 ## Vérifier le projet
@@ -90,7 +99,8 @@ Résumé de la [charte éthique](docs/ETHIQUE.md) :
 - [x] **Phase 2 — Extension Chrome** : side panel, menu contextuel, badge passif opt-in, extraction locale Readability
 - [x] **Phase 3 — Annuaire public** : lookup k-anonyme (technique HaveIBeenPwned), contestation d'analyses et droit de réponse, profils de domaines
 - [x] **Publication** : guide d'installation, empaquetage de l'extension, migrations Alembic
-- [ ] **Phase 3b** : instance de référence hébergée publiquement
+- [x] **Phase 3b — Portail public** : site (récit, méthodologie, référentiel, annuaire consultable), distribution de l'extension, inscription en un clic sans compte
+- [ ] **Phase 3c** : instance et portail de référence hébergés publiquement
 - [ ] **Phase 4 — Réseau** : fédération d'annuaires entre instances, i18n, portage Firefox
 
 ## Contribuer

@@ -64,6 +64,14 @@
     instance n'en demande pas.</p>
   <input type="text" id="cle" placeholder="LYNC1.… (facultatif)" autocomplete="off">
 
+  <p class="aide" style="margin-top:14px;">Vous n'en avez pas ? Un <strong>portail</strong>
+    peut vous en délivrer une immédiatement, et renseignera du même coup l'adresse de
+    l'instance à laquelle elle donne accès. Le portail est un service distinct de
+    l'instance : lui seul signe les clés.</p>
+  <input type="url" id="portail" placeholder="https://… (adresse du portail)" autocomplete="off">
+  <button class="secondaire" id="obtenir-cle">Obtenir une clé auprès de ce portail</button>
+  <div id="etat-inscription" class="cache"></div>
+
   <h2>Filet de sécurité réseau</h2>
   <p class="aide">Délai maximum d'une analyse avant abandon automatique. Un chronomètre et un
     bouton « Annuler » restent de toute façon disponibles dans le panneau pendant l'attente —

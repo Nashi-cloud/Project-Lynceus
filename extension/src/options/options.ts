@@ -2,10 +2,18 @@
  * est activé, et rendue si on le désactive (permissions minimales, charte §4). */
 
 import { chargerReglages, enregistrerReglages } from "../commun/reglages";
+import {
+  appliquerBillet,
+  demanderCle,
+  PORTAIL_DEFAUT,
+  resumerBillet,
+} from "../commun/inscription";
 
 const champInstance = document.getElementById("instance") as HTMLInputElement;
 const champDelai = document.getElementById("delai") as HTMLInputElement;
 const champCle = document.getElementById("cle") as HTMLInputElement;
+const champPortail = document.getElementById("portail") as HTMLInputElement;
+const zoneInscription = document.getElementById("etat-inscription") as HTMLElement;
 const caseBadge = document.getElementById("badge") as HTMLInputElement;
 const zoneEtat = document.getElementById("etat") as HTMLElement;
 const zoneInfos = document.getElementById("instance-infos") as HTMLElement;
@@ -23,6 +31,7 @@ async function initialiser(): Promise<void> {
   champInstance.value = reglages.instance;
   champDelai.value = String(reglages.delaiAnalyseS);
   champCle.value = reglages.cle;
+  champPortail.value = reglages.portail || PORTAIL_DEFAUT;
   const permission = await chrome.permissions.contains(DEMANDE_PERMISSION);
   caseBadge.checked = reglages.badgeActif && permission;
 }
@@ -47,10 +56,33 @@ document.getElementById("enregistrer")?.addEventListener("click", async () => {
     instance,
     badgeActif: caseBadge.checked,
     delaiAnalyseS,
+    portail: champPortail.value.trim().replace(/\/+$/, ""),
     cle: champCle.value.trim(),
   });
   zoneEtat.textContent = "Réglages enregistrés.";
   setTimeout(() => (zoneEtat.textContent = ""), 2500);
+});
+
+document.getElementById("obtenir-cle")?.addEventListener("click", async (evenement) => {
+  const bouton = evenement.currentTarget as HTMLButtonElement;
+  bouton.disabled = true;
+  zoneInscription.classList.remove("cache");
+  zoneInscription.textContent = "Demande en cours…";
+  try {
+    const billet = await demanderCle(champPortail.value);
+    await appliquerBillet(billet);
+    await enregistrerReglages({ portail: champPortail.value.trim().replace(/\/+$/, "") });
+    // Les champs sont mis à jour avec ce qui a réellement été enregistré : l'instance
+    // vient du portail, et l'utilisateur doit la voir plutôt que de la découvrir plus tard.
+    champInstance.value = billet.instance;
+    champCle.value = billet.cle;
+    zoneInscription.textContent = `✓ Clé obtenue. ${resumerBillet(billet)}`;
+  } catch (erreur) {
+    zoneInscription.textContent =
+      erreur instanceof Error ? erreur.message : "L'inscription a échoué.";
+  } finally {
+    bouton.disabled = false;
+  }
 });
 
 document.getElementById("tester")?.addEventListener("click", async () => {

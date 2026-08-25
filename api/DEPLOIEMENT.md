@@ -114,7 +114,67 @@ Chaque personne colle sa clé dans les réglages de l'extension, avec l'adresse 
 
 Le quota est journalier et ne compte que les **analyses réelles** : une page déjà présente dans l'annuaire est resservie gratuitement, sans l'entamer.
 
-## 6. Exploitation courante
+Cette distribution à la main convient à quelques proches. Au-delà, le **portail** délivre les clés tout seul (section suivante).
+
+## 6. Le portail public
+
+Le portail est le site : le récit, la méthodologie, le référentiel des procédés, l'annuaire consultable, le téléchargement de l'extension et l'inscription en un clic. C'est un second point d'entrée de la **même image**, déployé séparément.
+
+### Pourquoi séparément
+
+| | Instance | Portail |
+|---|---|---|
+| Détient | la clé **publique** | la clé **privée** |
+| Stocke | analyses, pages, contestations | **rien** |
+| Parle à | un fournisseur de modèle (facturé) | l'instance, par son API publique |
+| Si elle est compromise | les analyses sont exposées | **on peut forger des clés à volonté** |
+
+La clé privée est le secret le plus sensible du projet : elle permet d'émettre des clés valables sur votre instance, donc de dépenser votre budget de modèle. La poser sur la machine qui parle à Internet, qui exécute des analyses et qui tient une base de données, c'est la mettre là où il y a le plus à compromettre.
+
+Le portail, lui, n'a **pas de base de données** et ne conserve rien — ni les clés délivrées, ni les recherches, ni les contestations, qu'il transmet à l'instance. Un conteneur suffit, sur la plus petite machine disponible, et le perdre ne perd aucune donnée.
+
+Les réunir sur un seul hôte fonctionne et reste défendable pour démarrer. Mais c'est un choix à faire les yeux ouverts, pas un défaut de configuration.
+
+### Démarrer
+
+```bash
+# Sur la machine qui héberge le portail (idéalement pas celle de l'instance)
+cp .env.portail.example .env    # y placer LYNCEUS_PORTAIL_CLE_PRIVEE et l'adresse publique de l'instance
+mkdir -p paquets
+docker compose -f docker-compose.portail.yml --profile tunnel up -d
+```
+
+Le hostname Cloudflare du portail doit pointer vers `http://portail:8080`.
+
+### Publier l'extension
+
+Construisez le paquet **avec l'adresse du portail** : une extension téléchargée depuis un portail arrive alors déjà configurée sur lui, et l'utilisateur n'a plus qu'à cliquer sur « Obtenir une clé ».
+
+```bash
+cd extension
+npm run paquet -- --portail=https://lynceus.exemple.fr
+cp lynceus-extension-v*.zip /chemin/vers/paquets/
+```
+
+Le portail propose la **version la plus haute** présente dans le dossier — pas la plus récemment déposée : restaurer une sauvegarde ne fait donc pas régresser ce qui est distribué. Déposer un nouveau zip suffit à publier une mise à jour, sans redémarrer quoi que ce soit.
+
+### Ce que l'inscription délivre, et ce qu'elle ne retient pas
+
+`POST /v1/inscription` renvoie un billet : l'adresse de l'instance, une clé signée, son quota et son échéance. Aucun compte n'est créé, aucune adresse électronique n'est demandée, et **rien n'est enregistré** : interrogé, le portail serait incapable de dire qui a obtenu quoi.
+
+L'inscription est **libre par défaut** (`LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR=0`). Ce choix a une contrepartie qu'il faut connaître : rien n'empêche un script de demander mille clés, et chaque clé donne droit à des analyses facturées. Trois leviers, du plus doux au plus ferme :
+
+1. **Le quota par clé** (`LYNCEUS_PORTAIL_QUOTA_JOUR`) — déjà actif, il borne ce qu'une clé peut coûter.
+2. **Le plafond par adresse** (`LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR`) — passer à 2 ou 3 suffit à décourager le scriptage ordinaire. Compteur en mémoire, remis à zéro au redémarrage : un frein, pas une barrière, et inopérant derrière un rotateur d'adresses.
+3. **La révocation** (`LYNCEUS_CLES_REVOQUEES` sur l'instance) — l'identifiant d'une clé abusive est visible en base, dans `consommations_cles`.
+
+Surveillez le nombre d'analyses **réelles** (section « Surveiller les coûts ») plutôt que le nombre de clés : mille clés inutilisées ne coûtent rien.
+
+### Le portail sans clé privée
+
+Laisser `LYNCEUS_PORTAIL_CLE_PRIVEE` vide est un mode valide : les pages restent servies, l'annuaire reste consultable, et l'inscription répond `503` en expliquant qu'aucune clé n'est délivrée ici. C'est ce qu'il faut pour une vitrine, ou pour un portail qui ne distribue que la documentation.
+
+## 7. Exploitation courante
 
 ```bash
 # Contestations reçues (charte §6)
