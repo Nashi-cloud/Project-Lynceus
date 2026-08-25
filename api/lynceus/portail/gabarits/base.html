@@ -38,6 +38,12 @@
       <strong style="color: var(--encre); font-family: var(--display); font-size: 1.05rem;">{{ nom }}</strong><br>
       Logiciel libre sous licence AGPL-3.0.<br>
       Portail v{{ version }}.
+      {% if paquet %}
+      {# Lien direct et stable : /telecharger sert toujours la version la plus haute
+         publiée par ce portail. C'est l'adresse à transmettre à quelqu'un. #}
+      <br><a href="/telecharger" download>Télécharger l'extension v{{ paquet.version }}</a>
+      ({{ paquet.taille_ko }} Ko)
+      {% endif %}
     </div>
     <div class="liens">
       <a href="/charte">Charte éthique</a>

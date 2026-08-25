@@ -438,3 +438,21 @@ def test_aucun_tiret_cadratin_dans_les_documents_publies():
         texte = (trouver_racine() / "docs" / f"{nom}.md").read_text(encoding="utf-8")
         lignes = [l.strip() for l in texte.splitlines() if "\u2014" in l]
         assert not lignes, f"{nom}.md : {lignes}"
+
+
+def test_le_lien_de_telechargement_est_present_sur_toutes_les_pages(tmp_path):
+    """Un lien direct enfoui dans une seule page est un lien qu'on ne trouve pas. Il doit
+    être atteignable depuis n'importe où, et porter la version pour être vérifiable."""
+    _archive(tmp_path / "lynceus-extension-v3.1.4.zip")
+    p = parametres_portail_test(paquets=str(tmp_path))
+    with TestClient(creer_portail(p)) as client:
+        for chemin in ("/", "/taxonomie", "/charte", "/annuaire", "/contester"):
+            html = client.get(chemin).text
+            assert '/telecharger' in html, chemin
+            assert "v3.1.4" in html, chemin
+
+
+def test_sans_paquet_aucun_lien_de_telechargement_n_est_affiche():
+    """Proposer un lien qui répondrait 503 serait pire que ne rien proposer."""
+    with TestClient(creer_portail(parametres_portail_test())) as client:
+        assert "/telecharger" not in client.get("/").text

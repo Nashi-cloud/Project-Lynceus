@@ -152,6 +152,12 @@ L'image contient l'archive de l'extension : elle est construite dans un étage N
 
 Ce paquet embarqué est **neutre** : aucune adresse de portail n'y est inscrite, faute de quoi il faudrait une image par portail. L'adresse est ajoutée **au moment du téléchargement**, dans un fichier `portail.json` glissé dans l'archive servie. L'extension l'y lit et propose « Obtenir une clé » sans que personne ait à recopier une adresse. Renseignez `LYNCEUS_PORTAIL_ADRESSE` : sans elle, l'adresse est déduite de la requête, ce qui se trompe de schéma derrière un proxy qui ne transmet pas `X-Forwarded-Proto`.
 
+### Le lien à transmettre
+
+`https://votre-portail/telecharger` sert **toujours la version la plus haute** publiée par ce portail. C'est une adresse stable : elle ne change pas d'une version à l'autre, et le lien figure dans le pied de page de chaque page du site, avec le numéro de version et le poids de l'archive.
+
+L'archive servie est configurée à la volée pour ce portail, si bien qu'un lien envoyé par message suffit : la personne télécharge, charge l'extension dans Chrome, et le bouton « Obtenir une clé » sait déjà à qui s'adresser.
+
 ### Publier une version sans reconstruire l'image
 
 Déposez un zip de version plus haute dans `./paquets` :
