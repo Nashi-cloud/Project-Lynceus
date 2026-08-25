@@ -14,10 +14,14 @@
 #   docker compose -f docker-compose.prod.yml --profile tunnel up -d
 # Sans le profil, l'API n'écoute que sur LYNCEUS_BIND (127.0.0.1 par défaut).
 
+# Le nom des conteneurs porte un suffixe facultatif (LYNCEUS_SUFFIXE=-staging) : deux
+# environnements peuvent ainsi tourner sur la même machine sans se disputer « lynceus-api ».
+# Les volumes, eux, sont déjà isolés par le nom du projet Compose.
+
 services:
   db:
     image: postgres:16-alpine
-    container_name: lynceus-db
+    container_name: lynceus-db${LYNCEUS_SUFFIXE:-}
     environment:
       POSTGRES_DB: lynceus
       POSTGRES_USER: lynceus
@@ -36,7 +40,7 @@ services:
   api:
     image: ${LYNCEUS_IMAGE:?adresse de l'image requise, voir .env.prod.example}
     pull_policy: always
-    container_name: lynceus-api
+    container_name: lynceus-api${LYNCEUS_SUFFIXE:-}
     depends_on:
       db:
         condition: service_healthy
@@ -90,7 +94,7 @@ services:
   # Cloudflare Zero Trust, qui fournit en retour le jeton à placer dans .env.
   tunnel:
     image: cloudflare/cloudflared:latest
-    container_name: lynceus-tunnel
+    container_name: lynceus-tunnel${LYNCEUS_SUFFIXE:-}
     profiles: [tunnel]
     command: tunnel --no-autoupdate run
     environment:

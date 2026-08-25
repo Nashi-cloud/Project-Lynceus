@@ -43,6 +43,21 @@ Détail des étapes, si besoin de les lancer séparément :
 | Build extension | `cd extension && npm run build` | avant de recharger dans Chrome |
 | Calibration | `lynceus calibrer corpus/corpus.yaml` | **obligatoire** si `prompts/`, `docs/METHODOLOGIE.md`, `docs/TAXONOMIE.md` ou le modèle changent |
 
+## Ce que déclenche une poussée
+
+Le dépôt est bâti pour une forge dotée d'un runner auto-hébergé (voir [api/DEPLOIEMENT.md](api/DEPLOIEMENT.md)). Les tests y rejouent ce que `verifier.sh` fait en local, dans des conteneurs jetables.
+
+| Branche | Tests | Image publiée | Déploiement |
+|---|---|---|---|
+| `feat/*`, `fix/*`, `docs/*` | oui | aucune | aucun |
+| `dev` | oui | `:dev` | aucun |
+| `next` | oui | `:next` | staging |
+| `main` | oui | `:latest` et `:v<VERSION>` | production |
+
+La chaîne ne remplace pas `./verifier.sh` avant de fusionner : elle constate, elle ne relit pas. Et elle ne s'exécute pas pour une proposition venue d'un fork, un runner auto-hébergé exécutant le code qu'on lui confie.
+
+**Version de l'API** : le fichier `VERSION` à la racine fait foi, et doit s'accorder avec `api/pyproject.toml` et `api/lynceus/__init__.py`. C'est lui que la chaîne lit pour étiqueter l'image publiée depuis `main`, donc pour rendre un retour arrière possible. `verifier.sh` refuse un décalage.
+
 ## Conventions
 
 - **Commits** : style Conventional Commits, en français : `feat: …`, `fix: …`, `docs: …`, `chore: …`, `test: …`.
