@@ -8,9 +8,18 @@
  *    pour tout, y compris pour ré-analyser après une navigation) ;
  *  - le panneau ne s'ouvre jamais tout seul. */
 
-import { analyser, detailAnalyse, lookupParHash, lookupParPrefixe, metaInstance, signaler } from "./commun/api";
+import {
+  analyser,
+  detailAnalyse,
+  lookupParHash,
+  lookupParPrefixe,
+  metaInstance,
+  profilDomaine,
+  signaler,
+} from "./commun/api";
 import { hacherUrl } from "./commun/hachage";
 import { SuiviAnalyses } from "./commun/generations";
+import { raccourcir } from "./commun/troncature";
 import { chargerReglages } from "./commun/reglages";
 import type {
   CorrespondancePrefixe,
@@ -153,12 +162,15 @@ async function lancerAnalyse(tabId: number): Promise<void> {
     if (!extraction.ok) throw new Error(extraction.erreur);
 
     majEtat(tabId, { phase: "analyse", depuis: Date.now() });
+    const { contenuMax } = await capacites();
+    const { texte, tronque } = raccourcir(extraction.markdown, contenuMax);
     const reponse = await analyser(
       {
         url: extraction.url,
-        contenu_markdown: extraction.markdown,
+        contenu_markdown: texte,
         titre: extraction.titre ?? undefined,
         langue: extraction.langue ?? undefined,
+        tronque,
       },
       controleur.signal,
     );
@@ -256,26 +268,23 @@ function effacerBadge(tabId: number): void {
 
 /** Capacités de l'instance, découvertes une fois puis mémorisées : inutile d'interroger
  * /v1/meta à chaque page, et une instance plus ancienne (sans k-anonymat) reste utilisable. */
-let capacitesInstance: { kAnonyme: boolean; longueurPrefixe: number } | undefined;
+let capacitesInstance: { kAnonyme: boolean; longueurPrefixe: number; contenuMax: number } | undefined;
 
-async function capacites(): Promise<{ kAnonyme: boolean; longueurPrefixe: number }> {
+async function capacites(): Promise<{ kAnonyme: boolean; longueurPrefixe: number; contenuMax: number }> {
   if (capacitesInstance) return capacitesInstance;
   try {
     const meta = await metaInstance();
     capacitesInstance = {
       kAnonyme: meta.capacites?.lookup_k_anonyme === true,
       longueurPrefixe: meta.capacites?.longueur_prefixe ?? 5,
+      contenuMax: meta.limites?.contenu_max_cars ?? 60_000,
     };
   } catch {
-    capacitesInstance = { kAnonyme: false, longueurPrefixe: 5 }; // instance muette : repli prudent
+    // Instance muette : repli prudent, et limite basse pour ne pas se faire refuser.
+    capacitesInstance = { kAnonyme: false, longueurPrefixe: 5, contenuMax: 60_000 };
   }
   return capacitesInstance;
 }
-
-// Les réglages peuvent pointer une autre instance : on réévalue ses capacités.
-chrome.storage.onChanged.addListener((changements) => {
-  if (changements["instance"]) capacitesInstance = undefined;
-});
 
 /** Ce que la consultation d'annuaire apprend sur une page : rien, un résumé (mode k-anonyme,
  * la carte complète restant à charger), ou la carte entière (mode historique). */
@@ -322,6 +331,10 @@ async function majBadgePassif(tabId: number, url: string | undefined): Promise<v
     if (!resultat.connue) {
       effacerBadge(tabId);
       retirerBordure(tabId);
+      // La page est inconnue, mais son domaine ne l'est peut-être pas : le profil agrégé
+      // informe déjà l'utilisateur, sans analyse et sans coût.
+      const profil = await profilDomaine(new URL(url).hostname).catch(() => null);
+      if (profil && profil.nb_analyses > 0) majEtat(tabId, { phase: "repos", domaine: profil });
       return;
     }
     // La page est déjà dans l'annuaire : on l'affiche sans déclencher d'analyse (aucun

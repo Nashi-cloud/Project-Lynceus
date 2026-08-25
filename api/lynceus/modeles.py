@@ -4,7 +4,17 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -45,6 +55,16 @@ class Page(Base):
     """Une URL connue de l'annuaire, pointant vers son analyse courante."""
 
     __tablename__ = "pages"
+    __table_args__ = (
+        # Recherche par préfixe (lookup k-anonyme). PostgreSQL n'utilise un index B-tree
+        # ordinaire pour un LIKE 'abc%' que si la collation est « C » : sans cet opérateur,
+        # la requête la plus fréquente de l'API balaie toute la table (22 ms sur 500 000
+        # pages, contre 0,08 ms avec l'index). Ignoré par SQLite, qui n'a pas ce défaut.
+        # postgresql_ops : l'opérateur n'est appliqué que sur PostgreSQL ; les autres
+        # dialectes créent un index ordinaire, sans erreur de syntaxe.
+        Index("ix_pages_url_hash_prefixe", "url_hash",
+              postgresql_ops={"url_hash": "varchar_pattern_ops"}),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     url: Mapped[str] = mapped_column(Text)
@@ -54,6 +74,23 @@ class Page(Base):
     analyse_courante_id: Mapped[int | None] = mapped_column(ForeignKey("analyses.id"), nullable=True)
     premiere_vue: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_maintenant)
     derniere_vue: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_maintenant)
+
+
+class ConsommationCle(Base):
+    """Compteur d'usage journalier d'une clé.
+
+    Ce n'est PAS un annuaire de clés : aucune clé n'est enregistrée ici à l'émission, et
+    une ligne ne vaut que pour un jour. Les clés restent auto-validantes ; ce compteur sert
+    uniquement à faire respecter le quota qu'elles portent. Les lignes anciennes peuvent
+    être purgées sans rien casser."""
+
+    __tablename__ = "consommations_cles"
+    __table_args__ = (UniqueConstraint("identifiant_cle", "jour", name="uq_cle_jour"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    identifiant_cle: Mapped[str] = mapped_column(String(32), index=True)
+    jour: Mapped[str] = mapped_column(String(10), index=True)  # AAAA-MM-JJ
+    analyses: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class Signalement(Base):

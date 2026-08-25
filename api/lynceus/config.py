@@ -26,12 +26,45 @@ class Parametres(BaseSettings):
     llm_response_format: str = "none"
 
     # Garde-fous
+    # Analyses menées de front. Chacune mobilise un thread pendant tout l'appel au modèle
+    # (10 à 60 s) ; sans plafond, elles épuiseraient le pool de threads du serveur et les
+    # consultations d'annuaire — normalement instantanées — attendraient derrière elles.
+    # Les demandes au-delà de ce nombre patientent sans consommer de thread.
+    analyses_simultanees: int = 12
+
     contenu_min_cars: int = 200
     contenu_max_cars: int = 60000
     rate_limit_analyses: int = 10  # requêtes / minute / IP sur POST /v1/analyses
 
     # Modération : sans jeton, les routes /v1/admin/* restent fermées (défaut sûr).
     admin_token: str = ""
+
+    # Clés d'accès (Ed25519). Vide = instance ouverte, aucune clé exigée : c'est le défaut
+    # pour un usage personnel ou auto-hébergé. Renseigner la clé PUBLIQUE de l'émetteur
+    # ferme les analyses aux seuls porteurs d'une clé valide.
+    cle_publique: str = ""
+    # Identifiants de clés révoquées, séparés par des virgules. Ne contient que les clés
+    # abusives : ce n'est pas un annuaire, seulement une liste noire.
+    cles_revoquees: str = ""
+
+    # Derrière un proxy ou un tunnel (Cloudflare Tunnel, reverse proxy…), toutes les
+    # requêtes arrivent avec l'adresse du proxy : le compteur par IP deviendrait commun à
+    # tout le monde. Cette option nomme l'en-tête portant l'adresse réelle du visiteur
+    # (« CF-Connecting-IP » pour Cloudflare, « X-Real-IP » pour nginx).
+    #
+    # VIDE PAR DÉFAUT, et c'est important : un en-tête est trivial à falsifier. Ne
+    # l'activer que si l'instance n'est JOIGNABLE QUE par le proxy — sinon n'importe qui
+    # contournerait la limite en forgeant l'en-tête.
+    entete_ip_reelle: str = ""
+
+    # Connexions à la base gardées ouvertes. Le défaut de SQLAlchemy (5 + 10 de débord)
+    # est inférieur au nombre de threads du serveur : sous charge, des requêtes attendraient
+    # une connexion libre alors que la base, elle, n'est pas saturée.
+    bdd_pool_size: int = 20
+    bdd_max_overflow: int = 20
+    # Recycle les connexions inactives : certains pare-feux et proxys coupent silencieusement
+    # les connexions longues, ce qui produit des erreurs déroutantes après une accalmie.
+    bdd_pool_recycle_s: int = 1800
 
     # Divers
     cors_origins: str = "*"

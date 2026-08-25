@@ -15,6 +15,9 @@ export async function importerTs(chemin) {
     format: "esm",
     platform: "neutral",
     external: ["@mozilla/readability", "turndown"],
+    // Injecté par build.mjs à la compilation du paquet : sans valeur ici, les modules
+    // qui le lisent lèveraient une ReferenceError au chargement du test.
+    define: { PORTAIL_PAR_DEFAUT: '""' },
     outfile: sortie,
   });
   return import(sortie);

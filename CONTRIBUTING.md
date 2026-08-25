@@ -14,13 +14,13 @@ feat/*  fix/*  docs/*        (branches spécifiques, depuis dev)
      next                     (pré-production : stabilisation, tests d'instance)
       │
       ▼  release taguée (vX.Y.Z)
-     main                     (stable — c'est ce que les instances déploient)
+     main                     (stable : c'est ce que les instances déploient)
 ```
 
 - **`main`** : stable uniquement. Ne reçoit que des merges depuis `next`, chaque release est taguée.
 - **`next`** : pré-production. Reçoit `dev` quand un ensemble cohérent est prêt ; on y stabilise.
 - **`dev`** : branche d'intégration. Toutes les branches spécifiques en partent et y reviennent.
-- **Branches spécifiques** : `feat/<sujet>`, `fix/<sujet>`, `docs/<sujet>` — courtes, focalisées, mergées dans `dev` via PR.
+- **Branches spécifiques** : `feat/<sujet>`, `fix/<sujet>`, `docs/<sujet>` : courtes, focalisées, mergées dans `dev` via PR.
 
 ## Routine de vérification
 
@@ -45,14 +45,37 @@ Détail des étapes, si besoin de les lancer séparément :
 
 ## Conventions
 
-- **Commits** : style Conventional Commits, en français — `feat: …`, `fix: …`, `docs: …`, `chore: …`, `test: …`.
+- **Commits** : style Conventional Commits, en français : `feat: …`, `fix: …`, `docs: …`, `chore: …`, `test: …`.
 - **Une branche par sujet**, mergée dans `dev` avec `--no-ff` (l'historique garde la trace du regroupement).
 - **Tests obligatoires** pour toute correction de bug : le test doit échouer avant le correctif. Pour une fonctionnalité, tester au moins la logique métier isolable des API du navigateur.
 - **Versions de l'extension** : toute modification de `extension/` incrémente la version dans `manifest.json` **et** `package.json`, avec une entrée dans `extension/CHANGELOG.md` (patch pour un correctif, mineure pour une fonctionnalité). Sans ça, impossible de savoir quel build est chargé dans Chrome.
 - **Prompts et méthodologie** : toute modification de `prompts/`, `docs/METHODOLOGIE.md` ou `docs/TAXONOMIE.md` incrémente `prompt_version` (semver) et doit passer la calibration sur `corpus/`. Reporter le résultat dans [corpus/RESULTATS.md](corpus/RESULTATS.md).
-- **Corpus** : ne jamais assouplir une attente pour faire passer un test sans avoir examiné le cas — et jamais sur `techniques_attendues` / `techniques_interdites`, qui sont le cœur de la mesure.
+- **Corpus** : ne jamais assouplir une attente pour faire passer un test sans avoir examiné le cas, et jamais sur `techniques_attendues` / `techniques_interdites`, qui sont le cœur de la mesure.
 - **Ids de taxonomie** : stables et définitifs, jamais renommés (l'annuaire les référence).
-- **Charte** : toute PR doit être compatible avec [docs/ETHIQUE.md](docs/ETHIQUE.md) — c'est le critère de revue numéro un.
+- **Charte** : toute PR doit être compatible avec [docs/ETHIQUE.md](docs/ETHIQUE.md) : c'est le critère de revue numéro un.
+
+## Droits sur les contributions
+
+Le projet applique le **Developer Certificate of Origin** ([DCO.txt](DCO.txt)), le même
+mécanisme que le noyau Linux et Git. Rien à signer, rien à renvoyer : vous ajoutez une
+ligne à chaque commit.
+
+```bash
+git commit -s -m "feat: ..."      # -s ajoute la ligne Signed-off-by
+```
+
+```
+Signed-off-by: Prénom Nom <adresse@exemple.fr>
+```
+
+Par cette ligne, vous certifiez avoir le droit d'apporter ce code sous licence AGPL-3.0.
+Vous **conservez vos droits d'auteur** sur votre contribution : le projet ne vous demande
+aucune cession.
+
+Conséquence assumée : le projet ne pourra jamais être relicencié sans l'accord de chaque
+contributeur, et ne pourra donc pas vendre d'exceptions à l'AGPL. C'est le prix d'une
+contribution sans paperasse, et le choix a été fait en connaissance de cause. Ajoutez-vous
+à [AUTHORS.md](AUTHORS.md) lors de votre première contribution.
 
 ## Développement local
 
