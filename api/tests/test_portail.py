@@ -464,15 +464,17 @@ def test_sans_paquet_aucun_lien_de_telechargement_n_est_affiche():
 
 # ------------------------------------------------------------------ légal
 
+# Exploitant fictif, comme les spécimens du corpus : un test ne doit pas dépendre de
+# l'identité réelle de qui que ce soit, ni la diffuser.
 EXPLOITANT = dict(
-    editeur_nom="Raphaël Auberlet",
-    editeur_statut="entrepreneur individuel (EI)",
+    editeur_nom="Association Vigie Exemple",
+    editeur_statut="association loi 1901",
     editeur_adresse="1 rue de l'Exemple, 75000 Ville",
     editeur_identifiant="SIREN 000 000 000",
-    editeur_directeur="Raphaël Auberlet",
+    editeur_directeur="Camille Exemple",
     editeur_contact="contact@exemple.fr",
-    hebergeur_nom="OVH SAS",
-    hebergeur_adresse="2 rue Kellermann, 59100 Roubaix",
+    hebergeur_nom="Hébergeur Exemple SAS",
+    hebergeur_adresse="2 rue du Serveur, 59000 Ville",
 )
 
 
@@ -481,8 +483,9 @@ def test_les_pages_legales_publient_l_identite_configuree():
     configuration et non du code, puisque chaque instance a son propre exploitant."""
     with TestClient(creer_portail(parametres_portail_test(**EXPLOITANT))) as client:
         html = client.get("/mentions-legales").text
-    for attendu in ("Raphaël Auberlet", "SIREN 000 000 000", "Le Tampon", "OVH SAS",
-                    "contact@exemple.fr"):
+    # Portions sans apostrophe : Jinja les échappe en &#39; dans le rendu.
+    for attendu in ("Association Vigie Exemple", "SIREN 000 000 000", "75000 Ville",
+                    "Hébergeur Exemple SAS", "contact@exemple.fr"):
         assert attendu in html, attendu
 
 

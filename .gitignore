@@ -14,6 +14,11 @@ dist/
 *.tsbuildinfo
 lynceus-extension-v*.zip
 
+# Dossiers de financement : hors du dépôt, sur décision de l'utilisateur. Ils portent des
+# éléments d'entreprise (identité, stratégie, montants) qui n'ont pas à être publiés avec
+# le code. Les fichiers restent présents dans le répertoire de travail.
+financement/
+
 # Environnement & secrets
 .env
 .env.*
