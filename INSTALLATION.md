@@ -9,7 +9,7 @@ Deux façons d'utiliser Lynceus, selon ce que vous cherchez.
 | Vos données | passent par l'instance choisie | ne quittent jamais vos machines |
 | Coût | aucun | celui du modèle d'IA que vous choisissez (ou zéro avec un modèle local) |
 
-> **Il n'existe pas encore d'instance publique de référence.** En attendant, le kit complet est la voie normale — et de toute façon la plus respectueuse de votre vie privée.
+> **Il n'existe pas encore d'instance publique de référence.** En attendant, le kit complet est la voie normale, et de toute façon la plus respectueuse de votre vie privée.
 
 ---
 
@@ -18,8 +18,8 @@ Deux façons d'utiliser Lynceus, selon ce que vous cherchez.
 ### Ce qu'il vous faut
 
 - Un ordinateur sous Linux, macOS ou Windows, allumé quand vous naviguez (un mini-PC ou un Raspberry Pi 4 suffisent).
-- **Python 3.11 ou plus récent** — vérifiez avec `python3 --version`.
-- **Node.js 20 ou plus récent** — vérifiez avec `node --version`.
+- **Python 3.11 ou plus récent** : vérifiez avec `python3 --version`.
+- **Node.js 20 ou plus récent** : vérifiez avec `node --version`.
 - Un accès à un modèle de langage. Deux possibilités :
   - **Un service en ligne** (OpenRouter, par exemple) : quelques centimes par analyse, aucune installation ;
   - **Un modèle local** avec [Ollama](https://ollama.com) : gratuit et privé, mais demande une machine costaude et donne des analyses moins fines.
@@ -110,10 +110,10 @@ Le serveur et sa base PostgreSQL démarrent ensemble. L'extension s'installe com
 ## Questions courantes
 
 **Combien ça coûte ?**
-Chaque page n'est analysée qu'une seule fois : ensuite elle est en cache, gratuitement et instantanément, pour tous les utilisateurs de votre instance. Comptez quelques centimes par nouvelle analyse selon le modèle choisi — ou rien du tout avec Ollama.
+Chaque page n'est analysée qu'une seule fois : ensuite elle est en cache, gratuitement et instantanément, pour tous les utilisateurs de votre instance. Comptez quelques centimes par nouvelle analyse selon le modèle choisi, ou rien du tout avec Ollama.
 
 **Mes pages visitées sont-elles envoyées quelque part ?**
-Le contenu d'une page n'est transmis que lorsque **vous** demandez une analyse. Si vous activez la reconnaissance automatique, seule une empreinte partielle de l'adresse circule (cinq caractères, partagés par plus d'un million d'adresses possibles) — votre instance ne peut pas savoir quelle page vous consultez. Rien n'est journalisé.
+Le contenu d'une page n'est transmis que lorsque **vous** demandez une analyse. Si vous activez la reconnaissance automatique, seule une empreinte partielle de l'adresse circule (cinq caractères, partagés par plus d'un million d'adresses possibles) : votre instance ne peut pas savoir quelle page vous consultez. Rien n'est journalisé.
 
 **« Instance Lynceus injoignable »**
 Le serveur est-il démarré ? L'adresse dans les réglages de l'extension correspond-elle ? Après avoir modifié `.env`, il faut **redémarrer le serveur** : ce fichier n'est lu qu'au démarrage.
@@ -128,8 +128,8 @@ Retirez l'extension depuis `chrome://extensions`, arrêtez le serveur (Ctrl+C) e
 
 ## Aller plus loin
 
-- [Charte éthique](docs/ETHIQUE.md) — ce que Lynceus s'interdit, et pourquoi
-- [Méthodologie](docs/METHODOLOGIE.md) — comment la note est calculée
-- [Taxonomie](docs/TAXONOMIE.md) — les 31 techniques détectées
-- [Architecture](docs/ARCHITECTURE.md) — pour les développeurs
-- [Contribuer](CONTRIBUTING.md) — code, taxonomie, traductions, hébergement
+- [Charte éthique](docs/ETHIQUE.md) : ce que Lynceus s'interdit, et pourquoi
+- [Méthodologie](docs/METHODOLOGIE.md) : comment la note est calculée
+- [Taxonomie](docs/TAXONOMIE.md) : les 31 techniques détectées
+- [Architecture](docs/ARCHITECTURE.md) : pour les développeurs
+- [Contribuer](CONTRIBUTING.md) : code, taxonomie, traductions, hébergement

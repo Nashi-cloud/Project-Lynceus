@@ -1,59 +1,64 @@
 {% extends "base.html" %}
-{% block titre %}Héberger sa propre instance — {{ nom }}{% endblock %}
+{% block titre %}Héberger sa propre instance · {{ nom }}{% endblock %}
 {% block corps %}
-<article class="contenu">
-  <h1>Héberger sa propre instance</h1>
-  <p class="chapo">Ce projet n'a de sens que si personne n'est obligé de nous faire
-  confiance. Le code est sous AGPL-3.0 : vous pouvez faire tourner votre instance,
-  la modifier, et l'offrir à qui vous voulez.</p>
+<header class="entete-page">
+  <div class="contenu">
+    <span class="surtitre">AGPL-3.0</span>
+    <h1>Héberger sa propre instance</h1>
+    <p class="chapo">Ce projet n'a de sens que si personne n'est obligé de nous faire
+    confiance. Le code est libre : vous pouvez faire tourner votre instance, la modifier,
+    et l'offrir à qui vous voulez.</p>
+  </div>
+</header>
 
-  <h2>Pourquoi vous voudriez le faire</h2>
+<article class="contenu corps-page">
+  <h2 style="margin-top:0">Pourquoi vous voudriez le faire</h2>
   <ul>
-    <li><strong>Aucune clé à demander.</strong> Une instance personnelle n'exige pas de
-    clé d'accès : le contrôle d'accès n'existe que pour protéger une instance publique
-    d'une facture de modèle qui s'envole.</li>
+    <li><strong>Aucune clé à demander.</strong> Une instance personnelle n'exige pas de clé
+    d'accès. Le contrôle d'accès n'existe que pour protéger une instance publique d'une
+    facture de modèle qui s'envole.</li>
     <li><strong>Vos analyses restent chez vous.</strong> Rien ne transite par ce portail.</li>
     <li><strong>Votre modèle, votre coût.</strong> N'importe quel fournisseur compatible
-    OpenAI convient — y compris un modèle local via Ollama, auquel cas l'analyse ne
-    coûte rien et ne sort pas de votre machine.</li>
+    OpenAI convient, y compris un modèle local via Ollama : l'analyse ne coûte alors rien
+    et ne sort pas de votre machine.</li>
     <li><strong>Votre méthodologie.</strong> Les pondérations, le référentiel de procédés
     et les prompts sont des fichiers du dépôt. Vous pouvez en discuter, et les changer.</li>
   </ul>
 
   <h2>Le minimum vital</h2>
-  <p>Avec Docker, une instance d'essai tient en une commande — SQLite, aucune base à
+  <p>Avec Docker, une instance d'essai tient en une commande, sur SQLite, sans base à
   installer :</p>
   <pre><code>git clone &lt;dépôt&gt; lynceus &amp;&amp; cd lynceus/api
 cp .env.example .env        # y placer la clé du fournisseur de modèle
 docker compose up -d</code></pre>
   <p>Pour une instance destinée à d'autres personnes, le dépôt fournit un
-  <code>docker-compose.prod.yml</code> (PostgreSQL, migrations automatiques, exposition
-  par Cloudflare Tunnel) et un guide de déploiement détaillé, y compris la façon
-  d'estimer la dépense avant d'ouvrir les portes.</p>
+  <code>docker-compose.prod.yml</code> (PostgreSQL, migrations automatiques, exposition par
+  Cloudflare Tunnel) et un guide de déploiement détaillé, y compris la façon d'estimer la
+  dépense avant d'ouvrir les portes.</p>
 
   <div class="encart attention">
     <h3 style="margin-top:0">La règle à ne pas oublier</h3>
-    <p style="margin-bottom:0">Une instance exposée sans clés d'accès permet à
-    n'importe qui de dépenser <em>votre</em> argent : chaque analyse appelle un modèle
-    facturé à l'usage. Le compose de production refuse d'ailleurs de démarrer sans clé
-    publique configurée. Ce n'est pas de la prudence excessive, c'est la première
-    mauvaise surprise qui guette.</p>
+    <p style="margin-bottom:0">Une instance exposée sans clés d'accès permet à n'importe
+    qui de dépenser <em>votre</em> argent : chaque analyse appelle un modèle facturé à
+    l'usage. Le compose de production refuse d'ailleurs de démarrer sans clé publique
+    configurée. Ce n'est pas de la prudence excessive, c'est la première mauvaise surprise
+    qui guette.</p>
   </div>
 
   <h2>Portail et instance sont deux choses</h2>
   <p>Ce que vous lisez est un <strong>portail</strong> : il présente le projet, distribue
   l'extension et délivre des clés. L'<strong>instance</strong>, elle, analyse et stocke.
-  Elles sont volontairement séparées, parce que le portail détient la clé privée qui
-  signe les clés d'accès : si l'instance était compromise, personne ne pourrait pour
-  autant émettre de clés en votre nom.</p>
+  Elles sont volontairement séparées, parce que le portail détient la clé privée qui signe
+  les clés d'accès : si l'instance était compromise, personne ne pourrait pour autant
+  émettre de clés en votre nom.</p>
   <p>Un même portail peut d'ailleurs délivrer des clés valables sur plusieurs instances.
-  C'est la première pierre de ce qui deviendra un réseau d'instances fédérées, plutôt
-  qu'un service central de plus.</p>
+  C'est la première pierre de ce qui deviendra un réseau d'instances fédérées, plutôt qu'un
+  service central de plus.</p>
 
   <h2>Contribuer</h2>
-  <p>La discussion la plus utile ne porte pas sur le code : elle porte sur le
+  <p>La discussion la plus utile ne porte pas sur le code. Elle porte sur le
   <a href="/taxonomie">référentiel de procédés</a>, sur les
-  <a href="/methodologie">pondérations</a> et sur les cas où l'analyse se trompe. Ces
+  <a href="/methodologie">pondérations</a>, et sur les cas où l'analyse se trompe. Ces
   fichiers sont publics précisément pour être contestés.</p>
 </article>
 {% endblock %}

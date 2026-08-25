@@ -1,6 +1,6 @@
 # Déployer une instance Lynceus
 
-Pour héberger une instance destinée à d'autres personnes — vos proches, un groupe, ou à terme le public.
+Pour héberger une instance destinée à d'autres personnes : vos proches, un groupe, ou à terme le public.
 
 > Pour un usage strictement personnel, [INSTALLATION.md](INSTALLATION.md) suffit : pas besoin de tout ceci.
 
@@ -30,7 +30,7 @@ Gardez la **clé privée** hors de la machine qui héberge l'instance : c'est el
 
 ## 2. Publier l'image
 
-L'image est construite une fois et déployée telle quelle — pas de compilation sur l'hôte :
+L'image est construite une fois et déployée telle quelle, sans compilation sur l'hôte :
 
 ```bash
 # Depuis la racine du dépôt
@@ -51,7 +51,7 @@ docker compose -f docker-compose.prod.yml up -d
 docker compose -f docker-compose.prod.yml logs -f api
 ```
 
-Le schéma de base est créé et migré automatiquement au démarrage (Alembic) — aucune commande à lancer.
+Le schéma de base est créé et migré automatiquement au démarrage (Alembic). Aucune commande à lancer.
 
 Vérifier :
 
@@ -69,7 +69,7 @@ L'API parle en HTTP simple : le chiffrement est délégué à la couche d'exposi
 Le conteneur `cloudflared` établit une connexion **sortante** vers Cloudflare : aucun port entrant à ouvrir, aucune adresse publique à exposer, certificat TLS géré par Cloudflare.
 
 1. Dans **Cloudflare Zero Trust → Networks → Tunnels**, créez un tunnel et notez son jeton.
-2. Ajoutez un *public hostname* pointant vers `http://api:8000` — c'est le nom du service dans le réseau Docker, pas une adresse de l'hôte.
+2. Ajoutez un *public hostname* pointant vers `http://api:8000`. C'est le nom du service dans le réseau Docker, pas une adresse de l'hôte.
 3. Placez le jeton dans `.env` :
 
 ```ini
@@ -86,11 +86,11 @@ LYNCEUS_ENTETE_IP_REELLE=CF-Connecting-IP
 docker compose -f docker-compose.prod.yml --profile tunnel up -d
 ```
 
-> **`LYNCEUS_ENTETE_IP_REELLE` ne doit être défini que si l'instance est joignable *uniquement* par le tunnel.** Un en-tête HTTP se falsifie : si l'API reste accessible en direct, n'importe qui contournerait la limite de débit en annonçant une adresse différente à chaque requête. Gardez `LYNCEUS_BIND=127.0.0.1` (le défaut), ou mieux, supprimez la section `ports:` du service `api` — le tunnel le joint par le réseau interne.
+> **`LYNCEUS_ENTETE_IP_REELLE` ne doit être défini que si l'instance est joignable *uniquement* par le tunnel.** Un en-tête HTTP se falsifie : si l'API reste accessible en direct, n'importe qui contournerait la limite de débit en annonçant une adresse différente à chaque requête. Gardez `LYNCEUS_BIND=127.0.0.1` (le défaut), ou mieux, supprimez la section `ports:` du service `api` : le tunnel le joint par le réseau interne.
 
 ### Autres options
 
-**Tailscale Serve** — accès réservé à votre tailnet, sans compte tiers :
+**Tailscale Serve** : accès réservé à votre tailnet, sans compte tiers :
 
 ```bash
 sudo tailscale serve --bg 8000     # tailnet seulement
@@ -103,14 +103,14 @@ Quelle que soit l'option, l'adresse obtenue est celle que les utilisateurs saisi
 
 ## 5. Distribuer les clés
 
-Depuis une machine détenant la clé privée — pas le serveur :
+Depuis une machine détenant la clé privée, pas le serveur :
 
 ```bash
 export LYNCEUS_CLE_PRIVEE=…
 lynceus cle-emettre --jours 365 --quota 50 --nombre 5
 ```
 
-Chaque personne colle sa clé dans les réglages de l'extension, avec l'adresse de l'instance. Une clé ne contient **aucune information sur son porteur** : ni nom, ni adresse, ni identifiant. Vous ne saurez pas qui analyse quoi — c'est voulu.
+Chaque personne colle sa clé dans les réglages de l'extension, avec l'adresse de l'instance. Une clé ne contient **aucune information sur son porteur** : ni nom, ni adresse, ni identifiant. Vous ne saurez pas qui analyse quoi, et c'est voulu.
 
 Le quota est journalier et ne compte que les **analyses réelles** : une page déjà présente dans l'annuaire est resservie gratuitement, sans l'entamer.
 
@@ -131,7 +131,7 @@ Le portail est le site : le récit, la méthodologie, le référentiel des proc�
 
 La clé privée est le secret le plus sensible du projet : elle permet d'émettre des clés valables sur votre instance, donc de dépenser votre budget de modèle. La poser sur la machine qui parle à Internet, qui exécute des analyses et qui tient une base de données, c'est la mettre là où il y a le plus à compromettre.
 
-Le portail, lui, n'a **pas de base de données** et ne conserve rien — ni les clés délivrées, ni les recherches, ni les contestations, qu'il transmet à l'instance. Un conteneur suffit, sur la plus petite machine disponible, et le perdre ne perd aucune donnée.
+Le portail, lui, n'a **pas de base de données** et ne conserve rien : ni les clés délivrées, ni les recherches, ni les contestations, qu'il transmet à l'instance. Un conteneur suffit, sur la plus petite machine disponible, et le perdre ne perd aucune donnée.
 
 Les réunir sur un seul hôte fonctionne et reste défendable pour démarrer. Mais c'est un choix à faire les yeux ouverts, pas un défaut de configuration.
 
@@ -156,7 +156,7 @@ npm run paquet -- --portail=https://lynceus.exemple.fr
 cp lynceus-extension-v*.zip /chemin/vers/paquets/
 ```
 
-Le portail propose la **version la plus haute** présente dans le dossier — pas la plus récemment déposée : restaurer une sauvegarde ne fait donc pas régresser ce qui est distribué. Déposer un nouveau zip suffit à publier une mise à jour, sans redémarrer quoi que ce soit.
+Le portail propose la **version la plus haute** présente dans le dossier, pas la plus récemment déposée : restaurer une sauvegarde ne fait donc pas régresser ce qui est distribué. Déposer un nouveau zip suffit à publier une mise à jour, sans redémarrer quoi que ce soit.
 
 ### Ce que l'inscription délivre, et ce qu'elle ne retient pas
 
@@ -164,9 +164,9 @@ Le portail propose la **version la plus haute** présente dans le dossier — pa
 
 L'inscription est **libre par défaut** (`LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR=0`). Ce choix a une contrepartie qu'il faut connaître : rien n'empêche un script de demander mille clés, et chaque clé donne droit à des analyses facturées. Trois leviers, du plus doux au plus ferme :
 
-1. **Le quota par clé** (`LYNCEUS_PORTAIL_QUOTA_JOUR`) — déjà actif, il borne ce qu'une clé peut coûter.
-2. **Le plafond par adresse** (`LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR`) — passer à 2 ou 3 suffit à décourager le scriptage ordinaire. Compteur en mémoire, remis à zéro au redémarrage : un frein, pas une barrière, et inopérant derrière un rotateur d'adresses.
-3. **La révocation** (`LYNCEUS_CLES_REVOQUEES` sur l'instance) — l'identifiant d'une clé abusive est visible en base, dans `consommations_cles`.
+1. **Le quota par clé** (`LYNCEUS_PORTAIL_QUOTA_JOUR`) : déjà actif, il borne ce qu'une clé peut coûter.
+2. **Le plafond par adresse** (`LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR`) : passer à 2 ou 3 suffit à décourager le scriptage ordinaire. Compteur en mémoire, remis à zéro au redémarrage : un frein, pas une barrière, et inopérant derrière un rotateur d'adresses.
+3. **La révocation** (`LYNCEUS_CLES_REVOQUEES` sur l'instance) : l'identifiant d'une clé abusive est visible en base, dans `consommations_cles`.
 
 Surveillez le nombre d'analyses **réelles** (section « Surveiller les coûts ») plutôt que le nombre de clés : mille clés inutilisées ne coûtent rien.
 
@@ -193,7 +193,7 @@ L'annuaire est le patrimoine de l'instance : chaque analyse a coûté un appel a
 
 ## Révoquer une clé
 
-Si une clé est utilisée abusivement, ajoutez son identifiant à `LYNCEUS_CLES_REVOQUEES` (visible dans la sortie de `cle-emettre`, ou en base) et redémarrez. La liste ne contient que les clés écartées — ce n'est pas un annuaire.
+Si une clé est utilisée abusivement, ajoutez son identifiant à `LYNCEUS_CLES_REVOQUEES` (visible dans la sortie de `cle-emettre`, ou en base) et redémarrez. La liste ne contient que les clés écartées, ce n'est pas un annuaire.
 
 ## Les trois garde-fous
 
@@ -203,15 +203,15 @@ Ils se cumulent, et **aucun ne s'applique à une page déjà présente dans l'an
 |---|---|---|---|---|
 | Débit | adresse du visiteur | 60 s glissantes | mémoire | `LYNCEUS_RATE_LIMIT_ANALYSES` (10/min) |
 | Quota | identifiant de clé | jour calendaire (UTC) | base | porté par chaque clé (`--quota`) |
-| Taille | — | par requête | — | `LYNCEUS_CONTENU_MAX_CARS` (60 000) |
+| Taille | aucune | par requête | aucun | `LYNCEUS_CONTENU_MAX_CARS` (60 000) |
 
 Le débit arrête les rafales (un script qui boucle) ; le quota protège le budget sur la durée (quelqu'un qui analyserait tranquillement des milliers de pages dans la journée).
 
-> **Un seul processus.** Le compteur de débit vit dans la mémoire du processus : servir l'application avec plusieurs workers multiplierait la limite réelle par leur nombre, silencieusement. L'image lance donc un unique processus. Si le trafic l'exigeait un jour, il faudrait d'abord déplacer ce compteur dans un stockage partagé (Redis ou équivalent) — avant d'ajouter des workers, pas après.
+> **Un seul processus.** Le compteur de débit vit dans la mémoire du processus : servir l'application avec plusieurs workers multiplierait la limite réelle par leur nombre, silencieusement. L'image lance donc un unique processus. Si le trafic l'exigeait un jour, il faudrait d'abord déplacer ce compteur dans un stockage partagé (Redis ou équivalent), avant d'ajouter des workers et non après.
 
 ## Capacité et montée en charge
 
-Une analyse mobilise un thread pendant tout l'appel au modèle (10 à 60 s selon le modèle et la longueur de la page). Sans plafond, quelques dizaines d'analyses suffiraient à saturer le serveur, et les consultations d'annuaire — normalement instantanées — attendraient derrière elles.
+Une analyse mobilise un thread pendant tout l'appel au modèle (10 à 60 s selon le modèle et la longueur de la page). Sans plafond, quelques dizaines d'analyses suffiraient à saturer le serveur, et les consultations d'annuaire, normalement instantanées, attendraient derrière elles.
 
 `LYNCEUS_ANALYSES_SIMULTANEES` (12 par défaut) borne les analyses menées de front. Les demandes au-delà **patientent sans consommer de thread** : elles aboutissent, simplement plus tard.
 
@@ -225,26 +225,26 @@ Mesures sur un serveur réel, modèle simulé à 3 s par analyse :
 
 Avant ce plafond, 40 analyses simultanées suffisaient à faire attendre un lookup **6,2 secondes**. Le badge passif reste désormais réactif sous une charge que votre instance ne connaîtra probablement jamais.
 
-**Débit soutenu** : environ `analyses_simultanees / durée_d_une_analyse`. Avec 12 places et un modèle à 15 s, comptez ~48 analyses par minute — bien au-delà de ce qu'un cercle familial ou associatif produit, d'autant que les pages déjà connues sont resservies **sans analyse**.
+**Débit soutenu** : environ `analyses_simultanees / durée_d_une_analyse`. Avec 12 places et un modèle à 15 s, comptez ~48 analyses par minute, bien au-delà de ce qu'un cercle familial ou associatif produit, d'autant que les pages déjà connues sont resservies **sans analyse**.
 
 Si le trafic l'exigeait vraiment :
 
-1. **augmentez `LYNCEUS_ANALYSES_SIMULTANEES`** — c'est le levier direct, tant que le fournisseur de modèle suit (attention à ses propres limites de débit) ;
-2. **puis seulement**, envisagez plusieurs processus — mais il faudra d'abord déplacer le compteur de débit dans un stockage partagé (voir l'avertissement plus haut).
+1. **augmentez `LYNCEUS_ANALYSES_SIMULTANEES`** : c'est le levier direct, tant que le fournisseur de modèle suit (attention à ses propres limites de débit) ;
+2. **puis seulement**, envisagez plusieurs processus, mais il faudra d'abord déplacer le compteur de débit dans un stockage partagé (voir l'avertissement plus haut).
 
 Une file de tâches (Celery, RQ) n'apporterait rien ici : elle imposerait Redis et un worker séparé, et obligerait les clients à interroger périodiquement l'état de leur analyse au lieu de recevoir directement leur carte. Le plafond de concurrence résout le même problème sans rien de tout cela.
 
 ## Monter à plusieurs milliers d'utilisateurs
 
-Ce qui cède en premier, dans l'ordre — et ce qui est déjà traité.
+Ce qui cède en premier, dans l'ordre, et ce qui est déjà traité.
 
 ### Déjà en place
 
-**L'index de recherche par préfixe.** Le lookup k-anonyme (`LIKE 'abcde%'`) est la requête la plus fréquente : une par page visitée, badge activé. PostgreSQL n'utilise un index B-tree ordinaire pour ce filtre que si la collation est `C` — sans opérateur adapté, la requête balaie toute la table. Mesuré : **22 ms sur 500 000 pages**, contre **0,08 ms** avec l'index `varchar_pattern_ops`, et **0,25 ms sur 5 millions**. La migration le crée automatiquement.
+**L'index de recherche par préfixe.** Le lookup k-anonyme (`LIKE 'abcde%'`) est la requête la plus fréquente : une par page visitée, badge activé. PostgreSQL n'utilise un index B-tree ordinaire pour ce filtre que si la collation est `C`. Sans opérateur adapté, la requête balaie toute la table. Mesuré : **22 ms sur 500 000 pages**, contre **0,08 ms** avec l'index `varchar_pattern_ops`, et **0,25 ms sur 5 millions**. La migration le crée automatiquement.
 
 **Le pool de connexions.** Le défaut de SQLAlchemy (5 + 10) était inférieur au nombre de threads du serveur : sous charge, des requêtes auraient attendu une connexion libre sans que la base soit en cause. Porté à 20 + 20, avec `pool_pre_ping` (écarte les connexions coupées par un pare-feu) et recyclage à 30 minutes.
 
-**Le démarrage simultané de plusieurs répliques.** Sans coordination, elles appliqueraient les mêmes migrations de front — erreurs, voire schéma à moitié migré. Un verrou consultatif PostgreSQL sérialise l'opération : vérifié avec 6 répliques lancées ensemble sur une base vierge, une seule migre, les autres attendent puis constatent qu'il n'y a rien à faire.
+**Le démarrage simultané de plusieurs répliques.** Sans coordination, elles appliqueraient les mêmes migrations de front, avec des erreurs, voire un schéma à moitié migré. Un verrou consultatif PostgreSQL sérialise l'opération : vérifié avec 6 répliques lancées ensemble sur une base vierge, une seule migre, les autres attendent puis constatent qu'il n'y a rien à faire.
 
 **Le plafond d'analyses simultanées**, qui préserve la réactivité des consultations (section précédente).
 
@@ -252,7 +252,7 @@ Ce qui cède en premier, dans l'ordre — et ce qui est déjà traité.
 
 Deux verrous empêchent aujourd'hui d'ajouter des répliques, et ils doivent être levés **avant**, pas après :
 
-1. **Le compteur de débit vit en mémoire.** Avec N processus, la limite réelle est multipliée par N. Il faut le déplacer dans un stockage partagé (Redis) — le quota par clé, lui, est déjà en base et se comporte correctement en multi-instances.
+1. **Le compteur de débit vit en mémoire.** Avec N processus, la limite réelle est multipliée par N. Il faut le déplacer dans un stockage partagé (Redis). Le quota par clé, lui, est déjà en base et se comporte correctement en multi-instances.
 2. **Le plafond de concurrence est également par processus.** Même remarque : N répliques enverraient N × 12 analyses simultanées au fournisseur de modèle, avec ses propres limites de débit à la clé.
 
 ### Le vrai plafond n'est pas technique
@@ -273,4 +273,4 @@ docker exec lynceus-db psql -U lynceus -c \
   "SELECT DATE(cree_le) jour, COUNT(*) analyses FROM analyses GROUP BY 1 ORDER BY 1 DESC LIMIT 7;"
 ```
 
-Multipliez par le tarif de votre modèle. Rappel utile : **une page n'est analysée qu'une fois** pour tous les utilisateurs — le coût décroît naturellement à mesure que l'annuaire se remplit.
+Multipliez par le tarif de votre modèle. Rappel utile : **une page n'est analysée qu'une fois** pour tous les utilisateurs, donc le coût décroît naturellement à mesure que l'annuaire se remplit.

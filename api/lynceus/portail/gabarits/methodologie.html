@@ -1,45 +1,61 @@
 {% extends "base.html" %}
-{% block titre %}Méthodologie — {{ nom }}{% endblock %}
+{% block titre %}Méthodologie · {{ nom }}{% endblock %}
 {% block corps %}
-<article class="contenu">
-  <h1>Comment la note est calculée</h1>
-  <p class="chapo">Les chiffres de cette page ne sont pas recopiés : ils sont lus dans
-  le code qui les applique. S'ils changent un jour, cette page change avec eux.</p>
+<header class="entete-page">
+  <div class="contenu">
+    <span class="surtitre">Transparence</span>
+    <h1>Comment la note est calculée</h1>
+    <p class="chapo">Les chiffres de cette page ne sont pas recopiés : ils sont lus dans le
+    code qui les applique. S'ils changent un jour, cette page change avec eux.</p>
+  </div>
+</header>
 
-  <h2>Quatre dimensions, quatre poids</h2>
-  <p>Le modèle de langage attribue une note de 0 à 100 à chacune de ces quatre
-  dimensions, et justifie chacune. Il ne calcule pas la note globale.</p>
+<article class="contenu corps-page">
+  <h2 style="margin-top:0">Quatre dimensions, quatre poids</h2>
+  <p>Le modèle de langage attribue une note de 0 à 100 à chacune de ces quatre dimensions,
+  et justifie chacune. Il ne calcule pas la note globale.</p>
+
   <div class="barres">
     {% for d in ponderations %}
     <div class="barre">
-      <span class="nom">{{ d.libelle }} <span class="identifiant">{{ d.cle }}</span></span>
-      <span class="poids">{{ d.poids }} %</span>
+      <div class="ligne">
+        <span class="nom">{{ d.libelle }}</span>
+        <span class="identifiant">{{ d.cle }}</span>
+        <span class="poids">{{ d.poids }} %</span>
+      </div>
       <div class="jauge"><div style="width: {{ d.poids * 2 }}%"></div></div>
     </div>
     {% endfor %}
   </div>
 
   <h2>La note globale est calculée par le serveur</h2>
-  <p>C'est un point de méthode, pas un détail d'implémentation. Une moyenne pondérée
-  est <strong>déterministe et vérifiable</strong> : deux personnes qui appliquent la
-  même formule aux mêmes dimensions obtiennent le même résultat. Laisser un modèle de
-  langage produire directement une note reviendrait à rendre le chiffre inauditable.</p>
+  <p>C'est un point de méthode, pas un détail d'implémentation. Une moyenne pondérée est
+  <strong>déterministe et vérifiable</strong> : deux personnes qui appliquent la même
+  formule aux mêmes dimensions obtiennent le même résultat. Laisser un modèle de langage
+  produire directement une note reviendrait à rendre le chiffre inauditable.</p>
+
   <div class="echelle">
     {% for s in seuils %}
-    <div class="grade-{{ s.grade }}"><strong style="font-size:19px">{{ s.grade }}</strong><br>{{ s.de }} – {{ s.a }}</div>
+    <div class="grade-{{ s.grade }}"><strong>{{ s.grade }}</strong>{{ s.de }} à {{ s.a }}</div>
     {% endfor %}
   </div>
 
   <h2>Chaque citation est vérifiée</h2>
   <p>Un modèle de langage invente parfois des citations. Le serveur refuse donc toute
   détection dont l'extrait n'est pas retrouvé <strong>mot pour mot</strong> dans la page
-  analysée, et refuse toute technique absente du référentiel. Ce qui a été écarté est
-  indiqué dans la réponse : la transparence porte aussi sur les erreurs du modèle.</p>
+  analysée, et toute technique absente du référentiel. Ce qui a été écarté figure dans la
+  réponse : la transparence porte aussi sur les erreurs du modèle.</p>
 
-  <details style="margin-top: 40px">
-    <summary style="cursor: pointer; font-weight: 600">Lire la méthodologie complète
-    ({{ detail.titre }})</summary>
-    <div class="deroulant" style="margin-top: 18px">{{ detail.html | safe }}</div>
+  <div class="encart note">
+    <h3 style="margin-top:0">Une note ne dit pas si un texte est vrai</h3>
+    <p style="margin-bottom:0">Elle mesure la façon dont il est construit : sourçage,
+    rigueur, registre, transparence de l'éditeur. Un texte factuellement juste mais écrit
+    à coups de procédés d'urgence obtiendra une note moyenne, et c'est voulu.</p>
+  </div>
+
+  <details class="repli">
+    <summary>Lire la méthodologie complète</summary>
+    <div class="deroulant">{{ detail.html | safe }}</div>
   </details>
 </article>
 {% endblock %}

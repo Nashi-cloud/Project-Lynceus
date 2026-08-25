@@ -1,12 +1,12 @@
 # Charte éthique de Lynceus
 
-Cette charte est contraignante : toute fonctionnalité, tout prompt, toute décision de conception doit pouvoir s'y référer. Elle est versionnée avec le code — la modifier est un acte public.
+Cette charte est contraignante : toute fonctionnalité, tout prompt, toute décision de conception doit pouvoir s'y référer. Elle est versionnée avec le code, et la modifier est un acte public.
 
 ## 1. Une vigie, pas un juge
 
 Lynceus **décrit des méthodes**, il ne juge pas des personnes ni des croyances.
 
-- On signale « ce texte emploie l'appel à la peur, voici l'extrait » — jamais « ce site ment » ni « vous avez tort d'y croire ».
+- On signale « ce texte emploie l'appel à la peur, voici l'extrait ». Jamais « ce site ment » ni « vous avez tort d'y croire ».
 - La **foi religieuse et les convictions personnelles ne sont pas notées**. Sont évaluées : les affirmations factuelles vérifiables (« ce remède guérit le cancer ») et les techniques de manipulation (peur, urgence, isolement « eux contre nous »), quelle que soit la tradition ou l'idéologie qui les emploie.
 - Le lecteur tire ses conclusions lui-même. L'objectif est l'autonomie intellectuelle (théorie de l'inoculation), pas l'adhésion à un verdict.
 
@@ -44,12 +44,12 @@ On ne peut pas dénoncer l'opacité en étant opaque.
 - L'analyse est produite par un modèle de langage : **elle peut se tromper**. Chaque carte affiche un indice de confiance et cet avertissement.
 - Toute analyse est **contestable** depuis le panneau ou l'API (`POST /v1/signalements`), y compris par les éditeurs des sites analysés (motif `droit_de_reponse`). Un signalement est anonyme par défaut : aucune donnée personnelle n'est exigée. Le nombre de contestations est public sur chaque analyse ; leur contenu est réservé à l'opérateur de l'instance (il peut contenir un contact).
 
-  **Ce que Lynceus promet, et ce qu'il ne promet pas.** Une contestation est enregistrée, rendue visible en nombre, et mise à disposition de l'opérateur de l'instance, qui décide des suites — sa décision et sa justification sont conservées. Le projet étant auto-hébergeable et sans autorité centrale, aucune instance ne peut garantir un examen humain systématique : le message rendu à l'utilisateur le dit explicitement plutôt que de promettre une modération qui n'existerait pas. Seul le motif « page modifiée » est traité automatiquement (re-vérification du contenu et nouvelle analyse le cas échéant).
+  **Ce que Lynceus promet, et ce qu'il ne promet pas.** Une contestation est enregistrée, rendue visible en nombre, et mise à disposition de l'opérateur de l'instance, qui décide des suites. Sa décision et sa justification sont conservées. Le projet étant auto-hébergeable et sans autorité centrale, aucune instance ne peut garantir un examen humain systématique : le message rendu à l'utilisateur le dit explicitement plutôt que de promettre une modération qui n'existerait pas. Seul le motif « page modifiée » est traité automatiquement (re-vérification du contenu et nouvelle analyse le cas échéant).
 - Les analyses sont datées et re-générables : un site qui s'améliore verra sa carte évoluer.
 
 ## 7. Pédagogie plutôt que verdict
 
-- Vocabulaire descriptif (« signaux de prudence », « techniques relevées ») — jamais de « FAKE NEWS », d'emoji poubelle, de rouge criard accusateur.
+- Vocabulaire descriptif (« signaux de prudence », « techniques relevées »). Jamais de « FAKE NEWS », d'emoji poubelle, de rouge criard accusateur.
 - Chaque technique détectée est accompagnée d'une **explication du mécanisme psychologique** : c'est l'apprentissage du procédé qui immunise, pas l'étiquette.
 - Des **« questions à se poser »** accompagnent chaque carte : le lecteur reste l'enquêteur.
 
@@ -61,11 +61,11 @@ On ne peut pas dénoncer l'opacité en étant opaque.
 
 ## 9. Cadre juridique
 
-Lynceus publie des **évaluations méthodologiquement fondées de contenus publics** — le terrain établi des initiatives d'éducation aux médias (Décodex, NewsGuard, fact-checkers IFCN). Trois garde-fous : méthodologie publiée, extraits cités verbatim, droit de réponse. Les cartes portent sur des contenus et des procédés, pas sur des personnes.
+Lynceus publie des **évaluations méthodologiquement fondées de contenus publics**, sur le terrain établi des initiatives d'éducation aux médias (Décodex, NewsGuard, fact-checkers IFCN). Trois garde-fous : méthodologie publiée, extraits cités verbatim, droit de réponse. Les cartes portent sur des contenus et des procédés, pas sur des personnes.
 
 ## Références
 
-- *The Debunking Handbook 2020* — Lewandowsky, Cook et al.
-- Sander van der Linden, *Foolproof* (2023) — théorie de l'inoculation / prebunking.
-- John Cook — taxonomie FLICC (Fake experts, Logical fallacies, Impossible expectations, Cherry picking, Conspiracy theories).
-- First Draft — typologie des désordres de l'information (Wardle & Derakhshan).
+- *The Debunking Handbook 2020*, Lewandowsky, Cook et al.
+- Sander van der Linden, *Foolproof* (2023) : théorie de l'inoculation et prebunking.
+- John Cook, taxonomie FLICC (Fake experts, Logical fallacies, Impossible expectations, Cherry picking, Conspiracy theories).
+- First Draft, typologie des désordres de l'information (Wardle & Derakhshan).

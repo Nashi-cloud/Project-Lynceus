@@ -65,7 +65,7 @@ document.getElementById("activer")?.addEventListener("click", async () => {
   } else {
     zoneEtat.className = "";
     zoneEtat.textContent =
-      "Permission refusée — Lynceus reste utilisable via le clic droit. " +
+      "Permission refusée. Lynceus reste utilisable via le clic droit. " +
       "Vous pourrez l'activer plus tard dans les réglages.";
   }
 });
@@ -74,7 +74,7 @@ document.getElementById("plus-tard")?.addEventListener("click", async () => {
   await enregistrerReglages({ badgeActif: false });
   zoneEtat.className = "";
   zoneEtat.textContent =
-    "Entendu — utilisez le clic droit → « Analyser cette page ». " +
+    "Entendu. Utilisez le clic droit puis « Analyser cette page ». " +
     "La reconnaissance automatique reste disponible dans les réglages.";
 });
 
@@ -84,4 +84,4 @@ document.getElementById("lien-reglages")?.addEventListener("click", (evenement) 
 });
 
 const zoneVersion = document.getElementById("version") as HTMLElement;
-zoneVersion.textContent = `Lynceus — extension v${chrome.runtime.getManifest().version}`;
+zoneVersion.textContent = `Lynceus, extension v${chrome.runtime.getManifest().version}`;

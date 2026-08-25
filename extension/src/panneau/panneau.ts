@@ -15,7 +15,7 @@ const CATEGORIES: Record<string, string> = {
   information: "Information",
   opinion: "Opinion",
   analyse_expertise: "Analyse / expertise",
-  satire: "Satire — second degré",
+  satire: "Satire, second degré",
   publicite_sponsorise: "Contenu commercial",
   temoignage: "Témoignage",
   contenu_confessionnel: "Contenu confessionnel",
@@ -118,8 +118,8 @@ function rendreRepos(domaine?: ProfilDomaine): void {
   bloc.append(
     el("h2", undefined, "Analyser cette page ?"),
     el("div", undefined,
-      "Lynceus lit le contenu, puis décrit les techniques de persuasion qu'il emploie " +
-      "— avec extraits, explications et points positifs. À vous de conclure."),
+      "Lynceus lit le contenu, puis décrit les techniques de persuasion qu'il emploie : " +
+      "extraits, explications et points positifs. À vous de conclure."),
   );
   const bouton = el("button", "bouton", "🔭 Analyser cette page");
   bouton.addEventListener("click", () => {
@@ -171,7 +171,7 @@ function rendreAttente(phase: "extraction" | "analyse", depuis: number): void {
   bloc.append(el("div", undefined,
     phase === "extraction"
       ? "Extraction du contenu, localement dans votre navigateur…"
-      : "Analyse en cours — le modèle lit la page…"));
+      : "Analyse en cours, le modèle lit la page…"));
   const minuteur = el("div", "minuteur", formaterDuree(Date.now() - depuis));
   bloc.append(minuteur);
 
