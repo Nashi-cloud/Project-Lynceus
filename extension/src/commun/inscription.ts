@@ -11,12 +11,37 @@
 
 import { enregistrerReglages } from "./reglages";
 
-/** Portail proposé par défaut. Injecté à la compilation (`node build.mjs --portail=…`)
- * pour qu'un paquet distribué par un portail arrive déjà configuré ; vide sinon. */
+/** Portail inscrit à la compilation (`node build.mjs --portail=…`). Utile pour un paquet
+ * qu'on construit soi-même ; vide dans l'archive publiée, qui doit rester valable pour
+ * n'importe quel portail. */
 declare const PORTAIL_PAR_DEFAUT: string;
 
-export const PORTAIL_DEFAUT: string =
+const PORTAIL_COMPILE: string =
   typeof PORTAIL_PAR_DEFAUT === "string" ? PORTAIL_PAR_DEFAUT : "";
+
+/** Fichier ajouté à l'archive par le portail qui l'a servie. Il ne contient que son
+ * adresse : c'est ce qui permet de publier une seule image pour tous les portails, tout
+ * en évitant à chaque utilisateur de recopier une adresse à la main. */
+const FICHIER_PORTAIL = "portail.json";
+
+/** Portail à proposer dans l'interface, dans l'ordre : celui inscrit à la compilation,
+ * puis celui écrit dans l'archive au téléchargement. Vide si l'extension a été construite
+ * localement, auquel cas l'utilisateur saisit l'adresse lui-même. */
+export async function portailParDefaut(): Promise<string> {
+  if (PORTAIL_COMPILE) return PORTAIL_COMPILE;
+  const url = globalThis.chrome?.runtime?.getURL?.(FICHIER_PORTAIL);
+  if (!url) return "";
+  try {
+    const reponse = await fetch(url);
+    if (!reponse.ok) return "";
+    const donnees = (await reponse.json()) as { portail?: unknown };
+    // Le fichier vient d'un serveur : on le valide comme n'importe quelle donnée reçue.
+    return typeof donnees?.portail === "string" ? normaliserAdresse(donnees.portail) : "";
+  } catch {
+    // Archive construite sans portail, ou fichier illisible : on n'en propose aucun.
+    return "";
+  }
+}
 
 export interface Billet {
   instance: string;

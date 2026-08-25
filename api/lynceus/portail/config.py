@@ -41,9 +41,17 @@ class ParametresPortail(BaseSettings):
     cles_par_ip_jour: int = 0
 
     # --- Distribution de l'extension ---
-    # Dossier contenant les archives lynceus-extension-v*.zip. La plus récente est proposée
-    # au téléchargement. Vide = le portail annonce honnêtement qu'aucun paquet n'est publié.
+    # Dossiers contenant les archives lynceus-extension-v*.zip, séparés par des virgules.
+    # Typiquement un volume alimenté à la main et le paquet embarqué dans l'image : la
+    # version la plus haute l'emporte, d'où qu'elle vienne. Vide = le portail annonce
+    # honnêtement qu'aucun paquet n'est publié.
     paquets: str = ""
+
+    # Adresse publique de ce portail, glissée dans l'archive téléchargée pour que
+    # l'extension sache à qui demander sa clé. Vide = déduite de la requête, ce qui suffit
+    # dans la plupart des cas mais se trompe de schéma derrière un proxy qui ne transmet
+    # pas X-Forwarded-Proto.
+    adresse: str = ""
 
     # --- Réseau ---
     # L'extension appelle /v1/inscription depuis chrome-extension://<id>, identifiant qui

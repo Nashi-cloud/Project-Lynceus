@@ -5,7 +5,7 @@ import { chargerReglages, enregistrerReglages } from "../commun/reglages";
 import {
   appliquerBillet,
   demanderCle,
-  PORTAIL_DEFAUT,
+  portailParDefaut,
   resumerBillet,
 } from "../commun/inscription";
 
@@ -31,7 +31,7 @@ async function initialiser(): Promise<void> {
   champInstance.value = reglages.instance;
   champDelai.value = String(reglages.delaiAnalyseS);
   champCle.value = reglages.cle;
-  champPortail.value = reglages.portail || PORTAIL_DEFAUT;
+  champPortail.value = reglages.portail || (await portailParDefaut());
   const permission = await chrome.permissions.contains(DEMANDE_PERMISSION);
   caseBadge.checked = reglages.badgeActif && permission;
 }

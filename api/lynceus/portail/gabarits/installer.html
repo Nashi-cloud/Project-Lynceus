@@ -16,8 +16,11 @@
     <h3 style="margin-top:0">1. Télécharger</h3>
     <p>Version {{ paquet.version }}, {{ paquet.taille_ko }} Ko, archive ZIP.</p>
     <p><a class="bouton" href="/telecharger" download>Télécharger l'extension</a></p>
-    <p class="discret" style="margin-bottom:0">Le paquet est reconstructible depuis les
-    sources (<code>npm run paquet</code>) : rien de ce qui est distribué ici n'est opaque.</p>
+    <p class="discret" style="margin-bottom:0">L'archive que vous recevez contient un
+    fichier <code>portail.json</code> portant l'adresse de ce portail, et rien d'autre :
+    c'est ce qui permet à l'extension de demander sa clé sans que vous ayez à recopier
+    quoi que ce soit. Tout le reste est reconstructible depuis les sources
+    (<code>npm run paquet</code>) : rien de ce qui est distribué ici n'est opaque.</p>
   </div>
   {% else %}
   <div class="encart attention">

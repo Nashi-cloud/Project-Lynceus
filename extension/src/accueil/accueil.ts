@@ -6,7 +6,7 @@ import { chargerReglages, enregistrerReglages } from "../commun/reglages";
 import {
   appliquerBillet,
   demanderCle,
-  PORTAIL_DEFAUT,
+  portailParDefaut,
   resumerBillet,
 } from "../commun/inscription";
 
@@ -22,7 +22,7 @@ const etatInscription = document.getElementById("etat-inscription") as HTMLEleme
 
 void (async () => {
   const reglages = await chargerReglages();
-  champPortail.value = reglages.portail || PORTAIL_DEFAUT;
+  champPortail.value = reglages.portail || (await portailParDefaut());
   if (reglages.cle) {
     etatInscription.textContent =
       "Une clé est déjà enregistrée. En demander une nouvelle remplacera l'actuelle.";

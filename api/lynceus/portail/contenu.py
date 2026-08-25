@@ -100,23 +100,34 @@ def seuils() -> list[dict]:
     return lignes
 
 
-def paquet_le_plus_recent(dossier: str) -> dict | None:
-    """L'archive d'extension la plus récente d'un dossier, ou None s'il n'y en a pas.
+_MOTIF_PAQUET = re.compile(r"^lynceus-extension-v(\d+)\.(\d+)\.(\d+)\.zip$")
 
-    Tri par version (numérique) et non par date de fichier : une copie ou une restauration
-    de sauvegarde ne doit pas faire régresser ce qui est proposé au téléchargement."""
-    if not dossier:
-        return None
-    base = Path(dossier)
-    if not base.is_dir():
-        return None
 
-    motif = re.compile(r"^lynceus-extension-v(\d+)\.(\d+)\.(\d+)\.zip$")
+def paquet_le_plus_recent(dossiers: str) -> dict | None:
+    """L'archive d'extension de plus haute version, parmi plusieurs dossiers.
+
+    Plusieurs dossiers séparés par des virgules, dans l'ordre : typiquement un volume
+    alimenté à la main et le paquet embarqué dans l'image. Le plus haut numéro l'emporte,
+    d'où qu'il vienne, ce qui permet de publier une mise à jour en déposant un zip sans
+    reconstruire l'image, sans pour autant qu'une image neuve reparte de rien.
+
+    Tri par **version** et non par date de fichier : une copie ou une restauration de
+    sauvegarde ne doit pas faire régresser ce qui est proposé au téléchargement.
+
+    Relu à chaque appel, jamais mémorisé au démarrage : un zip déposé pendant que le
+    portail tourne doit être proposé immédiatement. C'est un parcours de quelques entrées
+    de dossier, négligeable devant le rendu d'un gabarit."""
     candidats = []
-    for chemin in base.glob("lynceus-extension-v*.zip"):
-        m = motif.match(chemin.name)
-        if m:
-            candidats.append((tuple(int(g) for g in m.groups()), chemin))
+    for dossier in (d.strip() for d in dossiers.split(",")):
+        if not dossier:
+            continue
+        base = Path(dossier)
+        if not base.is_dir():
+            continue
+        for chemin in base.glob("lynceus-extension-v*.zip"):
+            m = _MOTIF_PAQUET.match(chemin.name)
+            if m:
+                candidats.append((tuple(int(g) for g in m.groups()), chemin))
     if not candidats:
         return None
 

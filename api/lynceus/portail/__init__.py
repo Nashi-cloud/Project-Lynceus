@@ -13,6 +13,9 @@ répond « injoignable ») sans l'empêcher de servir ses pages.
 
 from __future__ import annotations
 
+import io
+import json
+import zipfile
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -20,7 +23,7 @@ from pathlib import Path
 import httpx
 from fastapi import FastAPI, Form, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -32,6 +35,11 @@ from . import contenu
 from .config import ParametresPortail, parametres_portail
 
 RACINE = Path(__file__).parent
+
+# Fichier déposé dans l'archive au moment du téléchargement. Il porte l'adresse du portail
+# qui l'a servie, et rien d'autre : l'extension l'y lit pour proposer « Obtenir une clé »
+# sans que personne ait à recopier une adresse.
+FICHIER_PORTAIL = "portail.json"
 
 MOTIFS = [
     ("analyse_erronee", "L'analyse est fausse"),
@@ -93,16 +101,19 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
     app.mount("/statique", StaticFiles(directory=RACINE / "statique"), name="statique")
     gabarits = Jinja2Templates(directory=str(RACINE / "gabarits"))
 
-    paquet = contenu.paquet_le_plus_recent(p.paquets)
     gabarits.env.globals.update(
         nom=p.nom,
         contact=p.contact,
         version=__version__,
         instance=instance_publique,
-        paquet=paquet,
         inscription_ouverte=bool(p.cle_privee and instance_publique),
         nb_techniques=contenu.nb_techniques(),
     )
+
+    def paquet_courant() -> dict | None:
+        """Relu à chaque appel : déposer un zip dans le volume publie la mise à jour
+        immédiatement, sans redémarrer le conteneur."""
+        return contenu.paquet_le_plus_recent(p.paquets)
 
     def adresse(requete: Request) -> str:
         if p.entete_ip_reelle:
@@ -112,7 +123,23 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
         return requete.client.host if requete.client else "inconnue"
 
     def page(requete: Request, gabarit: str, **valeurs) -> HTMLResponse:
+        valeurs.setdefault("paquet", paquet_courant())
         return gabarits.TemplateResponse(requete, gabarit, valeurs)
+
+    def adresse_portail(requete: Request) -> str:
+        """Adresse publique de ce portail, telle qu'un navigateur peut la joindre.
+
+        Configurée de préférence : derrière un tunnel ou un proxy, l'application ne voit
+        que le nom d'hôte transmis dans les en-têtes, et le schéma qu'elle croit servir
+        est http même quand le visiteur est en https. À défaut de configuration, on
+        déduit de la requête, en tenant compte de l'en-tête de schéma du proxy."""
+        if p.adresse:
+            return p.adresse.rstrip("/")
+        base = str(requete.base_url).rstrip("/")
+        schema = requete.headers.get("x-forwarded-proto", "").split(",")[0].strip()
+        if schema in ("http", "https") and "://" in base:
+            base = f"{schema}://{base.split('://', 1)[1]}"
+        return base
 
     # ---------------------------------------------------------------- pages
 
@@ -146,14 +173,27 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
     # ---------------------------------------------------- téléchargement
 
     @app.get("/telecharger")
-    def telecharger():
+    def telecharger(requete: Request):
+        """Sert l'archive, en y glissant l'adresse de ce portail.
+
+        L'image publiée contient un paquet **neutre**, valable pour n'importe quel
+        portail : c'est ce qui permet à tout le monde de déployer la même image. L'adresse
+        est donc ajoutée à la volée, à la seule archive téléchargée. Sans cela il faudrait
+        soit reconstruire l'extension par portail, soit demander à chaque utilisateur de
+        recopier une adresse à la main."""
+        paquet = paquet_courant()
         if paquet is None:
             raise HTTPException(
                 503,
                 "Aucun paquet n'est publié sur ce portail. Construisez l'extension depuis "
-                "les sources (npm run paquet dans extension/) — le dépôt est libre.",
+                "les sources : npm run paquet, dans extension/. Le dépôt est libre.",
             )
-        return FileResponse(paquet["chemin"], media_type="application/zip", filename=paquet["nom"])
+        contenu_zip = _archive_configuree(paquet["chemin"], adresse_portail(requete))
+        return Response(
+            contenu_zip,
+            media_type="application/zip",
+            headers={"content-disposition": f'attachment; filename="{paquet["nom"]}"'},
+        )
 
     # ------------------------------------------------------- inscription
 
@@ -251,11 +291,30 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
             "statut": "ok",
             "version": __version__,
             "emission_de_cles": bool(p.cle_privee),
-            "paquet": paquet["version"] if paquet else None,
+            "paquet": (paquet_courant() or {}).get("version"),
             "instance": etat_instance,
         }
 
     return app
+
+
+def _archive_configuree(chemin: Path, portail: str) -> bytes:
+    """Recopie l'archive en y ajoutant (ou remplaçant) portail.json.
+
+    Le zip fait une quinzaine de kilo-octets : le reconstruire en mémoire coûte quelques
+    millisecondes, et évite d'avoir à écrire une variante par portail sur le disque. Une
+    entrée existante du même nom est écartée, pour qu'un paquet déjà configuré ne se
+    retrouve pas avec deux adresses contradictoires."""
+    tampon = io.BytesIO()
+    with zipfile.ZipFile(chemin) as source, \
+         zipfile.ZipFile(tampon, "w", zipfile.ZIP_DEFLATED) as sortie:
+        for info in source.infolist():
+            if info.filename == FICHIER_PORTAIL:
+                continue
+            sortie.writestr(info, source.read(info.filename))
+        sortie.writestr(FICHIER_PORTAIL,
+                        json.dumps({"portail": portail}, ensure_ascii=False))
+    return tampon.getvalue()
 
 
 async def _consulter(client: httpx.AsyncClient, instance: str, texte: str) -> dict:

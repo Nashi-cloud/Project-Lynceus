@@ -2,6 +2,11 @@
 
 Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension : utile pour vérifier qu'un rebuild a bien été rechargé.
 
+## 0.9.2 (2026-08-25)
+
+- **feat** : l'extension lit l'adresse du portail dans `portail.json`, fichier que le portail glisse dans l'archive au moment du téléchargement. Une extension téléchargée depuis un portail propose donc « Obtenir une clé » sans qu'on ait rien à saisir, alors même que le paquet publié est neutre et valable pour n'importe quel portail. L'option de compilation `--portail=` reste prioritaire, pour un paquet qu'on construit soi-même.
+- **security** : l'adresse lue dans l'archive est validée comme n'importe quelle donnée reçue d'un serveur. Une adresse qui n'est pas en http(s) est ignorée plutôt que proposée.
+
 ## 0.9.1 (2026-08-25)
 
 - **docs** : suppression des tirets cadratins dans tous les textes visibles de l'extension (page d'accueil, réglages, panneau, messages d'erreur), reformulés plutôt que substitués. Demande explicite de l'utilisateur.

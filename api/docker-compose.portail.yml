@@ -46,16 +46,24 @@ services:
       LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR: ${LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR:-0}
 
       # --- Distribution de l'extension ---
-      LYNCEUS_PORTAIL_PAQUETS: /paquets
+      # Le volume d'abord, puis le paquet embarqué dans l'image : la version la plus haute
+      # l'emporte. Un déploiement neuf distribue donc l'extension sans rien préparer, et
+      # déposer un zip plus récent dans ./paquets publie une mise à jour sans reconstruire
+      # l'image ni redémarrer le conteneur.
+      LYNCEUS_PORTAIL_PAQUETS: ${LYNCEUS_PORTAIL_PAQUETS:-/paquets,/app/paquets-image}
+      # Adresse publique de ce portail, inscrite dans l'archive téléchargée pour que
+      # l'extension sache à qui demander sa clé. Vide = déduite de la requête, ce qui
+      # convient sauf derrière un proxy qui ne transmet pas X-Forwarded-Proto.
+      LYNCEUS_PORTAIL_ADRESSE: ${LYNCEUS_PORTAIL_ADRESSE:-}
 
       # --- Réseau ---
       # Derrière Cloudflare Tunnel, sans cet en-tête toutes les requêtes portent l'adresse
       # du tunnel. À ne définir QUE si le portail n'est joignable que par le tunnel.
       LYNCEUS_PORTAIL_ENTETE_IP_REELLE: ${LYNCEUS_PORTAIL_ENTETE_IP_REELLE:-}
     volumes:
-      # Les archives lynceus-extension-v*.zip produites par `npm run paquet`. La version
-      # la plus haute est proposée au téléchargement ; déposer un nouveau zip suffit à
-      # publier une mise à jour, sans redémarrage d'image.
+      # Facultatif : des archives lynceus-extension-v*.zip produites par `npm run paquet`.
+      # L'image en embarque déjà une ; ce volume ne sert qu'à publier une version plus
+      # récente que celle de l'image, ou une variante à soi.
       - ./paquets:/paquets:ro
     ports:
       - "${LYNCEUS_PORTAIL_BIND:-127.0.0.1}:8080:8080"
