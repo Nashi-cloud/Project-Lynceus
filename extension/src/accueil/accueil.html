@@ -2,65 +2,63 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bienvenue dans Lynceus</title>
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="../commun/lynceus.css">
   <style>
-    :root { --encre: #1c2733; --douce: #5b6b7b; --trait: #e3e8ee; --accent: #16324f;
-            --fond: #fff; --carte: #f7f9fb; --vert: #1a7f37; }
-    @media (prefers-color-scheme: dark) {
-      :root { --encre: #e6ebf0; --douce: #93a1af; --trait: #2a323b; --accent: #9fc2e0;
-              --fond: #14181d; --carte: #1b2129; --vert: #4ac26b; }
-    }
-    * { box-sizing: border-box; }
     body { margin: 0; background: var(--fond); color: var(--encre);
-           font: 15px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-    main { max-width: 620px; margin: 0 auto; padding: 44px 22px 60px; }
-    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-    .logo img { width: 34px; height: 34px; }
-    h1 { font-size: 23px; margin: 0; }
-    .accroche { color: var(--douce); margin: 0 0 30px; }
-    h2 { font-size: 16px; margin: 0 0 4px; }
-    .carte { background: var(--carte); border: 1px solid var(--trait);
-             border-radius: 10px; padding: 18px 20px; margin-bottom: 14px; }
-    .carte.retenue { border-color: var(--accent); }
-    ul { margin: 10px 0 0; padding-left: 20px; color: var(--douce); font-size: 14px; }
-    li { margin: 5px 0; }
-    button { appearance: none; border: 0; border-radius: 7px; cursor: pointer;
-             font: inherit; font-weight: 600; padding: 10px 18px; margin-top: 14px; }
-    .principal { background: var(--accent); color: var(--fond); }
-    .secondaire { background: transparent; color: var(--accent); border: 1px solid var(--trait); }
-    .confidentialite { border-left: 3px solid var(--accent); padding-left: 14px;
-                       margin: 26px 0; color: var(--douce); font-size: 13.5px; }
-    .confidentialite strong { color: var(--encre); }
-    #etat { margin-top: 18px; font-weight: 600; }
-    #etat.ok, #etat-inscription.ok { color: var(--vert); font-weight: 600; }
-    .pied { margin-top: 34px; border-top: 1px solid var(--trait); padding-top: 16px;
-            color: var(--douce); font-size: 13px; }
-    a { color: var(--accent); }
+           font: 400 16px/1.7 var(--texte); -webkit-font-smoothing: antialiased; }
+    .bandeau { border-bottom: 1px solid var(--trait); background: var(--fond-2);
+               padding: 0.85rem clamp(1rem, 5vw, 2rem); }
+    main { max-width: 40rem; margin: 0 auto; padding: clamp(2rem, 6vw, 3.2rem) 1.25rem 4rem; }
+    .surtitre { font: 650 0.78rem/1 var(--ui); letter-spacing: 0.16em; text-transform: uppercase;
+                color: var(--laiton); margin: 0 0 0.9rem; }
+    h1 { font-size: clamp(1.9rem, 1.4rem + 2vw, 2.6rem); margin: 0 0 0.35em;
+         font-variation-settings: "opsz" 72; }
+    h2 { font-size: 1.25rem; margin: 0 0 0.3em; font-variation-settings: "opsz" 40; }
+    .chapo { font-size: 1.1rem; line-height: 1.6; color: var(--encre-2); margin: 0 0 2.4rem;
+             text-wrap: pretty; }
+    p { margin: 0 0 1em; }
+    .carte { margin-bottom: 1.1rem; }
+    .carte ul { margin: 0.8rem 0 0; padding-left: 1.2em; }
+    .carte li { margin: 0.35em 0; color: var(--encre-2); font-size: 0.94rem; }
+    .actions { margin-top: 1.1rem; }
+    label { display: block; font: 600 0.84rem/1.5 var(--ui); color: var(--encre-2);
+            margin: 1.1rem 0 0.3rem; }
+    .encart { margin: 2rem 0; font-size: 0.95rem; }
+    .encart strong { color: var(--encre); }
+    #etat, #etat-inscription { margin-top: 0.9rem; font: 600 0.92rem/1.5 var(--ui); }
+    #etat.ok, #etat-inscription.ok { color: var(--a); }
+    .pied { margin-top: 2.6rem; border-top: 1px solid var(--trait); padding-top: 1rem;
+            color: var(--encre-2); font-size: 0.88rem; }
+    .pied p { margin: 0.3em 0; }
   </style>
 </head>
 <body>
+
+<header class="bandeau">
+  <span class="marque"><!--LOGO-->Lynceus</span>
+</header>
+
 <main>
-  <div class="logo">
-    <img src="../icones/lynceus-128.png" alt="">
-    <h1>Bienvenue dans Lynceus</h1>
-  </div>
-  <p class="accroche">La vigie de l'information. Lynceus décrit les techniques de persuasion
+  <p class="surtitre">Installation</p>
+  <h1>Bienvenue dans Lynceus</h1>
+  <p class="chapo">La vigie de l'information. Lynceus décrit les techniques de persuasion
     employées par une page, sans juger : à vous de conclure.</p>
 
   <div class="carte retenue" id="carte-inscription">
-    <h2>D'abord : connecter Lynceus à une instance</h2>
-    <p style="margin:6px 0 0;color:var(--douce);font-size:14px;">
-      Lynceus ne fonctionne pas seul : il a besoin d'une instance qui analyse les pages.
-      Un portail peut vous en indiquer une et vous délivrer une clé d'accès :
+    <h2>D'abord, connecter Lynceus à une instance</h2>
+    <p class="aide">Lynceus ne fonctionne pas seul : il a besoin d'une instance qui analyse les
+      pages. Un portail peut vous en indiquer une et vous délivrer une clé d'accès :
       <strong>sans compte, sans adresse électronique, en un clic</strong>.</p>
-    <label for="portail" style="display:block;font-size:13px;color:var(--douce);margin-top:14px;">
-      Adresse du portail</label>
-    <input type="url" id="portail" placeholder="https://…" autocomplete="off"
-           style="width:100%;padding:8px 10px;margin-top:4px;border:1px solid var(--trait);
-                  border-radius:6px;background:var(--fond);color:var(--encre);font:inherit;">
-    <button class="principal" id="obtenir-cle">Obtenir une clé d'accès</button>
-    <button class="secondaire" id="deja-instance">J'ai déjà une instance</button>
-    <div id="etat-inscription" role="status" style="margin-top:14px;font-size:14px;"></div>
+    <label for="portail">Adresse du portail</label>
+    <input type="url" id="portail" class="champ" placeholder="https://…" autocomplete="off">
+    <div class="actions">
+      <button class="bouton" id="obtenir-cle">Obtenir une clé d'accès</button>
+      <button class="bouton creux" id="deja-instance">J'ai déjà une instance</button>
+    </div>
+    <div id="etat-inscription" role="status"></div>
     <ul>
       <li>la clé ne contient <strong>ni nom, ni adresse, ni identifiant de compte</strong> :
         seulement une date d'expiration et un nombre d'analyses par jour ;</li>
@@ -71,22 +69,23 @@
 
   <div class="carte retenue">
     <h2>Vous préférez être prévenu automatiquement ?</h2>
-    <p style="margin:6px 0 0;color:var(--douce);font-size:14px;">
-      Lynceus peut reconnaître les pages déjà analysées par la communauté, sans aucune action
-      de votre part :</p>
+    <p class="aide">Lynceus peut reconnaître les pages déjà analysées par la communauté, sans
+      aucune action de votre part :</p>
     <ul>
       <li>la note s'affiche <strong>sur l'icône</strong> dès l'ouverture d'une page connue ;</li>
       <li>le panneau montre <strong>directement la carte</strong>, sans cliquer sur « Analyser » ;</li>
       <li>un <strong>contour discret</strong> entoure les pages jugées à risque (D ou E) ;</li>
       <li>fonctionne aussi sur les sites qui changent de contenu sans recharger (YouTube…).</li>
     </ul>
-    <button class="principal" id="activer">Activer la reconnaissance automatique</button>
-    <button class="secondaire" id="plus-tard">Plus tard</button>
+    <div class="actions">
+      <button class="bouton" id="activer">Activer la reconnaissance automatique</button>
+      <button class="bouton creux" id="plus-tard">Plus tard</button>
+    </div>
     <div id="etat" role="status"></div>
   </div>
 
-  <div class="confidentialite">
-    <strong>Ce que Lynceus envoie, dans les deux cas.</strong>
+  <div class="encart">
+    <p><strong>Ce que Lynceus envoie, dans les deux cas.</strong>
     Pour reconnaître une page, seule une <strong>empreinte</strong> (hash) de son adresse est
     envoyée : ni l'adresse elle-même, ni son contenu, et rien n'est journalisé.
     Le contenu d'une page n'est transmis que lorsque <strong>vous</strong> cliquez sur
@@ -94,16 +93,17 @@
     <strong>fournisseur de modèle de langage</strong> qu'elle utilise, parfois établi hors
     de l'Union européenne. C'est inévitable pour analyser, et l'instance publique doit le
     détailler dans sa politique de confidentialité. Une instance auto-hébergée avec un
-    modèle local n'envoie rien au dehors. Chrome vous demandera l'accès à vos pages : c'est la permission
-    technique nécessaire pour lire l'adresse en continu et dessiner le contour, et elle ne change
-    rien à ce qui circule sur le réseau. Réversible à tout moment dans les réglages.
+    modèle local n'envoie rien au dehors. Chrome vous demandera l'accès à vos pages : c'est la
+    permission technique nécessaire pour lire l'adresse en continu et dessiner le contour, et
+    elle ne change rien à ce qui circule sur le réseau. Réversible à tout moment dans les
+    réglages.</p>
   </div>
 
   <div class="carte">
-    <h2>Sans activer : Lynceus fonctionne quand même</h2>
-    <p style="margin:6px 0 0;color:var(--douce);font-size:14px;">
-      Clic droit sur une page → « 🔭 Analyser cette page avec Lynceus ». Permissions réduites au
-      strict minimum, mais chaque page demande ce geste, y compris après un changement de page.</p>
+    <h2>Sans activer, Lynceus fonctionne quand même</h2>
+    <p class="aide">Clic droit sur une page, puis « 🔭 Analyser cette page avec Lynceus ».
+      Permissions réduites au strict minimum, mais chaque page demande ce geste, y compris
+      après un changement de page.</p>
   </div>
 
   <div class="pied">
@@ -112,6 +112,7 @@
     <p id="version"></p>
   </div>
 </main>
+
 <script src="accueil.js"></script>
 </body>
 </html>

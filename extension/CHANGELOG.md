@@ -2,6 +2,15 @@
 
 Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension : utile pour vérifier qu'un rebuild a bien été rechargé.
 
+## 0.10.0 (2026-08-25)
+
+- **design** : l'extension prend l'identité visuelle du portail. Même papier chaud, même encre, mêmes accents laiton, mêmes polices (Fraunces pour les titres, Newsreader pour les textes qui se lisent), même pastille de grade en carré arrondi. Le panneau garde sa densité et la police d'interface du système : c'est une colonne étroite qu'on parcourt du coin de l'œil, pas une page qu'on lit. Jusqu'ici le site et l'extension avaient l'air de deux logiciels différents, ce qui est gênant quand l'un sert à télécharger l'autre.
+- **design** : le logotype du site, un œil au centre d'une lunette graduée, remplace l'ancienne image dans le bandeau des pages et du panneau. Il est en SVG, donc il suit la couleur du texte et reste net à toute taille. Source unique dans `src/commun/logo.svg`, injectée dans chaque page à la construction.
+- **design** : les icônes de la barre d'outils sont désormais engendrées depuis ce même tracé (`npm run icones`), sans aucune dépendance. Le détail s'adapte à la taille, parce qu'une pupille de moins d'un pixel n'est pas une pupille.
+- **fix** : en thème sombre, les boutons principaux affichaient du texte blanc sur un bleu pâle, soit un contraste d'environ 1,9 pour 1. Le texte y est maintenant sombre. Le portail avait le même défaut, corrigé du même coup.
+- **docs** : les derniers tirets cadratins visibles ont été retirés, y compris dans le nom que Chrome affiche dans sa liste d'extensions.
+- **test** : `identite.test.mjs` compare la palette, le logotype, les icônes et les polices de l'extension à ceux du portail. La copie est inévitable, la dérive silencieuse ne l'est pas.
+
 ## 0.9.3 (2026-08-25)
 
 - **docs** : la page d'accueil et les réglages annoncent désormais que le texte d'une page analysée est transmis par l'instance au fournisseur de modèle de langage qu'elle utilise, parfois hors de l'Union européenne. L'extension promettait la vie privée sans mentionner le seul transfert que son utilisateur ne peut pas éviter. Le remède est indiqué dans la même phrase : une instance auto-hébergée avec un modèle local n'envoie rien au dehors.

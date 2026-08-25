@@ -1,0 +1,223 @@
+/* ===========================================================================
+   Identité visuelle de Lynceus, côté extension.
+
+   Les jetons ci-dessous sont ceux du portail (api/lynceus/portail/statique/
+   lynceus.css), valeur pour valeur. Ils sont recopiés parce qu'un .zip chargé
+   dans Chrome n'a accès qu'à lui-même : l'extension ne peut pas lire la feuille
+   de style d'un site, et surtout elle ne doit pas aller la chercher sur le
+   réseau. La copie est donc voulue, mais elle ne peut pas dériver en silence :
+   extension/test/identite.test.mjs compare les deux fichiers et échoue dès
+   qu'une couleur diverge.
+
+   Deux régimes, comme sur le portail. Les pages qui se lisent (accueil,
+   réglages) sont en Newsreader sur papier chaud. Le panneau, lui, est un outil
+   consulté en un coup d'œil dans une colonne étroite : il garde la police
+   d'interface du système, plus lisible en petit corps, et n'emprunte au portail
+   que ses couleurs, sa pastille et son titre en Fraunces.
+   =========================================================================== */
+
+@font-face {
+  font-family: "Fraunces";
+  src: url("../polices/fraunces-latin.woff2") format("woff2");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+20AC, U+2122;
+}
+
+@font-face {
+  font-family: "Newsreader";
+  src: url("../polices/newsreader-latin.woff2") format("woff2");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+20AC, U+2122;
+}
+
+/* ---------------------------------------------------------------- jetons */
+
+:root {
+  /* Nuit : réservée aux fonds sombres, indépendante du thème du système. */
+  --nuit: #06080f;
+  --nuit-2: #0b1019;
+  --profond: #121a2c;
+  --or: #e0a962;
+  --creme: #f6e8d4;
+
+  /* Jour : un papier chaud plutôt qu'un blanc d'écran. */
+  --fond: #faf7f1;
+  --fond-2: #f2ebdf;
+  --carte: #ffffff;
+  --encre: #22211d;
+  --encre-2: #6b6357;
+  --trait: #e6ded0;
+  --accent: #14415e;
+  /* Couleur du texte posé sur --accent. En thème sombre, l'accent devient un bleu
+     pâle : y laisser du blanc donnerait un rapport de contraste d'environ 1,9 pour 1,
+     soit un bouton illisible. */
+  --sur-accent: #ffffff;
+  --laiton: #9a6b25;
+  --ombre: 0 1px 2px rgba(40, 32, 20, 0.05), 0 8px 24px -12px rgba(40, 32, 20, 0.18);
+  --ombre-levee: 0 2px 4px rgba(40, 32, 20, 0.06), 0 18px 40px -18px rgba(40, 32, 20, 0.32);
+
+  /* Grades : identiques à ceux du portail, volontairement. Un B doit avoir la
+     même couleur dans le panneau, sur le site et dans l'annuaire. */
+  --a: #1a7f37; --b: #5a8f29; --c: #b58900; --d: #c9662a; --e: #b3261e;
+
+  --display: "Fraunces", "Iowan Old Style", Georgia, ui-serif, serif;
+  --texte: "Newsreader", Georgia, ui-serif, serif;
+  --ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fond: #14120f;
+    --fond-2: #1b1815;
+    --carte: #1d1a15;
+    --encre: #ece5da;
+    --encre-2: #a99e8d;
+    --trait: #2f2a22;
+    --accent: #8fbcd9;
+    --sur-accent: #16130f;
+    --laiton: #d5a45f;
+    --ombre: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+    --ombre-levee: 0 2px 4px rgba(0, 0, 0, 0.5), 0 18px 40px -18px rgba(0, 0, 0, 0.75);
+  }
+}
+
+/* ------------------------------------------------------------------ base */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+img, svg { max-width: 100%; }
+
+a {
+  color: var(--accent);
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+a:hover { text-decoration-color: currentColor; }
+
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--laiton);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+h1, h2, h3 {
+  font-family: var(--display);
+  font-weight: 600;
+  line-height: 1.16;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+strong { font-weight: 650; }
+li::marker { color: var(--laiton); }
+
+/* ------------------------------------------------------------- logotype */
+
+/* Un œil au centre d'une lunette graduée, dessiné en SVG plutôt qu'en image :
+   il suit la couleur du texte, reste net à toute taille et ne pèse rien. Même
+   tracé que sur le portail et que les icônes de la barre d'outils, engendrées
+   depuis ce fichier par `npm run icones`. */
+.marque {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font: 600 1.16rem/1 var(--display);
+  font-variation-settings: "opsz" 40;
+  letter-spacing: -0.01em;
+  color: var(--encre);
+  text-decoration: none;
+}
+.marque .logotype { color: var(--laiton); flex: none; width: 26px; height: 26px; }
+
+/* --------------------------------------------------------------- pièces */
+
+.carte {
+  background: var(--carte);
+  border: 1px solid var(--trait);
+  border-radius: 14px;
+  padding: 1.15rem 1.3rem;
+  box-shadow: var(--ombre);
+}
+.carte > :first-child { margin-top: 0; }
+.carte > :last-child { margin-bottom: 0; }
+.carte.retenue { border-color: color-mix(in srgb, var(--laiton) 55%, var(--trait)); }
+
+.encart {
+  background: var(--fond-2);
+  border-left: 3px solid var(--laiton);
+  border-radius: 0 10px 10px 0;
+  padding: 0.95rem 1.15rem;
+}
+.encart > :first-child { margin-top: 0; }
+.encart > :last-child { margin-bottom: 0; }
+.encart.attention { border-left-color: var(--d); }
+
+.bouton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.66rem 1.2rem;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: var(--accent);
+  color: var(--sur-accent);
+  font: 600 0.95rem/1 var(--ui);
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: var(--ombre);
+  transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
+}
+.bouton:hover { transform: translateY(-2px); box-shadow: var(--ombre-levee); filter: brightness(1.08); }
+.bouton:active { transform: translateY(0); }
+.bouton[disabled] { opacity: 0.55; cursor: default; transform: none; box-shadow: var(--ombre); filter: none; }
+.bouton.or { background: linear-gradient(180deg, #eebc7a, var(--or)); color: #38240c; }
+.bouton.creux {
+  background: transparent;
+  color: inherit;
+  border-color: color-mix(in srgb, currentColor 38%, transparent);
+  box-shadow: none;
+}
+.bouton.creux:hover { border-color: currentColor; box-shadow: none; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+
+.champ {
+  width: 100%;
+  min-width: 0;
+  padding: 0.6rem 0.8rem;
+  font: 400 0.95rem/1.4 var(--ui);
+  color: var(--encre);
+  background: var(--carte);
+  border: 1px solid var(--trait);
+  border-radius: 10px;
+}
+.champ::placeholder { color: color-mix(in srgb, var(--encre-2) 70%, transparent); }
+textarea.champ { resize: vertical; }
+
+/* Pastille de grade : carré arrondi, comme sur le portail. Le cercle donnait
+   un air de badge de notification à ce qui est une note de lecture. */
+.pastille {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 9px;
+  color: #fff;
+  font: 700 1.05rem/1 var(--ui);
+  flex: none;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.16);
+}
+.pastille.grande { width: 3rem; height: 3rem; border-radius: 12px; font-size: 1.45rem; }
+.grade-A { background: var(--a); } .grade-B { background: var(--b); }
+.grade-C { background: var(--c); } .grade-D { background: var(--d); }
+.grade-E { background: var(--e); }
+
+.aide, .discret { color: var(--encre-2); font-size: 0.88rem; line-height: 1.6; }
