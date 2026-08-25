@@ -1,11 +1,16 @@
 {% extends "base.html" %}
-{% block titre %}{{ document.titre }} — {{ nom }}{% endblock %}
+{% block titre %}{{ document.titre }} · {{ nom }}{% endblock %}
 {% block corps %}
-<article class="contenu">
-  <h1>{{ document.titre }}</h1>
-  <p class="chapo">Ce texte est le fichier même que le projet applique : il est publié
-  dans le dépôt, et cette page en est le rendu direct. Il ne peut donc pas dire autre
-  chose que ce qui engage le code.</p>
+<header class="entete-page">
+  <div class="contenu">
+    <span class="surtitre">Document de référence</span>
+    <h1>{{ document.titre }}</h1>
+    <p class="chapo">Ce texte est le fichier même que le projet applique. Il est publié
+    dans le dépôt, et cette page en est le rendu direct : il ne peut donc pas dire autre
+    chose que ce qui engage le code.</p>
+  </div>
+</header>
+<article class="contenu corps-page">
   {{ document.html | safe }}
 </article>
 {% endblock %}

@@ -1,6 +1,6 @@
 # Méthodologie d'analyse
 
-Version : **0.1.0** — toute modification de ce document ou des prompts incrémente `prompt_version` (semver) et déclenche une passe sur le [corpus de calibration](../corpus/).
+Version : **0.1.0**. Toute modification de ce document ou des prompts incrémente `prompt_version` (semver) et déclenche une passe sur le [corpus de calibration](../corpus/).
 
 ## Vue d'ensemble
 
@@ -34,22 +34,22 @@ La catégorie conditionne la lecture de la note (voir « Cas particuliers »).
 
 ## 2. Les quatre dimensions (0–100 chacune)
 
-### `sources` — Qualité du sourçage (pondération : 30 %)
+### `sources` : qualité du sourçage (pondération : 30 %)
 - Les affirmations importantes sont-elles sourcées ? Sources primaires identifiables et vérifiables ?
 - Liens réels vers les sources, ou simples affirmations (« des études montrent ») ?
 - Les sources citées disent-elles vraiment ce qu'on leur fait dire (si vérifiable dans le texte) ?
 
-### `factualite` — Rigueur factuelle (pondération : 30 %)
+### `factualite` : rigueur factuelle (pondération : 30 %)
 - Affirmations extraordinaires → preuves extraordinaires ?
 - Contradictions avec des faits établis ou le consensus scientifique (dans les limites de ce que le modèle sait, avec prudence) ?
 - Distinction faits / interprétations ? Chiffres et dates cohérents ?
 
-### `ton` — Registre et procédés rhétoriques (pondération : 20 %)
+### `ton` : registre et procédés rhétoriques (pondération : 20 %)
 - Registre dominant : factuel ou émotionnel (peur, indignation, urgence) ?
 - Densité de techniques de manipulation détectées (voir [TAXONOMIE.md](TAXONOMIE.md)) ?
 - Titre cohérent avec le contenu, ou piège à clic ?
 
-### `transparence` — Transparence de l'éditeur (pondération : 20 %)
+### `transparence` : transparence de l'éditeur (pondération : 20 %)
 - Auteur identifiable ? Mentions légales, entité éditrice ?
 - Conflits d'intérêt visibles dans le texte (vente de produits liés aux affirmations) ?
 - Opinion présentée comme information, publicité déguisée ?
@@ -75,15 +75,15 @@ score = 0,30·sources + 0,30·factualite + 0,20·ton + 0,20·transparence
 |---|---|---|
 | **A** | ≥ 80 | Bonnes pratiques d'information |
 | **B** | 65–79 | Globalement fiable, quelques réserves |
-| **C** | 50–64 | Prudence — vérifier avant de partager |
-| **D** | 30–49 | Forte prudence — signaux sérieux |
+| **C** | 50–64 | Prudence, vérifier avant de partager |
+| **D** | 30–49 | Forte prudence, signaux sérieux |
 | **E** | < 30 | Signaux critiques nombreux |
 
 L'**indice de confiance** (0–1, fourni par le LLM) est affiché séparément : il qualifie l'analyse, pas le contenu.
 
 ## 6. Cas particuliers
 
-- **Satire** : la note évalue la *transparence de la satire* (un site parodique assumé note bien). La carte porte l'avertissement « contenu satirique — second degré ». Jamais traitée comme désinformation.
+- **Satire** : la note évalue la *transparence de la satire* (un site parodique assumé note bien). La carte porte l'avertissement « contenu satirique, second degré ». Jamais traitée comme désinformation.
 - **Opinion / éditorial** : évalué sur l'honnêteté argumentative (sources des faits invoqués, absence de techniques déloyales), **jamais sur la position défendue**.
 - **Contenu confessionnel** : la foi n'est pas notée. Seules le sont les affirmations factuelles (santé, science, histoire) et les techniques de manipulation éventuelles (peur, urgence, isolement).
 - **Contenu court ou tronqué** (paywall, extrait) : indice de confiance abaissé + avertissement explicite.

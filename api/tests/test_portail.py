@@ -20,6 +20,7 @@ from lynceus.normalisation import hacher_url
 from lynceus.portail import creer_portail
 from lynceus.portail.config import ParametresPortail
 from lynceus.portail.contenu import paquet_le_plus_recent
+from lynceus.portail import RACINE
 from tests.conftest import CONTENU_TEST, SORTIE_LLM, parametres_test
 
 URL = "https://exemple.fr/article"
@@ -282,3 +283,56 @@ def test_le_telechargement_sert_l_archive(tmp_path):
     assert reponse.status_code == 200
     assert reponse.headers["content-type"] == "application/zip"
     assert reponse.content.startswith(b"PK")
+
+
+# ------------------------------------------------------- mise en page
+
+def test_aucune_grille_n_impose_une_largeur_superieure_a_l_ecran():
+    """Régression signalée depuis un téléphone : les tuiles débordaient à droite.
+
+    Une grille « repeat(auto-fit, minmax(N, 1fr)) » réserve N pixels par colonne même
+    quand la fenêtre est plus étroite, et pousse alors la page hors de l'écran. La forme
+    « minmax(min(100%, N), 1fr) » laisse la colonne se replier. La règle vaut pour toutes
+    les grilles du portail, pas seulement celles qui débordaient ce jour-là."""
+    css = (RACINE / "statique" / "lynceus.css").read_text(encoding="utf-8")
+    fautives = [
+        ligne.strip()
+        for ligne in css.splitlines()
+        if "auto-fit" in ligne and "minmax(min(" not in ligne
+    ]
+    assert not fautives, "grille sans repli sur écran étroit : " + " | ".join(fautives)
+
+
+def test_les_scenes_du_recit_ne_sont_pas_centrees_en_flex():
+    """Cause exacte du débordement : un conteneur flex en colonne avec « align-items:
+    center » dimensionne ses enfants sur leur contenu maximal, et non sur la largeur
+    disponible. Les scènes doivent rester en flux normal."""
+    css = (RACINE / "statique" / "lynceus.css").read_text(encoding="utf-8")
+    debut = css.index(".scene {")
+    bloc = css[debut:css.index("}", debut)]
+    assert "display: flex" not in bloc, bloc
+
+
+def test_aucun_tiret_cadratin_dans_les_pages():
+    """Demande explicite de l'utilisateur : pas de « — » dans les textes affichés.
+
+    Vérifié sur les gabarits plutôt que sur le rendu, pour couvrir aussi les branches
+    conditionnelles qu'une page donnée n'emprunte pas. Les documents de docs/ rendus par
+    le portail sont couverts séparément, puisqu'ils vivent hors de ce dossier."""
+    coupables = {
+        chemin.name: [l.strip() for l in chemin.read_text(encoding="utf-8").splitlines() if "\u2014" in l]
+        for chemin in sorted((RACINE / "gabarits").glob("*.html"))
+    }
+    coupables = {k: v for k, v in coupables.items() if v}
+    assert not coupables, coupables
+
+
+def test_aucun_tiret_cadratin_dans_les_documents_publies():
+    """Même exigence pour la charte et la méthodologie : elles sont rendues telles quelles
+    sur le site. docs/TAXONOMIE.md est exclu à dessein : son parseur (moteur/prompt.py)
+    découpe les titres sur « — », et l'en retirer casserait le chargement du référentiel."""
+    from lynceus.config import trouver_racine
+    for nom in ("ETHIQUE", "METHODOLOGIE"):
+        texte = (trouver_racine() / "docs" / f"{nom}.md").read_text(encoding="utf-8")
+        lignes = [l.strip() for l in texte.splitlines() if "\u2014" in l]
+        assert not lignes, f"{nom}.md : {lignes}"

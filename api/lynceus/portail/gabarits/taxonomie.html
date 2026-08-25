@@ -1,33 +1,41 @@
 {% extends "base.html" %}
-{% block titre %}Les procédés reconnus — {{ nom }}{% endblock %}
+{% block titre %}Les procédés reconnus · {{ nom }}{% endblock %}
 {% block corps %}
-<article class="contenu large">
-  <h1>Les {{ nb_techniques }} procédés du référentiel</h1>
-  <p class="chapo" style="max-width: var(--prose)">Cette liste est <strong>fermée</strong> :
-  l'analyse ne peut rien nommer qui ne s'y trouve pas. Elle est aussi celle qui est
-  transmise au modèle — cette page en est l'affichage direct, pas une reformulation.</p>
-  <p class="discret" style="max-width: var(--prose)">La gravité indiquée est une
-  indication générale, pas une sentence : un même procédé peut être anodin dans un
-  billet d'humeur et sérieux dans un article qui se présente comme une information.</p>
+<header class="entete-page">
+  <div class="contenu large">
+    <span class="surtitre">Référentiel</span>
+    <h1>Les {{ nb_techniques }} procédés reconnus</h1>
+    <p class="chapo" style="max-width: var(--prose)">Cette liste est <strong>fermée</strong> :
+    l'analyse ne peut rien nommer qui ne s'y trouve pas. C'est aussi celle qui est transmise
+    au modèle, et cette page en est l'affichage direct, pas une reformulation.</p>
+  </div>
+</header>
+
+<article class="contenu large corps-page">
+  <p class="discret" style="max-width: var(--prose)">La gravité indiquée est une indication
+  générale, pas une sentence. Un même procédé peut être anodin dans un billet d'humeur et
+  sérieux dans un article qui se présente comme une information.</p>
 
   {% for famille in familles %}
   <section class="famille">
-    <h2>{{ famille.nom }}</h2>
-    {% for t in famille.techniques %}
-    <div class="technique-carte" id="{{ t.id }}">
-      <h3>
-        {{ t.nom }}
-        <span class="identifiant">{{ t.id }}</span>
-        <span class="gravite gravite-{{ t.gravite }}">{{ gravites.get(t.gravite, t.gravite) }}</span>
-      </h3>
-      <p>{{ t.definition }}</p>
+    <h2><span class="lettre">{{ famille.lettre }}</span> {{ famille.nom }}</h2>
+    <div class="grille-procedes">
+      {% for t in famille.techniques %}
+      <div class="procede-carte" id="{{ t.id }}">
+        <h3>
+          {{ t.nom }}
+          <span class="gravite gravite-{{ t.gravite }}">{{ gravites.get(t.gravite, t.gravite) }}</span>
+        </h3>
+        <p>{{ t.definition }}</p>
+        <p class="identifiant" style="margin-top:.5rem">{{ t.id }}</p>
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
   </section>
   {% endfor %}
 
   <p class="discret" style="max-width: var(--prose)">Le référentiel évolue lentement et
-  publiquement : ajouter un procédé change les analyses futures, jamais celles déjà
-  produites — chaque analyse conserve la version qui l'a produite.</p>
+  publiquement. Ajouter un procédé change les analyses futures, jamais celles déjà
+  produites : chaque analyse conserve la version qui l'a produite.</p>
 </article>
 {% endblock %}

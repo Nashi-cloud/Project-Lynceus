@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Lynceus — la vigie de l'information",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Analyse la fiabilité d'une page web et explique, sans juger, les techniques de persuasion qu'elle emploie. Libre (AGPL-3.0) et auto-hébergeable.",
   "minimum_chrome_version": "116",
   "permissions": [

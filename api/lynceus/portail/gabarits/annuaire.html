@@ -1,32 +1,37 @@
 {% extends "base.html" %}
-{% block titre %}Annuaire public — {{ nom }}{% endblock %}
+{% block titre %}Annuaire public · {{ nom }}{% endblock %}
 {% block corps %}
-<article class="contenu">
-  <h1>Consulter l'annuaire</h1>
-  <p class="chapo">Ce que cette instance a déjà analysé est public, et consultable sans
-  installer l'extension. Un domaine pour son profil général, une adresse complète pour
-  l'analyse d'une page précise.</p>
+<header class="entete-page">
+  <div class="contenu">
+    <span class="surtitre">Sans rien installer</span>
+    <h1>Consulter l'annuaire</h1>
+    <p class="chapo">Ce que cette instance a déjà analysé est public. Un domaine pour son
+    profil général, une adresse complète pour l'analyse d'une page précise.</p>
+  </div>
+</header>
 
+<article class="contenu corps-page">
   <form class="recherche" hx-get="/annuaire/recherche" hx-target="#resultat"
         hx-indicator="#attente" role="search">
-    <input class="champ" type="search" name="q" placeholder="exemple.fr — ou https://exemple.fr/article"
-           aria-label="Domaine ou adresse de page" autocomplete="off" required>
+    <input class="champ" type="search" name="q" required autocomplete="off"
+           placeholder="exemple.fr ou https://exemple.fr/article"
+           aria-label="Domaine ou adresse de page">
     <button class="bouton" type="submit">Chercher</button>
   </form>
   <p class="attente" id="attente"><span class="attente-cachee">Consultation de l'instance…</span></p>
 
-  <div id="resultat" class="resultat"></div>
+  <div id="resultat" class="resultat" aria-live="polite"></div>
 
-  <div class="encart" style="margin-top: 40px">
-    <h3>Ce que l'instance apprend de votre recherche</h3>
-    <p>Pour une <strong>adresse de page</strong>, ce portail n'envoie à l'instance que
-    les premiers caractères de l'empreinte, puis fait la correspondance finale lui-même.
-    L'instance voit passer une demande qui correspond à des milliers de pages possibles
-    et ne peut pas savoir laquelle vous intéresse — c'est le même mécanisme que dans
+  <div class="encart note" style="margin-top: 2.6rem">
+    <h3 style="margin-top:0">Ce que l'instance apprend de votre recherche</h3>
+    <p>Pour une <strong>adresse de page</strong>, ce portail n'envoie à l'instance que les
+    premiers caractères de l'empreinte, puis fait la correspondance finale lui-même.
+    L'instance voit passer une demande qui correspond à des milliers de pages possibles et
+    ne peut pas savoir laquelle vous intéresse. C'est le même mécanisme que dans
     l'extension, et il s'applique aussi quand la demande vient d'un serveur.</p>
-    <p style="margin-bottom:0">Pour un <strong>domaine</strong>, la question est en
-    revanche transmise telle quelle : un profil de domaine est une donnée publique et
-    ne dit rien de la page que vous lisiez.</p>
+    <p style="margin-bottom:0">Pour un <strong>domaine</strong>, la question est en revanche
+    transmise telle quelle : un profil de domaine est une donnée publique, et il ne dit
+    rien de la page que vous lisiez.</p>
   </div>
 </article>
 {% endblock %}

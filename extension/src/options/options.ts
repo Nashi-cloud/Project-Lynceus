@@ -41,7 +41,7 @@ caseBadge.addEventListener("change", async () => {
     const accorde = await chrome.permissions.request(DEMANDE_PERMISSION);
     if (!accorde) {
       caseBadge.checked = false;
-      zoneEtat.textContent = "Permission refusée — badge et contour passifs restent désactivés.";
+      zoneEtat.textContent = "Permission refusée. Badge et contour passifs restent désactivés.";
     }
   } else {
     await chrome.permissions.remove(DEMANDE_PERMISSION).catch(() => {});
@@ -105,7 +105,7 @@ document.getElementById("tester")?.addEventListener("click", async () => {
       (cleRequise
         ? "Cette instance demande une clé d'accès pour les analyses.\n"
         : "Cette instance n'exige aucune clé.\n") +
-      "Elle publie sa méthodologie — c'est le contrat de transparence Lynceus.";
+      "Elle publie sa méthodologie : c'est le contrat de transparence Lynceus.";
   } catch (erreur) {
     zoneInfos.textContent =
       `✗ Instance injoignable (${erreur instanceof Error ? erreur.message : String(erreur)}). ` +
@@ -114,6 +114,6 @@ document.getElementById("tester")?.addEventListener("click", async () => {
 });
 
 const zoneVersion = document.getElementById("version") as HTMLElement;
-zoneVersion.textContent = `Lynceus — extension v${chrome.runtime.getManifest().version}`;
+zoneVersion.textContent = `Lynceus, extension v${chrome.runtime.getManifest().version}`;
 
 void initialiser();

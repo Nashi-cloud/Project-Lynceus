@@ -75,7 +75,7 @@ async function requete<T>(
       /* corps non JSON */
     }
     if (reponse.status === 401) {
-      detail += " — renseignez votre clé d'accès dans les réglages de l'extension.";
+      detail += " Renseignez votre clé d'accès dans les réglages de l'extension.";
     }
     throw new Error(detail);
   }
