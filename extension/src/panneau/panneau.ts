@@ -240,7 +240,7 @@ function rendreCarte(
   infos.append(el("div", "categorie", CATEGORIES[carte.categorie] ?? carte.categorie));
   infos.append(el("div", "sous-info",
     `Indice ${carte.note.score}/100 · confiance de l'analyse : ${Math.round(carte.note.confiance * 100)} %`));
-  if (enCache) infos.append(el("div", "badge-cache", "Déjà dans l'annuaire — réponse instantanée"));
+  if (enCache) infos.append(el("div", "badge-cache", "Déjà dans l'annuaire, réponse instantanée"));
   enTete.append(infos);
   app.append(enTete);
 
@@ -277,7 +277,7 @@ function rendreCarte(
   const [blocPositifs, contenuPositifs] = section("Points positifs", false, String(carte.points_positifs.length));
   const listePositifs = el("ul");
   for (const point of carte.points_positifs) listePositifs.append(el("li", undefined, `✓ ${point}`));
-  if (carte.points_positifs.length === 0) listePositifs.append(el("li", undefined, "—"));
+  if (carte.points_positifs.length === 0) listePositifs.append(el("li", undefined, "Aucun relevé par l'analyse."));
   contenuPositifs.append(listePositifs);
   app.append(blocPositifs);
 

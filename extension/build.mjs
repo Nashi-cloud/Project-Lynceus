@@ -1,5 +1,5 @@
 import { build } from "esbuild";
-import { cpSync, mkdirSync, rmSync } from "node:fs";
+import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 
 // Portail proposé par défaut dans l'extension : `node build.mjs --portail=https://…`.
 // Un portail qui distribue le paquet le construit avec sa propre adresse, si bien que
@@ -28,12 +28,29 @@ await build({
   logLevel: "info",
 });
 
+// Le logotype est écrit une fois, dans src/commun/logo.svg, et injecté à la place du
+// marqueur <!--LOGO--> dans chaque page. Trois copies du même tracé dans trois fichiers
+// HTML finiraient par diverger ; celui-ci est aussi la source des icônes de la barre
+// d'outils (npm run icones) et le jumeau de celui du portail, ce que verrouille
+// test/identite.test.mjs.
+const logotype = readFileSync("src/commun/logo.svg", "utf-8").trim();
+
+const copierPage = (source, destination) => {
+  const html = readFileSync(source, "utf-8").replace("<!--LOGO-->", logotype);
+  writeFileSync(destination, html);
+};
+
 cpSync("manifest.json", "dist/manifest.json");
-cpSync("src/panneau/panneau.html", "dist/panneau/panneau.html");
+copierPage("src/panneau/panneau.html", "dist/panneau/panneau.html");
 cpSync("src/panneau/panneau.css", "dist/panneau/panneau.css");
-cpSync("src/options/options.html", "dist/options/options.html");
-cpSync("src/accueil/accueil.html", "dist/accueil/accueil.html");
+copierPage("src/options/options.html", "dist/options/options.html");
+copierPage("src/accueil/accueil.html", "dist/accueil/accueil.html");
+mkdirSync("dist/commun", { recursive: true });
+cpSync("src/commun/lynceus.css", "dist/commun/lynceus.css");
 cpSync("icones", "dist/icones", { recursive: true });
+// Polices embarquées : une page de l'extension ne doit rien demander au réseau, pas même
+// une police. Ce sont les fichiers du portail, sous licence OFL (voir polices/LICENSE).
+cpSync("polices", "dist/polices", { recursive: true });
 console.log("→ dist/ prêt (chrome://extensions → Charger l'extension non empaquetée)");
 
 // --paquet : archive ZIP prête à distribuer ou à soumettre au Chrome Web Store.
