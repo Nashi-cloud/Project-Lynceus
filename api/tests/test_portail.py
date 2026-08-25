@@ -5,7 +5,9 @@ Deux propriétés comptent plus que l'affichage et sont testées comme telles :
   · une recherche par adresse ne transmet à l'instance qu'un préfixe d'empreinte.
 """
 
+import io
 import json as json_
+import zipfile
 
 import httpx
 import pytest
@@ -17,7 +19,7 @@ from lynceus.cles import generer_paire
 from lynceus.main import creer_application
 from lynceus.moteur import llm, notation, prompt
 from lynceus.normalisation import hacher_url
-from lynceus.portail import creer_portail
+from lynceus.portail import FICHIER_PORTAIL, creer_portail
 from lynceus.portail.config import ParametresPortail
 from lynceus.portail.contenu import paquet_le_plus_recent
 from lynceus.portail import RACINE
@@ -29,7 +31,7 @@ URL = "https://exemple.fr/article"
 def parametres_portail_test(**surcharges) -> ParametresPortail:
     """Comme pour l'API : configuration explicite, pour ne pas hériter du .env de la machine."""
     defauts = dict(nom="Lynceus", contact="", cle_privee="", instance="",
-                   instance_interne="", paquets="", cles_par_ip_jour=0)
+                   instance_interne="", paquets="", adresse="", cles_par_ip_jour=0)
     defauts.update(surcharges)
     return ParametresPortail(**defauts)
 
@@ -255,16 +257,116 @@ def test_une_contestation_refusee_est_annoncee_comme_telle(portail, tmp_path):
 
 # ------------------------------------------------------------ paquet zip
 
+def _archive(chemin, entrees=None):
+    """Écrit un zip minimal mais réel : les tests de téléchargement le rouvrent."""
+    with zipfile.ZipFile(chemin, "w") as z:
+        for nom, contenu_ in (entrees or {"manifest.json": '{"version":"1.0.0"}'}).items():
+            z.writestr(nom, contenu_)
+
+
 def test_le_paquet_propose_est_la_version_la_plus_haute(tmp_path):
     """Tri par version, pas par date de fichier : restaurer une sauvegarde ne doit pas
     faire régresser ce qui est distribué."""
     for nom in ("lynceus-extension-v0.9.0.zip", "lynceus-extension-v0.10.0.zip",
                 "lynceus-extension-v0.2.0.zip", "brouillon.zip"):
-        (tmp_path / nom).write_bytes(b"PK\x03\x04")
+        _archive(tmp_path / nom)
     (tmp_path / "lynceus-extension-v0.9.0.zip").touch()  # la plus récente sur le disque
 
     paquet = paquet_le_plus_recent(str(tmp_path))
     assert paquet["version"] == "0.10.0"
+
+
+def test_le_paquet_du_volume_l_emporte_sur_celui_de_l_image(tmp_path):
+    """L'image embarque un paquet pour qu'un déploiement neuf ne parte pas les mains vides,
+    et un zip déposé dans le volume publie une mise à jour sans reconstruire l'image. Le
+    départage se fait sur la version, jamais sur l'ordre des dossiers."""
+    image, volume = tmp_path / "image", tmp_path / "volume"
+    image.mkdir(); volume.mkdir()
+    _archive(image / "lynceus-extension-v1.0.0.zip")
+    _archive(volume / "lynceus-extension-v1.1.0.zip")
+
+    dossiers = f"{volume},{image}"
+    assert paquet_le_plus_recent(dossiers)["version"] == "1.1.0"
+
+    # Un zip plus ancien déposé dans le volume ne doit PAS faire régresser la distribution.
+    _archive(volume / "lynceus-extension-v0.5.0.zip")
+    assert paquet_le_plus_recent(dossiers)["version"] == "1.1.0"
+
+
+def test_un_dossier_absent_ne_fait_pas_echouer_la_resolution(tmp_path):
+    """Le volume peut ne pas être monté : le portail doit alors servir le paquet de l'image
+    plutôt que de tomber en panne."""
+    _archive(tmp_path / "lynceus-extension-v1.0.0.zip")
+    assert paquet_le_plus_recent(f"/inexistant,{tmp_path}")["version"] == "1.0.0"
+    assert paquet_le_plus_recent("/inexistant,/pas-davantage") is None
+
+
+def test_un_paquet_depose_apres_le_demarrage_est_propose_sans_redemarrage(tmp_path):
+    """Régression : la version était résolue une fois pour toutes à la création de
+    l'application, si bien que déposer un zip ne changeait rien jusqu'au redémarrage,
+    contrairement à ce qu'annonçait la documentation de déploiement."""
+    p = parametres_portail_test(paquets=str(tmp_path))
+    with TestClient(creer_portail(p)) as client:
+        assert client.get("/sante").json()["paquet"] is None
+        assert client.get("/telecharger").status_code == 503
+
+        _archive(tmp_path / "lynceus-extension-v2.0.0.zip")
+
+        assert client.get("/sante").json()["paquet"] == "2.0.0"
+        assert client.get("/telecharger").status_code == 200
+        assert "2.0.0" in client.get("/installer").text
+
+
+# ------------------------------------------------- adresse dans l'archive
+
+def test_l_archive_telechargee_porte_l_adresse_du_portail(tmp_path):
+    """Le paquet publié est neutre, pour qu'une seule image serve à tous les portails.
+    L'adresse est ajoutée à la volée : sans elle, chaque personne devrait recopier
+    l'adresse du portail à la main avant de pouvoir demander une clé."""
+    _archive(tmp_path / "lynceus-extension-v1.0.0.zip",
+             {"manifest.json": '{"version":"1.0.0"}', "fond.js": "// code"})
+    p = parametres_portail_test(paquets=str(tmp_path))
+    with TestClient(creer_portail(p)) as client:
+        reponse = client.get("/telecharger")
+
+    assert reponse.headers["content-type"] == "application/zip"
+    archive = zipfile.ZipFile(io.BytesIO(reponse.content))
+    assert archive.testzip() is None, "archive corrompue"
+    assert set(archive.namelist()) == {"manifest.json", "fond.js", FICHIER_PORTAIL}
+    assert json_.loads(archive.read(FICHIER_PORTAIL))["portail"] == "http://testserver"
+
+
+def test_l_adresse_configuree_prime_sur_celle_deduite_de_la_requete(tmp_path):
+    """Derrière un tunnel, l'application ne voit qu'un nom d'hôte interne. Une adresse
+    explicite doit donc pouvoir être imposée."""
+    _archive(tmp_path / "lynceus-extension-v1.0.0.zip")
+    p = parametres_portail_test(paquets=str(tmp_path), adresse="https://lynceus.exemple.fr/")
+    with TestClient(creer_portail(p)) as client:
+        archive = zipfile.ZipFile(io.BytesIO(client.get("/telecharger").content))
+    assert json_.loads(archive.read(FICHIER_PORTAIL))["portail"] == "https://lynceus.exemple.fr"
+
+
+def test_le_schema_du_proxy_est_respecte(tmp_path):
+    """Servi derrière un tunnel HTTPS, le portail ne doit pas inscrire une adresse en
+    http : l'extension enverrait alors ses demandes de clé en clair, ou échouerait."""
+    _archive(tmp_path / "lynceus-extension-v1.0.0.zip")
+    p = parametres_portail_test(paquets=str(tmp_path))
+    with TestClient(creer_portail(p)) as client:
+        reponse = client.get("/telecharger", headers={"X-Forwarded-Proto": "https"})
+    archive = zipfile.ZipFile(io.BytesIO(reponse.content))
+    assert json_.loads(archive.read(FICHIER_PORTAIL))["portail"].startswith("https://")
+
+
+def test_une_adresse_deja_presente_dans_l_archive_est_remplacee(tmp_path):
+    """Un paquet construit localement avec --portail, redéposé sur un autre portail, ne
+    doit pas se retrouver avec deux adresses contradictoires."""
+    _archive(tmp_path / "lynceus-extension-v1.0.0.zip",
+             {"manifest.json": "{}", FICHIER_PORTAIL: '{"portail": "https://ancien.test"}'})
+    p = parametres_portail_test(paquets=str(tmp_path), adresse="https://nouveau.test")
+    with TestClient(creer_portail(p)) as client:
+        archive = zipfile.ZipFile(io.BytesIO(client.get("/telecharger").content))
+    assert archive.namelist().count(FICHIER_PORTAIL) == 1
+    assert json_.loads(archive.read(FICHIER_PORTAIL))["portail"] == "https://nouveau.test"
 
 
 def test_sans_paquet_le_telechargement_explique_quoi_faire(portail):
@@ -275,14 +377,14 @@ def test_sans_paquet_le_telechargement_explique_quoi_faire(portail):
 
 
 def test_le_telechargement_sert_l_archive(tmp_path):
-    (tmp_path / "lynceus-extension-v1.2.3.zip").write_bytes(b"PK\x03\x04 contenu")
+    _archive(tmp_path / "lynceus-extension-v1.2.3.zip")
     p = parametres_portail_test(paquets=str(tmp_path))
     with TestClient(creer_portail(p)) as client:
         assert "1.2.3" in client.get("/installer").text
         reponse = client.get("/telecharger")
     assert reponse.status_code == 200
     assert reponse.headers["content-type"] == "application/zip"
-    assert reponse.content.startswith(b"PK")
+    assert 'filename="lynceus-extension-v1.2.3.zip"' in reponse.headers["content-disposition"]
 
 
 # ------------------------------------------------------- mise en page

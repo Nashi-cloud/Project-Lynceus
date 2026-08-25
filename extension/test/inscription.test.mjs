@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { beforeEach, describe, it } from "node:test";
 import { importerTs, installerFauxChrome } from "./aide.mjs";
 
-const { demanderCle, appliquerBillet, normaliserAdresse, resumerBillet } =
+const { demanderCle, appliquerBillet, normaliserAdresse, resumerBillet, portailParDefaut } =
   await importerTs("src/commun/inscription.ts");
 const { chargerReglages } = await importerTs("src/commun/reglages.ts");
 
@@ -112,5 +112,39 @@ describe("resumerBillet", () => {
     assert.match(resume, /instance\.test/);
     assert.match(resume, /2027-08-25/);
     assert.match(resume, /20 analyses par jour/);
+  });
+});
+
+describe("portailParDefaut", () => {
+  beforeEach(() => {
+    installerFauxChrome();
+    delete globalThis.fetch;
+  });
+
+  it("lit l'adresse écrite dans l'archive par le portail qui l'a servie", async () => {
+    // C'est ce qui permet de publier UNE image pour tous les portails : l'adresse n'est
+    // pas compilée dans l'extension, elle est ajoutée au zip au téléchargement.
+    globalThis.chrome.runtime = { getURL: (f) => `chrome-extension://abc/${f}` };
+    globalThis.fetch = async (url) => {
+      assert.equal(url, "chrome-extension://abc/portail.json");
+      return { ok: true, json: async () => ({ portail: "https://portail.test/" }) };
+    };
+    assert.equal(await portailParDefaut(), "https://portail.test");
+  });
+
+  it("ne propose rien quand l'archive ne contient pas le fichier", async () => {
+    globalThis.chrome.runtime = { getURL: (f) => `chrome-extension://abc/${f}` };
+    globalThis.fetch = async () => ({ ok: false, status: 404, json: async () => ({}) });
+    assert.equal(await portailParDefaut(), "");
+  });
+
+  it("refuse une adresse invalide plutôt que de la propager dans les réglages", async () => {
+    globalThis.chrome.runtime = { getURL: (f) => f };
+    globalThis.fetch = async () => ({ ok: true, json: async () => ({ portail: "javascript:1" }) });
+    assert.equal(await portailParDefaut(), "");
+  });
+
+  it("ne tombe pas en panne hors contexte d'extension", async () => {
+    assert.equal(await portailParDefaut(), "");
   });
 });

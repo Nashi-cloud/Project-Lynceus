@@ -146,17 +146,36 @@ docker compose -f docker-compose.portail.yml --profile tunnel up -d
 
 Le hostname Cloudflare du portail doit pointer vers `http://portail:8080`.
 
-### Publier l'extension
+### L'extension est déjà dans l'image
 
-Construisez le paquet **avec l'adresse du portail** : une extension téléchargée depuis un portail arrive alors déjà configurée sur lui, et l'utilisateur n'a plus qu'à cliquer sur « Obtenir une clé ».
+L'image contient l'archive de l'extension : elle est construite dans un étage Node du `Dockerfile`, dont rien d'autre ne subsiste. Un portail fraîchement déployé distribue donc l'extension sans qu'on ait à copier quoi que ce soit sur l'hôte.
+
+Ce paquet embarqué est **neutre** : aucune adresse de portail n'y est inscrite, faute de quoi il faudrait une image par portail. L'adresse est ajoutée **au moment du téléchargement**, dans un fichier `portail.json` glissé dans l'archive servie. L'extension l'y lit et propose « Obtenir une clé » sans que personne ait à recopier une adresse. Renseignez `LYNCEUS_PORTAIL_ADRESSE` : sans elle, l'adresse est déduite de la requête, ce qui se trompe de schéma derrière un proxy qui ne transmet pas `X-Forwarded-Proto`.
+
+### Publier une version sans reconstruire l'image
+
+Déposez un zip de version plus haute dans `./paquets` :
 
 ```bash
-cd extension
-npm run paquet -- --portail=https://lynceus.exemple.fr
-cp lynceus-extension-v*.zip /chemin/vers/paquets/
+cd extension && npm run paquet
+scp lynceus-extension-v*.zip serveur:/chemin/vers/api/paquets/
 ```
 
-Le portail propose la **version la plus haute** présente dans le dossier, pas la plus récemment déposée : restaurer une sauvegarde ne fait donc pas régresser ce qui est distribué. Déposer un nouveau zip suffit à publier une mise à jour, sans redémarrer quoi que ce soit.
+Le portail relit le dossier à chaque requête : la nouvelle version est proposée **immédiatement**, sans redémarrage. Le départage se fait sur le **numéro de version**, jamais sur la date du fichier ni sur l'ordre des dossiers, si bien que restaurer une sauvegarde ou déposer un zip plus ancien ne fait pas régresser ce qui est distribué. Retirez le zip du volume et le paquet de l'image reprend la main.
+
+### Ce qui redémarre, et ce qui ne redémarre pas
+
+Trois conteneurs, trois cycles de vie indépendants. Mettre l'un à jour n'interrompt pas les autres.
+
+| Ce que vous changez | Ce qu'il faut faire | Ce qui s'interrompt |
+|---|---|---|
+| Une version de l'extension | déposer le zip dans `./paquets` | **rien** |
+| Le site (textes, mise en page) | `pull` puis `up -d` du compose portail | le site, quelques secondes |
+| L'API (moteur, annuaire, schéma) | `pull` puis `up -d` du compose instance | les analyses, quelques secondes |
+
+Le site et l'API partagent la même image mais pas le même conteneur : redéployer le portail laisse l'API analyser sans s'en apercevoir, et inversement. Pendant un redémarrage de l'instance, le portail continue de servir ses pages et signale simplement l'annuaire comme injoignable.
+
+> **Une extension installée ne se met pas à jour toute seule.** Chargée en mode développeur, elle reste à sa version tant que la personne ne la recharge pas. Publier un nouveau zip met la nouvelle version à disposition, cela ne l'installe chez personne.
 
 ### Ce que l'inscription délivre, et ce qu'elle ne retient pas
 

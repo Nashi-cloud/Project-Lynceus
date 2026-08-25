@@ -1,0 +1,16 @@
+# Ce qui n'a rien à faire dans le contexte de build : lourd, ou reconstruit dedans.
+.git
+**/node_modules
+**/.venv
+**/__pycache__
+**/*.pyc
+extension/dist
+*.sqlite3
+.env
+.env.*
+!.env.example
+!.env.prod.example
+!.env.portail.example
+api/paquets
+corpus/captures
+lynceus-extension-v*.zip
