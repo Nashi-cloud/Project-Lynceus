@@ -14,3 +14,6 @@ extension/dist
 api/paquets
 corpus/captures
 lynceus-extension-v*.zip
+
+# Dossiers de financement : hors du dépôt, et hors du contexte de build.
+financement
