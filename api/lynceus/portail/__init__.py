@@ -122,10 +122,6 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
                 return premiere
         return requete.client.host if requete.client else "inconnue"
 
-    def page(requete: Request, gabarit: str, **valeurs) -> HTMLResponse:
-        valeurs.setdefault("paquet", paquet_courant())
-        return gabarits.TemplateResponse(requete, gabarit, valeurs)
-
     def adresse_portail(requete: Request) -> str:
         """Adresse publique de ce portail, telle qu'un navigateur peut la joindre.
 
@@ -140,6 +136,11 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
         if schema in ("http", "https") and "://" in base:
             base = f"{schema}://{base.split('://', 1)[1]}"
         return base
+
+    def page(requete: Request, gabarit: str, **valeurs) -> HTMLResponse:
+        valeurs.setdefault("paquet", paquet_courant())
+        valeurs.setdefault("adresse_portail", adresse_portail(requete))
+        return gabarits.TemplateResponse(requete, gabarit, valeurs)
 
     # ---------------------------------------------------------------- pages
 
