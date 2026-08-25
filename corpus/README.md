@@ -24,10 +24,13 @@ Le socle est **local par choix** : un corpus d'URL casse dès qu'une page est mo
 ## Lancer une calibration
 
 ```bash
-lynceus calibrer corpus/corpus.yaml                    # rapport en console
+lynceus calibrer corpus/corpus.yaml                      # rapport en console
 lynceus calibrer corpus/corpus.yaml --json rapport.json  # + rapport détaillé
 lynceus calibrer corpus/corpus.yaml --filtre satire      # un sous-ensemble
+lynceus calibrer corpus/corpus.yaml --parallele 12       # plus vite sur votre propre instance
 ```
+
+Les cas sont analysés **de front** (4 à la fois par défaut), ce qui divise l'attente d'autant : mesuré sur 12 cas à 3 s l'analyse, 37 s en séquentiel contre 9,6 s à 4 en parallèle, et 4,2 s à 12. Le défaut reste modeste par courtoisie envers une instance partagée — monter à 12 est justifié sur votre propre instance. Un dépassement de la limite de débit n'échoue pas : la demande patiente et reprend.
 
 Les écarts sont classés : catégorie erronée, technique attendue manquante ou faux positif sur une technique interdite sont des **échecs graves** (code de sortie 1) ; un grade à un cran de la fourchette est un **écart mineur**.
 

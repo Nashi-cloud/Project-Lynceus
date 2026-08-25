@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import json
 import os
+import time
+from concurrent.futures import ThreadPoolExecutor
 import sys
 from pathlib import Path
 
@@ -140,6 +142,7 @@ def calibrer(
     fichier: Path = typer.Argument(help="corpus YAML (cf. corpus/README.md)"),
     json_sortie: Path = typer.Option(None, "--json", help="écrire le rapport détaillé en JSON"),
     filtre: str = typer.Option(None, "--filtre", help="ne traiter que les entrées dont le titre/chemin contient ce texte"),
+    parallele: int = typer.Option(4, "--parallele", help="cas analysés de front (le serveur plafonne aussi de son côté)"),
 ):
     """Passe le corpus de calibration et vérifie catégories, grades et techniques.
 
@@ -164,32 +167,57 @@ def calibrer(
 
     rapport, graves, mineurs, ignores = [], 0, 0, 0
 
-    for entree in entrees:
+    def mesurer(entree: dict) -> dict:
+        """Analyse un cas et le compare à ses attentes. Ne lève pas : tout écart, y compris
+        une panne réseau, revient sous forme de résultat pour figurer au rapport."""
         etiquette = entree.get("titre") or entree.get("fichier") or entree.get("url") or "(sans titre)"
         try:
             corps = _corps_demande(entree, racine)
         except CaptureManquante as exc:
-            ignores += 1
-            table.add_row(etiquette, "-", "-", f"[yellow]ignoré : {exc}[/yellow]")
-            continue
+            return {"etiquette": etiquette, "ignore": str(exc)}
         if corps is None:
-            graves += 1
-            table.add_row(etiquette, "-", "-", "[red]entrée invalide (ni fichier ni url)[/red]")
-            continue
+            return {"etiquette": etiquette, "erreur": "entrée invalide (ni fichier, ni capture, ni url)"}
 
-        try:
-            reponse = httpx.post(f"{_api()}/v1/analyses", json=corps, timeout=600)
-        except httpx.HTTPError as exc:
-            graves += 1
-            table.add_row(etiquette, "-", f"réseau : {exc}", "[red]ERREUR[/red]")
-            continue
+        # Le serveur limite le débit par adresse : une passe parallèle le heurte forcément.
+        # On patiente et on reprend plutôt que de déclarer le cas en échec, ce qui
+        # signalerait un problème de qualité là où il n'y a qu'une file d'attente.
+        for tentative in range(6):
+            try:
+                reponse = httpx.post(f"{_api()}/v1/analyses", json=corps, timeout=600)
+            except httpx.HTTPError as exc:
+                return {"etiquette": etiquette, "erreur": f"réseau : {exc}"}
+            if reponse.status_code != 429:
+                break
+            time.sleep(min(2 ** tentative, 20))
         if reponse.status_code != 200:
-            graves += 1
-            table.add_row(etiquette, "-", f"HTTP {reponse.status_code}", f"[red]{_erreur_http(reponse)[:80]}[/red]")
-            continue
+            return {"etiquette": etiquette, "erreur": f"HTTP {reponse.status_code} — {_erreur_http(reponse)[:80]}"}
 
         carte = reponse.json()["carte"]
         ecarts_graves, ecarts_mineurs = _comparer(entree, carte)
+        return {
+            "etiquette": etiquette, "entree": entree, "carte": carte,
+            "graves": ecarts_graves, "mineurs": ecarts_mineurs,
+        }
+
+    # Les analyses sont indépendantes : les mener de front divise l'attente d'autant.
+    # Le serveur plafonne de toute façon sa propre concurrence — inutile de le noyer.
+    with console.status(f"Calibration de {len(entrees)} cas ({parallele} de front)…"):
+        with ThreadPoolExecutor(max_workers=max(1, parallele)) as pool:
+            resultats = list(pool.map(mesurer, entrees))
+
+    for resultat in resultats:
+        etiquette = resultat["etiquette"]
+        if "ignore" in resultat:
+            ignores += 1
+            table.add_row(etiquette, "-", "-", f"[yellow]ignoré : {resultat['ignore']}[/yellow]")
+            continue
+        if "erreur" in resultat:
+            graves += 1
+            table.add_row(etiquette, "-", "-", f"[red]{resultat['erreur']}[/red]")
+            continue
+
+        entree, carte = resultat["entree"], resultat["carte"]
+        ecarts_graves, ecarts_mineurs = resultat["graves"], resultat["mineurs"]
         graves += bool(ecarts_graves)
         mineurs += bool(ecarts_mineurs and not ecarts_graves)
 
@@ -200,12 +228,13 @@ def calibrer(
         else:
             verdict = "[green]OK[/green]"
 
-        attendu = f"{entree.get('categorie_attendue', '?')} {entree.get('grade_attendu', '')}"
+        attendu = f"{entree.get('categorie_attendue') or entree.get('categories_acceptables', '?')} {entree.get('grade_attendu', '')}"
         obtenu = f"{carte['categorie']} {carte['note']['grade']} ({carte['note']['score']})"
         table.add_row(etiquette, attendu, obtenu, verdict)
         rapport.append({
             "cas": etiquette,
-            "attendu": {k: v for k, v in entree.items() if k.endswith(("_attendue", "_attendu", "_attendues", "_interdites", "_min", "_acceptables"))},
+            "attendu": {k: v for k, v in entree.items()
+                        if k.endswith(("_attendue", "_attendu", "_attendues", "_interdites", "_min", "_acceptables"))},
             "obtenu": {
                 "categorie": carte["categorie"],
                 "grade": carte["note"]["grade"],
