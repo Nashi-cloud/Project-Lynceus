@@ -45,6 +45,20 @@ services:
       # des scripts : la valeur se change sans reconstruire l'image.
       LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR: ${LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR:-0}
 
+      # --- Identité légale de l'exploitant ---
+      # Obligatoire dès que le portail est ouvert au public. Non renseignés, les pages
+      # légales indiquent qu'elles ne le sont pas, et le portail avertit au démarrage.
+      LYNCEUS_PORTAIL_EDITEUR_NOM: ${LYNCEUS_PORTAIL_EDITEUR_NOM:-}
+      LYNCEUS_PORTAIL_EDITEUR_STATUT: ${LYNCEUS_PORTAIL_EDITEUR_STATUT:-}
+      LYNCEUS_PORTAIL_EDITEUR_ADRESSE: ${LYNCEUS_PORTAIL_EDITEUR_ADRESSE:-}
+      LYNCEUS_PORTAIL_EDITEUR_IDENTIFIANT: ${LYNCEUS_PORTAIL_EDITEUR_IDENTIFIANT:-}
+      LYNCEUS_PORTAIL_EDITEUR_DIRECTEUR: ${LYNCEUS_PORTAIL_EDITEUR_DIRECTEUR:-}
+      LYNCEUS_PORTAIL_EDITEUR_CONTACT: ${LYNCEUS_PORTAIL_EDITEUR_CONTACT:-}
+      LYNCEUS_PORTAIL_HEBERGEUR_NOM: ${LYNCEUS_PORTAIL_HEBERGEUR_NOM:-}
+      LYNCEUS_PORTAIL_HEBERGEUR_ADRESSE: ${LYNCEUS_PORTAIL_HEBERGEUR_ADRESSE:-}
+      LYNCEUS_PORTAIL_HEBERGEUR_SITE: ${LYNCEUS_PORTAIL_HEBERGEUR_SITE:-}
+      LYNCEUS_PORTAIL_DROIT_APPLICABLE: ${LYNCEUS_PORTAIL_DROIT_APPLICABLE:-}
+
       # --- Distribution de l'extension ---
       # Le volume d'abord, puis le paquet embarqué dans l'image : la version la plus haute
       # l'emporte. Un déploiement neuf distribue donc l'extension sans rien préparer, et

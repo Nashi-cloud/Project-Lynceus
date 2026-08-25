@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import io
 import json
+import sys
 import zipfile
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -79,11 +80,49 @@ class _CompteurCles:
         self._compte[cle] = self._compte.get(cle, 0) + 1
 
 
+def identite_legale(p: ParametresPortail) -> dict:
+    """Ce que le portail sait de son exploitant, et s'il en sait assez.
+
+    `complete` conditionne l'affichage des pages légales : mieux vaut une page qui
+    reconnaît ne pas être renseignée qu'une page qui affiche des mentions inventées."""
+    champs = {
+        "nom": p.editeur_nom,
+        "statut": p.editeur_statut,
+        "adresse": p.editeur_adresse,
+        "identifiant": p.editeur_identifiant,
+        "directeur": p.editeur_directeur,
+        "contact": p.editeur_contact,
+    }
+    hebergeur = {
+        "nom": p.hebergeur_nom,
+        "adresse": p.hebergeur_adresse,
+        "site": p.hebergeur_site,
+    }
+    # Le minimum imposé par la LCEN : qui édite, où le joindre, qui héberge.
+    obligatoires = ("nom", "adresse", "contact")
+    return {
+        **champs,
+        "hebergeur": hebergeur,
+        "droit_applicable": p.droit_applicable,
+        "complete": all(champs[c] for c in obligatoires) and bool(hebergeur["nom"]),
+    }
+
+
 def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
     p = p or parametres_portail()
     instance_interne = (p.instance_interne or p.instance).rstrip("/")
     instance_publique = p.instance.rstrip("/")
     compteur = _CompteurCles()
+    legal = identite_legale(p)
+
+    if instance_publique and not legal["complete"]:
+        print(
+            "⚠  Identité de l'exploitant incomplète (LYNCEUS_PORTAIL_EDITEUR_*, "
+            "LYNCEUS_PORTAIL_HEBERGEUR_NOM). Un portail ouvert au public doit publier "
+            "des mentions légales : en l'état, les pages légales indiquent qu'elles ne "
+            "sont pas renseignées.",
+            file=sys.stderr,
+        )
 
     @asynccontextmanager
     async def cycle_de_vie(app: FastAPI):
@@ -108,6 +147,7 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
         instance=instance_publique,
         inscription_ouverte=bool(p.cle_privee and instance_publique),
         nb_techniques=contenu.nb_techniques(),
+        legal=legal,
     )
 
     def paquet_courant() -> dict | None:
@@ -170,6 +210,26 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
     @app.get("/installer", response_class=HTMLResponse)
     def installer(requete: Request):
         return page(requete, "installer.html")
+
+    # ------------------------------------------------------------- légal
+
+    @app.get("/mentions-legales", response_class=HTMLResponse)
+    def mentions_legales(requete: Request):
+        return page(requete, "mentions-legales.html")
+
+    @app.get("/confidentialite", response_class=HTMLResponse)
+    async def confidentialite(requete: Request):
+        """La politique nomme le fournisseur de modèle réellement configuré.
+
+        Il est lu dans /v1/meta de l'instance plutôt qu'écrit à la main : une politique de
+        confidentialité qui désigne un sous-traitant que l'instance n'utilise plus serait
+        fausse, et personne ne s'en apercevrait."""
+        return page(requete, "confidentialite.html",
+                    moteur=await _meta_instance(app.state.client, instance_interne))
+
+    @app.get("/conditions", response_class=HTMLResponse)
+    def conditions(requete: Request):
+        return page(requete, "conditions.html")
 
     # ---------------------------------------------------- téléchargement
 
@@ -365,6 +425,23 @@ async def _consulter(client: httpx.AsyncClient, instance: str, texte: str) -> di
     domaine = texte.lower().removeprefix("www.")
     profil = await _domaine(client, instance, domaine)
     return {"domaine": profil} if profil else {"domaine_inconnu": domaine}
+
+
+async def _meta_instance(client: httpx.AsyncClient, instance: str) -> dict | None:
+    """Modèle et fournisseur annoncés par l'instance, ou None si elle est injoignable."""
+    if not instance:
+        return None
+    try:
+        reponse = await client.get(f"{instance}/v1/meta")
+        reponse.raise_for_status()
+        donnees = reponse.json()
+    except (httpx.HTTPError, ValueError):
+        return None
+    return {
+        "modele": donnees.get("modele"),
+        "fournisseur": donnees.get("fournisseur"),
+        "contenu_max_cars": donnees.get("limites", {}).get("contenu_max_cars"),
+    }
 
 
 async def _domaine(client: httpx.AsyncClient, instance: str, domaine: str | None) -> dict | None:

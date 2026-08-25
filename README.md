@@ -105,8 +105,20 @@ Résumé de la [charte éthique](docs/ETHIQUE.md) :
 
 ## Contribuer
 
-Le projet vise un réseau mondial et bénévole de vérification. Toute contribution est bienvenue : code, taxonomie, corpus de calibration, traductions, hébergement d'instances. Licence **AGPL-3.0** : toute instance publique modifiée doit publier ses sources, car la transparence de l'analyseur est le cœur de sa légitimité.
+Le projet est développé par [Nashi.cloud](https://nashi.cloud) (Raphaël Auberlet,
+entrepreneur individuel) et vise un réseau mondial et bénévole de vérification. Toute contribution est bienvenue : code, taxonomie, corpus de calibration, traductions, hébergement d'instances. Licence **AGPL-3.0** : toute instance publique modifiée doit publier ses sources, car la transparence de l'analyseur est le cœur de sa légitimité.
 
 ---
+
+## Licence et droits
+
+    Copyright (C) 2026 Raphaël Auberlet (Nashi.cloud)
+
+Publié sous **AGPL-3.0-or-later** (voir [LICENSE](LICENSE) et [AUTHORS.md](AUTHORS.md)).
+Les contributions relèvent du [Developer Certificate of Origin](DCO.txt) : chacun conserve
+ses droits sur son apport.
+
+L'analyse de conformité du projet, ce qui est traité, transmis et conservé, figure dans
+[docs/CONFORMITE.md](docs/CONFORMITE.md).
 
 *English summary: Lynceus is a free-software (AGPL-3.0) media-literacy stack (a Chrome extension plus a self-hostable directory API) that analyzes web pages with a configurable LLM and explains, without preaching, the manipulation techniques they use (missing sources, fear appeals, fake experts…), summarized as an A–E trust index. Every analysis is cached in a shared directory so each page is only ever analyzed once. Documentation is currently in French; translations welcome.*

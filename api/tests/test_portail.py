@@ -31,7 +31,11 @@ URL = "https://exemple.fr/article"
 def parametres_portail_test(**surcharges) -> ParametresPortail:
     """Comme pour l'API : configuration explicite, pour ne pas hériter du .env de la machine."""
     defauts = dict(nom="Lynceus", contact="", cle_privee="", instance="",
-                   instance_interne="", paquets="", adresse="", cles_par_ip_jour=0)
+                   instance_interne="", paquets="", adresse="", cles_par_ip_jour=0,
+                   editeur_nom="", editeur_statut="", editeur_adresse="",
+                   editeur_identifiant="", editeur_directeur="", editeur_contact="",
+                   hebergeur_nom="", hebergeur_adresse="", hebergeur_site="",
+                   droit_applicable="")
     defauts.update(surcharges)
     return ParametresPortail(**defauts)
 
@@ -456,3 +460,94 @@ def test_sans_paquet_aucun_lien_de_telechargement_n_est_affiche():
     """Proposer un lien qui répondrait 503 serait pire que ne rien proposer."""
     with TestClient(creer_portail(parametres_portail_test())) as client:
         assert "/telecharger" not in client.get("/").text
+
+
+# ------------------------------------------------------------------ légal
+
+EXPLOITANT = dict(
+    editeur_nom="Raphaël Auberlet",
+    editeur_statut="entrepreneur individuel (EI)",
+    editeur_adresse="1 rue de l'Exemple, 75000 Ville",
+    editeur_identifiant="SIREN 000 000 000",
+    editeur_directeur="Raphaël Auberlet",
+    editeur_contact="contact@exemple.fr",
+    hebergeur_nom="OVH SAS",
+    hebergeur_adresse="2 rue Kellermann, 59100 Roubaix",
+)
+
+
+def test_les_pages_legales_publient_l_identite_configuree():
+    """Un service ouvert au public doit identifier son éditeur. Les valeurs viennent de la
+    configuration et non du code, puisque chaque instance a son propre exploitant."""
+    with TestClient(creer_portail(parametres_portail_test(**EXPLOITANT))) as client:
+        html = client.get("/mentions-legales").text
+    for attendu in ("Raphaël Auberlet", "SIREN 000 000 000", "Le Tampon", "OVH SAS",
+                    "contact@exemple.fr"):
+        assert attendu in html, attendu
+
+
+def test_une_identite_absente_est_annoncee_plutot_qu_inventee():
+    """Le pire des cas serait une page de mentions légales affichant un exploitant
+    plausible mais faux. Elle doit reconnaître qu'elle n'est pas renseignée."""
+    with TestClient(creer_portail(parametres_portail_test())) as client:
+        for chemin in ("/mentions-legales", "/confidentialite"):
+            html = client.get(chemin).text
+            assert "non renseignées sur cette instance" in html.lower() or \
+                   "Mentions non renseignées" in html, chemin
+
+
+def test_la_politique_annonce_le_transfert_vers_le_fournisseur_de_modele():
+    """Le flux de données le plus important du système est le texte de la page envoyé au
+    fournisseur de modèle. Une politique qui vante le k-anonymat sans le mentionner serait
+    trompeuse par omission, et le projet se donne pour objet de repérer ce procédé."""
+    with TestClient(creer_portail(parametres_portail_test(**EXPLOITANT))) as client:
+        html = client.get("/confidentialite").text
+    assert "transmis à un fournisseur de modèle de langage tiers" in html
+    assert "hors de l'Union européenne" in html
+    # Et le remède doit être proposé dans la même phrase, pas relégué ailleurs.
+    assert "/auto-hebergement" in html
+
+
+def test_la_politique_nomme_le_fournisseur_reellement_configure():
+    """Écrit à la main, le nom du sous-traitant deviendrait faux le jour où l'instance
+    change de fournisseur, sans que personne s'en aperçoive. Il est donc lu dans /v1/meta."""
+    instance = FastAPI()
+
+    @instance.get("/v1/meta")
+    def meta():
+        return {"modele": "fournisseur-test/modele-x", "fournisseur": "exemple-llm.test",
+                "limites": {"contenu_max_cars": 60000}}
+
+    parametres = parametres_portail_test(instance="https://instance.test", **EXPLOITANT)
+    with TestClient(creer_portail(parametres)) as client:
+        brancher_sur(client, instance)
+        html = client.get("/confidentialite").text
+    assert "exemple-llm.test" in html
+    assert "fournisseur-test/modele-x" in html
+
+
+def test_la_politique_reste_lisible_si_l_instance_est_injoignable():
+    """Une instance éteinte ne doit pas faire disparaître l'obligation d'information."""
+    parametres = parametres_portail_test(instance="https://instance.test", **EXPLOITANT)
+    with TestClient(creer_portail(parametres)) as client:
+        client.app.state.client = httpx.AsyncClient(base_url="http://eteinte.invalid")
+        reponse = client.get("/confidentialite")
+    assert reponse.status_code == 200
+    assert "fournisseur de modèle de langage tiers" in reponse.text
+
+
+def test_les_pages_legales_sont_accessibles_depuis_toutes_les_pages():
+    with TestClient(creer_portail(parametres_portail_test(**EXPLOITANT))) as client:
+        for chemin in ("/", "/taxonomie", "/annuaire"):
+            html = client.get(chemin).text
+            for lien in ("/mentions-legales", "/confidentialite", "/conditions"):
+                assert lien in html, f"{lien} absent de {chemin}"
+
+
+def test_la_charte_publie_le_transfert_vers_le_modele():
+    """La charte est contraignante. Elle promettait la vie privée sans mentionner le seul
+    transfert qu'un utilisateur du service hébergé ne peut pas éviter."""
+    from lynceus.config import trouver_racine
+    charte = (trouver_racine() / "docs" / "ETHIQUE.md").read_text(encoding="utf-8")
+    assert "fournisseur de modèle" in charte
+    assert "hors de l'Union européenne" in charte
