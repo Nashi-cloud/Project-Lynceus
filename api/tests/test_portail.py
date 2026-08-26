@@ -297,6 +297,24 @@ def test_le_paquet_du_volume_l_emporte_sur_celui_de_l_image(tmp_path):
     assert paquet_le_plus_recent(dossiers)["version"] == "1.1.0"
 
 
+def test_a_version_egale_le_premier_dossier_l_emporte(tmp_path):
+    """Le cas courant : on redépose à la main le zip d'une version déjà embarquée, pour
+    servir une variante. L'égalité doit se trancher sur l'ordre annoncé des dossiers, et
+    non sur l'ordre alphabétique des chemins, qui laisserait le hasard décider."""
+    image, volume = tmp_path / "aaa-image", tmp_path / "zzz-volume"
+    image.mkdir(); volume.mkdir()
+    _archive(image / "lynceus-extension-v1.0.0.zip")
+    _archive(volume / "lynceus-extension-v1.0.0.zip")
+
+    # Le volume est cité en premier, comme dans le défaut « /paquets,/app/paquets-image ».
+    retenu = paquet_le_plus_recent(f"{volume},{image}")
+    assert retenu["chemin"].parent == volume
+
+    # Ordre inverse : c'est l'image qui gagne. Le nom des dossiers n'y est pour rien.
+    retenu = paquet_le_plus_recent(f"{image},{volume}")
+    assert retenu["chemin"].parent == image
+
+
 def test_un_dossier_absent_ne_fait_pas_echouer_la_resolution(tmp_path):
     """Le volume peut ne pas être monté : le portail doit alors servir le paquet de l'image
     plutôt que de tomber en panne."""
