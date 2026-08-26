@@ -98,7 +98,7 @@ Correspondance entre branche et étiquette d'image :
 À configurer dans le dépôt, côté forge :
 
 - variable `REGISTRE_FORGE` : adresse du registre **vue depuis le runner**, `127.0.0.1:5000` par défaut. Les hôtes de déploiement, eux, joignent ce registre par son nom réseau, renseigné dans le `LYNCEUS_IMAGE` de chaque stack ;
-- secrets `WEBHOOK_STAGING_INSTANCE`, `WEBHOOK_STAGING_PORTAIL`, `WEBHOOK_PROD` : les URL de redéploiement. Une étape sans secret passe avec un avertissement plutôt que d'échouer, pour qu'un dépôt cloné puisse construire ses images sans rien configurer.
+- secrets `WEBHOOK_STAGING_INSTANCE`, `WEBHOOK_STAGING_PORTAIL`, `WEBHOOK_PROD_INSTANCE`, `WEBHOOK_PROD_PORTAIL` : les URL de redéploiement, une par stack. Deux stacks tirent la même image, l'instance et le portail, donc deux appels ; l'instance d'abord, c'est elle qui porte les migrations de schéma. Une étape sans secret passe avec un avertissement plutôt que d'échouer, pour qu'un dépôt cloné puisse construire ses images sans rien configurer.
 
 Ces URL ne sont pas dans les fichiers de workflow, et ne doivent pas y entrer : **une URL de webhook Portainer est un jeton de déploiement déguisé**, qui suffit à faire redéployer une stack à quiconque la connaît. Le dépôt étant destiné à devenir public, elles restent des secrets.
 
