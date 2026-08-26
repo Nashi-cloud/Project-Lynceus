@@ -8,11 +8,13 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 from enum import Enum
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 import sys
 from pathlib import Path
 
@@ -613,18 +615,104 @@ class CibleEnv(str, Enum):
     recette = "recette"
 
 
-def _bloc(titre: str, destination: str, lignes: list[str]) -> None:
+@dataclass
+class Variable:
+    """Une ligne de fichier .env, et ce qu'il faut en dire.
+
+    `note_si_vide` n'apparaît que si personne n'a rempli la valeur : le commentaire qui
+    explique pourquoi une variable est laissée vide devient faux dès qu'elle ne l'est plus.
+    """
+
+    nom: str
+    valeur: str = ""
+    note: str = ""
+    note_si_vide: str = ""
+
+
+def _rendre(elements: list[Variable | str]) -> list[str]:
+    lignes: list[str] = []
+    for element in elements:
+        if isinstance(element, str):
+            lignes.append(element)
+            continue
+        for source in (element.note, "" if element.valeur else element.note_si_vide):
+            lignes.extend(f"# {texte}" for texte in source.splitlines() if source)
+        lignes.append(f"{element.nom}={element.valeur}")
+    return lignes
+
+
+SEPARATEUR = "# " + "=" * 74
+
+
+def _bloc(titre: str, destination: str, elements: list[Variable | str]) -> None:
     """Affiche un bloc de variables prêt à coller.
 
-    Deux précautions qui se voient à l'usage. Le titre part sur la sortie d'erreur, pour
-    que la sortie standard ne contienne que des lignes NOM=valeur et reste redirigeable
-    telle quelle dans un .env. Et les variables passent par `print` plutôt que par la
-    console riche, qui replie les lignes trop longues sur la largeur du terminal : une clé
-    coupée en deux, recopiée dans Portainer, donne une configuration fausse et muette."""
-    aide.print(f"\n[bold]{titre}[/bold]")
-    aide.print(f"[dim]{destination}[/dim]\n")
-    for ligne in lignes:
+    Le titre est écrit en COMMENTAIRE sur la sortie standard, avec les variables, et non
+    à part sur la sortie d'erreur. Une cible de production produit deux fichiers, un par
+    machine, qui portent les mêmes noms de variables avec des valeurs différentes : sans
+    marqueur, une redirection les colle bout à bout et le second recouvre le premier en
+    silence. En commentaire, le marqueur survit à la redirection et laisse couper au bon
+    endroit, sans rendre le fichier invalide.
+
+    Les variables passent par `print` plutôt que par la console riche, qui replie les
+    lignes trop longues sur la largeur du terminal : une clé coupée en deux, recopiée dans
+    Portainer, donne une configuration fausse et muette."""
+    print(f"\n{SEPARATEUR}")
+    print(f"# {titre}")
+    print(f"# {destination}")
+    print(f"{SEPARATEUR}\n")
+    for ligne in _rendre(elements):
         print(ligne)
+
+
+class Questionneur:
+    """Pose les questions, ou pas.
+
+    Muet, il rend des chaînes vides : la sortie redevient un modèle à trous, ce qui est le
+    comportement voulu en script et en CI. Toutes les invites partent sur la sortie
+    d'erreur, faute de quoi « lynceus env > .env » écrirait les questions dans le fichier.
+    """
+
+    def __init__(self, actif: bool):
+        self.actif = actif
+
+    def texte(self, question: str, *, defaut: str = "", secret: bool = False) -> str:
+        if not self.actif:
+            return defaut if not secret else ""
+        reponse = typer.prompt(question, default=defaut, hide_input=secret,
+                               show_default=bool(defaut), err=True)
+        return (reponse or "").strip()
+
+    def adresse(self, question: str) -> str:
+        """Une adresse publique, vérifiée sommairement.
+
+        Une adresse sans schéma est le genre d'erreur qui passe la configuration et se
+        manifeste chez l'utilisateur : l'extension reçoit une adresse qu'elle ne sait pas
+        joindre, longtemps après le déploiement."""
+        while True:
+            reponse = self.texte(question)
+            if not reponse or reponse.startswith(("http://", "https://")):
+                return reponse.rstrip("/")
+            aide.print("[yellow]Il faut une adresse complète, commençant par http:// ou https://[/yellow]")
+
+    def oui_non(self, question: str, *, defaut: bool = False) -> bool:
+        """Question fermée, en français.
+
+        `typer.confirm` n'accepte que y/n : dans une interface entièrement française,
+        répondre « o » renvoie « Error: invalid input », ce qui est absurde. On accepte les
+        deux langues, et on affiche celle de l'interface."""
+        if not self.actif:
+            return defaut
+        suffixe = "[O/n]" if defaut else "[o/N]"
+        while True:
+            reponse = self.texte(f"{question} {suffixe}").lower()
+            if not reponse:
+                return defaut
+            if reponse in ("o", "oui", "y", "yes"):
+                return True
+            if reponse in ("n", "non", "no"):
+                return False
+            aide.print("[yellow]Répondez par o ou n.[/yellow]")
 
 
 @app.command("env")
@@ -634,20 +722,29 @@ def env(
         "", "--cle-privee",
         help="Réutiliser une paire existante plutôt que d'en engendrer une. La publique s'en déduit.",
     ),
+    questions: bool = typer.Option(
+        None, "--questions/--sans-questions",
+        help="Poser les questions. Par défaut, oui si la commande tourne dans un terminal.",
+    ),
     quota: int = typer.Option(20, "--quota", help="Analyses par jour et par clé délivrée."),
     validite: int = typer.Option(0, "--validite", help="Validité des clés en jours. 0 = défaut de la cible."),
 ):
     """Engendre les variables d'environnement d'un déploiement, prêtes à coller.
 
-    Rien n'est écrit sur le disque : la sortie se recopie dans un fichier .env ou dans
-    l'éditeur de variables de Portainer. Ce qui est engendré ici est engendré une fois ;
-    ce que vous seul connaissez (adresse du registre, clé du fournisseur de modèle, jeton
-    de tunnel, identité légale) est laissé VIDE plutôt que rempli d'un exemple, afin que
-    Compose refuse de démarrer en le disant, au lieu de démarrer avec une valeur fausse.
+    Dans un terminal, la commande pose ses questions : adresse du registre, clé du
+    fournisseur de modèle, adresses publiques, jetons de tunnel, identité légale. Ce qui
+    peut être engendré l'est sans rien demander : mot de passe de base, jeton
+    d'administration, et une SEULE paire de clés pour les deux machines. C'est l'erreur la
+    plus facile à commettre que de lancer deux fois `cles-paire` et de déployer un portail
+    qui signe avec une clé que l'instance ne reconnaît pas.
 
-    La paire de clés est engendrée une seule fois pour les deux blocs de production : c'est
-    l'erreur la plus facile à commettre que de lancer deux fois `cles-paire` et de déployer
-    un portail qui signe avec une clé que l'instance ne reconnaît pas.
+    Toute réponse peut rester vide : la variable est alors laissée vide plutôt que remplie
+    d'un exemple, pour que Compose refuse de démarrer en la nommant, au lieu de démarrer
+    sur une valeur fausse.
+
+    Redirigée (`lynceus env recette > .env`), la commande ne pose rien et écrit un fichier
+    à trous : questions et explications passent par la sortie d'erreur, jamais par la
+    sortie standard.
     """
     import secrets as _secrets
 
@@ -662,9 +759,62 @@ def env(
     else:
         privee, publique = generer_paire()
 
+    demande = Questionneur(sys.stdin.isatty() if questions is None else questions)
     motdepasse = _secrets.token_urlsafe(24)
     jeton_admin = _secrets.token_urlsafe(32)
     jours = validite or (30 if cible is CibleEnv.recette else 365)
+    recette = cible is CibleEnv.recette
+
+    if demande.actif:
+        aide.print(
+            "[dim]Chaque réponse peut rester vide : la variable sera laissée à remplir "
+            "plus tard, et Compose refusera de démarrer en la nommant.[/dim]\n"
+        )
+
+    # La sortie standard est détournée pendant les questions. Click écrit l'invite sur la
+    # sortie d'erreur, mais confie les espaces qui la terminent à `input()`, lequel écrit
+    # sur la sortie standard : une espace par question, en tête du fichier engendré. Le
+    # détournement met à l'abri de ce genre de fuite, celle-ci comme les prochaines.
+    with contextlib.redirect_stdout(sys.stderr):
+        image = demande.texte("Adresse de l'image (registre compris)")
+        cle_llm = demande.texte("Clé du fournisseur de modèle", secret=True)
+        modele = demande.texte("Modèle d'analyse", defaut="z-ai/glm-5.2")
+        adresse_instance = demande.adresse("Adresse publique de l'instance")
+        adresse_portail = demande.adresse("Adresse publique du portail")
+
+        # Deux machines, donc deux tunnels : un jeton par tunnel, jamais le même.
+        jeton_tunnel_instance = demande.texte(
+            "Jeton Cloudflare Tunnel" + ("" if recette else " de l'instance"), secret=True)
+        jeton_tunnel_portail = "" if recette else demande.texte(
+            "Jeton Cloudflare Tunnel du portail", secret=True)
+
+        # Question à conséquence : un en-tête se falsifie. Sur une instance joignable en
+        # direct, s'y fier laisse contourner la limite de débit en annonçant l'adresse qu'on
+        # veut. Elle n'a donc de sens que si le tunnel est la SEULE voie d'accès.
+        seulement_tunnel = bool(jeton_tunnel_instance) and demande.oui_non(
+            "L'instance est-elle joignable UNIQUEMENT par le tunnel ?", defaut=False)
+        entete = "CF-Connecting-IP" if seulement_tunnel else ""
+
+        identite: dict[str, str] = {}
+        if not recette and demande.oui_non(
+            "Renseigner l'identité légale de l'exploitant maintenant ?", defaut=False
+        ):
+            aide.print(
+                "[dim]Obligatoire dès que le portail est ouvert au public (LCEN). "
+                "Non renseignée, chaque page légale l'annonce.[/dim]"
+            )
+            for nom, question in [
+                ("EDITEUR_NOM", "Éditeur : nom ou raison sociale"),
+                ("EDITEUR_STATUT", "Éditeur : forme juridique"),
+                ("EDITEUR_ADRESSE", "Éditeur : adresse postale"),
+                ("EDITEUR_IDENTIFIANT", "Éditeur : identifiant (SIREN, RNA…)"),
+                ("EDITEUR_DIRECTEUR", "Directeur de la publication"),
+                ("EDITEUR_CONTACT", "Contact (courriel)"),
+                ("HEBERGEUR_NOM", "Hébergeur : nom"),
+                ("HEBERGEUR_ADRESSE", "Hébergeur : adresse"),
+                ("HEBERGEUR_SITE", "Hébergeur : site"),
+            ]:
+                identite[nom] = demande.texte(question)
 
     aide.print(
         Panel(
@@ -676,57 +826,55 @@ def env(
         )
     )
 
-    commun_llm = [
-        "# Fournisseur de modèle. Laissé vide : sans lui, l'instance refuse de démarrer",
-        "# en le disant, ce qui vaut mieux qu'une clé d'exemple qui échouerait à la",
-        "# première analyse.",
-        "LYNCEUS_LLM_BASE_URL=https://openrouter.ai/api/v1",
-        "LYNCEUS_LLM_API_KEY=",
-        "LYNCEUS_LLM_MODEL=z-ai/glm-5.2",
+    bloc_llm = [
+        Variable("LYNCEUS_LLM_BASE_URL", "https://openrouter.ai/api/v1"),
+        Variable("LYNCEUS_LLM_API_KEY", cle_llm,
+                 note_si_vide="Sans elle, l'instance refuse de démarrer en le disant, ce qui\n"
+                              "vaut mieux qu'une clé d'exemple qui échouerait à la première analyse."),
+        Variable("LYNCEUS_LLM_MODEL", modele),
     ]
-    note_entete = [
-        "# Adresse réelle du visiteur, transmise par le tunnel. À DÉCOMMENTER seulement si",
-        "# l'instance n'est joignable QUE par le tunnel : un en-tête se falsifie, et une",
-        "# instance joignable en direct verrait sa limite de débit contournée.",
-        "# LYNCEUS_ENTETE_IP_REELLE=CF-Connecting-IP",
-    ]
+    note_entete = (
+        "Adresse réelle du visiteur, transmise par le tunnel. À n'activer que si\n"
+        "l'instance n'est joignable QUE par le tunnel : un en-tête se falsifie, et une\n"
+        "instance joignable en direct verrait sa limite de débit contournée."
+    )
 
-    if cible is CibleEnv.recette:
+    if recette:
         _bloc(
             "Recette : stack unique",
             "docker-compose.staging.yml, ou variables de la stack Portainer",
             [
-                "LYNCEUS_IMAGE=",
-                "LYNCEUS_SUFFIXE=-staging",
+                Variable("LYNCEUS_IMAGE", image),
+                Variable("LYNCEUS_SUFFIXE", "-staging"),
                 "",
-                f"POSTGRES_PASSWORD={motdepasse}",
-                f"LYNCEUS_ADMIN_TOKEN={jeton_admin}",
+                Variable("POSTGRES_PASSWORD", motdepasse),
+                Variable("LYNCEUS_ADMIN_TOKEN", jeton_admin),
                 "",
-                *commun_llm,
+                *bloc_llm,
                 "",
-                "# Paire d'émission PROPRE À LA RECETTE. Reprendre celle de production ici",
-                "# ferait accepter par la production toutes les clés émises pour les essais.",
-                f"LYNCEUS_CLE_PUBLIQUE={publique}",
-                f"LYNCEUS_PORTAIL_CLE_PRIVEE={privee}",
+                Variable("LYNCEUS_CLE_PUBLIQUE", publique,
+                         note="Paire d'émission PROPRE À LA RECETTE. Reprendre celle de production\n"
+                              "ferait accepter par la production les clés émises pour les essais."),
+                Variable("LYNCEUS_PORTAIL_CLE_PRIVEE", privee),
                 "",
-                "# Adresses publiques. La première est annoncée aux extensions, la seconde",
-                "# est inscrite dans l'archive téléchargée : sans elle, l'adresse serait",
-                "# déduite de la requête, donc peut-être en http derrière un tunnel.",
-                "LYNCEUS_PORTAIL_INSTANCE=",
-                "LYNCEUS_PORTAIL_ADRESSE=",
-                "LYNCEUS_PORTAIL_NOM=Lynceus (recette)",
-                f"LYNCEUS_PORTAIL_QUOTA_JOUR={quota}",
-                f"LYNCEUS_PORTAIL_VALIDITE_JOURS={jours}",
+                Variable("LYNCEUS_PORTAIL_INSTANCE", adresse_instance,
+                         note="Adresse annoncée aux extensions, joignable depuis un navigateur."),
+                Variable("LYNCEUS_PORTAIL_ADRESSE", adresse_portail,
+                         note="Adresse inscrite dans l'archive téléchargée. Sans elle, elle serait\n"
+                              "déduite de la requête, donc peut-être en http derrière un tunnel."),
+                Variable("LYNCEUS_PORTAIL_NOM", "Lynceus (recette)"),
+                Variable("LYNCEUS_PORTAIL_QUOTA_JOUR", str(quota)),
+                Variable("LYNCEUS_PORTAIL_VALIDITE_JOURS", str(jours)),
                 "",
                 "# Identité légale laissée vide DÉLIBÉRÉMENT : les pages légales annoncent",
                 "# alors qu'elles ne le sont pas. Une recette ne doit pas pouvoir passer",
                 "# pour un service ouvert au public.",
                 "",
-                "LYNCEUS_BIND=127.0.0.1",
-                "LYNCEUS_PAQUETS=/opt/lynceus/paquets-staging",
-                "CLOUDFLARE_TUNNEL_TOKEN=",
-                "COMPOSE_PROFILES=tunnel",
-                *note_entete,
+                Variable("LYNCEUS_BIND", "127.0.0.1"),
+                Variable("LYNCEUS_PAQUETS", "/opt/lynceus/paquets-staging"),
+                Variable("CLOUDFLARE_TUNNEL_TOKEN", jeton_tunnel_instance),
+                Variable("COMPOSE_PROFILES", "tunnel" if jeton_tunnel_instance else ""),
+                Variable("LYNCEUS_ENTETE_IP_REELLE", entete, note=note_entete),
             ],
         )
         aide.print(
@@ -739,22 +887,22 @@ def env(
         "1. Instance (la machine exposée)",
         "api/.env, à côté de docker-compose.prod.yml",
         [
-            "LYNCEUS_IMAGE=",
-            "LYNCEUS_SUFFIXE=",
+            Variable("LYNCEUS_IMAGE", image),
+            Variable("LYNCEUS_SUFFIXE"),
             "",
-            f"POSTGRES_PASSWORD={motdepasse}",
-            f"LYNCEUS_ADMIN_TOKEN={jeton_admin}",
+            Variable("POSTGRES_PASSWORD", motdepasse),
+            Variable("LYNCEUS_ADMIN_TOKEN", jeton_admin),
             "",
-            *commun_llm,
+            *bloc_llm,
             "",
-            "# Clé PUBLIQUE : elle vérifie les clés d'accès, elle n'en émet aucune.",
-            "# Une instance compromise ne permet donc pas d'en forger.",
-            f"LYNCEUS_CLE_PUBLIQUE={publique}",
-            "LYNCEUS_CLES_REVOQUEES=",
+            Variable("LYNCEUS_CLE_PUBLIQUE", publique,
+                     note="Clé PUBLIQUE : elle vérifie les clés d'accès, elle n'en émet aucune.\n"
+                          "Une instance compromise ne permet donc pas d'en forger."),
+            Variable("LYNCEUS_CLES_REVOQUEES"),
             "",
-            "LYNCEUS_BIND=127.0.0.1",
-            "CLOUDFLARE_TUNNEL_TOKEN=",
-            *note_entete,
+            Variable("LYNCEUS_BIND", "127.0.0.1"),
+            Variable("CLOUDFLARE_TUNNEL_TOKEN", jeton_tunnel_instance),
+            Variable("LYNCEUS_ENTETE_IP_REELLE", entete, note=note_entete),
         ],
     )
 
@@ -762,50 +910,47 @@ def env(
         "2. Portail (idéalement une AUTRE machine)",
         "api/.env, à côté de docker-compose.portail.yml",
         [
-            "LYNCEUS_IMAGE=",
-            "LYNCEUS_SUFFIXE=",
+            Variable("LYNCEUS_IMAGE", image),
+            Variable("LYNCEUS_SUFFIXE"),
             "",
-            "# Clé PRIVÉE : elle seule émet. C'est le secret le mieux gardé du déploiement,",
-            "# et la raison pour laquelle le portail ne vit pas sur l'instance.",
-            f"LYNCEUS_PORTAIL_CLE_PRIVEE={privee}",
-            f"LYNCEUS_PORTAIL_QUOTA_JOUR={quota}",
-            f"LYNCEUS_PORTAIL_VALIDITE_JOURS={jours}",
-            "LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR=0",
+            Variable("LYNCEUS_PORTAIL_CLE_PRIVEE", privee,
+                     note="Clé PRIVÉE : elle seule émet. C'est le secret le mieux gardé du\n"
+                          "déploiement, et la raison pour laquelle le portail ne vit pas sur\n"
+                          "l'instance."),
+            Variable("LYNCEUS_PORTAIL_QUOTA_JOUR", str(quota)),
+            Variable("LYNCEUS_PORTAIL_VALIDITE_JOURS", str(jours)),
+            Variable("LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR", "0"),
             "",
-            "# Adresse publique de l'instance, telle qu'un navigateur la joint.",
-            "LYNCEUS_PORTAIL_INSTANCE=",
-            "# Adresse par laquelle le portail interroge lui-même l'instance. Vide = la",
-            "# même que ci-dessus.",
-            "LYNCEUS_PORTAIL_INSTANCE_INTERNE=",
-            "# Adresse publique de CE portail, inscrite dans l'archive téléchargée.",
-            "LYNCEUS_PORTAIL_ADRESSE=",
-            "LYNCEUS_PORTAIL_NOM=Lynceus",
-            "LYNCEUS_PORTAIL_CONTACT=",
+            Variable("LYNCEUS_PORTAIL_INSTANCE", adresse_instance,
+                     note="Adresse publique de l'instance, telle qu'un navigateur la joint."),
+            Variable("LYNCEUS_PORTAIL_INSTANCE_INTERNE",
+                     note="Adresse par laquelle le portail interroge lui-même l'instance.\n"
+                          "Vide = la même que ci-dessus."),
+            Variable("LYNCEUS_PORTAIL_ADRESSE", adresse_portail,
+                     note="Adresse publique de CE portail, inscrite dans l'archive téléchargée."),
+            Variable("LYNCEUS_PORTAIL_NOM", "Lynceus"),
+            Variable("LYNCEUS_PORTAIL_CONTACT", identite.get("EDITEUR_CONTACT", "")),
             "",
             "# Identité légale. Obligatoire dès que le portail est ouvert au public (LCEN).",
             "# Non renseignée, chaque page légale l'annonce, et le portail avertit au",
             "# démarrage plutôt que d'inventer une mention.",
-            "LYNCEUS_PORTAIL_EDITEUR_NOM=",
-            "LYNCEUS_PORTAIL_EDITEUR_STATUT=",
-            "LYNCEUS_PORTAIL_EDITEUR_ADRESSE=",
-            "LYNCEUS_PORTAIL_EDITEUR_IDENTIFIANT=",
-            "LYNCEUS_PORTAIL_EDITEUR_DIRECTEUR=",
-            "LYNCEUS_PORTAIL_EDITEUR_CONTACT=",
-            "LYNCEUS_PORTAIL_HEBERGEUR_NOM=",
-            "LYNCEUS_PORTAIL_HEBERGEUR_ADRESSE=",
-            "LYNCEUS_PORTAIL_HEBERGEUR_SITE=",
-            "LYNCEUS_PORTAIL_DROIT_APPLICABLE=français",
+            *[Variable(f"LYNCEUS_PORTAIL_{nom}", identite.get(nom, "")) for nom in (
+                "EDITEUR_NOM", "EDITEUR_STATUT", "EDITEUR_ADRESSE", "EDITEUR_IDENTIFIANT",
+                "EDITEUR_DIRECTEUR", "EDITEUR_CONTACT", "HEBERGEUR_NOM", "HEBERGEUR_ADRESSE",
+                "HEBERGEUR_SITE")],
+            Variable("LYNCEUS_PORTAIL_DROIT_APPLICABLE", "français"),
             "",
-            "LYNCEUS_PORTAIL_BIND=127.0.0.1",
-            "LYNCEUS_PAQUETS=/opt/lynceus/paquets",
-            "CLOUDFLARE_TUNNEL_TOKEN=",
-            "# LYNCEUS_PORTAIL_ENTETE_IP_REELLE=CF-Connecting-IP",
+            Variable("LYNCEUS_PORTAIL_BIND", "127.0.0.1"),
+            Variable("LYNCEUS_PAQUETS", "/opt/lynceus/paquets"),
+            Variable("CLOUDFLARE_TUNNEL_TOKEN", jeton_tunnel_portail,
+                     note="Tunnel du PORTAIL, distinct de celui de l'instance : deux machines,\n"
+                          "deux tunnels, deux jetons."),
         ],
     )
 
     aide.print(
-        "\n[dim]Les deux blocs viennent de la MÊME paire : la publique ci-dessus vérifie "
-        "ce que la privée ci-dessous signe. Pour reconfigurer une seule machine plus tard, "
+        "\n[dim]Les deux blocs viennent de la MÊME paire : la publique du premier vérifie "
+        "ce que la privée du second signe. Pour reconfigurer une seule machine plus tard, "
         "rappelez cette commande avec --cle-privee, la publique s'en déduit.[/dim]"
     )
 
