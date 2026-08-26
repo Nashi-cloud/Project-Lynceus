@@ -17,16 +17,40 @@ La règle non négociable : **votre clé LLM est facturée à l'usage**. Une ins
 
 ## 1. Préparer les secrets
 
-```bash
-cd api
-cp .env.prod.example .env
+Une commande engendre l'ensemble des variables, secrets compris :
 
-python3 -c "import secrets; print(secrets.token_urlsafe(24))"   # POSTGRES_PASSWORD
-python3 -c "import secrets; print(secrets.token_urlsafe(32))"   # LYNCEUS_ADMIN_TOKEN
-lynceus cles-paire                                              # LYNCEUS_CLE_PUBLIQUE
+```bash
+lynceus env production     # deux blocs : l'instance, puis le portail
+lynceus env recette        # un seul bloc, pour la stack de recette
 ```
 
+Sans installation locale, la même commande vit dans l'image :
+
+```bash
+docker run --rm <registre>/lynceus-api:latest lynceus env production
+```
+
+Ce qui est engendré l'est **une seule fois** : mot de passe PostgreSQL, jeton d'administration, et surtout **une seule paire de clés pour les deux blocs**. C'est l'erreur la plus facile à commettre que d'appeler `cles-paire` deux fois et de déployer un portail qui signe avec une clé que l'instance ne reconnaît pas ; l'inscription répond alors correctement, et c'est l'instance qui refuse la clé, plus tard, chez l'utilisateur.
+
+Ce que vous seul connaissez reste **vide** : adresse du registre, clé du fournisseur de modèle, jeton de tunnel, adresses publiques, identité légale. C'est délibéré. Une valeur d'exemple laisserait la stack démarrer et échouer à la première analyse ; vide, Compose refuse de démarrer et nomme la variable manquante.
+
+Les explications partent sur la sortie d'erreur, les variables sur la sortie standard : le fichier s'écrit donc directement, et reste lisible à l'écran.
+
+```bash
+lynceus env recette > .env
+```
+
+Pour reconfigurer une seule machine plus tard, sans réémettre les clés déjà distribuées :
+
+```bash
+lynceus env production --cle-privee <la privée existante>
+```
+
+La clé publique se déduit de la privée : il n'y a donc qu'un secret à conserver.
+
 Gardez la **clé privée** hors de la machine qui héberge l'instance : c'est elle qui permet d'émettre des clés, et l'instance n'en a pas besoin. Si le serveur est compromis, personne ne pourra émettre de clés en votre nom.
+
+> La sortie contient des secrets en clair. Elle n'a rien à faire dans un ticket, un dépôt, ni une conversation.
 
 ## 2. Publier l'image
 

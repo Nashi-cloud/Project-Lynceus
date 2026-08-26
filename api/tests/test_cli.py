@@ -323,3 +323,108 @@ def test_capturer_refuse_un_contenu_trop_court(tmp_path):
     resultat = runner.invoke(app, ["capturer", str(source), "--url", "https://exemple.fr/a",
                                    "--vers", str(tmp_path / "captures")])
     assert resultat.exit_code == 2
+
+
+# ---------- lynceus env : variables d'un déploiement ----------
+
+def _variables(sortie: str) -> dict[str, str]:
+    """Les lignes NOM=valeur de la sortie, commentaires et cadres ignorés."""
+    valeurs = {}
+    for ligne in sortie.splitlines():
+        ligne = ligne.strip()
+        if ligne.startswith("#") or "=" not in ligne or " " in ligne.split("=", 1)[0]:
+            continue
+        nom, valeur = ligne.split("=", 1)
+        if nom.isupper():
+            valeurs[nom] = valeur
+    return valeurs
+
+
+def test_env_production_apparie_les_deux_machines():
+    """Le piège du déploiement : lancer cles-paire deux fois et déployer un portail qui
+    signe avec une clé que l'instance ne reconnaît pas. Les deux blocs doivent venir
+    d'une seule paire, ce qui se vérifie par la cryptographie, pas par la mise en page."""
+    from lynceus.cles import publique_de
+
+    resultat = runner.invoke(app, ["env", "production"])
+    assert resultat.exit_code == 0
+    variables = _variables(resultat.stdout)
+
+    publique = variables["LYNCEUS_CLE_PUBLIQUE"]
+    privee = variables["LYNCEUS_PORTAIL_CLE_PRIVEE"]
+    assert publique and privee
+    assert publique_de(privee) == publique
+
+
+def test_env_recette_apparie_aussi():
+    from lynceus.cles import publique_de
+
+    variables = _variables(runner.invoke(app, ["env", "recette"]).stdout)
+    assert publique_de(variables["LYNCEUS_PORTAIL_CLE_PRIVEE"]) == variables["LYNCEUS_CLE_PUBLIQUE"]
+
+
+def test_env_engendre_des_secrets_differents_a_chaque_appel():
+    un = _variables(runner.invoke(app, ["env", "production"]).stdout)
+    deux = _variables(runner.invoke(app, ["env", "production"]).stdout)
+    for nom in ("POSTGRES_PASSWORD", "LYNCEUS_ADMIN_TOKEN", "LYNCEUS_PORTAIL_CLE_PRIVEE"):
+        assert un[nom] != deux[nom], f"{nom} est identique d'un appel à l'autre"
+        assert len(un[nom]) >= 20
+
+
+def test_env_reutilise_une_paire_existante():
+    """Reconfigurer une seule machine ne doit pas obliger à tout réémettre."""
+    from lynceus.cles import generer_paire
+
+    privee, publique = generer_paire()
+    variables = _variables(runner.invoke(app, ["env", "production", "--cle-privee", privee]).stdout)
+    assert variables["LYNCEUS_PORTAIL_CLE_PRIVEE"] == privee
+    assert variables["LYNCEUS_CLE_PUBLIQUE"] == publique
+
+
+def test_env_refuse_une_cle_privee_illisible():
+    resultat = runner.invoke(app, ["env", "production", "--cle-privee", "pas-une-cle"])
+    assert resultat.exit_code == 1
+    # Sur la sortie d'erreur, comme tout ce qui n'est pas une variable exploitable.
+    assert "illisible" in resultat.stderr
+    assert resultat.stdout.strip() == "", "aucune variable ne doit sortir en cas d'échec"
+
+
+def test_env_laisse_vide_ce_que_lui_seul_ne_peut_pas_savoir():
+    """Un exemple plausible démarrerait et échouerait plus tard, à la première analyse.
+    Vide, Compose refuse de démarrer et dit laquelle manque."""
+    variables = _variables(runner.invoke(app, ["env", "production"]).stdout)
+    for nom in ("LYNCEUS_IMAGE", "LYNCEUS_LLM_API_KEY", "LYNCEUS_PORTAIL_INSTANCE",
+                "LYNCEUS_PORTAIL_EDITEUR_NOM", "CLOUDFLARE_TUNNEL_TOKEN"):
+        assert variables[nom] == "", f"{nom} devrait être vide"
+
+
+def test_env_recette_ne_renseigne_pas_didentite_legale():
+    """Une recette ne doit pas pouvoir passer pour un service ouvert au public."""
+    variables = _variables(runner.invoke(app, ["env", "recette"]).stdout)
+    assert not any(nom.startswith("LYNCEUS_PORTAIL_EDITEUR") for nom in variables)
+    assert variables["LYNCEUS_SUFFIXE"] == "-staging"
+
+
+def test_env_sortie_standard_directement_utilisable_comme_fichier():
+    """« lynceus env recette > .env » doit produire un fichier valide, pas un fichier à
+    nettoyer. Titres, avertissement et explications partent donc sur la sortie d'erreur :
+    Compose refuse un fichier dont une ligne n'est pas NOM=valeur, et l'erreur qu'il
+    donne alors (« key cannot contain a space ») n'aide personne."""
+    resultat = runner.invoke(app, ["env", "recette"])
+
+    for numero, ligne in enumerate(resultat.stdout.splitlines(), start=1):
+        if not ligne.strip() or ligne.lstrip().startswith("#"):
+            continue
+        nom = ligne.split("=", 1)[0]
+        assert "=" in ligne and nom.isupper() and " " not in nom, (
+            f"ligne {numero} inexploitable dans un .env : {ligne!r}"
+        )
+
+    # Les explications existent toujours, ailleurs.
+    assert "Recette" in resultat.stderr
+    assert "trousseau" in resultat.stderr
+
+
+def test_env_sans_tiret_cadratin():
+    for cible in ("production", "recette"):
+        assert "—" not in runner.invoke(app, ["env", cible]).stdout
