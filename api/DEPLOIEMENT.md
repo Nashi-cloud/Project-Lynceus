@@ -17,12 +17,17 @@ La règle non négociable : **votre clé LLM est facturée à l'usage**. Une ins
 
 ## 1. Préparer les secrets
 
-Une commande engendre l'ensemble des variables, secrets compris :
+Une commande pose les questions et engendre l'ensemble des variables, secrets compris :
 
 ```bash
 lynceus env production     # deux blocs : l'instance, puis le portail
 lynceus env recette        # un seul bloc, pour la stack de recette
 ```
+
+Dans un terminal, elle demande ce qu'elle ne peut pas deviner : adresse du registre, clé du fournisseur de modèle, adresses publiques, jetons de tunnel, identité légale. Toute réponse peut rester vide, la variable reste alors à remplir. Deux questions méritent qu'on s'y arrête :
+
+- **le jeton de tunnel est demandé deux fois** en production. Deux machines, deux tunnels, deux jetons : recopier le même des deux côtés donne un second tunnel qui se connecte et sert le mauvais service ;
+- **l'instance est-elle joignable uniquement par le tunnel ?** Répondre oui active `LYNCEUS_ENTETE_IP_REELLE`. Un en-tête se falsifie : sur une instance joignable en direct, s'y fier laisse contourner la limite de débit en annonçant l'adresse qu'on veut.
 
 Sans installation locale, la même commande vit dans l'image :
 
@@ -34,11 +39,14 @@ Ce qui est engendré l'est **une seule fois** : mot de passe PostgreSQL, jeton d
 
 Ce que vous seul connaissez reste **vide** : adresse du registre, clé du fournisseur de modèle, jeton de tunnel, adresses publiques, identité légale. C'est délibéré. Une valeur d'exemple laisserait la stack démarrer et échouer à la première analyse ; vide, Compose refuse de démarrer et nomme la variable manquante.
 
-Les explications partent sur la sortie d'erreur, les variables sur la sortie standard : le fichier s'écrit donc directement, et reste lisible à l'écran.
+Explications et questions partent sur la sortie d'erreur, les variables sur la sortie standard : le fichier s'écrit donc directement. Redirigée, la commande ne pose rien et rend un modèle à trous, ce qui convient aux scripts.
 
 ```bash
-lynceus env recette > .env
+lynceus env recette > .env      # modèle à remplir
+lynceus env recette | tee .env  # questions posées, fichier écrit
 ```
+
+En production, la sortie contient **deux fichiers**, un par machine, portant les mêmes noms de variables avec des valeurs différentes. Un marqueur en commentaire sépare les blocs : coupez dessus. Coller les deux dans un seul `.env` ferait gagner le second sans que rien ne le signale.
 
 Pour reconfigurer une seule machine plus tard, sans réémettre les clés déjà distribuées :
 
