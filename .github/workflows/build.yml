@@ -83,17 +83,20 @@ jobs:
       # (LYNCEUS_IMAGE=…:vX.Y.Z puis `docker compose up -d`). Elle vient de VERSION, dont
       # verifier.sh garantit qu'il s'accorde avec pyproject.toml et __init__.py : sans quoi
       # l'instance annoncerait sur /v1/meta une version que personne ne saurait redéployer.
+      # Deux stacks tirent la même image, l'instance et le portail : deux webhooks, comme
+      # en recette. Les appeler dans cet ordre n'est pas indifférent, c'est l'instance qui
+      # porte les migrations de schéma ; le portail, lui, ne fait que la lire.
       - name: Redéployer la production
         if: github.ref == 'refs/heads/main'
         env:
-          WEBHOOK_PROD: ${{ secrets.WEBHOOK_PROD }}
+          WEBHOOK_INSTANCE: ${{ secrets.WEBHOOK_PROD_INSTANCE }}
+          WEBHOOK_PORTAIL: ${{ secrets.WEBHOOK_PROD_PORTAIL }}
         run: |
-          if [ -z "$WEBHOOK_PROD" ]; then
+          if [ -z "$WEBHOOK_INSTANCE" ] && [ -z "$WEBHOOK_PORTAIL" ]; then
             echo "::warning::Aucun webhook de production configuré, redéploiement ignoré."
             exit 0
           fi
-          VERSION=$(tr -d '[:space:]' < VERSION)
-          curl -sS --fail --max-time 30 \
-            -X POST "$WEBHOOK_PROD" \
-            -H "Content-Type: application/json" \
-            -d "{\"version\":\"${VERSION}\",\"ref\":\"${GITHUB_REF_NAME}\",\"sha\":\"${GITHUB_SHA}\"}"
+          for url in "$WEBHOOK_INSTANCE" "$WEBHOOK_PORTAIL"; do
+            [ -n "$url" ] || continue
+            curl -sS --fail --max-time 30 -X POST "$url"
+          done
