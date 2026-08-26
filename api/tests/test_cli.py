@@ -420,9 +420,115 @@ def test_env_sortie_standard_directement_utilisable_comme_fichier():
             f"ligne {numero} inexploitable dans un .env : {ligne!r}"
         )
 
-    # Les explications existent toujours, ailleurs.
-    assert "Recette" in resultat.stderr
+    # Le titre survit à la redirection, en commentaire, et l'avertissement reste à l'écran.
+    assert "# Recette : stack unique" in resultat.stdout
     assert "trousseau" in resultat.stderr
+
+
+# ---------- lynceus env : le questionnaire ----------
+
+REPONSES_PRODUCTION = "\n".join([
+    "registre.test/lynceus-api:latest",  # image
+    "sk-fournisseur",                    # clé du modèle
+    "",                                  # modèle : défaut
+    "https://api.test",                  # adresse de l'instance
+    "https://portail.test",              # adresse du portail
+    "jeton-instance",                    # tunnel de l'instance
+    "jeton-portail",                     # tunnel du portail
+    "o",                                 # joignable uniquement par le tunnel
+    "n",                                 # identité légale plus tard
+]) + "\n"
+
+
+def test_env_interactif_reporte_les_reponses():
+    resultat = runner.invoke(app, ["env", "production", "--questions"], input=REPONSES_PRODUCTION)
+    assert resultat.exit_code == 0
+    variables = _variables(resultat.stdout)
+
+    assert variables["LYNCEUS_IMAGE"] == "registre.test/lynceus-api:latest"
+    assert variables["LYNCEUS_LLM_API_KEY"] == "sk-fournisseur"
+    assert variables["LYNCEUS_LLM_MODEL"] == "z-ai/glm-5.2"  # défaut accepté
+    assert variables["LYNCEUS_PORTAIL_INSTANCE"] == "https://api.test"
+    assert variables["LYNCEUS_PORTAIL_ADRESSE"] == "https://portail.test"
+
+
+def test_env_interactif_ne_salit_pas_la_sortie_standard():
+    """Click écrit l'invite sur la sortie d'erreur mais confie les espaces qui la
+    terminent à `input()`, qui écrit sur la sortie standard : une espace par question, en
+    tête du fichier. Invisible à l'écran, fatal une fois redirigé dans un .env."""
+    resultat = runner.invoke(app, ["env", "production", "--questions"], input=REPONSES_PRODUCTION)
+
+    for numero, ligne in enumerate(resultat.stdout.splitlines(), start=1):
+        assert ligne == ligne.lstrip(), f"ligne {numero} commence par une espace : {ligne!r}"
+        if ligne.strip() and not ligne.startswith("#"):
+            assert " " not in ligne.split("=", 1)[0]
+
+
+def _blocs(sortie: str) -> list[dict[str, str]]:
+    """Les blocs de la sortie, séparés par le marqueur en commentaire.
+
+    Une cible de production produit deux fichiers, un par machine, qui portent les mêmes
+    noms de variables avec des valeurs différentes : les lire d'un seul tenant ferait
+    silencieusement gagner le second."""
+    from lynceus.cli import SEPARATEUR
+
+    morceaux = [m for m in sortie.split(SEPARATEUR) if m.strip()]
+    # Chaque bloc est précédé de son titre, réparti sur deux morceaux par le marqueur.
+    return [_variables(m) for m in morceaux if "=" in m]
+
+
+def test_env_production_produit_deux_fichiers_distincts():
+    """Deux machines, deux tunnels. Sans marqueur, une redirection colle les deux blocs
+    bout à bout et le second recouvre le premier sans que rien ne le signale."""
+    sortie = runner.invoke(app, ["env", "production", "--questions"],
+                           input=REPONSES_PRODUCTION).stdout
+    instance, portail = _blocs(sortie)
+
+    assert instance["CLOUDFLARE_TUNNEL_TOKEN"] == "jeton-instance"
+    assert portail["CLOUDFLARE_TUNNEL_TOKEN"] == "jeton-portail"
+    # Chaque machine ne reçoit que la moitié de la paire qui la concerne.
+    assert "LYNCEUS_CLE_PUBLIQUE" in instance and "LYNCEUS_PORTAIL_CLE_PRIVEE" not in instance
+    assert "LYNCEUS_PORTAIL_CLE_PRIVEE" in portail and "LYNCEUS_CLE_PUBLIQUE" not in portail
+
+
+def test_env_accepte_un_oui_francais():
+    """Une interface en français qui répond « Error: invalid input » à « o » est cassée."""
+    variables = _blocs(
+        runner.invoke(app, ["env", "production", "--questions"],
+                      input=REPONSES_PRODUCTION).stdout
+    )[0]
+    assert variables["LYNCEUS_ENTETE_IP_REELLE"] == "CF-Connecting-IP"
+
+
+def test_env_entete_ip_seulement_si_le_tunnel_est_la_seule_voie():
+    """Un en-tête se falsifie : s'y fier sur une instance joignable en direct laisse
+    contourner la limite de débit en annonçant l'adresse qu'on veut."""
+    # Sans jeton, la question n'est même pas posée : l'en-tête n'aurait aucun sens.
+    sans_tunnel = "\n".join([
+        "registre.test/lynceus-api:latest", "sk-fournisseur", "", "https://api.test",
+        "https://portail.test", "", "", "n",
+    ]) + "\n"
+    variables = _blocs(
+        runner.invoke(app, ["env", "production", "--questions"], input=sans_tunnel).stdout
+    )[0]
+    assert variables["LYNCEUS_ENTETE_IP_REELLE"] == ""
+
+
+def test_env_refuse_une_adresse_sans_schema():
+    """Une adresse sans schéma passe la configuration et se manifeste chez l'utilisateur,
+    dont l'extension reçoit une adresse qu'elle ne sait pas joindre."""
+    reponses = REPONSES_PRODUCTION.replace(
+        "https://api.test", "api.test\nhttps://api.test", 1)
+    resultat = runner.invoke(app, ["env", "production", "--questions"], input=reponses)
+    assert "http://" in resultat.stderr
+    assert _variables(resultat.stdout)["LYNCEUS_PORTAIL_INSTANCE"] == "https://api.test"
+
+
+def test_env_sans_questions_reste_un_modele_a_trous():
+    """En script ou en CI, la commande ne doit rien attendre de personne."""
+    resultat = runner.invoke(app, ["env", "production", "--sans-questions"])
+    assert resultat.exit_code == 0
+    assert _variables(resultat.stdout)["LYNCEUS_IMAGE"] == ""
 
 
 def test_env_sans_tiret_cadratin():
