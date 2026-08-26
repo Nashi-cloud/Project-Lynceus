@@ -118,7 +118,7 @@ def paquet_le_plus_recent(dossiers: str) -> dict | None:
     portail tourne doit être proposé immédiatement. C'est un parcours de quelques entrées
     de dossier, négligeable devant le rendu d'un gabarit."""
     candidats = []
-    for dossier in (d.strip() for d in dossiers.split(",")):
+    for rang, dossier in enumerate(d.strip() for d in dossiers.split(",")):
         if not dossier:
             continue
         base = Path(dossier)
@@ -127,11 +127,16 @@ def paquet_le_plus_recent(dossiers: str) -> dict | None:
         for chemin in base.glob("lynceus-extension-v*.zip"):
             m = _MOTIF_PAQUET.match(chemin.name)
             if m:
-                candidats.append((tuple(int(g) for g in m.groups()), chemin))
+                # À version égale, le dossier cité en premier gagne : le rang est stocké
+                # en négatif pour que le même `max` tranche les deux critères. Sans lui,
+                # l'égalité se réglait sur l'ordre alphabétique des chemins, ce qui
+                # revenait à laisser le hasard décider entre un zip déposé à la main et
+                # celui de l'image.
+                candidats.append((tuple(int(g) for g in m.groups()), -rang, chemin))
     if not candidats:
         return None
 
-    version, chemin = max(candidats)
+    version, _, chemin = max(candidats)
     return {
         "version": ".".join(str(n) for n in version),
         "nom": chemin.name,
