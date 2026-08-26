@@ -79,6 +79,22 @@ def generer_paire() -> tuple[str, str]:
     return _encoder(brut_prive), _encoder(brut_public)
 
 
+def publique_de(cle_privee: str) -> str:
+    """Retrouve la clé publique correspondant à une clé privée.
+
+    Une clé publique Ed25519 se déduit de la privée : il n'y a donc rien à conserver de
+    plus que la privée pour reconfigurer une instance, et rien à craindre de perdre la
+    publique. L'inverse est évidemment faux."""
+    try:
+        privee = Ed25519PrivateKey.from_private_bytes(_decoder(cle_privee))
+    except Exception as erreur:  # base64 invalide, longueur incorrecte
+        raise CleInvalide(f"clé privée illisible : {erreur}") from erreur
+
+    from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+
+    return _encoder(privee.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw))
+
+
 def emettre(cle_privee: str, *, jours: int = 365, quota_jour: int = 50) -> tuple[str, Droits]:
     """Émet une clé signée. À n'exécuter QUE côté émetteur (détenteur de la clé privée)."""
     aujourdhui = datetime.now(timezone.utc).date()
