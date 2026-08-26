@@ -1,4 +1,4 @@
-"""CLI Lynceus — client de l'API pour tester, analyser et calibrer.
+"""CLI Lynceus : client de l'API pour tester, analyser et calibrer.
 
   lynceus analyser https://exemple.fr/article
   lynceus analyser article.md --url https://exemple.fr/article
@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import json
+from enum import Enum
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -23,8 +24,12 @@ from rich.table import Table
 
 from .normalisation import hacher_contenu
 
-app = typer.Typer(help="Lynceus — la vigie de l'information.", no_args_is_help=True)
+app = typer.Typer(help="Lynceus, la vigie de l'information.", no_args_is_help=True)
 console = Console()
+# Tout ce qui n'est pas une donnée exploitable part sur la sortie d'erreur : titres,
+# avertissements, explications. « lynceus env recette > .env » écrit alors un fichier
+# directement valide, pendant que l'humain garde ses explications à l'écran.
+aide = Console(stderr=True)
 
 COULEURS_GRADE = {"A": "green", "B": "green3", "C": "yellow", "D": "dark_orange", "E": "red"}
 
@@ -45,11 +50,11 @@ def _afficher_carte(carte: dict, en_cache: bool | None = None) -> None:
     note = carte["note"]
     couleur = COULEURS_GRADE.get(note["grade"], "white")
     entete = (
-        f"[bold {couleur}]Indice {note['grade']}[/] — score {note['score']}/100 · "
+        f"[bold {couleur}]Indice {note['grade']}[/] · score {note['score']}/100 · "
         f"catégorie : [bold]{carte['categorie']}[/] · confiance de l'analyse : {note['confiance']:.0%}"
     )
     if en_cache:
-        entete += "  [dim](annuaire — déjà analysée)[/dim]"
+        entete += "  [dim](déjà dans l'annuaire)[/dim]"
     console.print(Panel(entete, title=carte.get("titre") or carte.get("url") or "Analyse Lynceus"))
 
     table = Table(show_header=True, header_style="bold")
@@ -83,7 +88,7 @@ def _afficher_carte(carte: dict, en_cache: bool | None = None) -> None:
     for avert in carte.get("avertissements", []):
         console.print(f"[dim]⚠ {avert}[/dim]")
     meta = carte["meta"]
-    console.print(f"[dim]— {meta['modele']} · prompt v{meta['prompt_version']} · {meta['analyse_le']}[/dim]")
+    console.print(f"[dim]{meta['modele']} · prompt v{meta['prompt_version']} · {meta['analyse_le']}[/dim]")
 
 
 @app.command()
@@ -190,7 +195,7 @@ def calibrer(
                 break
             time.sleep(min(2 ** tentative, 20))
         if reponse.status_code != 200:
-            return {"etiquette": etiquette, "erreur": f"HTTP {reponse.status_code} — {_erreur_http(reponse)[:80]}"}
+            return {"etiquette": etiquette, "erreur": f"HTTP {reponse.status_code} : {_erreur_http(reponse)[:80]}"}
 
         carte = reponse.json()["carte"]
         ecarts_graves, ecarts_mineurs = _comparer(entree, carte)
@@ -200,7 +205,7 @@ def calibrer(
         }
 
     # Les analyses sont indépendantes : les mener de front divise l'attente d'autant.
-    # Le serveur plafonne de toute façon sa propre concurrence — inutile de le noyer.
+    # Le serveur plafonne de toute façon sa propre concurrence, inutile de le noyer.
     with console.status(f"Calibration de {len(entrees)} cas ({parallele} de front)…"):
         with ThreadPoolExecutor(max_workers=max(1, parallele)) as pool:
             resultats = list(pool.map(mesurer, entrees))
@@ -275,12 +280,12 @@ def _lire_capture(entree: dict, racine: Path) -> str:
     """Lit une capture locale et vérifie son empreinte.
 
     Les captures de pages réelles ne sont pas versionnées (droit d'auteur) : seul le
-    manifeste l'est. L'empreinte garantit que tout le monde mesure bien le même contenu —
+    manifeste l'est. L'empreinte garantit que tout le monde mesure bien le même contenu,
     sans elle, deux contributeurs compareraient des résultats incomparables."""
     chemin = racine / entree["capture"]
     if not chemin.is_file():
         raise CaptureManquante(
-            f"capture absente : {entree['capture']} — la recréer depuis {entree.get('url', '?')} "
+            f"capture absente : {entree['capture']}, la recréer depuis {entree.get('url', '?')} "
             "(voir corpus/README.md)"
         )
     contenu = chemin.read_text(encoding="utf-8")
@@ -289,7 +294,7 @@ def _lire_capture(entree: dict, racine: Path) -> str:
         reel = hacher_contenu(contenu)
         if reel != attendu:
             raise CaptureManquante(
-                f"capture divergente : {entree['capture']} — empreinte {reel[:12]}… "
+                f"capture divergente : {entree['capture']}, empreinte {reel[:12]}… "
                 f"au lieu de {attendu[:12]}…. La page a changé depuis la capture de référence : "
                 "recapturer et réexaminer les attentes plutôt que de les ajuster à l'aveugle."
             )
@@ -329,7 +334,7 @@ def _comparer(entree: dict, carte: dict) -> tuple[list[str], list[str]]:
     graves, mineurs = [], []
     grades = ["A", "B", "C", "D", "E"]
 
-    # `categorie_attendue` (exacte) ou `categories_acceptables` (liste) — certains contenus
+    # `categorie_attendue` (exacte) ou `categories_acceptables` (liste). Certains contenus
     # relèvent légitimement de plusieurs catégories : un article pseudo-médical qui vend un
     # produit est à la fois pseudo_science et publicite_sponsorise. Exiger une catégorie
     # unique testerait alors un choix arbitraire, pas la qualité de l'analyse.
@@ -454,11 +459,11 @@ def verifier_page(
     donnees = reponse.json()
     carte = donnees["carte"]
     if donnees["en_cache"]:
-        console.print("[yellow]Le contenu est inchangé[/yellow] — l'analyse en cache correspond toujours.")
+        console.print("[yellow]Le contenu est inchangé[/yellow] : l'analyse en cache correspond toujours.")
         conclusion = "Contenu inchangé à la re-vérification : l'analyse reste valable."
         statut = "rejete"
     else:
-        console.print(f"[green]Page modifiée[/green] — nouvelle analyse : "
+        console.print(f"[green]Page modifiée[/green] : nouvelle analyse "
                       f"{carte['categorie']} · grade {carte['note']['grade']} ({carte['note']['score']}/100)")
         conclusion = (f"Page modifiée depuis l'analyse contestée. Nouvelle analyse : "
                       f"{carte['categorie']}, grade {carte['note']['grade']}.")
@@ -485,7 +490,7 @@ def capturer(
 
     Les captures ne sont pas versionnées : reproduire des pages entières dans le dépôt
     poserait un problème de droit d'auteur. Seul le manifeste (URL, date, empreinte,
-    attentes) l'est — l'empreinte garantissant que tous mesurent le même contenu."""
+    attentes) l'est, l'empreinte garantissant que tous mesurent le même contenu."""
     from datetime import date
 
     contenu = sys.stdin.read() if str(fichier) == "-" else fichier.read_text(encoding="utf-8")
@@ -532,13 +537,13 @@ def cles_paire():
     from .cles import generer_paire
 
     privee, publique = generer_paire()
-    console.print("[bold red]Clé PRIVÉE[/bold red] — à garder secrète, chez l'émetteur uniquement :")
+    console.print("[bold red]Clé PRIVÉE[/bold red], à garder secrète, chez l'émetteur uniquement :")
     console.print(f"  LYNCEUS_CLE_PRIVEE={privee}\n", soft_wrap=True)
-    console.print("[bold green]Clé PUBLIQUE[/bold green] — à mettre dans le .env de chaque instance :")
+    console.print("[bold green]Clé PUBLIQUE[/bold green], à mettre dans le .env de chaque instance :")
     console.print(f"  LYNCEUS_CLE_PUBLIQUE={publique}\n", soft_wrap=True)
     console.print(
         "[dim]Tant que LYNCEUS_CLE_PUBLIQUE est vide, l'instance reste ouverte et n'exige "
-        "aucune clé — c'est le défaut pour un usage personnel.[/dim]"
+        "aucune clé : c'est le défaut pour un usage personnel.[/dim]"
     )
 
 
@@ -600,6 +605,209 @@ def meta():
     """Transparence de l'instance interrogée."""
     reponse = httpx.get(f"{_api()}/v1/meta", timeout=30)
     console.print_json(reponse.text)
+
+# ---------------------------------------------------------------- variables d'environnement
+
+class CibleEnv(str, Enum):
+    production = "production"
+    recette = "recette"
+
+
+def _bloc(titre: str, destination: str, lignes: list[str]) -> None:
+    """Affiche un bloc de variables prêt à coller.
+
+    Deux précautions qui se voient à l'usage. Le titre part sur la sortie d'erreur, pour
+    que la sortie standard ne contienne que des lignes NOM=valeur et reste redirigeable
+    telle quelle dans un .env. Et les variables passent par `print` plutôt que par la
+    console riche, qui replie les lignes trop longues sur la largeur du terminal : une clé
+    coupée en deux, recopiée dans Portainer, donne une configuration fausse et muette."""
+    aide.print(f"\n[bold]{titre}[/bold]")
+    aide.print(f"[dim]{destination}[/dim]\n")
+    for ligne in lignes:
+        print(ligne)
+
+
+@app.command("env")
+def env(
+    cible: CibleEnv = typer.Argument(CibleEnv.production, help="Environnement à configurer."),
+    cle_privee: str = typer.Option(
+        "", "--cle-privee",
+        help="Réutiliser une paire existante plutôt que d'en engendrer une. La publique s'en déduit.",
+    ),
+    quota: int = typer.Option(20, "--quota", help="Analyses par jour et par clé délivrée."),
+    validite: int = typer.Option(0, "--validite", help="Validité des clés en jours. 0 = défaut de la cible."),
+):
+    """Engendre les variables d'environnement d'un déploiement, prêtes à coller.
+
+    Rien n'est écrit sur le disque : la sortie se recopie dans un fichier .env ou dans
+    l'éditeur de variables de Portainer. Ce qui est engendré ici est engendré une fois ;
+    ce que vous seul connaissez (adresse du registre, clé du fournisseur de modèle, jeton
+    de tunnel, identité légale) est laissé VIDE plutôt que rempli d'un exemple, afin que
+    Compose refuse de démarrer en le disant, au lieu de démarrer avec une valeur fausse.
+
+    La paire de clés est engendrée une seule fois pour les deux blocs de production : c'est
+    l'erreur la plus facile à commettre que de lancer deux fois `cles-paire` et de déployer
+    un portail qui signe avec une clé que l'instance ne reconnaît pas.
+    """
+    import secrets as _secrets
+
+    from .cles import CleInvalide, generer_paire, publique_de
+
+    if cle_privee:
+        try:
+            privee, publique = cle_privee, publique_de(cle_privee)
+        except CleInvalide as exc:
+            aide.print(f"[red]Clé privée illisible :[/red] {exc}")
+            raise typer.Exit(1) from exc
+    else:
+        privee, publique = generer_paire()
+
+    motdepasse = _secrets.token_urlsafe(24)
+    jeton_admin = _secrets.token_urlsafe(32)
+    jours = validite or (30 if cible is CibleEnv.recette else 365)
+
+    aide.print(
+        Panel(
+            "Cette sortie contient des secrets : mot de passe de base, jeton "
+            "d'administration et clé privée d'émission.\n"
+            "Elle n'a rien à faire dans un ticket, un dépôt, ni une conversation.",
+            border_style="red",
+            title="[bold red]À traiter comme un trousseau",
+        )
+    )
+
+    commun_llm = [
+        "# Fournisseur de modèle. Laissé vide : sans lui, l'instance refuse de démarrer",
+        "# en le disant, ce qui vaut mieux qu'une clé d'exemple qui échouerait à la",
+        "# première analyse.",
+        "LYNCEUS_LLM_BASE_URL=https://openrouter.ai/api/v1",
+        "LYNCEUS_LLM_API_KEY=",
+        "LYNCEUS_LLM_MODEL=z-ai/glm-5.2",
+    ]
+    note_entete = [
+        "# Adresse réelle du visiteur, transmise par le tunnel. À DÉCOMMENTER seulement si",
+        "# l'instance n'est joignable QUE par le tunnel : un en-tête se falsifie, et une",
+        "# instance joignable en direct verrait sa limite de débit contournée.",
+        "# LYNCEUS_ENTETE_IP_REELLE=CF-Connecting-IP",
+    ]
+
+    if cible is CibleEnv.recette:
+        _bloc(
+            "Recette : stack unique",
+            "docker-compose.staging.yml, ou variables de la stack Portainer",
+            [
+                "LYNCEUS_IMAGE=",
+                "LYNCEUS_SUFFIXE=-staging",
+                "",
+                f"POSTGRES_PASSWORD={motdepasse}",
+                f"LYNCEUS_ADMIN_TOKEN={jeton_admin}",
+                "",
+                *commun_llm,
+                "",
+                "# Paire d'émission PROPRE À LA RECETTE. Reprendre celle de production ici",
+                "# ferait accepter par la production toutes les clés émises pour les essais.",
+                f"LYNCEUS_CLE_PUBLIQUE={publique}",
+                f"LYNCEUS_PORTAIL_CLE_PRIVEE={privee}",
+                "",
+                "# Adresses publiques. La première est annoncée aux extensions, la seconde",
+                "# est inscrite dans l'archive téléchargée : sans elle, l'adresse serait",
+                "# déduite de la requête, donc peut-être en http derrière un tunnel.",
+                "LYNCEUS_PORTAIL_INSTANCE=",
+                "LYNCEUS_PORTAIL_ADRESSE=",
+                "LYNCEUS_PORTAIL_NOM=Lynceus (recette)",
+                f"LYNCEUS_PORTAIL_QUOTA_JOUR={quota}",
+                f"LYNCEUS_PORTAIL_VALIDITE_JOURS={jours}",
+                "",
+                "# Identité légale laissée vide DÉLIBÉRÉMENT : les pages légales annoncent",
+                "# alors qu'elles ne le sont pas. Une recette ne doit pas pouvoir passer",
+                "# pour un service ouvert au public.",
+                "",
+                "LYNCEUS_BIND=127.0.0.1",
+                "LYNCEUS_PAQUETS=/opt/lynceus/paquets-staging",
+                "CLOUDFLARE_TUNNEL_TOKEN=",
+                "COMPOSE_PROFILES=tunnel",
+                *note_entete,
+            ],
+        )
+        aide.print(
+            "\n[dim]Un seul tunnel dessert les deux services : côté Cloudflare, deux "
+            "hostnames, l'un vers http://api:8000, l'autre vers http://portail:8080.[/dim]"
+        )
+        return
+
+    _bloc(
+        "1. Instance (la machine exposée)",
+        "api/.env, à côté de docker-compose.prod.yml",
+        [
+            "LYNCEUS_IMAGE=",
+            "LYNCEUS_SUFFIXE=",
+            "",
+            f"POSTGRES_PASSWORD={motdepasse}",
+            f"LYNCEUS_ADMIN_TOKEN={jeton_admin}",
+            "",
+            *commun_llm,
+            "",
+            "# Clé PUBLIQUE : elle vérifie les clés d'accès, elle n'en émet aucune.",
+            "# Une instance compromise ne permet donc pas d'en forger.",
+            f"LYNCEUS_CLE_PUBLIQUE={publique}",
+            "LYNCEUS_CLES_REVOQUEES=",
+            "",
+            "LYNCEUS_BIND=127.0.0.1",
+            "CLOUDFLARE_TUNNEL_TOKEN=",
+            *note_entete,
+        ],
+    )
+
+    _bloc(
+        "2. Portail (idéalement une AUTRE machine)",
+        "api/.env, à côté de docker-compose.portail.yml",
+        [
+            "LYNCEUS_IMAGE=",
+            "LYNCEUS_SUFFIXE=",
+            "",
+            "# Clé PRIVÉE : elle seule émet. C'est le secret le mieux gardé du déploiement,",
+            "# et la raison pour laquelle le portail ne vit pas sur l'instance.",
+            f"LYNCEUS_PORTAIL_CLE_PRIVEE={privee}",
+            f"LYNCEUS_PORTAIL_QUOTA_JOUR={quota}",
+            f"LYNCEUS_PORTAIL_VALIDITE_JOURS={jours}",
+            "LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR=0",
+            "",
+            "# Adresse publique de l'instance, telle qu'un navigateur la joint.",
+            "LYNCEUS_PORTAIL_INSTANCE=",
+            "# Adresse par laquelle le portail interroge lui-même l'instance. Vide = la",
+            "# même que ci-dessus.",
+            "LYNCEUS_PORTAIL_INSTANCE_INTERNE=",
+            "# Adresse publique de CE portail, inscrite dans l'archive téléchargée.",
+            "LYNCEUS_PORTAIL_ADRESSE=",
+            "LYNCEUS_PORTAIL_NOM=Lynceus",
+            "LYNCEUS_PORTAIL_CONTACT=",
+            "",
+            "# Identité légale. Obligatoire dès que le portail est ouvert au public (LCEN).",
+            "# Non renseignée, chaque page légale l'annonce, et le portail avertit au",
+            "# démarrage plutôt que d'inventer une mention.",
+            "LYNCEUS_PORTAIL_EDITEUR_NOM=",
+            "LYNCEUS_PORTAIL_EDITEUR_STATUT=",
+            "LYNCEUS_PORTAIL_EDITEUR_ADRESSE=",
+            "LYNCEUS_PORTAIL_EDITEUR_IDENTIFIANT=",
+            "LYNCEUS_PORTAIL_EDITEUR_DIRECTEUR=",
+            "LYNCEUS_PORTAIL_EDITEUR_CONTACT=",
+            "LYNCEUS_PORTAIL_HEBERGEUR_NOM=",
+            "LYNCEUS_PORTAIL_HEBERGEUR_ADRESSE=",
+            "LYNCEUS_PORTAIL_HEBERGEUR_SITE=",
+            "LYNCEUS_PORTAIL_DROIT_APPLICABLE=français",
+            "",
+            "LYNCEUS_PORTAIL_BIND=127.0.0.1",
+            "LYNCEUS_PAQUETS=/opt/lynceus/paquets",
+            "CLOUDFLARE_TUNNEL_TOKEN=",
+            "# LYNCEUS_PORTAIL_ENTETE_IP_REELLE=CF-Connecting-IP",
+        ],
+    )
+
+    aide.print(
+        "\n[dim]Les deux blocs viennent de la MÊME paire : la publique ci-dessus vérifie "
+        "ce que la privée ci-dessous signe. Pour reconfigurer une seule machine plus tard, "
+        "rappelez cette commande avec --cle-privee, la publique s'en déduit.[/dim]"
+    )
 
 
 if __name__ == "__main__":
