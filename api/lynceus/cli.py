@@ -873,7 +873,8 @@ def env(
                 Variable("LYNCEUS_BIND", "127.0.0.1"),
                 Variable("LYNCEUS_PAQUETS", "/opt/lynceus/paquets-staging"),
                 Variable("CLOUDFLARE_TUNNEL_TOKEN", jeton_tunnel_instance),
-                Variable("COMPOSE_PROFILES", "tunnel" if jeton_tunnel_instance else ""),
+                Variable("COMPOSE_PROFILES", "tunnel" if jeton_tunnel_instance else "",
+                         note="Active le service de tunnel, qui vit derrière un profil Compose et\nn'existe donc pas tant qu'on ne le nomme pas. En ligne de commande,\n« --profile tunnel » fait la même chose ; depuis Portainer, où il n'y a\npas de drapeau à passer, c'est cette variable qui l'active."),
                 Variable("LYNCEUS_ENTETE_IP_REELLE", entete, note=note_entete),
             ],
         )
@@ -902,6 +903,8 @@ def env(
             "",
             Variable("LYNCEUS_BIND", "127.0.0.1"),
             Variable("CLOUDFLARE_TUNNEL_TOKEN", jeton_tunnel_instance),
+            Variable("COMPOSE_PROFILES", "tunnel" if jeton_tunnel_instance else "",
+                     note="Active le service de tunnel, qui vit derrière un profil Compose et\nn'existe donc pas tant qu'on ne le nomme pas. En ligne de commande,\n« --profile tunnel » fait la même chose ; depuis Portainer, où il n'y a\npas de drapeau à passer, c'est cette variable qui l'active."),
             Variable("LYNCEUS_ENTETE_IP_REELLE", entete, note=note_entete),
         ],
     )
@@ -945,6 +948,8 @@ def env(
             Variable("CLOUDFLARE_TUNNEL_TOKEN", jeton_tunnel_portail,
                      note="Tunnel du PORTAIL, distinct de celui de l'instance : deux machines,\n"
                           "deux tunnels, deux jetons."),
+            Variable("COMPOSE_PROFILES", "tunnel" if jeton_tunnel_portail else "",
+                     note="Active le service de tunnel, qui vit derrière un profil Compose et\nn'existe donc pas tant qu'on ne le nomme pas. En ligne de commande,\n« --profile tunnel » fait la même chose ; depuis Portainer, où il n'y a\npas de drapeau à passer, c'est cette variable qui l'active."),
         ],
     )
 
