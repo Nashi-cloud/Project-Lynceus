@@ -192,6 +192,14 @@ LYNCEUS_ENTETE_IP_REELLE=CF-Connecting-IP
 docker compose -f docker-compose.prod.yml --profile tunnel up -d
 ```
 
+Le service de tunnel vit derrière un **profil Compose** : sans lui, il n'existe pas, et rien ne le signale. C'est déroutant la première fois, on déploie, tout fonctionne, et il manque un conteneur.
+
+Depuis **Portainer**, il n'y a pas de drapeau à passer : ajoutez la variable aux variables de la stack, Compose la lit dans le `.env` que Portainer écrit à côté du fichier.
+
+```ini
+COMPOSE_PROFILES=tunnel
+```
+
 > **`LYNCEUS_ENTETE_IP_REELLE` ne doit être défini que si l'instance est joignable *uniquement* par le tunnel.** Un en-tête HTTP se falsifie : si l'API reste accessible en direct, n'importe qui contournerait la limite de débit en annonçant une adresse différente à chaque requête. Gardez `LYNCEUS_BIND=127.0.0.1` (le défaut), ou mieux, supprimez la section `ports:` du service `api` : le tunnel le joint par le réseau interne.
 
 ### Autres options
@@ -249,6 +257,8 @@ cp .env.portail.example .env    # y placer LYNCEUS_PORTAIL_CLE_PRIVEE et l'adres
 mkdir -p paquets
 docker compose -f docker-compose.portail.yml --profile tunnel up -d
 ```
+
+Depuis Portainer, la variable `COMPOSE_PROFILES=tunnel` remplace le drapeau.
 
 Le hostname Cloudflare du portail doit pointer vers `http://portail:8080`.
 
