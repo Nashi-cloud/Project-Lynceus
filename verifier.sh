@@ -64,6 +64,25 @@ if [ -f extension/manifest.json ]; then
   fi
 fi
 
+# ---------- Cohérence des versions de l'API ----------
+# Trois fichiers portent le même numéro, et la CI en fait une étiquette d'image
+# (`vX.Y.Z`) au moment de publier `main`. Un décalage ici, et l'image publiée ne dit
+# pas la même chose que l'instance qu'elle fait tourner : `/v1/meta` annoncerait une
+# version que personne ne pourrait redéployer.
+etape "API — cohérence des versions"
+if [ -f VERSION ]; then
+  v_fichier=$(tr -d '[:space:]' < VERSION)
+  v_paquet=$(grep -m1 '^version = ' api/pyproject.toml | cut -d'"' -f2)
+  v_module=$(grep -m1 '^__version__' api/lynceus/__init__.py | cut -d'"' -f2)
+  if [ "$v_fichier" = "$v_paquet" ] && [ "$v_fichier" = "$v_module" ]; then
+    verdict 0 "v$v_fichier cohérente (VERSION, pyproject, __init__)"
+  else
+    printf "${ROUGE}  ✗ VERSION (%s) ≠ pyproject (%s) ≠ __init__ (%s)${FIN}\n" \
+      "$v_fichier" "$v_paquet" "$v_module"
+    echecs=$((echecs + 1))
+  fi
+fi
+
 # ---------- Calibration (optionnelle : serveur requis, consomme des tokens) ----------
 if [ "${1:-}" = "--calibrer" ]; then
   etape "Calibration du corpus (appels LLM réels)"

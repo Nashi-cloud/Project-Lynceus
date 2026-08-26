@@ -1,0 +1,172 @@
+# Environnement de recette Lynceus : une seule stack, tout dedans.
+#
+#   docker compose -f docker-compose.staging.yml up -d
+#   docker compose -f docker-compose.staging.yml --profile tunnel up -d   (exposition)
+#
+# Pourquoi un fichier de plus, alors que la production en a déjà deux : parce que ce n'est
+# pas le même compromis.
+#
+# En production, l'instance et le portail sont deux stacks sur deux machines, parce que le
+# portail détient la clé privée qui signe les accès et que l'instance, elle, est la surface
+# exposée. Les séparer fait qu'une instance compromise ne permet toujours pas de forger des
+# clés. C'est la garantie centrale du modèle, elle ne se négocie pas là où il y a de vrais
+# utilisateurs.
+#
+# En recette, on cherche l'inverse : vérifier que la boucle complète fonctionne, d'un coup,
+# avec un seul webhook de redéploiement et un seul jeu de variables. Le portail joint donc
+# l'instance par le réseau interne de la stack, sans repasser par le tunnel, et la clé
+# privée de recette vit à côté de l'instance de recette. C'est acceptable parce que cette
+# paire de clés ne vaut rien ailleurs : elle N'EST PAS celle de la production. Réutiliser
+# la clé publique de production ici ferait accepter par la production toutes les clés
+# émises pour les essais.
+#
+# Variables attendues (fichier .env à côté, ou éditeur de variables de Portainer) :
+#   LYNCEUS_IMAGE, POSTGRES_PASSWORD, LYNCEUS_LLM_API_KEY,
+#   LYNCEUS_CLE_PUBLIQUE et LYNCEUS_PORTAIL_CLE_PRIVEE (la MÊME paire, dédiée à la recette),
+#   CLOUDFLARE_TUNNEL_TOKEN si le profil « tunnel » est activé.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: lynceus-db${LYNCEUS_SUFFIXE:--staging}
+    environment:
+      POSTGRES_DB: lynceus
+      POSTGRES_USER: lynceus
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?mot de passe PostgreSQL requis}
+    volumes:
+      - lynceus-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lynceus"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks: [lynceus-net]
+
+  api:
+    image: ${LYNCEUS_IMAGE:?adresse de l'image requise, par exemple <registre>/lynceus-api:next}
+    pull_policy: always
+    container_name: lynceus-api${LYNCEUS_SUFFIXE:--staging}
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      LYNCEUS_DATABASE_URL: postgresql+psycopg://lynceus:${POSTGRES_PASSWORD}@db:5432/lynceus
+
+      LYNCEUS_LLM_BASE_URL: ${LYNCEUS_LLM_BASE_URL:-https://openrouter.ai/api/v1}
+      LYNCEUS_LLM_API_KEY: ${LYNCEUS_LLM_API_KEY:?clé du fournisseur LLM requise}
+      LYNCEUS_LLM_MODEL: ${LYNCEUS_LLM_MODEL:-z-ai/glm-5.2}
+
+      # Même exposée à trois personnes, une instance de recette appelle un modèle facturé.
+      # La clé d'accès reste obligatoire ici aussi.
+      LYNCEUS_CLE_PUBLIQUE: ${LYNCEUS_CLE_PUBLIQUE:?clé publique requise, même en recette}
+      LYNCEUS_CLES_REVOQUEES: ${LYNCEUS_CLES_REVOQUEES:-}
+      LYNCEUS_ADMIN_TOKEN: ${LYNCEUS_ADMIN_TOKEN:-}
+
+      # Garde-fous volontairement plus serrés qu'en production : une recette n'a pas à
+      # pouvoir consommer un budget de production par accident.
+      LYNCEUS_RATE_LIMIT_ANALYSES: ${LYNCEUS_RATE_LIMIT_ANALYSES:-5}
+      LYNCEUS_ANALYSES_SIMULTANEES: ${LYNCEUS_ANALYSES_SIMULTANEES:-4}
+      LYNCEUS_CONTENU_MAX_CARS: ${LYNCEUS_CONTENU_MAX_CARS:-60000}
+      LYNCEUS_CORS_ORIGINS: ${LYNCEUS_CORS_ORIGINS:-*}
+      LYNCEUS_ENTETE_IP_REELLE: ${LYNCEUS_ENTETE_IP_REELLE:-}
+    ports:
+      - "${LYNCEUS_BIND:-127.0.0.1}:${LYNCEUS_PORT_API:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/sante', timeout=5).status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    networks: [lynceus-net]
+
+  portail:
+    image: ${LYNCEUS_IMAGE}
+    pull_policy: always
+    container_name: lynceus-portail${LYNCEUS_SUFFIXE:--staging}
+    command: ["uvicorn", "lynceus.portail:creer_portail", "--factory",
+              "--host", "0.0.0.0", "--port", "8080"]
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      LYNCEUS_PORTAIL_NOM: ${LYNCEUS_PORTAIL_NOM:-Lynceus (recette)}
+      LYNCEUS_PORTAIL_CONTACT: ${LYNCEUS_PORTAIL_CONTACT:-}
+
+      LYNCEUS_PORTAIL_CLE_PRIVEE: ${LYNCEUS_PORTAIL_CLE_PRIVEE:?clé privée requise, sinon l'inscription ne peut pas être testée}
+      # Adresse annoncée aux extensions : elle doit être joignable depuis le navigateur de
+      # celui qui essaie, donc l'adresse publique de la recette, pas un nom de service.
+      LYNCEUS_PORTAIL_INSTANCE: ${LYNCEUS_PORTAIL_INSTANCE:?adresse publique de l'instance de recette requise}
+      # Adresse par laquelle le portail interroge lui-même l'instance. Ici les deux sont
+      # dans la même stack : autant passer par le réseau interne plutôt que de ressortir
+      # par le tunnel pour y revenir.
+      LYNCEUS_PORTAIL_INSTANCE_INTERNE: ${LYNCEUS_PORTAIL_INSTANCE_INTERNE:-http://api:8000}
+      LYNCEUS_PORTAIL_QUOTA_JOUR: ${LYNCEUS_PORTAIL_QUOTA_JOUR:-20}
+      LYNCEUS_PORTAIL_VALIDITE_JOURS: ${LYNCEUS_PORTAIL_VALIDITE_JOURS:-30}
+      LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR: ${LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR:-0}
+
+      # Identité légale laissée vide DÉLIBÉRÉMENT. Les pages légales annoncent alors
+      # qu'elles ne sont pas renseignées, et le portail avertit au démarrage : une recette
+      # ne doit pas pouvoir passer pour un service ouvert au public.
+      LYNCEUS_PORTAIL_EDITEUR_NOM: ${LYNCEUS_PORTAIL_EDITEUR_NOM:-}
+      LYNCEUS_PORTAIL_EDITEUR_STATUT: ${LYNCEUS_PORTAIL_EDITEUR_STATUT:-}
+      LYNCEUS_PORTAIL_EDITEUR_ADRESSE: ${LYNCEUS_PORTAIL_EDITEUR_ADRESSE:-}
+      LYNCEUS_PORTAIL_EDITEUR_IDENTIFIANT: ${LYNCEUS_PORTAIL_EDITEUR_IDENTIFIANT:-}
+      LYNCEUS_PORTAIL_EDITEUR_DIRECTEUR: ${LYNCEUS_PORTAIL_EDITEUR_DIRECTEUR:-}
+      LYNCEUS_PORTAIL_EDITEUR_CONTACT: ${LYNCEUS_PORTAIL_EDITEUR_CONTACT:-}
+      LYNCEUS_PORTAIL_HEBERGEUR_NOM: ${LYNCEUS_PORTAIL_HEBERGEUR_NOM:-}
+      LYNCEUS_PORTAIL_HEBERGEUR_ADRESSE: ${LYNCEUS_PORTAIL_HEBERGEUR_ADRESSE:-}
+      LYNCEUS_PORTAIL_HEBERGEUR_SITE: ${LYNCEUS_PORTAIL_HEBERGEUR_SITE:-}
+      LYNCEUS_PORTAIL_DROIT_APPLICABLE: ${LYNCEUS_PORTAIL_DROIT_APPLICABLE:-}
+
+      LYNCEUS_PORTAIL_PAQUETS: ${LYNCEUS_PORTAIL_PAQUETS:-/paquets,/app/paquets-image}
+      # À renseigner derrière un tunnel : sans elle, l'adresse inscrite dans l'archive
+      # téléchargée serait déduite de la requête, donc potentiellement en http.
+      LYNCEUS_PORTAIL_ADRESSE: ${LYNCEUS_PORTAIL_ADRESSE:-}
+      LYNCEUS_PORTAIL_ENTETE_IP_REELLE: ${LYNCEUS_PORTAIL_ENTETE_IP_REELLE:-}
+    volumes:
+      # Chemin absolu : voir le commentaire de docker-compose.portail.yml. Le dossier peut
+      # ne pas exister, Docker le crée, et l'image embarque déjà un paquet.
+      - ${LYNCEUS_PAQUETS:-/opt/lynceus/paquets-staging}:/paquets:ro
+    ports:
+      - "${LYNCEUS_BIND:-127.0.0.1}:${LYNCEUS_PORT_PORTAIL:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8080/sante', timeout=5).status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    networks: [lynceus-net]
+
+  # Un seul tunnel pour les deux services : côté Cloudflare, deux « public hostnames »
+  # pointent l'un sur http://api:8000, l'autre sur http://portail:8080. Ce sont les noms
+  # des services dans le réseau de la stack, pas des adresses de l'hôte.
+  #
+  # Depuis Portainer, un profil s'active en ajoutant la variable COMPOSE_PROFILES=tunnel
+  # aux variables de la stack. Si votre version l'ignore, déclarez le tunnel comme une
+  # petite stack à part plutôt que de retirer le profil d'ici.
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: lynceus-tunnel${LYNCEUS_SUFFIXE:--staging}
+    profiles: [tunnel]
+    command: tunnel --no-autoupdate run
+    environment:
+      # Volontairement SANS garde « :? ». Compose interpole tout le fichier au chargement,
+      # y compris les services d'un profil non activé : un garde ici empêcherait de
+      # démarrer la stack à quiconque n'utilise pas Cloudflare, alors que le tunnel n'est
+      # qu'une option d'exposition parmi d'autres. Avec le profil activé et sans jeton,
+      # cloudflared s'arrête de lui-même et le dit dans ses journaux.
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      portail:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [lynceus-net]
+
+volumes:
+  lynceus-db-data:
+
+networks:
+  lynceus-net:

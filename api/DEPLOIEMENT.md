@@ -36,13 +36,86 @@ L'image est construite une fois et déployée telle quelle, sans compilation sur
 # Depuis la racine du dépôt
 REGISTRE=votre-registre.exemple/lynceus-api      # votre registre d'images
 
-docker build -f api/Dockerfile -t $REGISTRE:v0.3.0 .
-docker tag  $REGISTRE:v0.3.0 $REGISTRE:latest
-docker push $REGISTRE:v0.3.0
+docker build -f api/Dockerfile -t $REGISTRE:v$(cat VERSION) .
+docker tag  $REGISTRE:v$(cat VERSION) $REGISTRE:latest
+docker push $REGISTRE:v$(cat VERSION)
 docker push $REGISTRE:latest
 ```
 
-L'étiquette de version permet de revenir en arrière : `LYNCEUS_IMAGE=…:v0.2.0` puis `docker compose up -d`.
+Le contexte de construction est la **racine du dépôt**, pas `api/` : l'image embarque `prompts/`, `docs/` et `schema/`, et son premier étage construit le paquet de l'extension depuis `extension/`. Une seule image sert l'instance et le portail, qui n'en sont que deux commandes d'entrée.
+
+L'étiquette de version permet de revenir en arrière : `LYNCEUS_IMAGE=…:v0.2.0` puis `docker compose up -d`. Elle vient du fichier `VERSION`, dont `verifier.sh` vérifie qu'il s'accorde avec `pyproject.toml` et `__init__.py`. Un décalage produirait une instance qui annonce sur `/v1/meta` une version que personne ne saurait redéployer.
+
+### Automatiser : la chaîne d'intégration
+
+Le dépôt contient deux workflows compatibles GitHub Actions, prévus pour un **runner auto-hébergé** étiqueté `self-hosted, forge` :
+
+| Fichier | Déclenchement | Effet |
+|---|---|---|
+| `.github/workflows/tests.yml` | poussée sur `main`, `next`, `dev`, `feat/**`, `fix/**`, `docs/**` | rejoue `pytest` et la suite de l'extension dans des conteneurs jetables |
+| `.github/workflows/build.yml` | poussée sur `main`, `next`, `dev` | construit l'image, la publie, et déclenche le redéploiement |
+
+Correspondance entre branche et étiquette d'image :
+
+| Branche | Étiquette | Redéploiement |
+|---|---|---|
+| `dev` | `:dev` | aucun (construction seule) |
+| `next` | `:next` | staging, par webhook |
+| `main` | `:latest` et `:v<VERSION>` | production, par webhook |
+
+À configurer dans le dépôt, côté forge :
+
+- variable `REGISTRE_FORGE` : adresse du registre **vue depuis le runner**, `127.0.0.1:5000` par défaut. Les hôtes de déploiement, eux, joignent ce registre par son nom réseau, renseigné dans le `LYNCEUS_IMAGE` de chaque stack ;
+- secrets `WEBHOOK_STAGING_INSTANCE`, `WEBHOOK_STAGING_PORTAIL`, `WEBHOOK_PROD` : les URL de redéploiement. Une étape sans secret passe avec un avertissement plutôt que d'échouer, pour qu'un dépôt cloné puisse construire ses images sans rien configurer.
+
+Ces URL ne sont pas dans les fichiers de workflow, et ne doivent pas y entrer : **une URL de webhook Portainer est un jeton de déploiement déguisé**, qui suffit à faire redéployer une stack à quiconque la connaît. Le dépôt étant destiné à devenir public, elles restent des secrets.
+
+Deux détails qui coûtent cher quand on les découvre en production :
+
+- l'appel de webhook utilise `curl --fail`. Sans ce drapeau, `curl` sort en 0 sur un HTTP 404 et l'étape passe au vert alors que l'appel a tapé dans le vide. Une stack supprimée puis recréée change d'identifiant de webhook : c'est exactement le cas qu'il faut voir échouer ;
+- les travaux de test ne s'exécutent **pas** pour une proposition venue d'un fork. Un runner auto-hébergé exécute le code qu'on lui donne : sur un dépôt public, l'ouvrir aux forks reviendrait à offrir la machine. Les contributions se relisent, et leur auteur lance `./verifier.sh` chez lui.
+
+### Une instance de recette, déployée depuis Portainer
+
+`docker-compose.staging.yml` est prévu pour ça : **une seule stack**, base, instance et portail ensemble, un seul jeu de variables, un seul webhook de redéploiement.
+
+C'est un compromis assumé, et il ne vaut que pour la recette. En production, l'instance et le portail sont deux stacks sur deux machines : le portail détient la clé privée qui signe les accès, l'instance est la surface exposée, et les séparer fait qu'une instance compromise ne permet toujours pas de forger des clés. En recette on cherche l'inverse, vérifier la boucle complète d'un coup, donc le portail joint l'instance par le réseau interne de la stack et la clé privée de recette vit à côté d'elle.
+
+**La paire de clés doit être propre à la recette.** `lynceus cles-paire` en engendre une. Reprendre la clé publique de production ferait accepter par la production toutes les clés émises pour les essais.
+
+Variables à renseigner dans l'éditeur de Portainer :
+
+```ini
+LYNCEUS_IMAGE=<registre>/lynceus-api:next
+POSTGRES_PASSWORD=<propre à la recette>
+LYNCEUS_LLM_API_KEY=<votre clé>
+LYNCEUS_CLE_PUBLIQUE=<paire de recette>
+LYNCEUS_PORTAIL_CLE_PRIVEE=<la privée de la MÊME paire>
+LYNCEUS_PORTAIL_INSTANCE=https://api-recette.exemple.fr   # adresse publique, pas un nom de service
+LYNCEUS_PORTAIL_ADRESSE=https://recette.exemple.fr        # sinon l'archive téléchargée peut porter une adresse en http
+CLOUDFLARE_TUNNEL_TOKEN=<jeton>
+COMPOSE_PROFILES=tunnel                                   # active le service de tunnel
+```
+
+Un seul tunnel suffit pour les deux services : côté Cloudflare, deux *public hostnames*, l'un vers `http://api:8000`, l'autre vers `http://portail:8080`. Ce sont les noms des services dans le réseau de la stack, pas des adresses de l'hôte.
+
+L'identité légale est laissée vide **volontairement** : les pages légales annoncent alors qu'elles ne sont pas renseignées, et le portail avertit au démarrage. Une recette ne doit pas pouvoir passer pour un service ouvert au public.
+
+Trois pièges, tous rencontrés :
+
+- **les chemins relatifs ne veulent rien dire dans Portainer.** Un `./paquets` se résout par rapport au répertoire d'où Compose est lancé, qui n'est pas ce dépôt quand c'est Portainer qui déploie. Le montage utilise donc un chemin absolu, `LYNCEUS_PAQUETS`, dont le défaut convient. Docker crée le dossier s'il manque ;
+- **le suffixe de conteneur n'est pas cosmétique.** Sans `LYNCEUS_SUFFIXE`, deux environnements sur la même machine se disputent le nom `lynceus-api` et le second refuse de démarrer. Le fichier de recette suffixe `-staging` par défaut ;
+- **le webhook est un jeton de déploiement.** Qui connaît son URL peut redéclencher la stack. Elle se dépose dans les secrets du dépôt, jamais dans un fichier versionné.
+
+### Ou deux stacks séparées, comme en production
+
+Rien n'oblige à passer par le fichier de recette : `docker-compose.prod.yml` et `docker-compose.portail.yml` acceptent les mêmes variables, avec `LYNCEUS_IMAGE` sur `:next` et `LYNCEUS_SUFFIXE=-staging`. C'est le choix à faire si la recette doit reproduire la topologie de production plutôt que d'aller vite.
+
+```bash
+docker compose -p lynceus-staging -f docker-compose.prod.yml up -d
+```
+
+Le suffixe ne porte que sur le nom des conteneurs ; les volumes, eux, sont déjà isolés par le nom du projet Compose.
 
 ## 3. Démarrer
 
