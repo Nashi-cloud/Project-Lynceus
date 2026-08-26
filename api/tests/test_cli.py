@@ -531,6 +531,37 @@ def test_env_sans_questions_reste_un_modele_a_trous():
     assert _variables(resultat.stdout)["LYNCEUS_IMAGE"] == ""
 
 
+def test_env_active_le_profil_du_tunnel_quand_un_jeton_est_donne():
+    """Le tunnel vit derrière un profil Compose : sans COMPOSE_PROFILES, le service
+    n'existe pas et rien ne le signale. Depuis Portainer il n'y a pas de drapeau à passer,
+    cette variable est le seul moyen."""
+    instance, portail = _blocs(
+        runner.invoke(app, ["env", "production", "--questions"],
+                      input=REPONSES_PRODUCTION).stdout
+    )
+    assert instance["COMPOSE_PROFILES"] == "tunnel"
+    assert portail["COMPOSE_PROFILES"] == "tunnel"
+
+    sans_tunnel = "\n".join([
+        "registre.test/lynceus-api:latest", "sk-fournisseur", "", "https://api.test",
+        "https://portail.test", "", "", "n",
+    ]) + "\n"
+    instance, portail = _blocs(
+        runner.invoke(app, ["env", "production", "--questions"], input=sans_tunnel).stdout
+    )
+    assert instance["COMPOSE_PROFILES"] == ""
+    assert portail["COMPOSE_PROFILES"] == ""
+
+
+def test_exemples_env_documentent_le_profil():
+    """Les .env d'exemple sont ce que recopie quelqu'un qui déploie à la main."""
+    from pathlib import Path as _Path
+
+    racine = _Path(__file__).resolve().parents[1]
+    for nom in (".env.prod.example", ".env.portail.example"):
+        assert "COMPOSE_PROFILES=tunnel" in (racine / nom).read_text(), nom
+
+
 def test_env_sans_tiret_cadratin():
     for cible in ("production", "recette"):
         assert "—" not in runner.invoke(app, ["env", cible]).stdout
