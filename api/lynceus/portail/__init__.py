@@ -33,6 +33,7 @@ from ..annuaire import LONGUEUR_PREFIXE
 from ..cles import emettre
 from ..normalisation import extraire_domaine, hacher_url, normaliser_url
 from . import contenu, i18n
+from .i18n import N_
 from .config import ParametresPortail, parametres_portail
 
 RACINE = Path(__file__).parent
@@ -41,15 +42,6 @@ RACINE = Path(__file__).parent
 # qui l'a servie, et rien d'autre : l'extension l'y lit pour proposer « Obtenir une clé »
 # sans que personne ait à recopier une adresse.
 FICHIER_PORTAIL = "portail.json"
-
-def N_(texte: str) -> str:
-    """Marque une phrase à traduire sans la traduire ici.
-
-    Ces libellés sont définis au chargement du module, avant qu'une requête et donc une
-    langue existent. Le marqueur les rend visibles de l'extraction et du test de
-    couverture ; la traduction a lieu au moment du rendu."""
-    return texte
-
 
 MOTIFS = [
     ("analyse_erronee", N_("L'analyse est fausse")),
@@ -205,6 +197,7 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
             legal=legal,
             depot=p.depot.rstrip("/"),
             langue=code,
+            langue_source=i18n.LANGUE_SOURCE,
             _=i18n.traducteur(code),
             # Toute adresse interne passe par « u » : sans elle, un lien écrit en dur
             # ramènerait le lecteur anglophone sur la version française de la page.
@@ -275,16 +268,22 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
 
     @app.get("/methodologie", response_class=HTMLResponse)
     def methodologie(requete: Request):
+        traduire = i18n.traducteur(requete.scope.get("lynceus_langue", i18n.LANGUE_SOURCE))
         return page(requete, "methodologie.html",
-                    ponderations=contenu.ponderations(), seuils=contenu.seuils(),
+                    ponderations=[dict(d, libelle=traduire(d["libelle"]))
+                                  for d in contenu.ponderations()],
+                    seuils=contenu.seuils(),
                     version_prompt=contenu.versions_prompt()[-1],
                     detail=contenu.document("METHODOLOGIE", p.depot_fichiers,
                                             prefixe_langue(requete)))
 
     @app.get("/taxonomie", response_class=HTMLResponse)
     def taxonomie(requete: Request):
+        traduire = i18n.traducteur(requete.scope.get("lynceus_langue", i18n.LANGUE_SOURCE))
         return page(requete, "taxonomie.html",
-                    familles=contenu.taxonomie_par_famille(), gravites=contenu.GRAVITES)
+                    familles=contenu.taxonomie_par_famille(),
+                    gravites={cle: traduire(libelle)
+                              for cle, libelle in contenu.GRAVITES.items()})
 
     @app.get("/charte", response_class=HTMLResponse)
     def charte(requete: Request):

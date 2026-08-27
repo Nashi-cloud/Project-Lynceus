@@ -11,6 +11,7 @@
   </div>
 </header>
 <article class="contenu corps-page">
+  {% if langue != langue_source %}{% include "_document_non_traduit.html" %}{% endif %}
   {{ document.html | safe }}
 </article>
 {% endblock %}

@@ -54,6 +54,15 @@ def catalogue(langue: str) -> dict[str, str]:
     }
 
 
+def N_(texte: str) -> str:
+    """Marque une phrase à traduire sans la traduire ici.
+
+    Certaines phrases sont définies au chargement d'un module, avant qu'une requête et donc
+    une langue existent. Le marqueur les rend visibles de l'extraction et du test de
+    couverture ; la traduction a lieu au moment du rendu."""
+    return texte
+
+
 def traducteur(langue: str):
     """Rend la fonction `_` injectée dans les gabarits.
 

@@ -12,6 +12,7 @@
   </div>
 </header>
 <article class="contenu corps-page">
+  {% if langue != langue_source %}{% include "_document_non_traduit.html" %}{% endif %}
   {% if versions|length > 1 %}
   {# Les anciennes versions restent lisibles : une analyse de l'annuaire annonce la version
      qui l'a produite, et cette page est le seul endroit où l'on peut aller la relire. #}

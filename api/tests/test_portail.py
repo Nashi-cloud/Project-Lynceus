@@ -160,7 +160,7 @@ def test_aucune_phrase_de_gabarit_n_est_laissee_sans_traduction():
     from lynceus.portail import i18n
 
     motif = re.compile(r'\bN?_\(\s*"((?:[^"\\]|\\.)*)"')
-    fichiers = [*(RACINE / "gabarits").glob("*.html"), RACINE / "__init__.py"]
+    fichiers = [*(RACINE / "gabarits").glob("*.html"), *RACINE.glob("*.py")]
     phrases = set()
     for fichier in fichiers:
         phrases |= {p.replace('\\"', '"')

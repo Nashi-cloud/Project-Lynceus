@@ -351,3 +351,91 @@ msgstr "Contributing"
 
 msgid "La discussion la plus utile ne porte pas sur le code. Elle porte sur le <a href=\"%(taxonomie)s\">référentiel de procédés</a>, sur les <a href=\"%(methodologie)s\">pondérations</a>, et sur les cas où l'analyse se trompe. Ces fichiers sont publics précisément pour être contestés."
 msgstr "The most useful discussion is not about the code. It is about the <a href=\"%(taxonomie)s\">catalogue of techniques</a>, the <a href=\"%(methodologie)s\">weightings</a>, and the cases where the analysis gets it wrong. Those files are public precisely so that they can be challenged."
+
+# --- Référentiel des procédés
+
+msgid "Ce document est publié dans sa langue d'origine, le français. Il n'est pas encore traduit : le portail préfère servir le texte qui engage réellement le projet plutôt qu'une traduction que personne n'a relue."
+msgstr "This document is published in its original language, French. It has not been translated yet: the portal would rather serve the text that actually binds the project than a translation nobody has reviewed."
+
+msgid "Les procédés reconnus"
+msgstr "The techniques we recognise"
+
+msgid "Référentiel"
+msgstr "Catalogue"
+
+msgid "Les %(nombre)s procédés reconnus"
+msgstr "The %(nombre)s techniques we recognise"
+
+msgid "Cette liste est <strong>fermée</strong> : l'analyse ne peut rien nommer qui ne s'y trouve pas. C'est aussi celle qui est transmise au modèle, et cette page en est l'affichage direct, pas une reformulation."
+msgstr "This list is <strong>closed</strong>: an analysis cannot name anything that is not on it. It is also the list handed to the model, and this page displays it directly rather than paraphrasing it."
+
+msgid "La gravité indiquée est une indication générale, pas une sentence. Un même procédé peut être anodin dans un billet d'humeur et sérieux dans un article qui se présente comme une information."
+msgstr "The severity shown is a general indication, not a verdict. The same technique can be harmless in an opinion piece and serious in an article presenting itself as news."
+
+msgid "Le référentiel évolue lentement et publiquement. Ajouter un procédé change les analyses futures, jamais celles déjà produites : chaque analyse conserve la version qui l'a produite."
+msgstr "The catalogue changes slowly and in the open. Adding a technique affects future analyses, never those already produced: every analysis keeps the version that produced it."
+
+msgid "Gravité haute"
+msgstr "High severity"
+
+msgid "Gravité moyenne"
+msgstr "Medium severity"
+
+msgid "Gravité faible"
+msgstr "Low severity"
+
+# --- Méthodologie
+
+msgid "Transparence"
+msgstr "Transparency"
+
+msgid "Comment la note est calculée"
+msgstr "How the grade is computed"
+
+msgid "Les chiffres de cette page ne sont pas recopiés : ils sont lus dans <a href=\"%(depot)s\">le code qui les applique</a>. S'ils changent un jour, cette page change avec eux."
+msgstr "The figures on this page are not transcribed: they are read from <a href=\"%(depot)s\">the code that applies them</a>. If they ever change, this page changes with them."
+
+msgid "Les chiffres de cette page ne sont pas recopiés : ils sont lus dans le code qui les applique. S'ils changent un jour, cette page change avec eux."
+msgstr "The figures on this page are not transcribed: they are read from the code that applies them. If they ever change, this page changes with them."
+
+msgid "Quatre dimensions, quatre poids"
+msgstr "Four dimensions, four weights"
+
+msgid "Le modèle de langage attribue une note de 0 à 100 à chacune de ces quatre dimensions, et justifie chacune. Il ne calcule pas la note globale."
+msgstr "The language model scores each of these four dimensions from 0 to 100, and justifies each one. It does not compute the overall grade."
+
+msgid "La note globale est calculée par le serveur"
+msgstr "The overall grade is computed by the server"
+
+msgid "C'est un point de méthode, pas un détail d'implémentation. Une moyenne pondérée est <strong>déterministe et vérifiable</strong> : deux personnes qui appliquent la même formule aux mêmes dimensions obtiennent le même résultat. Laisser un modèle de langage produire directement une note reviendrait à rendre le chiffre inauditable."
+msgstr "This is a point of method, not an implementation detail. A weighted average is <strong>deterministic and checkable</strong>: two people applying the same formula to the same dimensions get the same result. Letting a language model produce the grade directly would make the number impossible to audit."
+
+msgid "Chaque citation est vérifiée"
+msgstr "Every quotation is checked"
+
+msgid "Un modèle de langage invente parfois des citations. Le serveur refuse donc toute détection dont l'extrait n'est pas retrouvé <strong>mot pour mot</strong> dans la page analysée, et toute technique absente du référentiel. Ce qui a été écarté figure dans la réponse : la transparence porte aussi sur les erreurs du modèle."
+msgstr "Language models sometimes invent quotations. The server therefore rejects any detection whose excerpt cannot be found <strong>word for word</strong> in the analysed page, and any technique missing from the catalogue. What was thrown out appears in the response: transparency covers the model's mistakes too."
+
+msgid "Une note ne dit pas si un texte est vrai"
+msgstr "A grade does not say whether a text is true"
+
+msgid "Elle mesure la façon dont il est construit : sourçage, rigueur, registre, transparence de l'éditeur. Un texte factuellement juste mais écrit à coups de procédés d'urgence obtiendra une note moyenne, et c'est voulu."
+msgstr "It measures how the text is built: sourcing, rigour, register, how open the publisher is. A factually correct text written with manufactured urgency will get a middling grade, and that is intended."
+
+msgid "Version de prompt en vigueur : <strong>v%(version)s</strong>. <a href=\"%(prompt)s\">Lire le prompt intégral</a>, ou les <a href=\"%(calibration)s\">résultats de la dernière passe de calibration</a>."
+msgstr "Prompt version in force: <strong>v%(version)s</strong>. <a href=\"%(prompt)s\">Read the prompt in full</a>, or the <a href=\"%(calibration)s\">results of the latest calibration run</a>."
+
+msgid "Lire la méthodologie complète"
+msgstr "Read the full methodology"
+
+msgid "Qualité du sourçage"
+msgstr "Quality of sourcing"
+
+msgid "Rigueur factuelle"
+msgstr "Factual rigour"
+
+msgid "Registre et procédés"
+msgstr "Register and techniques"
+
+msgid "Transparence de l'éditeur"
+msgstr "Openness of the publisher"
