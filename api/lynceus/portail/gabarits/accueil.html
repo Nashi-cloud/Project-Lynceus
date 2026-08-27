@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titre %}{{ nom }}, la vigie de l'information{% endblock %}
+{% block titre %}{{ _("%(nom)s, la vigie de l'information", nom=nom) }}{% endblock %}
 {% block classe_corps %} class="pleine-largeur"{% endblock %}
 {% block tete %}
 <script>

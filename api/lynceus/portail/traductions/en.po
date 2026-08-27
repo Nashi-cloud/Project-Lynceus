@@ -691,3 +691,9 @@ msgstr "published methodology"
 
 msgid "analyses contestables"
 msgstr "analyses open to dispute"
+
+msgid "%(nom)s, la vigie de l'information"
+msgstr "%(nom)s, the lookout for information"
+
+msgid "Politique de confidentialité"
+msgstr "Privacy policy"

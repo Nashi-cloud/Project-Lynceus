@@ -26,7 +26,14 @@ class Parametres(BaseSettings):
     # d'hôte d'un modèle auto-hébergé n'a pas à être publié. Exemples : « Mistral AI »,
     # « OpenRouter, qui sous-traite l'inférence », « Ollama sur la machine de l'instance ».
     llm_fournisseur: str = ""
-    llm_temperature: float = 0.2
+    # Zéro par défaut, et c'est une décision mesurée, pas une préférence. Trois passes du
+    # corpus à 0,2 puis trois à 0,0, sur base neuve à chaque fois : l'écart de note d'une
+    # passe à l'autre tombe de 10,8 points en moyenne à 5,8, et d'un maximum de 61 points
+    # à 11. Un même texte satirique a obtenu 99, 79 puis 38 sur 100 à 0,2. Une note qui
+    # change de trois grades selon le tirage n'est pas une note. Le détail est dans
+    # corpus/RESULTATS.md. Le paramètre reste réglable par instance : la reproductibilité
+    # n'est pas le seul critère, et une instance peut vouloir plus de variété.
+    llm_temperature: float = 0.0
     llm_timeout_s: float = 180.0
     # none : le prompt exige du JSON (universel) · json_object / json_schema : si le fournisseur les supporte
     llm_response_format: str = "none"
