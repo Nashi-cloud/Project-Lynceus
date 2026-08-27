@@ -329,10 +329,32 @@ main { display: block; }
   font-size: 1.05rem;
   font-weight: 600;
 }
-.pied .contenu { display: grid; gap: 0.9rem 2rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+/* Quatre colonnes : qui parle, puis trois intentions de lecture. Une liste unique de dix
+   liens obligeait à tout parcourir pour en trouver un ; regroupés et titrés, ils se
+   choisissent d'un coup d'œil. La grille se replie d'elle-même sur un écran étroit. */
+.pied .contenu {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+}
+/* Au large, la colonne d'identité reçoit plus de place que les listes : elle porte des
+   phrases, pas des étiquettes, et se coupait au milieu de « AGPL-3.0 ». */
+@media (min-width: 56rem) {
+  .pied .contenu { grid-template-columns: 1.6fr 1fr 1fr 1fr; }
+}
 .pied a { color: var(--encre-2); }
 .pied a:hover { color: var(--encre); }
-.pied .liens { display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; }
+.pied-identite p { margin: 0 0 0.4em; text-wrap: pretty; }
+.pied-titre {
+  font: 650 0.72rem/1 var(--ui);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--laiton);
+  margin: 0.15rem 0 0.85rem;
+}
+.pied-groupe ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.pied-groupe a { text-decoration: none; }
+.pied-groupe a:hover { text-decoration: underline; }
 
 /* ------------------------------------------------------------- éléments */
 

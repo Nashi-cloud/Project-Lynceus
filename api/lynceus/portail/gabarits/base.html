@@ -39,31 +39,51 @@
 
 <footer class="pied">
   <div class="contenu large">
-    <div>
-      <strong class="nom-projet">{{ nom }}</strong><br>
-      {{ _("Logiciel libre sous licence AGPL-3.0.") }}<br>
-      {% if depot %}<a class="lien-forge" href="{{ depot }}" rel="noopener">{% include "_logo_forge.html" %}{{ _("Code source de cette instance") }}</a><br>{% endif %}
-      {{ _("Portail v%(version)s.", version=version) }}
+    <div class="pied-identite">
+      <strong class="nom-projet">{{ nom }}</strong>
+      <p>{{ _("Logiciel libre sous licence AGPL-3.0.") }}</p>
+      {% if depot %}
+      <p><a class="lien-forge" href="{{ depot }}" rel="noopener">{% include "_logo_forge.html" %}{{ _("Code source de cette instance") }}</a></p>
+      {% endif %}
+      <p>{{ _("Portail v%(version)s.", version=version) }}</p>
       {% if paquet %}
       {# Lien direct et stable : /telecharger sert toujours la version la plus haute
          publiée par ce portail. C'est l'adresse à transmettre à quelqu'un. #}
-      <br><a href="/telecharger" download>{{ _("Télécharger l'extension v%(version)s", version=paquet.version) }}</a>
-      ({{ _("%(taille)s Ko", taille=paquet.taille_ko) }})
+      <p><a href="/telecharger" download>{{ _("Télécharger l'extension v%(version)s", version=paquet.version) }}</a>
+      ({{ _("%(taille)s Ko", taille=paquet.taille_ko) }})</p>
       {% endif %}
     </div>
-    <div class="liens">
-      <a href="{{ u('/charte') }}">{{ _("Charte éthique") }}</a>
-      <a href="{{ u('/methodologie') }}">{{ _("Méthodologie") }}</a>
-      <a href="{{ u('/taxonomie') }}">{{ _("Les %(nombre)s procédés", nombre=nb_techniques) }}</a>
-      <a href="{{ u('/prompt') }}">{{ _("Prompt d'analyse") }}</a>
-      <a href="{{ u('/calibration') }}">{{ _("Résultats de calibration") }}</a>
-      <a href="{{ u('/contester') }}">{{ _("Contester une analyse") }}</a>
-      <a href="{{ u('/auto-hebergement') }}">{{ _("Héberger sa propre instance") }}</a>
-      <a href="{{ u('/mentions-legales') }}">{{ _("Mentions légales") }}</a>
-      <a href="{{ u('/confidentialite') }}">{{ _("Confidentialité") }}</a>
-      <a href="{{ u('/conditions') }}">{{ _("Conditions d'utilisation") }}</a>
-      {% if contact %}<a href="mailto:{{ contact }}">{{ contact }}</a>{% endif %}
-    </div>
+
+    <nav class="pied-groupe" aria-labelledby="pied-comprendre">
+      <p class="pied-titre" id="pied-comprendre">{{ _("Comprendre") }}</p>
+      <ul>
+        <li><a href="{{ u('/charte') }}">{{ _("Charte éthique") }}</a></li>
+        <li><a href="{{ u('/methodologie') }}">{{ _("Méthodologie") }}</a></li>
+        <li><a href="{{ u('/taxonomie') }}">{{ _("Les %(nombre)s procédés", nombre=nb_techniques) }}</a></li>
+        <li><a href="{{ u('/prompt') }}">{{ _("Prompt d'analyse") }}</a></li>
+        <li><a href="{{ u('/calibration') }}">{{ _("Résultats de calibration") }}</a></li>
+      </ul>
+    </nav>
+
+    <nav class="pied-groupe" aria-labelledby="pied-utiliser">
+      <p class="pied-titre" id="pied-utiliser">{{ _("Utiliser") }}</p>
+      <ul>
+        <li><a href="{{ u('/installer') }}">{{ _("Installer l'extension") }}</a></li>
+        <li><a href="{{ u('/annuaire') }}">{{ _("Consulter l'annuaire") }}</a></li>
+        <li><a href="{{ u('/contester') }}">{{ _("Contester une analyse") }}</a></li>
+        <li><a href="{{ u('/auto-hebergement') }}">{{ _("Héberger sa propre instance") }}</a></li>
+      </ul>
+    </nav>
+
+    <nav class="pied-groupe" aria-labelledby="pied-legal">
+      <p class="pied-titre" id="pied-legal">{{ _("Cadre légal") }}</p>
+      <ul>
+        <li><a href="{{ u('/mentions-legales') }}">{{ _("Mentions légales") }}</a></li>
+        <li><a href="{{ u('/confidentialite') }}">{{ _("Confidentialité") }}</a></li>
+        <li><a href="{{ u('/conditions') }}">{{ _("Conditions d'utilisation") }}</a></li>
+        {% if contact %}<li><a href="mailto:{{ contact }}">{{ contact }}</a></li>{% endif %}
+      </ul>
+    </nav>
   </div>
 </footer>
 
