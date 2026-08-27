@@ -100,9 +100,7 @@ export async function demanderCle(adressePortail: string): Promise<Billet> {
       signal: controleur.signal,
     });
   } catch {
-    throw new Error(
-      `Portail injoignable (${portail}). Vérifiez l'adresse et votre connexion.`,
-    );
+    throw new Error(msg("erreur_portail_injoignable", portail));
   } finally {
     clearTimeout(minuteur);
   }

@@ -306,7 +306,7 @@ function rendreContestation(carte: CarteAnalyse, signalements: number): HTMLElem
   const bloc = el("div", "contestation");
   if (signalements > 0) {
     bloc.append(el("div", "signalements-info",
-      `${signalements} contestation(s) déjà enregistrée(s) sur cette analyse.`));
+      msg("panneau_contestations_enregistrees", String(signalements))));
   }
 
   const lien = el("button", "lien-invitation", msg("contester_cette_analyse"));

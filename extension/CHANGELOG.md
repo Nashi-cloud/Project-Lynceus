@@ -2,6 +2,10 @@
 
 Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension : utile pour vérifier qu'un rebuild a bien été rechargé.
 
+## 0.11.1 (2026-08-27)
+
+- **fix** : les derniers messages restés en français sur un navigateur anglais sont traduits. Ils échappaient au catalogue parce qu'ils naissent d'une panne et non d'un gabarit : instance ou portail injoignable, délai d'analyse dépassé, clé d'accès manquante, contenu principal introuvable dans la page, extraction impossible, et le rappel du nombre de contestations déjà reçues. Une interface anglaise qui bascule en français au moment précis où quelque chose ne va pas est le pire endroit pour un trou de traduction.
+
 ## 0.11.0 (2026-08-27)
 
 - **feat** : l'extension parle anglais. Le mécanisme est celui de Chrome (`_locales/<langue>/messages.json`, `chrome.i18n`), donc sans bibliothèque embarquée et sans sélecteur : le navigateur choisit d'après sa propre langue d'interface, et le français reste la langue de repli. Nom, description et menu contextuel compris, puisqu'ils viennent du manifeste.
