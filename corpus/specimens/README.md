@@ -1,12 +1,14 @@
-# Spécimens de calibration
+# Calibration specimens
 
-Contenus **figés** servant de socle reproductible à la calibration.
+**English** · [Français](README.fr.md)
 
-Deux natures de spécimens, distinguées par leur en-tête YAML :
+**Frozen** content, serving as a reproducible base for calibration.
 
-- `source: fictif` — contenus **écrits pour l'exercice**, sur des domaines `.example`. Ils n'imitent aucun média réel et ne rapportent aucun fait réel : ce sont des exercices de style construits pour porter des procédés rhétoriques identifiables (appel à la peur, conflit d'intérêt commercial, faux équilibre…). Ils forment le socle stable du corpus : jamais modifiés, donc jamais de régression fantôme.
-- `source: archive` — extraits de **pages réelles**, capturés à une date donnée, avec URL d'origine et date de capture. À ajouter au fil de l'eau ; ce sont eux qui ancrent la calibration dans le monde réel.
+Two kinds of specimen, told apart by their YAML header:
 
-Chaque spécimen porte son attente dans `corpus.yaml` (catégorie, fourchette de grade, techniques attendues/interdites).
+- `source: fictif` means content **written for the exercise**, on `.example` domains. It imitates no real outlet and reports no real fact: these are set pieces built to carry identifiable rhetorical devices (appeal to fear, commercial conflict of interest, false balance and so on). They form the stable base of the corpus: never edited, therefore never a phantom regression.
+- `source: archive` means excerpts of **real pages**, captured on a given date, with the original URL and the capture date. To be added as they come; these are what anchor the calibration in the real world.
 
-> Les spécimens fictifs sont des **outils de test**, pas des articles : ne jamais les republier hors de ce dépôt sans leur en-tête, qui indique explicitement leur nature.
+Each specimen carries its expectation in `corpus.yaml` (category, grade range, expected and forbidden techniques).
+
+> Fictional specimens are **test fixtures**, not articles: never republish them outside this repository without their header, which states their nature explicitly.
