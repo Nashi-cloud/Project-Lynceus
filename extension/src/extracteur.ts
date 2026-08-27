@@ -5,6 +5,7 @@
 
 import { Readability } from "@mozilla/readability";
 import TurndownService from "turndown";
+import { msg } from "./commun/i18n";
 import type { Extraction } from "./commun/types";
 
 declare global {
@@ -37,7 +38,7 @@ globalThis.__lynceusExtraire = async (): Promise<Extraction> => {
     const copie = document.cloneNode(true) as Document;
     const article = new Readability(copie).parse();
     if (!article?.content) {
-      return { ok: false, erreur: "Contenu principal introuvable sur cette page (page d'accueil, application… ?)." };
+      return { ok: false, erreur: msg("erreur_contenu_introuvable") };
     }
     const turndown = new TurndownService({ headingStyle: "atx", codeBlockStyle: "fenced" });
     turndown.remove(["script", "style", "noscript"]);
@@ -51,6 +52,6 @@ globalThis.__lynceusExtraire = async (): Promise<Extraction> => {
       langue,
     };
   } catch (erreur) {
-    return { ok: false, erreur: `Extraction impossible : ${String(erreur)}` };
+    return { ok: false, erreur: msg("erreur_extraction_impossible", String(erreur)) };
   }
 };

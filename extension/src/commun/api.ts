@@ -1,5 +1,6 @@
 /** Client de l'API Lynceus (instance configurable — auto-hébergement de premier ordre). */
 
+import { msg } from "./i18n";
 import { chargerReglages } from "./reglages";
 import type {
   CarteAnalyse,
@@ -52,17 +53,10 @@ async function requete<T>(
     reponse = await fetch(`${instance.replace(/\/+$/, "")}${chemin}`, { ...options, headers: entetes, signal });
   } catch (erreur) {
     if (erreur instanceof DOMException && erreur.name === "TimeoutError") {
-      throw new Error(
-        `L'instance n'a pas répondu dans le délai imparti (${Math.round(delaiMs / 1000)} s). ` +
-          "Le fournisseur LLM configuré est peut-être lent ou indisponible ; vous pouvez " +
-          "augmenter ce délai dans les réglages, ou réessayer plus tard.",
-      );
+      throw new Error(msg("erreur_delai_depasse", String(Math.round(delaiMs / 1000))));
     }
     if (erreur instanceof DOMException && erreur.name === "AbortError") throw erreur; // annulation volontaire
-    throw new Error(
-      `Instance Lynceus injoignable (${instance}). Le serveur est-il démarré ? ` +
-        "L'adresse se règle dans les options de l'extension.",
-    );
+    throw new Error(msg("erreur_instance_injoignable", instance));
   } finally {
     liberer(); // succès comme échec : ne jamais laisser un minuteur armé derrière soi
   }
@@ -75,7 +69,7 @@ async function requete<T>(
       /* corps non JSON */
     }
     if (reponse.status === 401) {
-      detail += " Renseignez votre clé d'accès dans les réglages de l'extension.";
+      detail += ` ${msg("erreur_cle_requise")}`;
     }
     throw new Error(detail);
   }

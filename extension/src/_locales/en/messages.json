@@ -68,6 +68,24 @@
   "erreur_page_inaccessible": {
     "message": "Lynceus cannot reach this page. If it is an internal browser page or the Web Store, it cannot be analysed. Otherwise: start again with a right-click → “Analyse this page with Lynceus” (access expires when you navigate away). You can also turn on the passive badge in the settings so that this button keeps working after navigation."
   },
+  "erreur_delai_depasse": {
+    "message": "The instance did not answer within the allotted time ($1 s). The configured model provider may be slow or unavailable; you can raise this delay in the settings, or try again later."
+  },
+  "erreur_instance_injoignable": {
+    "message": "Lynceus instance unreachable ($1). Is the server running? The address can be changed in the extension options."
+  },
+  "erreur_cle_requise": {
+    "message": "Enter your access key in the extension settings."
+  },
+  "erreur_portail_injoignable": {
+    "message": "Portal unreachable ($1). Check the address and your connection."
+  },
+  "erreur_contenu_introuvable": {
+    "message": "No main content found on this page (home page, web app… ?)."
+  },
+  "erreur_extraction_impossible": {
+    "message": "Extraction failed: $1"
+  },
   "erreur_adresse_vide": {
     "message": "Enter the portal address (https://…)."
   },
@@ -208,6 +226,9 @@
   },
   "panneau_erreur_titre": {
     "message": "Analysis failed"
+  },
+  "panneau_contestations_enregistrees": {
+    "message": "$1 dispute(s) already recorded on this analysis."
   },
   "panneau_indice": {
     "message": "Score $1/100"
