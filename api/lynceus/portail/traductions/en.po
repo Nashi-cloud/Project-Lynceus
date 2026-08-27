@@ -543,7 +543,7 @@ msgid "On ne l'a pourtant jamais mis à la barre. Sa place était à l'avant du 
 msgstr "He was never given the helm. His place was at the front of the ship, and his job fitted in one line: <strong>call out the reefs</strong>. He did not choose the course. He said what lay ahead, and the crew decided."
 
 msgid "<strong>« Un œil de lynx »</strong> vient de là, à une confusion près : le félin porte en grec un nom presque identique, et il a fini par recueillir le compliment. Mais voir à travers la pierre était le don du guetteur, pas celui du chasseur. La nuance tient tout entière dans l'usage qu'on en fait : le fauve regarde pour lui, la vigie regarde pour les autres."
-msgstr "<strong>“Lynx-eyed”</strong> comes from here, give or take a confusion: the animal bears an almost identical name in Greek, and it ended up collecting the compliment. English usually hands that compliment to the eagle, and keeps the lynx for the rarer word. Either way, seeing through stone was the lookout's gift, not the hunter's, and the whole difference lies in what the sight is for: the predator looks for itself, the lookout looks for everyone else."
+msgstr "<strong>“Eagle-eyed”</strong>, English would say, and the same slip is already there: the compliment goes to a hunter. It began with a man. French made the same mistake with the lynx, whose Greek name is almost that of the lookout himself. Either way, seeing through stone was the lookout's gift, not the predator's, and the whole difference lies in what the sight is for: the hunter looks for itself, the lookout looks for everyone else."
 
 msgid "« Il ne décidait pas du cap.<br>Il disait seulement ce qu'il y avait devant. »"
 msgstr "“He did not decide the course.<br>He only said what lay ahead.”"
