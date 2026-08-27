@@ -112,8 +112,10 @@
 
 html {
   scroll-behavior: smooth;
-  /* Garde-fou : aucune page du portail ne doit défiler horizontalement. */
-  overflow-x: hidden;
+  /* Garde-fou : aucune page du portail ne doit défiler horizontalement. « clip » plutôt
+     que « hidden » : hidden fait de l'élément un conteneur de défilement, ce qui annule
+     le « position: sticky » du bandeau sans rien signaler. */
+  overflow-x: clip;
 }
 
 body {
@@ -124,7 +126,7 @@ body {
   font-variation-settings: "opsz" 16;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 img, svg, video { max-width: 100%; height: auto; }
@@ -315,6 +317,12 @@ main { display: block; }
   padding: clamp(2rem, 5vw, 3rem) 0 clamp(2.6rem, 6vw, 3.6rem);
   color: var(--encre-2);
   font: 0.92rem/1.7 var(--ui);
+}
+.pied .nom-projet {
+  color: var(--encre);
+  font-family: var(--display);
+  font-size: 1.05rem;
+  font-weight: 600;
 }
 .pied .contenu { display: grid; gap: 0.9rem 2rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
 .pied a { color: var(--encre-2); }
@@ -690,10 +698,26 @@ textarea.champ { resize: vertical; }
   color: rgba(246, 232, 212, 0.62);
 }
 
+/* --- lever du jour ---
+   Le passage de la braise au papier demande de la distance. Le faire à l'intérieur de la
+   dernière scène obligerait à éclaircir le fond sous un texte déjà sombre, donc à le rendre
+   illisible en chemin : d'où une bande sans texte, assez haute pour que le jour se lève au
+   même rythme que le reste de la page. */
+
+.aube {
+  height: clamp(20rem, 55vh, 34rem);
+  background: linear-gradient(180deg,
+    rgba(189, 107, 60, 0) 0%,
+    rgba(214, 138, 84, 0.6) 24%,
+    rgba(233, 183, 130, 0.9) 54%,
+    #f2e2c8 82%,
+    #f8eeda 100%);
+}
+
 /* --- dernière scène : le jour --- */
 
 .scene.jour {
-  background: linear-gradient(180deg, rgba(250, 244, 232, 0) 0%, #f8eeda 28%, #fbf6ec 100%);
+  background: linear-gradient(180deg, #f8eeda 0%, #fbf6ec 100%);
   color: #3f3226;
   text-align: center;
 }
