@@ -30,7 +30,7 @@
     <a href="{{ u('/taxonomie') }}">{{ _("Procédés") }}</a>
     <a href="{{ u('/annuaire') }}">{{ _("Annuaire") }}</a>
     <a href="{{ u('/charte') }}">{{ _("Charte") }}</a>
-    <a href="{{ u('/auto-hebergement') }}">{{ _("S'héberger") }}</a>
+    <a href="{{ u('/auto-hebergement') }}">{{ _("Héberger") }}</a>
     <span class="langues">{% for l in langues %}{% if l.courante %}<strong lang="{{ l.code }}">{{ l.code|upper }}</strong>{% else %}<a href="{{ l.url }}" hreflang="{{ l.code }}" lang="{{ l.code }}">{{ l.code|upper }}</a>{% endif %}{% endfor %}</span>
   </nav>
 </header>
