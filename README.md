@@ -1,140 +1,150 @@
-# Projet Lynceus 🔭
+# Project Lynceus 🔭
 
-> **La vigie de l'information.** Lyncée, vigie des Argonautes, voyait à travers les coques des navires et la terre elle-même. Une vigie prévient l'équipage ; elle ne prend jamais la barre.
+**English** · [Français](README.fr.md)
 
-Lynceus analyse le contenu d'une page web et explique à son lecteur, **sans le juger**, les techniques de persuasion et de manipulation qu'elle emploie : sources absentes, appel à la peur, rhétorique du secret, faux experts, conflits d'intérêt commerciaux… Le tout résumé par un indice de confiance façon **Nutri-Score de l'information** (A → E), avec le détail pédagogique à portée de clic.
+> **The lookout for information.** Lynceus, lookout of the Argonauts, could see through the hulls of ships and through the earth itself. A lookout warns the crew; a lookout never takes the helm.
 
-**Projet à but humanitaire, 100 % libre (AGPL-3.0), gratuit, auto-hébergeable.**
+Lynceus analyses the content of a web page and explains to its reader, **without judging them**, the persuasion and manipulation techniques it uses: missing sources, appeals to fear, the rhetoric of secrecy, fake experts, undisclosed commercial interests. The whole thing is summed up by a trust index in the manner of a **Nutri-Score for information** (A to E), with the teaching detail one click away.
 
-## Installer
+**A humanitarian project, entirely free software (AGPL-3.0), free of charge, self-hostable.**
 
-**[→ Guide d'installation pas à pas](INSTALLATION.md)** : extension seule ou kit complet (serveur + extension), avec ou sans Docker.
+## Install
 
-## Pourquoi ?
+**[→ Step-by-step installation guide](INSTALLATION.md)**: the extension alone, or the full kit (server plus extension), with or without Docker.
 
-Nous avons toutes et tous dans notre entourage des personnes exposées à la désinformation : pseudo-médecine, théories du complot, manipulation sectaire, articles fabriqués. Les contredire frontalement ne fonctionne pas, et la recherche montre même que cela renforce les croyances (réactance).
+## Why?
 
-Ce qui fonctionne, c'est **l'inoculation** : apprendre à reconnaître les *techniques* de manipulation, indépendamment du sujet. Lynceus n'est pas un ministère de la vérité ; c'est un outil d'éducation aux médias qui montre les procédés, cite les extraits, et laisse le lecteur conclure.
+Every one of us knows someone exposed to disinformation: pseudo-medicine, conspiracy theories, sectarian manipulation, fabricated articles. Contradicting them head-on does not work, and research shows it can even strengthen the belief (reactance).
 
-## Comment ça marche ?
+What does work is **inoculation**: learning to recognise the *techniques* of manipulation, independently of the subject matter. Lynceus is not a ministry of truth. It is a media-literacy tool that shows the devices, quotes the passages, and lets the reader draw the conclusion.
+
+## How it works
 
 ```
-┌─ Navigateur ────────────────────┐        ┌─ Instance Lynceus (auto-hébergeable) ┐
-│ Extension Chrome (MV3)          │        │  API annuaire (FastAPI)              │
-│  · badge passif ────────────────┼─GET──▶ │  /lookup (hash URL) ──▶ Annuaire     │
-│  · clic droit « Analyser »      │        │                         (PostgreSQL) │
-│  · extraction LOCALE            │        │  /v1/analyses                        │
-│    Readability.js → Markdown ───┼─POST─▶ │    │ si absent de l'annuaire         │
-│  · side panel (carte) ◀─────────┼─JSON── │    ▼                                 │
-└───────────┬─────────────────────┘        │  Moteur d'analyse (LLM configurable) │
-            │                              │  endpoint compatible OpenAI :        │
-            │ « Obtenir une clé »          │  OpenRouter │ Ollama │ vLLM │ etc.   │
+┌─ Browser ───────────────────────┐        ┌─ Lynceus instance (self-hostable) ───┐
+│ Chrome extension (MV3)          │        │  Directory API (FastAPI)             │
+│  · passive badge ───────────────┼─GET──▶ │  /lookup (URL hash) ──▶ Directory    │
+│  · right click, “Analyse”       │        │                         (PostgreSQL) │
+│  · LOCAL extraction             │        │  /v1/analyses                        │
+│    Readability.js → Markdown ───┼─POST─▶ │    │ if not already known            │
+│  · side panel (card) ◀──────────┼─JSON── │    ▼                                 │
+└───────────┬─────────────────────┘        │  Analysis engine (configurable LLM)  │
+            │                              │  OpenAI-compatible endpoint:         │
+            │ “Get a key”                  │  OpenRouter │ Ollama │ vLLM │ etc.   │
             ▼                              └───────────────▲──────────────────────┘
-┌─ Portail (site public) ─────────┐                        │
-│  récit · méthodologie · procédés│──── annuaire, ─────────┘
-│  annuaire · téléchargement      │     contestations
-│  /v1/inscription → clé signée   │
-│  détient la clé PRIVÉE          │   sans base de données : il ne conserve rien
+┌─ Portal (public site) ──────────┐                        │
+│  story · method · techniques    │──── directory, ────────┘
+│  directory · download           │     disputes
+│  /v1/inscription → signed key   │
+│  holds the PRIVATE key          │   no database: it stores nothing
 └─────────────────────────────────┘
 ```
 
-1. **Badge passif** : à chaque page, l'extension interroge l'annuaire (hash de l'URL, aucun contenu envoyé). Page déjà analysée → la note s'affiche sur l'icône. Désactivable.
-2. **Analyse volontaire** : clic droit → « Analyser cette page ». Le texte est extrait *localement* (Readability), converti en Markdown et envoyé à l'API. Le panneau latéral affiche la carte d'analyse.
-3. **Annuaire mutualisé** : chaque page n'est analysée qu'une fois pour tout le monde. Le même contenu copié-collé sur un autre site est reconnu (hash de contenu). Domaine par domaine, un profil de fiabilité se construit.
-4. **Portail** : le site public. Il présente le projet, publie la méthodologie, laisse consulter l'annuaire sans rien installer, distribue l'extension, et délivre une clé d'accès en un clic, sans compte ni adresse électronique. C'est un service **séparé de l'instance** : lui seul détient la clé privée qui signe les clés, si bien qu'une instance compromise ne permet pas d'en forger.
+1. **Passive badge**: on every page, the extension queries the directory (a hash of the URL, no content sent). If the page has already been analysed, the grade appears on the toolbar icon. Can be turned off.
+2. **Deliberate analysis**: right click, then "Analyse this page". The text is extracted *locally* (Readability), converted to Markdown and sent to the API. The side panel displays the analysis card.
+3. **Shared directory**: each page is analysed once, for everyone. The same content copied onto another site is recognised (content hash). Domain by domain, a reliability profile builds up.
+4. **Portal**: the public website. It presents the project, publishes the methodology, lets anyone browse the directory without installing anything, distributes the extension, and issues an access key in one click, with no account and no email address. It is a service **separate from the instance**: it alone holds the private key that signs access keys, so a compromised instance cannot forge any.
 
-## La carte d'analyse
+## The analysis card
 
-Chaque analyse produit une carte JSON ([schéma](schema/carte-analyse.schema.json), [exemple](schema/exemples/pseudo-science.json)) :
+Every analysis produces a JSON card ([schema](schema/carte-analyse.schema.json), [example](schema/exemples/pseudo-science.json)):
 
-- **Catégorie** du contenu : information, opinion, satire, pseudo-science, contenu confessionnel…
-- **Note globale A–E** calculée par le serveur à partir de 4 dimensions transparentes : sources, factualité, ton, transparence.
-- **Techniques détectées** : chacune avec l'extrait *verbatim* de la page et une explication pédagogique ([taxonomie complète](docs/TAXONOMIE.md)).
-- **Points positifs** : toujours recherchés : l'équité est une condition de la crédibilité.
-- **Questions à se poser** : socratiques, pour rendre le lecteur acteur.
+- **Category** of the content: information, opinion, satire, pseudo-science, faith-based content and so on.
+- **Overall grade A to E**, computed by the server from 4 transparent dimensions: sources, factuality, tone, transparency.
+- **Techniques detected**: each with the *verbatim* passage from the page and a plain explanation ([full taxonomy](docs/en/TAXONOMIE.md)).
+- **Positive points**: always looked for, because fairness is a condition of credibility.
+- **Questions to ask yourself**: socratic, so the reader stays the investigator.
 
-## Principes non négociables
+## Non-negotiable principles
 
-Résumé de la [charte éthique](docs/ETHIQUE.md) :
+A summary of the [ethical charter](docs/en/ETHIQUE.md):
 
-1. **Une vigie, pas un juge** : on décrit des méthodes, on ne juge pas des croyances.
-2. **Transparence radicale** : prompts, méthodologie, pondérations et code publics et versionnés.
-3. **Scan volontaire** : jamais d'analyse à l'insu de l'utilisateur.
-4. **Vie privée** : pas d'historique de navigation stocké, pas de compte requis, lookup par hash.
-5. **Équité** : satire ≠ désinformation, opinion assumée ≠ manipulation, points positifs systématiques.
-6. **Faillibilité assumée** : l'analyse est produite par une IA, l'indice de confiance est affiché, toute analyse est contestable.
+1. **A lookout, not a judge**: we describe methods, we do not judge beliefs.
+2. **Radical transparency**: prompts, methodology, weightings and code are public and versioned.
+3. **Deliberate scanning**: never an analysis without the user asking for it.
+4. **Privacy**: no browsing history stored, no account required, lookup by hash.
+5. **Fairness**: satire is not disinformation, an owned opinion is not manipulation, positive points are systematic.
+6. **Acknowledged fallibility**: the analysis is produced by an AI, the confidence index is displayed, and every analysis can be disputed.
 
 ## Documentation
 
-| Document | Contenu |
+The documents below are the ones that bind the project. The French text is the original and prevails in case of divergence; the English translation is checked against it at every build, so it can never quietly fall behind.
+
+| Document | Contents |
 |---|---|
-| [docs/ETHIQUE.md](docs/ETHIQUE.md) | La charte : posture, vie privée, équité, limites |
-| [docs/METHODOLOGIE.md](docs/METHODOLOGIE.md) | Catégories, dimensions, barème, calcul de la note, cas particuliers |
-| [docs/TAXONOMIE.md](docs/TAXONOMIE.md) | Les 31 techniques détectées, documentées et sourcées |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | API, modèle de données, déduplication, couche LLM, fédération |
-| [docs/IA-GENERATIVE.md](docs/IA-GENERATIVE.md) | Comment l'IA générative est utilisée pour développer le projet |
-| [prompts/](prompts/) | Prompts d'analyse versionnés (publics, comme tout le reste) |
-| [corpus/](corpus/) | Corpus de calibration des prompts |
-| [api/DEPLOIEMENT.md](api/DEPLOIEMENT.md) | Héberger une instance et un portail : secrets, exposition, clés, coûts, montée en charge |
+| [docs/en/ETHIQUE.md](docs/en/ETHIQUE.md) | The charter: posture, privacy, fairness, limits |
+| [docs/en/METHODOLOGIE.md](docs/en/METHODOLOGIE.md) | Categories, dimensions, scale, how the grade is computed, special cases |
+| [docs/en/TAXONOMIE.md](docs/en/TAXONOMIE.md) | The 31 techniques detected, documented and sourced |
+| [docs/en/ARCHITECTURE.md](docs/en/ARCHITECTURE.md) | API, data model, deduplication, LLM layer, federation |
+| [docs/en/CONFORMITE.md](docs/en/CONFORMITE.md) | What is processed, transmitted and kept, and under which legal basis |
+| [docs/en/IA-GENERATIVE.md](docs/en/IA-GENERATIVE.md) | How generative AI is used to build the project |
+| [prompts/](prompts/) | Versioned analysis prompts (public, like everything else) |
+| [corpus/](corpus/) | Calibration corpus for the prompts |
+| [api/DEPLOIEMENT.md](api/DEPLOIEMENT.md) | Hosting an instance and a portal: secrets, exposure, keys, costs, scaling |
 
 ## Stack
 
-- **API / serveur** : Python, FastAPI, PostgreSQL. Le « kit » auto-hébergeable (Docker Compose).
-- **Extension** : TypeScript, Manifest V3, side panel Chrome, extraction Readability.js.
-- **Portail** : le même paquet Python, second point d'entrée (`lynceus.portail`). Jinja2 et htmx,, aucune ressource chargée depuis un tiers, lisible sans JavaScript.
-- **LLM** : tout endpoint compatible OpenAI (`/chat/completions`) : OpenRouter, Ollama en local, vLLM… Modèle et fournisseur configurables par instance.
+- **API and server**: Python, FastAPI, PostgreSQL. The self-hostable "kit" (Docker Compose).
+- **Extension**: TypeScript, Manifest V3, Chrome side panel, extraction with Readability.js.
+- **Portal**: the same Python package, a second entry point (`lynceus.portail`). Jinja2 and htmx, no resource loaded from a third party, readable without JavaScript.
+- **LLM**: any OpenAI-compatible endpoint (`/chat/completions`): OpenRouter, Ollama running locally, vLLM and so on. Model and provider are configured per instance.
 
-## Vérifier le projet
+## Checking the project
 
 ```bash
-./verifier.sh              # tests API + extension, typage, build, cohérence des versions
-./verifier.sh --calibrer   # + calibration du corpus (serveur requis)
+./verifier.sh              # API and extension tests, typing, build, version consistency
+./verifier.sh --calibrer   # plus corpus calibration (needs a running server)
 ```
 
-97 tests au total : 65 côté API (pytest, couverture 84 %) et 32 côté extension (`node --test`), plus un test de parité garantissant que l'extension et le serveur calculent les mêmes empreintes d'URL.
+312 tests in total: 244 on the API side (pytest) and 68 on the extension side (`node --test`), including a parity test that guarantees the extension and the server compute the same URL hashes.
 
-## Feuille de route
+## Roadmap
 
-- [x] **Phase 0, fondations** : charte, méthodologie, taxonomie, schéma de la carte, prompt v0.1
-- [x] **Phase 1, API MVP** : `/lookup` + `/analyses`, SQLite/PostgreSQL, adapter LLM compatible OpenAI, CLI, Docker Compose
-- [x] **Phase 2, extension Chrome** : side panel, menu contextuel, badge passif opt-in, extraction locale Readability
-- [x] **Phase 3, annuaire public** : lookup k-anonyme (technique HaveIBeenPwned), contestation d'analyses et droit de réponse, profils de domaines
-- [x] **Publication** : guide d'installation, empaquetage de l'extension, migrations Alembic
-- [x] **Phase 3b, portail public** : site (récit, méthodologie, référentiel, annuaire consultable), distribution de l'extension, inscription en un clic sans compte
-- [ ] **Phase 3c** : instance et portail de référence hébergés publiquement
-- [ ] **Phase 4, réseau** : fédération d'annuaires entre instances, i18n, portage Firefox
+- [x] **Phase 0, foundations**: charter, methodology, taxonomy, card schema, prompt v0.1
+- [x] **Phase 1, API MVP**: `/lookup` and `/analyses`, SQLite/PostgreSQL, OpenAI-compatible LLM adapter, CLI, Docker Compose
+- [x] **Phase 2, Chrome extension**: side panel, context menu, opt-in passive badge, local extraction with Readability
+- [x] **Phase 3, public directory**: k-anonymous lookup (the HaveIBeenPwned technique), disputing an analysis and right of reply, domain profiles
+- [x] **Publication**: installation guide, extension packaging, Alembic migrations
+- [x] **Phase 3b, public portal**: the website (story, methodology, reference, browsable directory), extension distribution, one-click sign-up without an account
+- [x] **Bilingual**: portal and extension in French and English, analysis written in the language of the page analysed
+- [ ] **Phase 3c**: reference instance and portal, publicly hosted
+- [ ] **Phase 4, network**: federation of directories between instances, further languages, Firefox port
 
-## Comment ce projet est fabriqué
+## How this project is built
 
-Lynceus demande aux pages qu'il analyse d'être transparentes sur leurs procédés, il se
-doit de l'être sur les siens. **Le code, les tests et la documentation sont écrits avec
-l'assistance d'un modèle de langage**, sous la responsabilité d'un humain qui relit, teste
-et assume chaque ligne fusionnée. La charte, la taxonomie et les pondérations de la note ne
-sont pas déléguées.
+Lynceus asks the pages it analyses to be transparent about their devices, so it owes the
+same about its own. **The code, the tests and the documentation are written with the
+assistance of a language model**, under the responsibility of a human who reads, tests and
+stands behind every line merged. The charter, the taxonomy and the grade weightings are not
+delegated.
 
-Détail de la pratique, convention de provenance dans les commits et ce qui est demandé aux
-contributions extérieures : [docs/IA-GENERATIVE.md](docs/IA-GENERATIVE.md).
+The detail of that practice, the provenance convention used in commits and what is expected
+of outside contributions: [docs/en/IA-GENERATIVE.md](docs/en/IA-GENERATIVE.md).
 
-À ne pas confondre avec l'IA que le produit **emploie** pour analyser une page, qui est
-décrite dans [docs/METHODOLOGIE.md](docs/METHODOLOGIE.md) et
-[docs/CONFORMITE.md](docs/CONFORMITE.md).
+Not to be confused with the AI the product **uses** to analyse a page, which is described in
+[docs/en/METHODOLOGIE.md](docs/en/METHODOLOGIE.md) and [docs/en/CONFORMITE.md](docs/en/CONFORMITE.md).
 
-## Contribuer
+## Contributing
 
-Le projet est développé par [Nashi.cloud](https://nashi.cloud) (Raphaël Auberlet,
-entrepreneur individuel) et vise un réseau mondial et bénévole de vérification. Toute contribution est bienvenue : code, taxonomie, corpus de calibration, traductions, hébergement d'instances. Licence **AGPL-3.0** : toute instance publique modifiée doit publier ses sources, car la transparence de l'analyseur est le cœur de sa légitimité.
+The project is developed by [Nashi.cloud](https://nashi.cloud) (Raphaël Auberlet, sole
+trader) and aims at a worldwide, volunteer verification network. Every contribution is
+welcome: code, taxonomy, calibration corpus, translations, hosting an instance. Licence
+**AGPL-3.0**: any modified public instance must publish its sources, because the
+transparency of the analyser is the heart of its legitimacy.
+
+**One thing to know before opening the source**: the code and its comments are written in
+French, and so are the commit messages. That is a deliberate choice and it is not going to
+change, because rewriting it would cost more than it would bring. The documentation, on the
+other hand, is in English. Issues and pull requests are welcome in either language.
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) first.
 
 ---
 
-## Licence et droits
+## Licence and rights
 
     Copyright (C) 2026 Raphaël Auberlet (Nashi.cloud)
 
-Publié sous **AGPL-3.0-or-later** (voir [LICENSE](LICENSE) et [AUTHORS.md](AUTHORS.md)).
-Les contributions relèvent du [Developer Certificate of Origin](DCO.txt) : chacun conserve
-ses droits sur son apport.
-
-L'analyse de conformité du projet, ce qui est traité, transmis et conservé, figure dans
-[docs/CONFORMITE.md](docs/CONFORMITE.md).
-
-*English summary: Lynceus is a free-software (AGPL-3.0) media-literacy stack (a Chrome extension plus a self-hostable directory API) that analyzes web pages with a configurable LLM and explains, without preaching, the manipulation techniques they use (missing sources, fear appeals, fake experts…), summarized as an A–E trust index. Every analysis is cached in a shared directory so each page is only ever analyzed once. Documentation is currently in French; translations welcome.*
+Published under **AGPL-3.0-or-later** (see [LICENSE](LICENSE) and [AUTHORS.md](AUTHORS.md)).
+Contributions fall under the [Developer Certificate of Origin](DCO.txt): everyone keeps
+their rights over what they contribute.

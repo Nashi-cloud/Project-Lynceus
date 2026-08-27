@@ -1,72 +1,74 @@
-# Déployer une instance Lynceus
+# Deploying a Lynceus instance
 
-Pour héberger une instance destinée à d'autres personnes : vos proches, un groupe, ou à terme le public.
+**English** · [Français](DEPLOIEMENT.fr.md)
 
-> Pour un usage strictement personnel, [INSTALLATION.md](INSTALLATION.md) suffit : pas besoin de tout ceci.
+For hosting an instance meant for other people: your family and friends, a group, or in time the public.
 
-## Ce qui change dès qu'une instance est exposée
+> For strictly personal use, [INSTALLATION.md](../INSTALLATION.md) is enough: none of this is needed.
 
-| | Usage personnel | Instance exposée |
+## What changes the moment an instance is exposed
+
+| | Personal use | Exposed instance |
 |---|---|---|
-| Base de données | SQLite | PostgreSQL |
-| Accès | ouvert | **clés d'accès obligatoires** |
-| Chiffrement | inutile (localhost) | **HTTPS obligatoire** |
-| Redémarrage | manuel | automatique |
+| Database | SQLite | PostgreSQL |
+| Access | open | **access keys mandatory** |
+| Encryption | pointless (localhost) | **HTTPS mandatory** |
+| Restart | manual | automatic |
 
-La règle non négociable : **votre clé LLM est facturée à l'usage**. Une instance exposée sans clés d'accès permet à n'importe qui de dépenser votre argent. Le compose de production refuse d'ailleurs de démarrer sans `LYNCEUS_CLE_PUBLIQUE`.
+The non-negotiable rule: **your LLM key is billed by usage**. An exposed instance without access keys lets anyone spend your money. The production compose file refuses to start without `LYNCEUS_CLE_PUBLIQUE`.
 
-## 1. Préparer les secrets
+## 1. Preparing the secrets
 
-Une commande pose les questions et engendre l'ensemble des variables, secrets compris :
+One command asks the questions and generates every variable, secrets included:
 
 ```bash
-lynceus env production     # deux blocs : l'instance, puis le portail
-lynceus env recette        # un seul bloc, pour la stack de recette
+lynceus env production     # two blocks: the instance, then the portal
+lynceus env recette        # a single block, for the staging stack
 ```
 
-Dans un terminal, elle demande ce qu'elle ne peut pas deviner : adresse du registre, clé du fournisseur de modèle, adresses publiques, jetons de tunnel, identité légale. Toute réponse peut rester vide, la variable reste alors à remplir. Deux questions méritent qu'on s'y arrête :
+In a terminal it asks for what it cannot guess: registry address, model provider key, public addresses, tunnel tokens, legal identity. Any answer may be left empty, in which case the variable stays to be filled in. Two questions deserve a pause:
 
-- **le jeton de tunnel est demandé deux fois** en production. Deux machines, deux tunnels, deux jetons : recopier le même des deux côtés donne un second tunnel qui se connecte et sert le mauvais service ;
-- **l'instance est-elle joignable uniquement par le tunnel ?** Répondre oui active `LYNCEUS_ENTETE_IP_REELLE`. Un en-tête se falsifie : sur une instance joignable en direct, s'y fier laisse contourner la limite de débit en annonçant l'adresse qu'on veut.
+- **the tunnel token is asked for twice** in production. Two machines, two tunnels, two tokens: copying the same one on both sides gives you a second tunnel that connects and serves the wrong service;
+- **is the instance reachable only through the tunnel?** Answering yes enables `LYNCEUS_ENTETE_IP_REELLE`. A header can be forged: on an instance reachable directly, trusting it lets anyone bypass the rate limit by announcing whatever address they like.
 
-Sans installation locale, la même commande vit dans l'image :
+Without a local installation, the same command lives in the image:
 
 ```bash
-docker run --rm <registre>/lynceus-api:latest lynceus env production
+docker run --rm <registry>/lynceus-api:latest lynceus env production
 ```
 
-Ce qui est engendré l'est **une seule fois** : mot de passe PostgreSQL, jeton d'administration, et surtout **une seule paire de clés pour les deux blocs**. C'est l'erreur la plus facile à commettre que d'appeler `cles-paire` deux fois et de déployer un portail qui signe avec une clé que l'instance ne reconnaît pas ; l'inscription répond alors correctement, et c'est l'instance qui refuse la clé, plus tard, chez l'utilisateur.
+What is generated is generated **once**: PostgreSQL password, admin token, and above all **a single key pair for both blocks**. The easiest mistake to make is calling `cles-paire` twice and deploying a portal that signs with a key the instance does not recognise; sign-up then answers correctly, and it is the instance that refuses the key, later, at the user's end.
 
-Ce que vous seul connaissez reste **vide** : adresse du registre, clé du fournisseur de modèle, jeton de tunnel, adresses publiques, identité légale. C'est délibéré. Une valeur d'exemple laisserait la stack démarrer et échouer à la première analyse ; vide, Compose refuse de démarrer et nomme la variable manquante.
+What only you know stays **empty**: registry address, model provider key, tunnel token, public addresses, legal identity. That is deliberate. A sample value would let the stack start and fail on the first analysis; empty, Compose refuses to start and names the missing variable.
 
-Explications et questions partent sur la sortie d'erreur, les variables sur la sortie standard : le fichier s'écrit donc directement. Redirigée, la commande ne pose rien et rend un modèle à trous, ce qui convient aux scripts.
+Explanations and questions go to standard error, variables to standard output, so the file can be written directly. Redirected, the command asks nothing and returns a template with blanks, which suits scripts.
 
 ```bash
-lynceus env recette > .env      # modèle à remplir
-lynceus env recette | tee .env  # questions posées, fichier écrit
+lynceus env recette > .env      # a template to fill in
+lynceus env recette | tee .env  # questions asked, file written
 ```
 
-En production, la sortie contient **deux fichiers**, un par machine, portant les mêmes noms de variables avec des valeurs différentes. Un marqueur en commentaire sépare les blocs : coupez dessus. Coller les deux dans un seul `.env` ferait gagner le second sans que rien ne le signale.
+In production the output contains **two files**, one per machine, carrying the same variable names with different values. A comment marker separates the blocks: cut there. Pasting both into a single `.env` would let the second win with nothing to signal it.
 
-Pour reconfigurer une seule machine plus tard, sans réémettre les clés déjà distribuées :
+To reconfigure a single machine later, without reissuing the keys already handed out:
 
 ```bash
-lynceus env production --cle-privee <la privée existante>
+lynceus env production --cle-privee <the existing private key>
 ```
 
-La clé publique se déduit de la privée : il n'y a donc qu'un secret à conserver.
+The public key is derived from the private one, so there is only one secret to keep.
 
-Gardez la **clé privée** hors de la machine qui héberge l'instance : c'est elle qui permet d'émettre des clés, et l'instance n'en a pas besoin. Si le serveur est compromis, personne ne pourra émettre de clés en votre nom.
+Keep the **private key** off the machine hosting the instance: it is what allows keys to be issued, and the instance does not need it. If the server is compromised, nobody will be able to issue keys in your name.
 
-> La sortie contient des secrets en clair. Elle n'a rien à faire dans un ticket, un dépôt, ni une conversation.
+> The output contains secrets in the clear. It has no business in a ticket, a repository, or a conversation.
 
-## 2. Publier l'image
+## 2. Publishing the image
 
-L'image est construite une fois et déployée telle quelle, sans compilation sur l'hôte :
+The image is built once and deployed as is, with no compilation on the host:
 
 ```bash
-# Depuis la racine du dépôt
-REGISTRE=votre-registre.exemple/lynceus-api      # votre registre d'images
+# From the root of the repository
+REGISTRE=your-registry.example/lynceus-api      # your image registry
 
 docker build -f api/Dockerfile -t $REGISTRE:v$(cat VERSION) .
 docker tag  $REGISTRE:v$(cat VERSION) $REGISTRE:latest
@@ -74,82 +76,82 @@ docker push $REGISTRE:v$(cat VERSION)
 docker push $REGISTRE:latest
 ```
 
-Le contexte de construction est la **racine du dépôt**, pas `api/` : l'image embarque `prompts/`, `docs/` et `schema/`, et son premier étage construit le paquet de l'extension depuis `extension/`. Une seule image sert l'instance et le portail, qui n'en sont que deux commandes d'entrée.
+The build context is the **root of the repository**, not `api/`: the image embeds `prompts/`, `docs/` and `schema/`, and its first stage builds the extension package from `extension/`. A single image serves both the instance and the portal, which are only two entry commands into it.
 
-L'étiquette de version permet de revenir en arrière : `LYNCEUS_IMAGE=…:v0.2.0` puis `docker compose up -d`. Elle vient du fichier `VERSION`, dont `verifier.sh` vérifie qu'il s'accorde avec `pyproject.toml` et `__init__.py`. Un décalage produirait une instance qui annonce sur `/v1/meta` une version que personne ne saurait redéployer.
+The version tag makes it possible to roll back: `LYNCEUS_IMAGE=…:v0.2.0` then `docker compose up -d`. It comes from the `VERSION` file, which `verifier.sh` checks against `pyproject.toml` and `__init__.py`. A mismatch would produce an instance announcing on `/v1/meta` a version nobody could redeploy.
 
-### Automatiser : la chaîne d'intégration
+### Automating it: the CI pipeline
 
-Le dépôt contient deux workflows compatibles GitHub Actions, prévus pour un **runner auto-hébergé** étiqueté `self-hosted, forge` :
+The repository contains two GitHub Actions compatible workflows, designed for a **self-hosted runner** labelled `self-hosted, forge`:
 
-| Fichier | Déclenchement | Effet |
+| File | Trigger | Effect |
 |---|---|---|
-| `.github/workflows/tests.yml` | poussée sur `main`, `next`, `dev`, `feat/**`, `fix/**`, `docs/**` | rejoue `pytest` et la suite de l'extension dans des conteneurs jetables |
-| `.github/workflows/build.yml` | poussée sur `main`, `next`, `dev` | construit l'image, la publie, et déclenche le redéploiement |
+| `.github/workflows/tests.yml` | push to `main`, `next`, `dev`, `feat/**`, `fix/**`, `docs/**` | replays `pytest` and the extension suite in throwaway containers |
+| `.github/workflows/build.yml` | push to `main`, `next`, `dev` | builds the image, publishes it, and triggers the redeployment |
 
-Correspondance entre branche et étiquette d'image :
+How branches map to image tags:
 
-| Branche | Étiquette | Redéploiement |
+| Branch | Tag | Redeployment |
 |---|---|---|
-| `dev` | `:dev` | aucun (construction seule) |
-| `next` | `:next` | staging, par webhook |
-| `main` | `:latest` et `:v<VERSION>` | production, par webhook |
+| `dev` | `:dev` | none (build only) |
+| `next` | `:next` | staging, by webhook |
+| `main` | `:latest` and `:v<VERSION>` | production, by webhook |
 
-À configurer dans le dépôt, côté forge :
+To configure in the repository, on the forge side:
 
-- variable `REGISTRE_FORGE` : adresse du registre **vue depuis le runner**, `127.0.0.1:5000` par défaut. Les hôtes de déploiement, eux, joignent ce registre par son nom réseau, renseigné dans le `LYNCEUS_IMAGE` de chaque stack ;
-- secrets `WEBHOOK_STAGING_INSTANCE`, `WEBHOOK_STAGING_PORTAIL`, `WEBHOOK_PROD_INSTANCE`, `WEBHOOK_PROD_PORTAIL` : les URL de redéploiement, une par stack. Deux stacks tirent la même image, l'instance et le portail, donc deux appels ; l'instance d'abord, c'est elle qui porte les migrations de schéma. Une étape sans secret passe avec un avertissement plutôt que d'échouer, pour qu'un dépôt cloné puisse construire ses images sans rien configurer.
+- variable `REGISTRE_FORGE`: the registry address **as seen from the runner**, `127.0.0.1:5000` by default. The deployment hosts reach that registry by its network name instead, set in each stack's `LYNCEUS_IMAGE`;
+- secrets `WEBHOOK_STAGING_INSTANCE`, `WEBHOOK_STAGING_PORTAIL`, `WEBHOOK_PROD_INSTANCE`, `WEBHOOK_PROD_PORTAIL`: the redeployment URLs, one per stack. Two stacks pull the same image, the instance and the portal, hence two calls; the instance first, since it carries the schema migrations. A step with no secret passes with a warning rather than failing, so that a cloned repository can build its images without configuring anything.
 
-Ces URL ne sont pas dans les fichiers de workflow, et ne doivent pas y entrer : **une URL de webhook Portainer est un jeton de déploiement déguisé**, qui suffit à faire redéployer une stack à quiconque la connaît. Le dépôt étant destiné à devenir public, elles restent des secrets.
+Those URLs are not in the workflow files, and must not go in them: **a Portainer webhook URL is a deployment token in disguise**, enough for anyone who knows it to redeploy a stack. Since the repository is meant to become public, they stay secrets.
 
-Deux détails qui coûtent cher quand on les découvre en production :
+Two details that are expensive to discover in production:
 
-- l'appel de webhook utilise `curl --fail`. Sans ce drapeau, `curl` sort en 0 sur un HTTP 404 et l'étape passe au vert alors que l'appel a tapé dans le vide. Une stack supprimée puis recréée change d'identifiant de webhook : c'est exactement le cas qu'il faut voir échouer ;
-- les travaux de test ne s'exécutent **pas** pour une proposition venue d'un fork. Un runner auto-hébergé exécute le code qu'on lui donne : sur un dépôt public, l'ouvrir aux forks reviendrait à offrir la machine. Les contributions se relisent, et leur auteur lance `./verifier.sh` chez lui.
+- the webhook call uses `curl --fail`. Without that flag, `curl` exits 0 on an HTTP 404 and the step goes green while the call hit nothing. A stack deleted and recreated changes webhook id: that is exactly the case you want to see fail;
+- test jobs do **not** run for a proposal coming from a fork. A self-hosted runner executes whatever code it is given: on a public repository, opening it to forks would amount to handing over the machine. Contributions are reviewed, and their author runs `./verifier.sh` at home.
 
-### Une instance de recette, déployée depuis Portainer
+### A staging instance, deployed from Portainer
 
-`docker-compose.staging.yml` est prévu pour ça : **une seule stack**, base, instance et portail ensemble, un seul jeu de variables, un seul webhook de redéploiement.
+`docker-compose.staging.yml` is meant for that: **a single stack**, database, instance and portal together, one set of variables, one redeployment webhook.
 
-C'est un compromis assumé, et il ne vaut que pour la recette. En production, l'instance et le portail sont deux stacks sur deux machines : le portail détient la clé privée qui signe les accès, l'instance est la surface exposée, et les séparer fait qu'une instance compromise ne permet toujours pas de forger des clés. En recette on cherche l'inverse, vérifier la boucle complète d'un coup, donc le portail joint l'instance par le réseau interne de la stack et la clé privée de recette vit à côté d'elle.
+It is a knowing compromise, and it only holds for staging. In production the instance and the portal are two stacks on two machines: the portal holds the private key that signs access, the instance is the exposed surface, and separating them means a compromised instance still does not let anyone forge keys. In staging the aim is the opposite, checking the whole loop at once, so the portal reaches the instance over the stack's internal network and the staging private key lives next to it.
 
-**La paire de clés doit être propre à la recette.** `lynceus cles-paire` en engendre une. Reprendre la clé publique de production ferait accepter par la production toutes les clés émises pour les essais.
+**The key pair must be specific to staging.** `lynceus cles-paire` generates one. Reusing the production public key would make production accept every key issued for testing.
 
-Variables à renseigner dans l'éditeur de Portainer :
+Variables to fill in from the Portainer editor:
 
 ```ini
-LYNCEUS_IMAGE=<registre>/lynceus-api:next
-POSTGRES_PASSWORD=<propre à la recette>
-LYNCEUS_LLM_API_KEY=<votre clé>
-LYNCEUS_CLE_PUBLIQUE=<paire de recette>
-LYNCEUS_PORTAIL_CLE_PRIVEE=<la privée de la MÊME paire>
-LYNCEUS_PORTAIL_INSTANCE=https://api-recette.exemple.fr   # adresse publique, pas un nom de service
-LYNCEUS_PORTAIL_ADRESSE=https://recette.exemple.fr        # sinon l'archive téléchargée peut porter une adresse en http
-CLOUDFLARE_TUNNEL_TOKEN=<jeton>
-COMPOSE_PROFILES=tunnel                                   # active le service de tunnel
+LYNCEUS_IMAGE=<registry>/lynceus-api:next
+POSTGRES_PASSWORD=<specific to staging>
+LYNCEUS_LLM_API_KEY=<your key>
+LYNCEUS_CLE_PUBLIQUE=<staging pair>
+LYNCEUS_PORTAIL_CLE_PRIVEE=<the private key of the SAME pair>
+LYNCEUS_PORTAIL_INSTANCE=https://api-staging.example.org   # public address, not a service name
+LYNCEUS_PORTAIL_ADRESSE=https://staging.example.org        # otherwise the downloaded archive may carry an http address
+CLOUDFLARE_TUNNEL_TOKEN=<token>
+COMPOSE_PROFILES=tunnel                                    # enables the tunnel service
 ```
 
-Un seul tunnel suffit pour les deux services : côté Cloudflare, deux *public hostnames*, l'un vers `http://api:8000`, l'autre vers `http://portail:8080`. Ce sont les noms des services dans le réseau de la stack, pas des adresses de l'hôte.
+A single tunnel is enough for both services: on the Cloudflare side, two *public hostnames*, one to `http://api:8000`, the other to `http://portail:8080`. Those are the service names inside the stack's network, not addresses on the host.
 
-L'identité légale est laissée vide **volontairement** : les pages légales annoncent alors qu'elles ne sont pas renseignées, et le portail avertit au démarrage. Une recette ne doit pas pouvoir passer pour un service ouvert au public.
+The legal identity is left empty **on purpose**: the legal pages then announce that they are not filled in, and the portal warns at startup. A staging deployment must never be able to pass for a service open to the public.
 
-Trois pièges, tous rencontrés :
+Three traps, all of them met in practice:
 
-- **les chemins relatifs ne veulent rien dire dans Portainer.** Un `./paquets` se résout par rapport au répertoire d'où Compose est lancé, qui n'est pas ce dépôt quand c'est Portainer qui déploie. Le montage utilise donc un chemin absolu, `LYNCEUS_PAQUETS`, dont le défaut convient. Docker crée le dossier s'il manque ;
-- **le suffixe de conteneur n'est pas cosmétique.** Sans `LYNCEUS_SUFFIXE`, deux environnements sur la même machine se disputent le nom `lynceus-api` et le second refuse de démarrer. Le fichier de recette suffixe `-staging` par défaut ;
-- **le webhook est un jeton de déploiement.** Qui connaît son URL peut redéclencher la stack. Elle se dépose dans les secrets du dépôt, jamais dans un fichier versionné.
+- **relative paths mean nothing in Portainer.** A `./paquets` resolves against the directory Compose is launched from, which is not this repository when Portainer is deploying. The mount therefore uses an absolute path, `LYNCEUS_PAQUETS`, whose default is fine. Docker creates the folder if it is missing;
+- **the container suffix is not cosmetic.** Without `LYNCEUS_SUFFIXE`, two environments on the same machine fight over the name `lynceus-api` and the second refuses to start. The staging file suffixes `-staging` by default;
+- **the webhook is a deployment token.** Whoever knows its URL can retrigger the stack. It goes in the repository secrets, never in a versioned file.
 
-### Ou deux stacks séparées, comme en production
+### Or two separate stacks, as in production
 
-Rien n'oblige à passer par le fichier de recette : `docker-compose.prod.yml` et `docker-compose.portail.yml` acceptent les mêmes variables, avec `LYNCEUS_IMAGE` sur `:next` et `LYNCEUS_SUFFIXE=-staging`. C'est le choix à faire si la recette doit reproduire la topologie de production plutôt que d'aller vite.
+Nothing forces you to go through the staging file: `docker-compose.prod.yml` and `docker-compose.portail.yml` accept the same variables, with `LYNCEUS_IMAGE` on `:next` and `LYNCEUS_SUFFIXE=-staging`. That is the choice to make if staging is meant to reproduce the production topology rather than to be quick.
 
 ```bash
 docker compose -p lynceus-staging -f docker-compose.prod.yml up -d
 ```
 
-Le suffixe ne porte que sur le nom des conteneurs ; les volumes, eux, sont déjà isolés par le nom du projet Compose.
+The suffix only affects container names; the volumes are already isolated by the Compose project name.
 
-## 3. Démarrer
+## 3. Starting up
 
 ```bash
 cd api
@@ -157,192 +159,192 @@ docker compose -f docker-compose.prod.yml up -d
 docker compose -f docker-compose.prod.yml logs -f api
 ```
 
-Le schéma de base est créé et migré automatiquement au démarrage (Alembic). Aucune commande à lancer.
+The database schema is created and migrated automatically at startup (Alembic). There is no command to run.
 
-Vérifier :
+To check:
 
 ```bash
 curl http://127.0.0.1:8000/sante     # {"statut":"ok",…}
-curl http://127.0.0.1:8000/v1/meta   # doit indiquer "cle_requise": true
+curl http://127.0.0.1:8000/v1/meta   # must show "cle_requise": true
 ```
 
-## 4. Exposer en HTTPS
+## 4. Exposing over HTTPS
 
-L'API parle en HTTP simple : le chiffrement est délégué à la couche d'exposition.
+The API speaks plain HTTP: encryption is delegated to the exposure layer.
 
-### Cloudflare Tunnel (recommandé)
+### Cloudflare Tunnel (recommended)
 
-Le conteneur `cloudflared` établit une connexion **sortante** vers Cloudflare : aucun port entrant à ouvrir, aucune adresse publique à exposer, certificat TLS géré par Cloudflare.
+The `cloudflared` container establishes an **outbound** connection to Cloudflare: no inbound port to open, no public address to expose, TLS certificate handled by Cloudflare.
 
-1. Dans **Cloudflare Zero Trust → Networks → Tunnels**, créez un tunnel et notez son jeton.
-2. Ajoutez un *public hostname* pointant vers `http://api:8000`. C'est le nom du service dans le réseau Docker, pas une adresse de l'hôte.
-3. Placez le jeton dans `.env` :
+1. In **Cloudflare Zero Trust → Networks → Tunnels**, create a tunnel and note its token.
+2. Add a *public hostname* pointing at `http://api:8000`. That is the service name inside the Docker network, not an address on the host.
+3. Put the token in `.env`:
 
 ```ini
 CLOUDFLARE_TUNNEL_TOKEN=eyJ…
-# Cloudflare transmet l'adresse du visiteur dans cet en-tête. Sans lui, toutes les
-# requêtes porteraient l'adresse du tunnel et un seul visiteur épuiserait la limite
-# de débit de tout le monde.
+# Cloudflare passes the visitor's address in this header. Without it, every request
+# would carry the tunnel's address and a single visitor would exhaust everybody's
+# rate limit.
 LYNCEUS_ENTETE_IP_REELLE=CF-Connecting-IP
 ```
 
-4. Démarrez avec le profil :
+4. Start with the profile:
 
 ```bash
 docker compose -f docker-compose.prod.yml --profile tunnel up -d
 ```
 
-Le service de tunnel vit derrière un **profil Compose** : sans lui, il n'existe pas, et rien ne le signale. C'est déroutant la première fois, on déploie, tout fonctionne, et il manque un conteneur.
+The tunnel service lives behind a **Compose profile**: without it, it does not exist, and nothing says so. That is disconcerting the first time: you deploy, everything works, and a container is missing.
 
-Depuis **Portainer**, il n'y a pas de drapeau à passer : ajoutez la variable aux variables de la stack, Compose la lit dans le `.env` que Portainer écrit à côté du fichier.
+From **Portainer** there is no flag to pass: add the variable to the stack's variables, and Compose reads it from the `.env` Portainer writes next to the file.
 
 ```ini
 COMPOSE_PROFILES=tunnel
 ```
 
-> **`LYNCEUS_ENTETE_IP_REELLE` ne doit être défini que si l'instance est joignable *uniquement* par le tunnel.** Un en-tête HTTP se falsifie : si l'API reste accessible en direct, n'importe qui contournerait la limite de débit en annonçant une adresse différente à chaque requête. Gardez `LYNCEUS_BIND=127.0.0.1` (le défaut), ou mieux, supprimez la section `ports:` du service `api` : le tunnel le joint par le réseau interne.
+> **`LYNCEUS_ENTETE_IP_REELLE` must only be set if the instance is reachable *solely* through the tunnel.** An HTTP header can be forged: if the API remains directly accessible, anyone could bypass the rate limit by announcing a different address on every request. Keep `LYNCEUS_BIND=127.0.0.1` (the default), or better, remove the `ports:` section of the `api` service: the tunnel reaches it over the internal network.
 
-### Autres options
+### Other options
 
-**Tailscale Serve** : accès réservé à votre tailnet, sans compte tiers :
+**Tailscale Serve**: access restricted to your tailnet, with no third-party account:
 
 ```bash
-sudo tailscale serve --bg 8000     # tailnet seulement
-sudo tailscale funnel --bg 8000    # exposé à Internet
+sudo tailscale serve --bg 8000     # tailnet only
+sudo tailscale funnel --bg 8000    # exposed to the internet
 ```
 
-Un reverse proxy classique (Caddy, nginx) fonctionne également ; renseignez alors `LYNCEUS_ENTETE_IP_REELLE=X-Real-IP` (ou l'en-tête que votre proxy utilise).
+A classic reverse proxy (Caddy, nginx) works as well; in that case set `LYNCEUS_ENTETE_IP_REELLE=X-Real-IP` (or whichever header your proxy uses).
 
-Quelle que soit l'option, l'adresse obtenue est celle que les utilisateurs saisissent dans les réglages de l'extension.
+Whichever option you choose, the resulting address is the one users type into the extension settings.
 
-## 5. Distribuer les clés
+## 5. Handing out keys
 
-Depuis une machine détenant la clé privée, pas le serveur :
+From a machine holding the private key, not from the server:
 
 ```bash
 export LYNCEUS_CLE_PRIVEE=…
 lynceus cle-emettre --jours 365 --quota 50 --nombre 5
 ```
 
-Chaque personne colle sa clé dans les réglages de l'extension, avec l'adresse de l'instance. Une clé ne contient **aucune information sur son porteur** : ni nom, ni adresse, ni identifiant. Vous ne saurez pas qui analyse quoi, et c'est voulu.
+Each person pastes their key into the extension settings, along with the instance address. A key contains **no information about its holder**: no name, no address, no identifier. You will not know who analyses what, and that is by design.
 
-Le quota est journalier et ne compte que les **analyses réelles** : une page déjà présente dans l'annuaire est resservie gratuitement, sans l'entamer.
+The quota is daily and counts only **real analyses**: a page already present in the directory is served again for free, without eating into it.
 
-Cette distribution à la main convient à quelques proches. Au-delà, le **portail** délivre les clés tout seul (section suivante).
+Handing keys out by hand suits a few people you know. Beyond that, the **portal** issues keys on its own (next section).
 
-## 6. Le portail public
+## 6. The public portal
 
-Le portail est le site : le récit, la méthodologie, le référentiel des procédés, l'annuaire consultable, le téléchargement de l'extension et l'inscription en un clic. C'est un second point d'entrée de la **même image**, déployé séparément.
+The portal is the website: the story, the methodology, the reference list of techniques, the browsable directory, the extension download and one-click sign-up. It is a second entry point into the **same image**, deployed separately.
 
-### Pourquoi séparément
+### Why separately
 
-| | Instance | Portail |
+| | Instance | Portal |
 |---|---|---|
-| Détient | la clé **publique** | la clé **privée** |
-| Stocke | analyses, pages, contestations | **rien** |
-| Parle à | un fournisseur de modèle (facturé) | l'instance, par son API publique |
-| Si elle est compromise | les analyses sont exposées | **on peut forger des clés à volonté** |
+| Holds | the **public** key | the **private** key |
+| Stores | analyses, pages, disputes | **nothing** |
+| Talks to | a model provider (billed) | the instance, through its public API |
+| If compromised | the analyses are exposed | **keys can be forged at will** |
 
-La clé privée est le secret le plus sensible du projet : elle permet d'émettre des clés valables sur votre instance, donc de dépenser votre budget de modèle. La poser sur la machine qui parle à Internet, qui exécute des analyses et qui tient une base de données, c'est la mettre là où il y a le plus à compromettre.
+The private key is the most sensitive secret in the project: it makes it possible to issue keys valid on your instance, and therefore to spend your model budget. Putting it on the machine that talks to the internet, runs analyses and keeps a database is putting it where there is the most to compromise.
 
-Le portail, lui, n'a **pas de base de données** et ne conserve rien : ni les clés délivrées, ni les recherches, ni les contestations, qu'il transmet à l'instance. Un conteneur suffit, sur la plus petite machine disponible, et le perdre ne perd aucune donnée.
+The portal, for its part, has **no database** and keeps nothing: not the keys it issues, not the searches, not the disputes, which it forwards to the instance. One container is enough, on the smallest machine available, and losing it loses no data.
 
-Les réunir sur un seul hôte fonctionne et reste défendable pour démarrer. Mais c'est un choix à faire les yeux ouverts, pas un défaut de configuration.
+Putting them on a single host works and remains defensible to get started. But it is a choice to make with open eyes, not a misconfiguration.
 
-### Démarrer
+### Starting it
 
 ```bash
-# Sur la machine qui héberge le portail (idéalement pas celle de l'instance)
-cp .env.portail.example .env    # y placer LYNCEUS_PORTAIL_CLE_PRIVEE et l'adresse publique de l'instance
+# On the machine hosting the portal (ideally not the instance's)
+cp .env.portail.example .env    # put LYNCEUS_PORTAIL_CLE_PRIVEE and the instance's public address in it
 mkdir -p paquets
 docker compose -f docker-compose.portail.yml --profile tunnel up -d
 ```
 
-Depuis Portainer, la variable `COMPOSE_PROFILES=tunnel` remplace le drapeau.
+From Portainer, the `COMPOSE_PROFILES=tunnel` variable replaces the flag.
 
-Le hostname Cloudflare du portail doit pointer vers `http://portail:8080`.
+The portal's Cloudflare hostname must point at `http://portail:8080`.
 
-### L'extension est déjà dans l'image
+### The extension is already in the image
 
-L'image contient l'archive de l'extension : elle est construite dans un étage Node du `Dockerfile`, dont rien d'autre ne subsiste. Un portail fraîchement déployé distribue donc l'extension sans qu'on ait à copier quoi que ce soit sur l'hôte.
+The image contains the extension archive: it is built in a Node stage of the `Dockerfile`, of which nothing else survives. A freshly deployed portal therefore distributes the extension without anything having to be copied onto the host.
 
-Ce paquet embarqué est **neutre** : aucune adresse de portail n'y est inscrite, faute de quoi il faudrait une image par portail. L'adresse est ajoutée **au moment du téléchargement**, dans un fichier `portail.json` glissé dans l'archive servie. L'extension l'y lit et propose « Obtenir une clé » sans que personne ait à recopier une adresse. Renseignez `LYNCEUS_PORTAIL_ADRESSE` : sans elle, l'adresse est déduite de la requête, ce qui se trompe de schéma derrière un proxy qui ne transmet pas `X-Forwarded-Proto`.
+That embedded package is **neutral**: no portal address is written into it, since otherwise there would have to be one image per portal. The address is added **at download time**, in a `portail.json` file slipped into the archive that is served. The extension reads it there and offers "Get a key" without anyone having to copy an address. Set `LYNCEUS_PORTAIL_ADRESSE`: without it the address is inferred from the request, which gets the scheme wrong behind a proxy that does not forward `X-Forwarded-Proto`.
 
-### Le lien à transmettre
+### The link to pass around
 
-`https://votre-portail/telecharger` sert **toujours la version la plus haute** publiée par ce portail. C'est une adresse stable : elle ne change pas d'une version à l'autre, et le lien figure dans le pied de page de chaque page du site, avec le numéro de version et le poids de l'archive.
+`https://your-portal/telecharger` always serves **the highest version** published by that portal. It is a stable address: it does not change from one version to the next, and the link appears in the footer of every page of the site, with the version number and the size of the archive.
 
-L'archive servie est configurée à la volée pour ce portail, si bien qu'un lien envoyé par message suffit : la personne télécharge, charge l'extension dans Chrome, et le bouton « Obtenir une clé » sait déjà à qui s'adresser.
+The archive served is configured on the fly for that portal, so a link sent in a message is enough: the person downloads it, loads the extension into Chrome, and the "Get a key" button already knows who to talk to.
 
-### Publier une version sans reconstruire l'image
+### Publishing a version without rebuilding the image
 
-Déposez un zip de version plus haute dans `./paquets` :
+Drop a zip with a higher version into `./paquets`:
 
 ```bash
 cd extension && npm run paquet
-scp lynceus-extension-v*.zip serveur:/chemin/vers/api/paquets/
+scp lynceus-extension-v*.zip server:/path/to/api/paquets/
 ```
 
-Le portail relit le dossier à chaque requête : la nouvelle version est proposée **immédiatement**, sans redémarrage. Le départage se fait sur le **numéro de version**, jamais sur la date du fichier ni sur l'ordre des dossiers, si bien que restaurer une sauvegarde ou déposer un zip plus ancien ne fait pas régresser ce qui est distribué. Retirez le zip du volume et le paquet de l'image reprend la main.
+The portal re-reads the folder on every request: the new version is offered **immediately**, with no restart. The tie-break is on the **version number**, never on the file date nor on folder order, so restoring a backup or dropping in an older zip does not roll back what is distributed. Remove the zip from the volume and the package from the image takes over again.
 
-### Ce qui redémarre, et ce qui ne redémarre pas
+### What restarts, and what does not
 
-Trois conteneurs, trois cycles de vie indépendants. Mettre l'un à jour n'interrompt pas les autres.
+Three containers, three independent life cycles. Updating one does not interrupt the others.
 
-| Ce que vous changez | Ce qu'il faut faire | Ce qui s'interrompt |
+| What you change | What to do | What is interrupted |
 |---|---|---|
-| Une version de l'extension | déposer le zip dans `./paquets` | **rien** |
-| Le site (textes, mise en page) | `pull` puis `up -d` du compose portail | le site, quelques secondes |
-| L'API (moteur, annuaire, schéma) | `pull` puis `up -d` du compose instance | les analyses, quelques secondes |
+| An extension version | drop the zip into `./paquets` | **nothing** |
+| The site (text, layout) | `pull` then `up -d` of the portal compose | the site, for a few seconds |
+| The API (engine, directory, schema) | `pull` then `up -d` of the instance compose | analyses, for a few seconds |
 
-Le site et l'API partagent la même image mais pas le même conteneur : redéployer le portail laisse l'API analyser sans s'en apercevoir, et inversement. Pendant un redémarrage de l'instance, le portail continue de servir ses pages et signale simplement l'annuaire comme injoignable.
+The site and the API share the same image but not the same container: redeploying the portal leaves the API analysing without noticing, and the other way round. While the instance restarts, the portal keeps serving its pages and simply reports the directory as unreachable.
 
-> **Une extension installée ne se met pas à jour toute seule.** Chargée en mode développeur, elle reste à sa version tant que la personne ne la recharge pas. Publier un nouveau zip met la nouvelle version à disposition, cela ne l'installe chez personne.
+> **An installed extension does not update itself.** Loaded in developer mode, it stays at its version until the person reloads it. Publishing a new zip makes the new version available; it installs it on nobody.
 
-### Ce que l'inscription délivre, et ce qu'elle ne retient pas
+### What sign-up issues, and what it does not keep
 
-`POST /v1/inscription` renvoie un billet : l'adresse de l'instance, une clé signée, son quota et son échéance. Aucun compte n'est créé, aucune adresse électronique n'est demandée, et **rien n'est enregistré** : interrogé, le portail serait incapable de dire qui a obtenu quoi.
+`POST /v1/inscription` returns a ticket: the instance address, a signed key, its quota and its expiry. No account is created, no email address is asked for, and **nothing is recorded**: if asked, the portal would be unable to say who obtained what.
 
-L'inscription est **libre par défaut** (`LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR=0`). Ce choix a une contrepartie qu'il faut connaître : rien n'empêche un script de demander mille clés, et chaque clé donne droit à des analyses facturées. Trois leviers, du plus doux au plus ferme :
+Sign-up is **unrestricted by default** (`LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR=0`). That choice has a downside worth knowing: nothing stops a script from asking for a thousand keys, and every key grants billed analyses. Three levers, from gentlest to firmest:
 
-1. **Le quota par clé** (`LYNCEUS_PORTAIL_QUOTA_JOUR`) : déjà actif, il borne ce qu'une clé peut coûter.
-2. **Le plafond par adresse** (`LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR`) : passer à 2 ou 3 suffit à décourager le scriptage ordinaire. Compteur en mémoire, remis à zéro au redémarrage : un frein, pas une barrière, et inopérant derrière un rotateur d'adresses.
-3. **La révocation** (`LYNCEUS_CLES_REVOQUEES` sur l'instance) : l'identifiant d'une clé abusive est visible en base, dans `consommations_cles`.
+1. **The per-key quota** (`LYNCEUS_PORTAIL_QUOTA_JOUR`): already active, it bounds what one key can cost.
+2. **The per-address ceiling** (`LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR`): setting it to 2 or 3 is enough to discourage ordinary scripting. The counter lives in memory and resets on restart: a brake, not a barrier, and useless behind an address rotator.
+3. **Revocation** (`LYNCEUS_CLES_REVOQUEES` on the instance): the id of an abusive key is visible in the database, in `consommations_cles`.
 
-Surveillez le nombre d'analyses **réelles** (section « Surveiller les coûts ») plutôt que le nombre de clés : mille clés inutilisées ne coûtent rien.
+Watch the number of **real** analyses (the "Watching the costs" section) rather than the number of keys: a thousand unused keys cost nothing.
 
-### Obligations légales d'une instance ouverte au public
+### Legal obligations of an instance open to the public
 
-Dès que le portail est accessible à d'autres que vous, trois pages deviennent nécessaires,
-et le portail les sert : `/mentions-legales`, `/confidentialite` et `/conditions`.
+As soon as the portal is reachable by anyone but you, three pages become necessary, and the
+portal serves them: `/mentions-legales`, `/confidentialite` and `/conditions`.
 
-S'y ajoute une obligation qui ne vient pas de la loi mais de la licence. L'AGPL-3.0 impose
-(article 13) de proposer le code correspondant aux personnes qui **utilisent le service à
-distance**, modifications comprises. Servir Lynceus sans publier le code que vous faites
-tourner n'est pas conforme. Deux variables suffisent :
+To those is added an obligation that comes not from the law but from the licence. The
+AGPL-3.0 requires (article 13) that the corresponding source be offered to people who **use
+the service remotely**, modifications included. Serving Lynceus without publishing the code
+you are running is not compliant. Two variables are enough:
 
 ```ini
 LYNCEUS_PORTAIL_DEPOT=https://github.com/Nashi-cloud/Project-Lynceus
 LYNCEUS_PORTAIL_DEPOT_FICHIERS=https://github.com/Nashi-cloud/Project-Lynceus/blob/main
 ```
 
-Ce sont les valeurs par défaut : une instance qui fait tourner le code publié tel quel n'a
-rien à changer, et l'adresse annoncée est exacte. **Dès que vous modifiez le code, mettez
-celle de votre dépôt** : c'est votre version qui doit être proposée, pas la nôtre.
+Those are the defaults: an instance running the published code as is has nothing to change,
+and the address announced is accurate. **As soon as you modify the code, put your own
+repository there**: it is your version that must be offered, not ours.
 
-La première alimente les liens « code source » du pied de page et des documents. La
-seconde sert à désigner un fichier précis, et sa forme dépend de la forge : `/blob/main`
-sur GitHub et GitLab, `/src/branch/main` sur Forgejo. Vidées, les pages parlent du dépôt
-sans pouvoir y renvoyer, et le portail l'écrit au démarrage.
+The first feeds the "source code" links in the footer and in the documents. The second is
+used to point at a specific file, and its shape depends on the forge: `/blob/main` on GitHub
+and GitLab, `/src/branch/main` on Forgejo. Left empty, the pages talk about the repository
+without being able to link to it, and the portal says so at startup.
 
-Leur contenu vient de la configuration, pas du code, parce que chaque instance a son propre
-exploitant :
+Their content comes from the configuration, not from the code, because every instance has
+its own operator:
 
 ```ini
 LYNCEUS_PORTAIL_EDITEUR_NOM=…
 LYNCEUS_PORTAIL_EDITEUR_STATUT=…
 LYNCEUS_PORTAIL_EDITEUR_ADRESSE=…
-LYNCEUS_PORTAIL_EDITEUR_IDENTIFIANT=…     # SIREN ou équivalent
+LYNCEUS_PORTAIL_EDITEUR_IDENTIFIANT=…     # company number or equivalent
 LYNCEUS_PORTAIL_EDITEUR_DIRECTEUR=…
 LYNCEUS_PORTAIL_EDITEUR_CONTACT=…
 LYNCEUS_PORTAIL_HEBERGEUR_NOM=…
@@ -350,122 +352,121 @@ LYNCEUS_PORTAIL_HEBERGEUR_ADRESSE=…
 LYNCEUS_PORTAIL_DROIT_APPLICABLE=…
 ```
 
-Non renseignées, les pages **indiquent qu'elles ne le sont pas** au lieu d'afficher des
-mentions inventées, et le portail l'écrit sur la sortie d'erreur au démarrage. Un usage
-strictement personnel n'a rien à remplir.
+Left unset, the pages **say that they are unset** instead of displaying invented details,
+and the portal writes it to standard error at startup. Strictly personal use has nothing to
+fill in.
 
-> **Le point à ne pas manquer.** La politique de confidentialité annonce en tête que le
-> texte des pages analysées est transmis au fournisseur de modèle, qui peut être hors de
-> l'Union européenne. Elle **nomme le fournisseur réellement configuré**, lu dans
-> `/v1/meta` de l'instance : changer de fournisseur met la page à jour toute seule, ce qui
-> évite qu'elle devienne fausse sans que personne s'en aperçoive. Si ce transfert pose
-> problème dans votre cas, choisissez un fournisseur établi dans l'Union, ou un modèle
-> local via Ollama : le texte ne sort alors pas de la machine.
+> **The point not to miss.** The privacy policy states at the top that the text of analysed
+> pages is transmitted to the model provider, which may be outside the European Union. It
+> **names the provider actually configured**, read from the instance's `/v1/meta`: changing
+> provider updates the page by itself, which stops it becoming false without anyone
+> noticing. If that transfer is a problem in your case, choose a provider established in
+> the Union, or a local model through Ollama: the text then never leaves the machine.
 
-L'analyse complète, avec les traitements, les bases légales retenues et les durées de
-conservation, est dans [docs/CONFORMITE.md](../docs/CONFORMITE.md).
+The full analysis, with the processing operations, the legal bases relied on and the
+retention periods, is in [docs/en/CONFORMITE.md](../docs/en/CONFORMITE.md).
 
-### Le portail sans clé privée
+### The portal without a private key
 
-Laisser `LYNCEUS_PORTAIL_CLE_PRIVEE` vide est un mode valide : les pages restent servies, l'annuaire reste consultable, et l'inscription répond `503` en expliquant qu'aucune clé n'est délivrée ici. C'est ce qu'il faut pour une vitrine, ou pour un portail qui ne distribue que la documentation.
+Leaving `LYNCEUS_PORTAIL_CLE_PRIVEE` empty is a valid mode: the pages are still served, the directory is still browsable, and sign-up answers `503` explaining that no key is issued here. That is what you want for a showcase, or for a portal that only distributes the documentation.
 
-## 7. Exploitation courante
+## 7. Day-to-day operation
 
 ```bash
-# Contestations reçues (charte §6)
+# Disputes received (charter §6)
 export LYNCEUS_ADMIN_TOKEN=…
 lynceus signalements --statut nouveau
 lynceus traiter 3 --statut examine --decision "…"
 
-# Mise à jour
+# Update
 docker compose -f docker-compose.prod.yml pull && docker compose -f docker-compose.prod.yml up -d
 
-# Sauvegarde de l'annuaire
+# Backing up the directory
 docker exec lynceus-db pg_dump -U lynceus lynceus | gzip > lynceus-$(date +%F).sql.gz
 ```
 
-L'annuaire est le patrimoine de l'instance : chaque analyse a coûté un appel au modèle. **Sauvegardez-le régulièrement.**
+The directory is the instance's capital: every analysis cost a call to the model. **Back it up regularly.**
 
-## Révoquer une clé
+## Revoking a key
 
-Si une clé est utilisée abusivement, ajoutez son identifiant à `LYNCEUS_CLES_REVOQUEES` (visible dans la sortie de `cle-emettre`, ou en base) et redémarrez. La liste ne contient que les clés écartées, ce n'est pas un annuaire.
+If a key is being abused, add its id to `LYNCEUS_CLES_REVOQUEES` (visible in the output of `cle-emettre`, or in the database) and restart. The list contains only the keys that have been set aside; it is not a directory.
 
-## Les trois garde-fous
+## The three guardrails
 
-Ils se cumulent, et **aucun ne s'applique à une page déjà présente dans l'annuaire** : la resservir ne coûte rien, donc n'est ni limitée ni décomptée.
+They stack, and **none of them applies to a page already present in the directory**: serving it again costs nothing, so it is neither limited nor counted.
 
-| Garde-fou | Compté par | Fenêtre | Où | Réglage |
+| Guardrail | Counted per | Window | Where | Setting |
 |---|---|---|---|---|
-| Débit | adresse du visiteur | 60 s glissantes | mémoire | `LYNCEUS_RATE_LIMIT_ANALYSES` (10/min) |
-| Quota | identifiant de clé | jour calendaire (UTC) | base | porté par chaque clé (`--quota`) |
-| Taille | aucune | par requête | aucun | `LYNCEUS_CONTENU_MAX_CARS` (60 000) |
+| Rate | visitor address | 60 s sliding | memory | `LYNCEUS_RATE_LIMIT_ANALYSES` (10/min) |
+| Quota | key id | calendar day (UTC) | database | carried by each key (`--quota`) |
+| Size | nothing | per request | nothing | `LYNCEUS_CONTENU_MAX_CARS` (60,000) |
 
-Le débit arrête les rafales (un script qui boucle) ; le quota protège le budget sur la durée (quelqu'un qui analyserait tranquillement des milliers de pages dans la journée).
+The rate limit stops bursts (a looping script); the quota protects the budget over time (someone quietly analysing thousands of pages in a day).
 
-> **Un seul processus.** Le compteur de débit vit dans la mémoire du processus : servir l'application avec plusieurs workers multiplierait la limite réelle par leur nombre, silencieusement. L'image lance donc un unique processus. Si le trafic l'exigeait un jour, il faudrait d'abord déplacer ce compteur dans un stockage partagé (Redis ou équivalent), avant d'ajouter des workers et non après.
+> **A single process.** The rate counter lives in the process's memory: serving the application with several workers would multiply the real limit by their number, silently. The image therefore starts a single process. Should traffic ever demand it, that counter would first have to move to shared storage (Redis or equivalent), before adding workers and not after.
 
-## Capacité et montée en charge
+## Capacity and scaling
 
-Une analyse mobilise un thread pendant tout l'appel au modèle (10 à 60 s selon le modèle et la longueur de la page). Sans plafond, quelques dizaines d'analyses suffiraient à saturer le serveur, et les consultations d'annuaire, normalement instantanées, attendraient derrière elles.
+An analysis ties up a thread for the whole call to the model (10 to 60 s depending on the model and the length of the page). With no ceiling, a few dozen analyses would be enough to saturate the server, and directory lookups, normally instant, would queue behind them.
 
-`LYNCEUS_ANALYSES_SIMULTANEES` (12 par défaut) borne les analyses menées de front. Les demandes au-delà **patientent sans consommer de thread** : elles aboutissent, simplement plus tard.
+`LYNCEUS_ANALYSES_SIMULTANEES` (12 by default) bounds the analyses run concurrently. Requests beyond that **wait without consuming a thread**: they do complete, just later.
 
-Mesures sur un serveur réel, modèle simulé à 3 s par analyse :
+Measurements on a real server, with a simulated model at 3 s per analysis:
 
-| Analyses lancées d'un coup | Toutes abouties | Pire latence d'un lookup | Médiane |
+| Analyses started at once | All completed | Worst lookup latency | Median |
 |---|---|---|---|
-| 40 | 40/40 | 0,22 s | 2 ms |
-| 60 | 60/60 | 0,21 s | 2 ms |
-| 200 | 200/200 | 2,2 s | 2 ms |
+| 40 | 40/40 | 0.22 s | 2 ms |
+| 60 | 60/60 | 0.21 s | 2 ms |
+| 200 | 200/200 | 2.2 s | 2 ms |
 
-Avant ce plafond, 40 analyses simultanées suffisaient à faire attendre un lookup **6,2 secondes**. Le badge passif reste désormais réactif sous une charge que votre instance ne connaîtra probablement jamais.
+Before that ceiling, 40 simultaneous analyses were enough to make a lookup wait **6.2 seconds**. The passive badge now stays responsive under a load your instance will most likely never see.
 
-**Débit soutenu** : environ `analyses_simultanees / durée_d_une_analyse`. Avec 12 places et un modèle à 15 s, comptez ~48 analyses par minute, bien au-delà de ce qu'un cercle familial ou associatif produit, d'autant que les pages déjà connues sont resservies **sans analyse**.
+**Sustained throughput**: roughly `simultaneous_analyses / duration_of_one_analysis`. With 12 slots and a model at 15 s, reckon on about 48 analyses a minute, well beyond what a family or a small association produces, all the more so since already known pages are served **without an analysis**.
 
-Si le trafic l'exigeait vraiment :
+If traffic really demanded it:
 
-1. **augmentez `LYNCEUS_ANALYSES_SIMULTANEES`** : c'est le levier direct, tant que le fournisseur de modèle suit (attention à ses propres limites de débit) ;
-2. **puis seulement**, envisagez plusieurs processus, mais il faudra d'abord déplacer le compteur de débit dans un stockage partagé (voir l'avertissement plus haut).
+1. **raise `LYNCEUS_ANALYSES_SIMULTANEES`**: that is the direct lever, as long as the model provider keeps up (mind its own rate limits);
+2. **only then**, consider several processes, but the rate counter must first move to shared storage (see the warning above).
 
-Une file de tâches (Celery, RQ) n'apporterait rien ici : elle imposerait Redis et un worker séparé, et obligerait les clients à interroger périodiquement l'état de leur analyse au lieu de recevoir directement leur carte. Le plafond de concurrence résout le même problème sans rien de tout cela.
+A task queue (Celery, RQ) would bring nothing here: it would impose Redis and a separate worker, and would force clients to poll for the state of their analysis instead of receiving their card directly. The concurrency ceiling solves the same problem without any of that.
 
-## Monter à plusieurs milliers d'utilisateurs
+## Scaling to several thousand users
 
-Ce qui cède en premier, dans l'ordre, et ce qui est déjà traité.
+What gives way first, in order, and what is already handled.
 
-### Déjà en place
+### Already in place
 
-**L'index de recherche par préfixe.** Le lookup k-anonyme (`LIKE 'abcde%'`) est la requête la plus fréquente : une par page visitée, badge activé. PostgreSQL n'utilise un index B-tree ordinaire pour ce filtre que si la collation est `C`. Sans opérateur adapté, la requête balaie toute la table. Mesuré : **22 ms sur 500 000 pages**, contre **0,08 ms** avec l'index `varchar_pattern_ops`, et **0,25 ms sur 5 millions**. La migration le crée automatiquement.
+**The prefix search index.** The k-anonymous lookup (`LIKE 'abcde%'`) is the most frequent query: one per page visited, with the badge on. PostgreSQL only uses an ordinary B-tree index for that filter if the collation is `C`. Without a suitable operator class, the query scans the whole table. Measured: **22 ms over 500,000 pages**, against **0.08 ms** with the `varchar_pattern_ops` index, and **0.25 ms over 5 million**. The migration creates it automatically.
 
-**Le pool de connexions.** Le défaut de SQLAlchemy (5 + 10) était inférieur au nombre de threads du serveur : sous charge, des requêtes auraient attendu une connexion libre sans que la base soit en cause. Porté à 20 + 20, avec `pool_pre_ping` (écarte les connexions coupées par un pare-feu) et recyclage à 30 minutes.
+**The connection pool.** SQLAlchemy's default (5 + 10) was lower than the server's thread count: under load, requests would have waited for a free connection with the database not to blame. Raised to 20 + 20, with `pool_pre_ping` (which drops connections cut by a firewall) and recycling at 30 minutes.
 
-**Le démarrage simultané de plusieurs répliques.** Sans coordination, elles appliqueraient les mêmes migrations de front, avec des erreurs, voire un schéma à moitié migré. Un verrou consultatif PostgreSQL sérialise l'opération : vérifié avec 6 répliques lancées ensemble sur une base vierge, une seule migre, les autres attendent puis constatent qu'il n'y a rien à faire.
+**Several replicas starting at once.** Without coordination they would apply the same migrations concurrently, with errors, or even a half-migrated schema. A PostgreSQL advisory lock serialises the operation: verified with 6 replicas started together against a blank database, one migrates and the others wait and then find there is nothing to do.
 
-**Le plafond d'analyses simultanées**, qui préserve la réactivité des consultations (section précédente).
+**The ceiling on simultaneous analyses**, which preserves the responsiveness of lookups (previous section).
 
-### Ce qu'il faudra faire pour aller plus loin
+### What will have to be done to go further
 
-Deux verrous empêchent aujourd'hui d'ajouter des répliques, et ils doivent être levés **avant**, pas après :
+Two locks currently prevent adding replicas, and they must be lifted **before**, not after:
 
-1. **Le compteur de débit vit en mémoire.** Avec N processus, la limite réelle est multipliée par N. Il faut le déplacer dans un stockage partagé (Redis). Le quota par clé, lui, est déjà en base et se comporte correctement en multi-instances.
-2. **Le plafond de concurrence est également par processus.** Même remarque : N répliques enverraient N × 12 analyses simultanées au fournisseur de modèle, avec ses propres limites de débit à la clé.
+1. **The rate counter lives in memory.** With N processes, the real limit is multiplied by N. It has to move to shared storage (Redis). The per-key quota, on the other hand, is already in the database and behaves correctly across instances.
+2. **The concurrency ceiling is also per process.** Same remark: N replicas would send N × 12 simultaneous analyses to the model provider, which has its own per-key rate limits.
 
-### Le vrai plafond n'est pas technique
+### The real ceiling is not technical
 
-Le débit d'analyses est borné par le fournisseur de modèle et par le budget, pas par ce serveur. Deux effets jouent en votre faveur :
+Analysis throughput is bounded by the model provider and by the budget, not by this server. Two effects work in your favour:
 
-- **le cache est mutualisé** : plus il y a d'utilisateurs, plus la proportion de pages déjà connues augmente, et une page connue ne coûte rien ;
-- **les consultations sont quasi gratuites** : 0,25 ms sur 5 millions de pages, sans appel au modèle.
+- **the cache is shared**: the more users there are, the higher the proportion of pages already known, and a known page costs nothing;
+- **lookups are nearly free**: 0.25 ms over 5 million pages, with no call to the model.
 
-Autrement dit, un millier d'utilisateurs qui lisent les mêmes sites d'actualité coûtent bien moins qu'un millier d'utilisateurs qui exploreraient chacun des pages inédites. Surveillez le nombre d'analyses **réelles** (section suivante), pas le nombre de requêtes.
+In other words, a thousand users reading the same news sites cost far less than a thousand users each exploring pages nobody has seen. Watch the number of **real** analyses (next section), not the number of requests.
 
-## Surveiller les coûts
+## Watching the costs
 
-Le vrai risque d'une instance exposée n'est pas l'intrusion, c'est la facture. Trois garde-fous se cumulent : quota par clé, limite de débit par IP, et taille maximale du contenu. Pour estimer la dépense :
+The real risk of an exposed instance is not intrusion, it is the bill. Three guardrails stack: per-key quota, per-IP rate limit, and maximum content size. To estimate the spend:
 
 ```bash
 docker exec lynceus-db psql -U lynceus -c \
   "SELECT DATE(cree_le) jour, COUNT(*) analyses FROM analyses GROUP BY 1 ORDER BY 1 DESC LIMIT 7;"
 ```
 
-Multipliez par le tarif de votre modèle. Rappel utile : **une page n'est analysée qu'une fois** pour tous les utilisateurs, donc le coût décroît naturellement à mesure que l'annuaire se remplit.
+Multiply by your model's rate. A useful reminder: **a page is only analysed once** for all users, so the cost naturally falls as the directory fills up.

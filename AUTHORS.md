@@ -1,34 +1,36 @@
-# Auteurs et titulaires des droits
+# Authors and rights holders
 
-Lynceus est publié sous licence GNU Affero General Public License version 3
-(voir [LICENSE](LICENSE)).
+**English** · [Français](AUTHORS.fr.md)
 
-## Titulaire des droits
+Lynceus is published under the GNU Affero General Public License version 3
+(see [LICENSE](LICENSE)).
+
+## Rights holder
 
     Copyright (C) 2026 Raphaël Auberlet (Nashi.cloud)
 
-Nashi.cloud est le nom commercial de Raphaël Auberlet, entrepreneur individuel.
-Contact : contact@nashi.cloud
+Nashi.cloud is the trading name of Raphaël Auberlet, sole trader.
+Contact: contact@nashi.cloud
 
-## Contributeurs
+## Contributors
 
-Les contributions extérieures sont apportées sous **Developer Certificate of Origin**
-(voir [DCO.txt](DCO.txt)) : chaque contributeur conserve ses droits d'auteur sur son
-apport et certifie avoir le droit de le publier sous AGPL-3.0.
+Outside contributions are made under the **Developer Certificate of Origin**
+(see [DCO.txt](DCO.txt)): every contributor keeps their copyright over what they contribute
+and certifies that they have the right to publish it under AGPL-3.0.
 
-Conséquence à connaître : le projet **ne peut pas être relicencié** sans l'accord de
-chaque contributeur. C'est un choix, pas un oubli. Il rend la contribution plus simple, au
-prix de la possibilité de vendre des exceptions à la licence.
+A consequence worth knowing: the project **cannot be relicensed** without the agreement of
+every contributor. That is a choice, not an oversight. It makes contributing simpler, at the
+cost of ever being able to sell exceptions to the licence.
 
-<!-- Ajoutez-vous ici lors de votre première contribution, ordre alphabétique. -->
+<!-- Add yourself here with your first contribution, in alphabetical order. -->
 
-## Ressources tierces embarquées
+## Embedded third-party resources
 
-| Ressource | Licence | Notice |
+| Resource | Licence | Notice |
 |---|---|---|
 | htmx 2.0.4 | 0BSD | `api/lynceus/portail/statique/htmx.LICENSE` |
 | Fraunces | SIL Open Font License 1.1 | `api/lynceus/portail/statique/polices/LICENSE` |
 | Newsreader | SIL Open Font License 1.1 | `api/lynceus/portail/statique/polices/LICENSE` |
 
-Les dépendances installées par `pip` et `npm` ne sont pas redistribuées dans ce dépôt.
-Elles portent leurs propres licences, listées par `pip licenses` et `npm ls`.
+Dependencies installed by `pip` and `npm` are not redistributed in this repository. They
+carry their own licences, listed by `pip licenses` and `npm ls`.
