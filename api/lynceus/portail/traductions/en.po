@@ -515,3 +515,179 @@ msgstr "This text is the very file the project applies. It therefore cannot say 
 
 msgid "Cette page n'existe pour l'instant qu'en français, la langue dans laquelle elle engage l'exploitant. Une traduction serait une commodité, pas un texte de droit : en cas de divergence, c'est la version française qui vaut."
 msgstr "This page exists only in French for now, the language in which it binds the operator. A translation would be a convenience, not a legal text: should the two ever diverge, the French version is the one that counts."
+
+# --- Accueil : le récit
+#
+# Traduire mot à mot un texte écrit pour être lu à voix haute donnerait de l'anglais
+# scolaire. Ces phrases sont réécrites, avec la même intention et le même rythme.
+
+msgid "L'œil met du temps à s'habituer à l'obscurité.<br>Ensuite, il voit."
+msgstr "The eye takes its time to adjust to the dark.<br>Then it sees."
+
+msgid "Lire d'abord"
+msgstr "Read first"
+
+msgid "Faire défiler"
+msgstr "Scroll"
+
+msgid "I. Un homme à la proue"
+msgstr "I. A man at the prow"
+
+msgid "La vigie ne tenait pas la barre"
+msgstr "The lookout did not hold the helm"
+
+msgid "Les Argonautes avaient à leur bord un homme dont la vue passait pour surnaturelle. Lyncée voyait, disait-on, à travers la pierre et jusque sous la mer."
+msgstr "The Argonauts had aboard a man whose eyesight was said to be more than human. Lynceus, so the story goes, could see through stone and down beneath the sea."
+
+msgid "On ne l'a pourtant jamais mis à la barre. Sa place était à l'avant du navire, et son rôle tenait en une phrase : <strong>annoncer les écueils</strong>. Il ne choisissait pas la route. Il disait ce qu'il y avait devant, et l'équipage décidait."
+msgstr "He was never given the helm. His place was at the front of the ship, and his job fitted in one line: <strong>call out the reefs</strong>. He did not choose the course. He said what lay ahead, and the crew decided."
+
+msgid "<strong>« Un œil de lynx »</strong> vient de là, à une confusion près : le félin porte en grec un nom presque identique, et il a fini par recueillir le compliment. Mais voir à travers la pierre était le don du guetteur, pas celui du chasseur. La nuance tient tout entière dans l'usage qu'on en fait : le fauve regarde pour lui, la vigie regarde pour les autres."
+msgstr "<strong>“Eyes like a lynx”</strong> comes from here, give or take a confusion: the animal bears an almost identical name in Greek, and it ended up collecting the compliment. But seeing through stone was the lookout's gift, not the hunter's. The whole difference lies in what the sight is for: the predator looks for itself, the lookout looks for everyone else."
+
+msgid "« Il ne décidait pas du cap.<br>Il disait seulement ce qu'il y avait devant. »"
+msgstr "“He did not decide the course.<br>He only said what lay ahead.”"
+
+msgid "Le rôle que ce projet s'est donné."
+msgstr "The role this project has given itself."
+
+msgid "II. Le défaut de la légende"
+msgstr "II. The flaw in the legend"
+
+msgid "Personne ne se croit crédule"
+msgstr "Nobody thinks they are the gullible one"
+
+msgid "La légende est flatteuse, et c'est son défaut. Elle laisse croire qu'il existerait deux sortes de gens : ceux qui voient, et ceux qui se trompent. C'est faux, et c'est même le début du problème."
+msgstr "The legend is flattering, and that is its flaw. It suggests there are two kinds of people: those who see, and those who are fooled. That is false, and it is where the problem starts."
+
+msgid "Nous nous laissons tous convaincre par ce qui nous ressemble, par ce qui nous rassure, par ce qui arrive au moment où nous en avions besoin. Un texte bien construit désarme la vigilance de n'importe qui, la vôtre comme la mienne."
+msgstr "We are all persuaded by what resembles us, by what reassures us, by what arrives exactly when we needed it. A well-built text disarms anyone's guard, yours as much as mine."
+
+msgid "Ce qui se travaille n'est donc pas la lucidité. C'est une chose beaucoup plus modeste : <em>reconnaître un procédé quand on le croise</em>. Une fois qu'on a vu comment fonctionne l'urgence fabriquée, on la voit partout, et elle cesse d'agir."
+msgstr "What can be trained, then, is not clear-sightedness. It is something far more modest: <em>recognising a technique when you meet one</em>. Once you have seen how manufactured urgency works, you see it everywhere, and it stops working on you."
+
+msgid "III. Ce que vous verrez"
+msgstr "III. What you will see"
+
+msgid "Le passage exact, et le nom du procédé"
+msgstr "The exact passage, and the name of the technique"
+
+msgid "Lynceus lit la page que vous lisez et vous montre <strong>comment elle est construite</strong>. Il cite le passage exact, jamais un résumé ni une reformulation, puis nomme le procédé employé."
+msgstr "Lynceus reads the page you are reading and shows you <strong>how it is built</strong>. It quotes the exact passage, never a summary or a paraphrase, then names the technique at work."
+
+msgid "28 sur 100"
+msgstr "28 out of 100"
+
+msgid "Théorie du complot · veillecitoyenne.example"
+msgstr "Conspiracy theory · citizenwatch.example"
+
+msgid "Ce que les autorités ne veulent pas que vous lisiez sur l'eau du robinet"
+msgstr "What the authorities don't want you to read about tap water"
+
+msgid "Rhétorique de la vérité cachée"
+msgstr "Hidden-truth rhetoric"
+
+msgid "gravité haute"
+msgstr "high severity"
+
+msgid "« Ce que les autorités ne veulent surtout pas que vous lisiez »"
+msgstr "“What the authorities least of all want you to read”"
+
+msgid "Le titre pose l'existence d'un secret sans jamais dire qui le garderait, ni comment il tiendrait."
+msgstr "The headline asserts that a secret exists without ever saying who would be keeping it, or how it would hold."
+
+msgid "Autorité anonyme"
+msgstr "Anonymous authority"
+
+msgid "« selon plusieurs chercheurs indépendants »"
+msgstr "“according to several independent researchers”"
+
+msgid "Aucun nom, aucune publication, aucune date. La source est invérifiable par construction."
+msgstr "No name, no publication, no date. The source cannot be checked, by design."
+
+msgid "<strong>Ce qui va bien :</strong> l'article est daté et son auteur est identifiable."
+msgstr "<strong>What it does well:</strong> the article is dated and its author can be identified."
+
+msgid "Produite par une intelligence artificielle : elle peut comporter des erreurs. Elle décrit des procédés rhétoriques, pas la valeur des personnes qui partagent ce contenu."
+msgstr "Produced by an artificial intelligence: it may contain mistakes. It describes rhetorical techniques, not the worth of the people who share this content."
+
+msgid "Exemple fictif. Voilà ce qui s'affiche dans le panneau, à côté de la page que vous lisez."
+msgstr "A made-up example. This is what appears in the panel, beside the page you are reading."
+
+msgid "Une note, pas un verdict"
+msgstr "A grade, not a verdict"
+
+msgid "De A à E, comme un Nutri-Score. Elle est calculée par le serveur avec des pondérations publiées, pas décidée par le modèle de langage, qui se contente de décrire."
+msgstr "From A to E, like a nutrition label. It is computed by the server from published weightings, not decided by the language model, whose job is only to describe."
+
+msgid "Ce qui va bien aussi"
+msgstr "What it does well, too"
+
+msgid "Chaque analyse relève systématiquement les points positifs de la page. Un article n'est pas un camp : il a des qualités et des faiblesses."
+msgstr "Every analysis makes a point of listing what the page does well. An article is not a side to be on: it has strengths and weaknesses."
+
+msgid "Des questions, pas des ordres"
+msgstr "Questions, not orders"
+
+msgid "À la fin, quelques questions à se poser soi-même. C'est vous qui concluez. L'extension ne conclut jamais à votre place."
+msgstr "At the end, a few questions to put to yourself. You are the one who concludes. The extension never concludes for you."
+
+msgid "<a href=\"%(taxonomie)s\">%(nombre)s procédés au référentiel</a> : une liste fermée, publiée, que vous pouvez lire en entier avant d'installer quoi que ce soit."
+msgstr "<a href=\"%(taxonomie)s\">%(nombre)s techniques in the catalogue</a>: a closed, published list you can read from end to end before installing anything."
+
+msgid "IV. Les limites"
+msgstr "IV. The limits"
+
+msgid "Et surtout, ce qu'il ne fait pas"
+msgstr "And above all, what it does not do"
+
+msgid "Ces limites ne sont pas des précautions de façade. Elles sont écrites dans la <a href=\"%(charte)s\">charte</a>, et le code s'y tient."
+msgstr "These limits are not decorative caution. They are written into the <a href=\"%(charte)s\">charter</a>, and the code holds to them."
+
+msgid "Il ne dit pas ce qui est vrai"
+msgstr "It does not say what is true"
+
+msgid "Il décrit la façon dont un texte cherche à convaincre. Établir les faits est un autre métier, et il demande des humains."
+msgstr "It describes how a text sets out to persuade. Establishing the facts is another trade, and it takes people."
+
+msgid "Il ne note pas les croyances"
+msgstr "It does not grade beliefs"
+
+msgid "Une conviction religieuse, politique ou philosophique ne reçoit pas de note. Ce qui s'analyse est un procédé rhétorique, pas une foi."
+msgstr "A religious, political or philosophical conviction receives no grade. What is analysed is a rhetorical technique, not a faith."
+
+msgid "Il ne vous suit pas"
+msgstr "It does not follow you"
+
+msgid "La consultation de l'annuaire est anonyme par construction : le serveur reçoit quelques caractères d'empreinte, jamais l'adresse de la page."
+msgstr "Searching the directory is anonymous by construction: the server receives a few characters of a fingerprint, never the address of the page."
+
+msgid "Il peut se tromper"
+msgstr "It can be wrong"
+
+msgid "C'est une IA : elle produit des erreurs. Chaque analyse est contestable en deux clics, y compris par l'éditeur du site concerné."
+msgstr "It is an AI: it makes mistakes. Every analysis can be disputed in two clicks, including by the publisher of the site concerned."
+
+msgid "V. Le jour se lève"
+msgstr "V. Day breaks"
+
+msgid "Gratuit, libre, sans compte"
+msgstr "Free, open, no account"
+
+msgid "Vous pouvez l'installer en trois minutes, ou héberger votre propre instance et n'avoir de comptes à rendre à personne, pas même à nous."
+msgstr "You can install it in three minutes, or host your own instance and answer to nobody, us included."
+
+msgid "Héberger une instance"
+msgstr "Host an instance"
+
+msgid "<a href=\"%(depot)s\">Code source</a> sous AGPL-3.0"
+msgstr "<a href=\"%(depot)s\">Source code</a> under AGPL-3.0"
+
+msgid "Code source sous AGPL-3.0"
+msgstr "Source code under AGPL-3.0"
+
+msgid "méthodologie publiée"
+msgstr "published methodology"
+
+msgid "analyses contestables"
+msgstr "analyses open to dispute"
