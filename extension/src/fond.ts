@@ -18,6 +18,7 @@ import {
   signaler,
 } from "./commun/api";
 import { hacherUrl } from "./commun/hachage";
+import { msg } from "./commun/i18n";
 import { SuiviAnalyses } from "./commun/generations";
 import { raccourcir } from "./commun/troncature";
 import { chargerReglages } from "./commun/reglages";
@@ -48,7 +49,7 @@ const suivi = new SuiviAnalyses();
 chrome.runtime.onInstalled.addListener((details) => {
   chrome.contextMenus.create({
     id: MENU_ANALYSER,
-    title: "🔭 Analyser cette page avec Lynceus",
+    title: msg("menu_analyser"),
     contexts: ["page", "selection"],
   });
   // Un clic sur l'icône ouvre le panneau latéral (sans déclencher d'analyse).
@@ -158,7 +159,7 @@ async function lancerAnalyse(tabId: number): Promise<void> {
     if (!suivi.estCourante(tabId, generation)) return; // annulé pendant l'extraction
 
     const extraction = resultats[0]?.result as Extraction | undefined;
-    if (!extraction) throw new Error("L'extraction n'a rien renvoyé.");
+    if (!extraction) throw new Error(msg("erreur_extraction_vide"));
     if (!extraction.ok) throw new Error(extraction.erreur);
 
     majEtat(tabId, { phase: "analyse", depuis: Date.now() });
@@ -196,12 +197,7 @@ async function lancerAnalyse(tabId: number): Promise<void> {
 function messageLisible(erreur: unknown): string {
   const texte = erreur instanceof Error ? erreur.message : String(erreur);
   if (/cannot access|cannot be scripted|showErrorPage|chrome:\/\//i.test(texte)) {
-    return (
-      "Lynceus n'a pas accès à cette page. Si c'est une page interne du navigateur ou le Web " +
-      "Store, elle n'est pas analysable. Sinon : relancez via le clic droit → « Analyser cette " +
-      "page avec Lynceus » (l'accès expire après un changement de page). Vous pouvez aussi activer " +
-      "le badge passif dans les réglages pour que ce bouton fonctionne aussi après une navigation."
-    );
+    return msg("erreur_page_inaccessible");
   }
   return texte;
 }

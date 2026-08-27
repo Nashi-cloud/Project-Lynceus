@@ -8,6 +8,7 @@ import {
   portailParDefaut,
   resumerBillet,
 } from "../commun/inscription";
+import { msg, traduireDocument } from "../commun/i18n";
 
 const champInstance = document.getElementById("instance") as HTMLInputElement;
 const champDelai = document.getElementById("delai") as HTMLInputElement;
@@ -41,7 +42,7 @@ caseBadge.addEventListener("change", async () => {
     const accorde = await chrome.permissions.request(DEMANDE_PERMISSION);
     if (!accorde) {
       caseBadge.checked = false;
-      zoneEtat.textContent = "Permission refusée. Badge et contour passifs restent désactivés.";
+      zoneEtat.textContent = msg("options_permission_refusee");
     }
   } else {
     await chrome.permissions.remove(DEMANDE_PERMISSION).catch(() => {});
@@ -59,7 +60,7 @@ document.getElementById("enregistrer")?.addEventListener("click", async () => {
     portail: champPortail.value.trim().replace(/\/+$/, ""),
     cle: champCle.value.trim(),
   });
-  zoneEtat.textContent = "Réglages enregistrés.";
+  zoneEtat.textContent = msg("options_enregistres");
   setTimeout(() => (zoneEtat.textContent = ""), 2500);
 });
 
@@ -67,7 +68,7 @@ document.getElementById("obtenir-cle")?.addEventListener("click", async (eveneme
   const bouton = evenement.currentTarget as HTMLButtonElement;
   bouton.disabled = true;
   zoneInscription.classList.remove("cache");
-  zoneInscription.textContent = "Demande en cours…";
+  zoneInscription.textContent = msg("demande_en_cours");
   try {
     const billet = await demanderCle(champPortail.value);
     await appliquerBillet(billet);
@@ -76,10 +77,10 @@ document.getElementById("obtenir-cle")?.addEventListener("click", async (eveneme
     // vient du portail, et l'utilisateur doit la voir plutôt que de la découvrir plus tard.
     champInstance.value = billet.instance;
     champCle.value = billet.cle;
-    zoneInscription.textContent = `✓ Clé obtenue. ${resumerBillet(billet)}`;
+    zoneInscription.textContent = `✓ ${msg("cle_obtenue")} ${resumerBillet(billet)}`;
   } catch (erreur) {
     zoneInscription.textContent =
-      erreur instanceof Error ? erreur.message : "L'inscription a échoué.";
+      erreur instanceof Error ? erreur.message : msg("inscription_echouee");
   } finally {
     bouton.disabled = false;
   }
@@ -88,7 +89,7 @@ document.getElementById("obtenir-cle")?.addEventListener("click", async (eveneme
 document.getElementById("tester")?.addEventListener("click", async () => {
   const instance = champInstance.value.trim().replace(/\/+$/, "") || "http://localhost:8000";
   zoneInfos.classList.remove("cache");
-  zoneInfos.textContent = "Connexion…";
+  zoneInfos.textContent = msg("connexion_en_cours");
   try {
     const reponse = await fetch(`${instance}/v1/meta`);
     if (!reponse.ok) throw new Error(`HTTP ${reponse.status}`);
@@ -102,20 +103,20 @@ document.getElementById("tester")?.addEventListener("click", async () => {
       `✓ ${meta.nom} v${meta.version}\n` +
       // « via » supposait un fournisseur extérieur. Une instance peut annoncer un
       // modèle auto-hébergé, et « via modèle auto-hébergé » ne veut rien dire.
-      `Modèle : ${meta.modele} · ${meta.fournisseur}\n` +
-      `Prompt d'analyse : v${meta.prompt_version} · ${meta.taxonomie?.nb_techniques ?? "?"} techniques au référentiel\n` +
-      (cleRequise
-        ? "Cette instance demande une clé d'accès pour les analyses.\n"
-        : "Cette instance n'exige aucune clé.\n") +
-      "Elle publie sa méthodologie : c'est le contrat de transparence Lynceus.";
+      `${msg("options_modele", meta.modele, meta.fournisseur)}\n` +
+      `${msg("options_prompt", meta.prompt_version, String(meta.taxonomie?.nb_techniques ?? "?"))}\n` +
+      `${msg(cleRequise ? "options_cle_requise" : "options_cle_libre")}\n` +
+      msg("options_transparence");
   } catch (erreur) {
     zoneInfos.textContent =
-      `✗ Instance injoignable (${erreur instanceof Error ? erreur.message : String(erreur)}). ` +
-      "Le serveur est-il démarré ?";
+      `✗ ${msg("options_instance_injoignable",
+                 erreur instanceof Error ? erreur.message : String(erreur))}`;
   }
 });
 
 const zoneVersion = document.getElementById("version") as HTMLElement;
-zoneVersion.textContent = `Lynceus, extension v${chrome.runtime.getManifest().version}`;
+zoneVersion.textContent = msg("options_version", chrome.runtime.getManifest().version);
 
 void initialiser();
+
+traduireDocument();

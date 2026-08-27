@@ -47,6 +47,8 @@ copierPage("src/options/options.html", "dist/options/options.html");
 copierPage("src/accueil/accueil.html", "dist/accueil/accueil.html");
 mkdirSync("dist/commun", { recursive: true });
 cpSync("src/commun/lynceus.css", "dist/commun/lynceus.css");
+// Catalogues de traduction : Chrome les lit lui-même dans _locales/<langue>/.
+cpSync("src/_locales", "dist/_locales", { recursive: true });
 cpSync("icones", "dist/icones", { recursive: true });
 // Polices embarquées : une page de l'extension ne doit rien demander au réseau, pas même
 // une police. Ce sont les fichiers du portail, sous licence OFL (voir polices/LICENSE).

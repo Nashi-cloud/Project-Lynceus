@@ -513,8 +513,8 @@ msgstr "What the method produces on a corpus of cases known in advance, deviatio
 msgid "Ce texte est le fichier même que le projet applique. Il ne peut donc pas dire autre chose que ce qui engage le code."
 msgstr "This text is the very file the project applies. It therefore cannot say anything other than what binds the code."
 
-msgid "Cette page n'existe pour l'instant qu'en français, la langue dans laquelle elle engage l'exploitant. Une traduction serait une commodité, pas un texte de droit : en cas de divergence, c'est la version française qui vaut."
-msgstr "This page exists only in French for now, the language in which it binds the operator. A translation would be a convenience, not a legal text: should the two ever diverge, the French version is the one that counts."
+msgid "Cette page est une traduction, fournie pour votre commodité. Le texte qui engage l'exploitant est la version française : en cas de divergence, c'est elle qui vaut."
+msgstr "This page is a translation, provided for your convenience. The text that binds the operator is the French version: should the two ever diverge, that is the one that counts."
 
 # --- Accueil : le récit
 #
@@ -697,3 +697,300 @@ msgstr "%(nom)s, the lookout for information"
 
 msgid "Politique de confidentialité"
 msgstr "Privacy policy"
+
+# --- Conditions d'utilisation
+
+msgid "Conditions"
+msgstr "Terms"
+
+msgid "Ce que ce service vous offre, ce qu'il ne garantit pas, et ce qu'il vous demande."
+msgstr "What this service offers you, what it does not guarantee, and what it asks of you."
+
+msgid "Le service"
+msgstr "The service"
+
+msgid "Ce portail distribue une extension de navigateur libre et délivre des clés d'accès à une instance d'analyse. Le service est fourni <strong>gratuitement</strong>, sans compte et sans publicité. Il peut être interrompu, limité ou arrêté à tout moment, notamment parce que chaque analyse a un coût réel supporté par l'exploitant."
+msgstr "This portal distributes a free browser extension and issues access keys to an analysis instance. The service is provided <strong>free of charge</strong>, without an account and without advertising. It may be interrupted, limited or shut down at any time, not least because every analysis has a real cost borne by the operator."
+
+msgid "Ce que vous acceptez en l'utilisant"
+msgstr "What you accept by using it"
+
+msgid "Ne pas contourner les quotas ni les limites de débit, ni automatiser des demandes en masse. Ces garde-fous existent parce qu'un usage abusif se traduit directement par une facture."
+msgstr "Not to work around quotas or rate limits, and not to automate bulk requests. These safeguards exist because abuse translates directly into a bill."
+
+msgid "Ne pas présenter une analyse comme une vérification de faits, une décision de justice ou un jugement sur une personne. Ce n'en est aucune."
+msgstr "Not to present an analysis as a fact-check, a court ruling or a judgement on a person. It is none of those."
+
+msgid "Ne pas soumettre de contenus dont la transmission à un tiers vous est interdite, par exemple des documents confidentiels ou des données de santé. Le texte analysé est transmis à un fournisseur de modèle : voir la <a href=\"%(confidentialite)s\">politique de confidentialité</a>."
+msgstr "Not to submit content you are not allowed to pass to a third party, such as confidential documents or health data. The analysed text is sent to a model provider: see the <a href=\"%(confidentialite)s\">privacy policy</a>."
+
+msgid "Absence de garantie"
+msgstr "No warranty"
+
+msgid "Les analyses sont produites par un modèle de langage. Elles <strong>peuvent être fausses</strong>, incomplètes, ou mal calibrées. Le service est fourni en l'état, sans garantie d'exactitude, de disponibilité ni d'adéquation à un usage particulier, dans les limites permises par le droit applicable."
+msgstr "Analyses are produced by a language model. They <strong>can be wrong</strong>, incomplete, or badly calibrated. The service is provided as is, without warranty of accuracy, availability or fitness for any particular purpose, as far as the applicable law allows."
+
+msgid "Si une analyse vous paraît erronée, <a href=\"%(contester)s\">contestez-la</a>. C'est un engagement de la <a href=\"%(charte)s\">charte</a>, pas une politesse."
+msgstr "If an analysis looks wrong to you, <a href=\"%(contester)s\">dispute it</a>. That is a commitment in the <a href=\"%(charte)s\">charter</a>, not a courtesy."
+
+msgid "Clés d'accès"
+msgstr "Access keys"
+
+msgid "Une clé n'est pas un compte : elle ne contient aucune information sur son porteur, seulement une date d'expiration et un nombre d'analyses par jour. Elle peut être révoquée en cas d'usage abusif. Sa perte n'est pas un incident : demandez-en une autre."
+msgstr "A key is not an account: it holds no information about its bearer, only an expiry date and a number of analyses per day. It can be revoked in case of abuse. Losing one is not an incident: ask for another."
+
+msgid "Licence du logiciel"
+msgstr "Software licence"
+
+msgid "Le logiciel est distribué sous licence AGPL-3.0. Ces conditions portent sur <strong>ce service hébergé</strong>, pas sur le logiciel lui-même : vos droits sur le code sont ceux que la licence vous donne, et rien ici ne les restreint."
+msgstr "The software is distributed under the AGPL-3.0 licence. These terms cover <strong>this hosted service</strong>, not the software itself: your rights over the code are those the licence gives you, and nothing here restricts them."
+
+msgid "Évolution et droit applicable"
+msgstr "Changes and governing law"
+
+msgid "Ces conditions peuvent être modifiées. Les modifications sont publiques, puisque cette page est versionnée <a href=\"%(depot)s\">dans le dépôt</a> au même titre que le code."
+msgstr "These terms may change. Any change is public, since this page is versioned <a href=\"%(depot)s\">in the repository</a> just like the code."
+
+msgid "Ces conditions peuvent être modifiées. Les modifications sont publiques, puisque cette page est versionnée dans le dépôt au même titre que le code."
+msgstr "These terms may change. Any change is public, since this page is versioned in the repository just like the code."
+
+msgid "Les présentes conditions sont régies par le droit %(droit)s."
+msgstr "These terms are governed by %(droit)s law."
+
+msgid "Toute question : <a href=\"mailto:%(contact)s\">%(contact)s</a>."
+msgstr "Any question: <a href=\"mailto:%(contact)s\">%(contact)s</a>."
+
+# --- Mentions légales
+
+msgid "Informations légales"
+msgstr "Legal information"
+
+msgid "Qui édite ce service, qui l'héberge, et sous quelle licence son code est publié."
+msgstr "Who publishes this service, who hosts it, and under what licence its code is released."
+
+msgid "Éditeur du service"
+msgstr "Service publisher"
+
+msgid "Éditeur"
+msgstr "Publisher"
+
+msgid "Adresse"
+msgstr "Address"
+
+msgid "Identification"
+msgstr "Registration"
+
+msgid "Directeur de la publication"
+msgstr "Director of publication"
+
+msgid "Contact"
+msgstr "Contact"
+
+msgid "Hébergeur"
+msgstr "Host"
+
+msgid "Site"
+msgstr "Website"
+
+msgid "Propriété intellectuelle et licence"
+msgstr "Intellectual property and licence"
+
+msgid "Le code de Lynceus, sa méthodologie, son référentiel de procédés et ses prompts sont publiés sous licence <strong>GNU Affero General Public License version 3</strong>. Vous pouvez les utiliser, les étudier, les modifier et les redistribuer, y compris pour un usage commercial, à la condition que toute version modifiée mise à disposition par le réseau publie elle aussi ses sources."
+msgstr "The Lynceus code, its methodology, its catalogue of techniques and its prompts are released under the <strong>GNU Affero General Public License version 3</strong>. You may use, study, modify and redistribute them, including commercially, on condition that any modified version made available over a network publishes its sources too."
+
+msgid "Cette licence est un choix de méthode autant que de principe : un outil qui prétend expliquer comment on manipule ne peut pas demander qu'on le croie sur parole. Le code qui produit les analyses doit être vérifiable par ceux qui les lisent."
+msgstr "That licence is a choice of method as much as of principle: a tool that claims to explain how manipulation works cannot ask to be taken at its word. The code that produces the analyses must be checkable by the people who read them."
+
+msgid "Contenus analysés"
+msgstr "Analysed content"
+
+msgid "Les analyses publiées portent sur des <strong>contenus accessibles publiquement</strong> et décrivent des procédés rhétoriques. Elles citent des extraits courts à fin d'analyse et de commentaire, avec mention de la source. Elles ne portent pas de jugement sur les personnes qui publient ou partagent ces contenus."
+msgstr "Published analyses concern <strong>publicly accessible content</strong> and describe rhetorical techniques. They quote short excerpts for the purpose of analysis and comment, with the source named. They pass no judgement on the people who publish or share that content."
+
+msgid "Toute analyse est contestable, y compris et surtout par l'éditeur du site concerné : voir <a href=\"%(contester)s\">contester une analyse</a>. Le nombre de contestations reçues est affiché publiquement sous chaque analyse."
+msgstr "Every analysis can be disputed, and first of all by the publisher of the site concerned: see <a href=\"%(contester)s\">dispute an analysis</a>. The number of disputes received is shown publicly below each analysis."
+
+msgid "Responsabilité"
+msgstr "Liability"
+
+msgid "Les analyses sont produites par un modèle de langage et <strong>peuvent comporter des erreurs</strong>. Elles constituent un support d'éducation aux médias, pas une qualification juridique ni une vérification de faits. L'éditeur ne garantit ni l'exactitude ni l'exhaustivité des analyses, et ne saurait être tenu responsable de l'usage qui en est fait."
+msgstr "Analyses are produced by a language model and <strong>may contain mistakes</strong>. They are media-literacy material, not a legal characterisation nor a fact-check. The publisher warrants neither the accuracy nor the completeness of the analyses, and cannot be held liable for the use made of them."
+
+msgid "Voir aussi la <a href=\"%(confidentialite)s\">politique de confidentialité</a> et les <a href=\"%(conditions)s\">conditions d'utilisation</a>."
+msgstr "See also the <a href=\"%(confidentialite)s\">privacy policy</a> and the <a href=\"%(conditions)s\">terms of use</a>."
+
+# --- Politique de confidentialité
+
+msgid "Données personnelles"
+msgstr "Personal data"
+
+msgid "Ce que ce service reçoit, ce qu'il en fait, à qui il le transmet, et combien de temps il le garde. Y compris ce qui nous arrange le moins."
+msgstr "What this service receives, what it does with it, who it passes it to, and how long it keeps it. Including the parts that suit us least."
+
+msgid "Le point à lire en premier"
+msgstr "The part to read first"
+
+msgid "Quand vous demandez l'analyse d'une page, son texte est traité par un modèle <strong>hébergé par cette instance</strong> (%(fournisseur)s, modèle <code>%(modele)s</code>). Il n'est transmis à aucun fournisseur tiers et ne quitte pas l'infrastructure de l'exploitant."
+msgstr "When you ask for a page to be analysed, its text is processed by a model <strong>hosted by this instance</strong> (%(fournisseur)s, model <code>%(modele)s</code>). It is sent to no third-party provider and never leaves the operator's infrastructure."
+
+msgid "Reste ce que l'exploitant lui-même voit passer, décrit plus bas. Et cette page ne vaut que pour cette instance : une autre peut faire un tout autre choix, c'est à elle de le dire sur sa propre page."
+msgstr "What remains is what the operator sees, described below. And this page speaks only for this instance: another one may make an entirely different choice, and it is for that one to say so on its own page."
+
+msgid "Quand vous demandez l'analyse d'une page, <strong>le texte de cette page est transmis à un fournisseur de modèle de langage tiers</strong>"
+msgstr "When you ask for a page to be analysed, <strong>the text of that page is sent to a third-party language model provider</strong>"
+
+msgid "(actuellement %(fournisseur)s, modèle <code>%(modele)s</code>)"
+msgstr "(currently %(fournisseur)s, model <code>%(modele)s</code>)"
+
+msgid "Ce fournisseur peut être établi hors de l'Union européenne, et peut lui-même confier l'exécution du modèle à un autre."
+msgstr "That provider may be established outside the European Union, and may itself hand the running of the model to someone else."
+
+msgid "C'est le transfert le plus important du système, et le seul que vous ne pouvez pas éviter en utilisant ce service. Si cela ne vous convient pas, <a href=\"%(auto)s\">hébergez votre propre instance</a> avec un modèle local : le texte ne quitte alors pas votre machine, et le logiciel est conçu pour ça."
+msgstr "This is the most significant transfer in the system, and the only one you cannot avoid while using this service. If that does not suit you, <a href=\"%(auto)s\">host your own instance</a> with a local model: the text then never leaves your machine, and the software is built for that."
+
+msgid "Responsable du traitement"
+msgstr "Data controller"
+
+msgid "Contact : <a href=\"mailto:%(contact)s\">%(contact)s</a>."
+msgstr "Contact: <a href=\"mailto:%(contact)s\">%(contact)s</a>."
+
+msgid "Non renseigné sur cette instance."
+msgstr "Not filled in on this instance."
+
+msgid "Ce qui est traité, et pourquoi"
+msgstr "What is processed, and why"
+
+msgid "Traitement"
+msgstr "Processing"
+
+msgid "Données"
+msgstr "Data"
+
+msgid "Base légale"
+msgstr "Legal basis"
+
+msgid "Conservation"
+msgstr "Retention"
+
+msgid "<strong>Consultation de l'annuaire</strong><br>badge de l'extension, recherche sur le site"
+msgstr "<strong>Searching the directory</strong><br>extension badge, search on the site"
+
+msgid "Les premiers caractères de l'empreinte de l'adresse, jamais l'adresse. Adresse IP le temps de la requête."
+msgstr "The first characters of the address fingerprint, never the address. IP address for the duration of the request."
+
+msgid "Intérêt légitime : rendre le service demandé."
+msgstr "Legitimate interest: providing the service you asked for."
+
+msgid "<strong>Aucune conservation.</strong> Ni journal des consultations, ni couple adresse IP et page."
+msgstr "<strong>Nothing retained.</strong> No log of searches, no pairing of IP address with page."
+
+msgid "<strong>Analyse d'une page</strong>"
+msgstr "<strong>Analysing a page</strong>"
+
+msgid "Le texte de la page, son titre, son adresse. Adresse IP pour la limite de débit."
+msgstr "The page text, its title, its address. IP address for rate limiting."
+
+msgid "Intérêt légitime : exécuter l'analyse que vous demandez."
+msgstr "Legitimate interest: running the analysis you request."
+
+msgid "L'analyse produite est conservée sans limite dans l'annuaire public. Elle n'est rattachée à aucune personne : rien n'indique qui l'a demandée."
+msgstr "The resulting analysis is kept indefinitely in the public directory. It is attached to no person: nothing records who asked for it."
+
+msgid "<strong>Limite de débit</strong>"
+msgstr "<strong>Rate limiting</strong>"
+
+msgid "Adresse IP et compteur."
+msgstr "IP address and a counter."
+
+msgid "Intérêt légitime : empêcher qu'un seul visiteur épuise le service et son budget."
+msgstr "Legitimate interest: stopping one visitor from exhausting the service and its budget."
+
+msgid "En mémoire, sur une fenêtre glissante d'une minute. Rien n'est écrit sur disque."
+msgstr "In memory, over a one-minute sliding window. Nothing is written to disk."
+
+msgid "<strong>Contestation d'une analyse</strong>"
+msgstr "<strong>Disputing an analysis</strong>"
+
+msgid "Votre message, et le contact si vous en donnez un. Le contact est facultatif."
+msgstr "Your message, and a contact if you give one. The contact is optional."
+
+msgid "Intérêt légitime : instruire une contestation et permettre un droit de réponse."
+msgstr "Legitimate interest: examining a dispute and allowing a right of reply."
+
+msgid "Conservée tant que l'analyse contestée est publiée, la décision devant rester auditable."
+msgstr "Kept for as long as the disputed analysis is published, since the decision must remain auditable."
+
+msgid "<strong>Délivrance d'une clé d'accès</strong>"
+msgstr "<strong>Issuing an access key</strong>"
+
+msgid "Aucune. La clé ne porte qu'une date d'expiration et un quota."
+msgstr "None. The key carries only an expiry date and a quota."
+
+msgid "Sans objet."
+msgstr "Not applicable."
+
+msgid "<strong>Rien n'est enregistré.</strong> Ce portail serait incapable de dire qui a obtenu quelle clé."
+msgstr "<strong>Nothing is recorded.</strong> This portal would be unable to say who obtained which key."
+
+msgid "Destinataires"
+msgstr "Recipients"
+
+msgid "<strong>Le fournisseur de modèle de langage</strong>"
+msgstr "<strong>The language model provider</strong>"
+
+msgid "qui reçoit le texte des pages analysées. Voir l'encadré en tête de page."
+msgstr "which receives the text of analysed pages. See the box at the top of this page."
+
+msgid "<strong>%(hebergeur)s</strong>, hébergeur des serveurs."
+msgstr "<strong>%(hebergeur)s</strong>, host of the servers."
+
+msgid "Le cas échéant, le fournisseur du tunnel qui achemine les requêtes vers ce serveur, qui voit passer les adresses IP des visiteurs."
+msgstr "Where applicable, the provider of the tunnel that carries requests to this server, which sees visitors' IP addresses go past."
+
+msgid "Aucune donnée n'est vendue, échangée, ni transmise à des fins publicitaires. Il n'y a pas de régie, pas de mesure d'audience tierce, pas de traceur."
+msgstr "No data is sold, exchanged, or passed on for advertising. There is no ad network, no third-party analytics, no tracker."
+
+msgid "Cookies et traceurs"
+msgstr "Cookies and trackers"
+
+msgid "Ce site <strong>ne dépose aucun cookie</strong> et ne charge aucune ressource depuis un domaine tiers. Les polices de caractères, les feuilles de style et les scripts sont servis par ce serveur. C'est pourquoi vous n'avez pas vu de bandeau de consentement : il n'y a rien à consentir."
+msgstr "This site <strong>sets no cookie</strong> and loads no resource from a third-party domain. The fonts, the stylesheets and the scripts are served by this server. That is why you saw no consent banner: there is nothing to consent to."
+
+msgid "Ce que l'extension envoie, et quand"
+msgstr "What the extension sends, and when"
+
+msgid "L'extension ne transmet rien tant que vous ne le demandez pas. Le contenu d'une page part uniquement quand vous cliquez sur « Analyser cette page ». La reconnaissance automatique, si vous l'activez, n'envoie que quelques caractères d'empreinte, ce qui correspond à plus d'un million d'adresses possibles : le serveur ne peut pas déterminer la page que vous lisez."
+msgstr "The extension sends nothing until you ask it to. The content of a page leaves only when you click “Analyse this page”. Automatic recognition, if you turn it on, sends only a few characters of a fingerprint, which matches more than a million possible addresses: the server cannot work out which page you are reading."
+
+msgid "L'extraction du texte se fait <strong>dans votre navigateur</strong>. Le serveur ne visite jamais les pages à votre place, et n'apprend donc rien de votre navigation."
+msgstr "The text is extracted <strong>in your browser</strong>. The server never visits pages on your behalf, and therefore learns nothing about your browsing."
+
+msgid "Vos droits"
+msgstr "Your rights"
+
+msgid "Vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité"
+msgstr "You have rights of access, rectification, erasure, restriction, objection and portability"
+
+msgid ", exerçable à <a href=\"mailto:%(contact)s\">%(contact)s</a>"
+msgstr ", which you may exercise at <a href=\"mailto:%(contact)s\">%(contact)s</a>"
+
+msgid "Une limite qu'il faut connaître : comme rien n'est rattaché à une personne, nous n'avons en pratique <strong>aucun moyen de retrouver « vos » données</strong>. Ce n'est pas une échappatoire, c'est la conséquence directe du fait de ne rien conserver. Une contestation que vous auriez déposée avec un contact est en revanche identifiable, et effaçable sur demande."
+msgstr "One limit you should know about: since nothing is attached to a person, in practice we have <strong>no way of finding “your” data</strong>. This is not a loophole, it is the direct consequence of keeping nothing. A dispute you filed with a contact, on the other hand, can be identified, and erased on request."
+
+msgid "Vous pouvez introduire une réclamation auprès de l'autorité de protection des données dont vous relevez."
+msgstr "You may lodge a complaint with the data protection authority you fall under."
+
+msgid "Analyses produites par une intelligence artificielle"
+msgstr "Analyses produced by an artificial intelligence"
+
+msgid "Chaque analyse porte la mention qu'elle est produite par une intelligence artificielle et peut comporter des erreurs. Cette mention est ajoutée par le serveur, et ne peut pas être retirée par le client. Elle répond à l'exigence de transparence applicable aux systèmes d'IA qui interagissent avec des personnes."
+msgstr "Every analysis carries a notice that it was produced by an artificial intelligence and may contain mistakes. That notice is added by the server and cannot be removed by the client. It answers the transparency requirement that applies to AI systems interacting with people."
+
+msgid "Mentions non renseignées sur cette instance"
+msgstr "Legal details not filled in on this instance"
+
+msgid "L'exploitant de ce portail n'a pas rempli son identité légale. Lynceus étant auto-hébergeable, ces informations dépendent de qui fait tourner ce serveur, et le logiciel ne peut pas les deviner."
+msgstr "Whoever operates this portal has not filled in their legal identity. Since Lynceus can be self-hosted, those details depend on who runs this server, and the software cannot guess them."
+
+msgid "Si vous exploitez cette instance et qu'elle est ouverte au public, renseignez les variables <code>LYNCEUS_PORTAIL_EDITEUR_*</code> et <code>LYNCEUS_PORTAIL_HEBERGEUR_*</code> décrites dans le guide de déploiement."
+msgstr "If you operate this instance and it is open to the public, fill in the <code>LYNCEUS_PORTAIL_EDITEUR_*</code> and <code>LYNCEUS_PORTAIL_HEBERGEUR_*</code> variables described in the deployment guide."
