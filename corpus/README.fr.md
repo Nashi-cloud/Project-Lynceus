@@ -1,6 +1,6 @@
 # Corpus de calibration
 
-<!-- traduit-de: corpus/README.md sha256:91cc04b933f92f7b -->
+<!-- traduit-de: corpus/README.md sha256:bbcd43c370c4ec2d -->
 
 [English](README.md) · **Français**
 
@@ -82,8 +82,18 @@ L'ordre compte : fixer une attente avant d'avoir vu le résultat revient à inve
 
 **Choisir les techniques attendues.** Les modèles varient dans leurs détections : n'exiger que les marqueurs **stables**, ceux que plusieurs modèles relèvent. Le cas SOTT du corpus n'exige qu'une seule technique (`verite_cachee`), la seule commune aux deux modèles testés — le reste variait.
 
-## Résultats
+## Résultats, et d'où viennent les chiffres
 
-Voir [RESULTATS.md](RESULTATS.md) — dernière passe : trois passes avec `z-ai/glm-5.2` et le prompt v0.1.2 à température 0, soit 13/13, 10/13 et 11/12 conformes.
+Le tableau de [RESULTATS.md](RESULTATS.md) n'est pas écrit à la main : il est **engendré** depuis `passes.jsonl`, le journal des passes réellement exécutées.
+
+```bash
+lynceus calibrer corpus/corpus.yaml --ecrire
+```
+
+La commande ajoute la passe au journal, puis réengendre le tableau entre ses deux marques, dans les deux langues. Tout ce qui est en dehors des marques, la lecture des résultats et les enseignements, reste écrit à la main : une machine ne peut pas dire ce qu'un écart signifie.
+
+C'est ce qui rend le chiffre publié vérifiable. `verifier.sh` réengendre le tableau et échoue s'il diffère de celui qui est publié, ou si aucune passe n'existe pour la version de prompt en vigueur. Avant cela, seule l'estampille de version était contrôlée : rien n'empêchait de l'avancer sans avoir relancé une seule analyse, et le vert se serait allumé quand même.
+
+Le journal ne fait que croître, et l'historique git montre chaque ajout : reculer devient un acte visible. Une passe intégralement resservie depuis l'annuaire y est comptée comme telle, puisqu'elle rejoue une mesure au lieu d'en produire une nouvelle.
 
 > Un corpus qu'on ajuste jusqu'à ce que tout passe ne mesure plus rien. Chaque assouplissement d'attente doit être justifié par un examen du cas — et jamais porter sur les techniques attendues ou interdites, qui sont le cœur du test.

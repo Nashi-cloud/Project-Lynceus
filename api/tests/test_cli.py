@@ -571,3 +571,33 @@ def test_exemples_env_documentent_le_profil():
 def test_env_sans_tiret_cadratin():
     for cible in ("production", "recette"):
         assert "—" not in runner.invoke(app, ["env", cible]).stdout
+
+
+def test_calibrer_ecrire_enregistre_la_passe_et_engendre_le_tableau(corpus, monkeypatch):
+    """Le chiffre publié cesse d'être déclaratif : il vient du journal des passes."""
+    from lynceus import calibration
+
+    _simuler_api(monkeypatch, carte(categorie="satire", grade="A"))
+    dossier = corpus.parent
+    (dossier / "RESULTATS.md").write_text("# Résultats de calibration\n\n## Lecture\n", encoding="utf-8")
+
+    resultat = runner.invoke(app, ["calibrer", str(corpus), "--ecrire"])
+    assert resultat.exit_code == 0
+
+    passes = calibration.passes(dossier / "passes.jsonl")
+    assert len(passes) == 1
+    assert passes[0]["cas"][0]["score"] == carte()["note"]["score"]
+    assert passes[0]["corpus"] == calibration.empreinte(corpus)
+
+    publie = (dossier / "RESULTATS.md").read_text(encoding="utf-8")
+    assert calibration.MARQUE_DEBUT in publie
+    assert "| Cas de test | satire | A |" in publie
+    assert "## Lecture" in publie, "la partie écrite à la main doit survivre"
+
+
+def test_calibrer_ecrire_refuse_un_corpus_filtre(corpus, monkeypatch):
+    """Publier un tableau qui ne porte que sur une partie du corpus tromperait le lecteur."""
+    _simuler_api(monkeypatch, carte(categorie="satire", grade="A"))
+    resultat = runner.invoke(app, ["calibrer", str(corpus), "--ecrire", "--filtre", "Cas"])
+    assert resultat.exit_code == 2
+    assert "refusé" in resultat.stdout

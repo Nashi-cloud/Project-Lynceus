@@ -151,6 +151,7 @@ def calibrer(
     json_sortie: Path = typer.Option(None, "--json", help="écrire le rapport détaillé en JSON"),
     filtre: str = typer.Option(None, "--filtre", help="ne traiter que les entrées dont le titre/chemin contient ce texte"),
     parallele: int = typer.Option(4, "--parallele", help="cas analysés de front (le serveur plafonne aussi de son côté)"),
+    ecrire: bool = typer.Option(False, "--ecrire", help="enregistrer la passe et réengendrer le tableau publié"),
 ):
     """Passe le corpus de calibration et vérifie catégories, grades et techniques.
 
@@ -200,11 +201,14 @@ def calibrer(
         if reponse.status_code != 200:
             return {"etiquette": etiquette, "erreur": f"HTTP {reponse.status_code} : {_erreur_http(reponse)[:80]}"}
 
-        carte = reponse.json()["carte"]
-        ecarts_graves, ecarts_mineurs = _comparer(entree, carte)
+        donnees = reponse.json()
+        carte = donnees["carte"]
+        ecarts = _ecarts(entree, carte)
         return {
-            "etiquette": etiquette, "entree": entree, "carte": carte,
-            "graves": ecarts_graves, "mineurs": ecarts_mineurs,
+            "etiquette": etiquette, "entree": entree, "carte": carte, "ecarts": ecarts,
+            "en_cache": bool(donnees.get("en_cache")),
+            "graves": [_phrase_console(e) for e in ecarts if e["gravite"] == "grave"],
+            "mineurs": [_phrase_console(e) for e in ecarts if e["gravite"] == "mineur"],
         }
 
     # Les analyses sont indépendantes : les mener de front divise l'attente d'autant.
@@ -271,8 +275,117 @@ def calibrer(
         json_sortie.write_text(json.dumps(rapport, ensure_ascii=False, indent=2), encoding="utf-8")
         console.print(f"[dim]Rapport détaillé écrit dans {json_sortie}[/dim]")
 
+    if ecrire:
+        if filtre:
+            console.print("[red]--ecrire refusé avec --filtre : un tableau publié qui ne "
+                          "porterait que sur une partie du corpus tromperait son lecteur.[/red]")
+            raise typer.Exit(2)
+        _publier_la_passe(fichier, entrees, resultats, conformes, mesures)
+
     if graves:
         raise typer.Exit(1)
+
+
+def _publier_la_passe(corpus: Path, entrees: list, resultats: list, conformes: int, mesures: int) -> None:
+    """Ajoute la passe au journal, puis réengendre le tableau publié dans les deux langues.
+
+    C'est ici que le chiffre publié cesse d'être déclaratif. Tant que ce tableau s'écrivait
+    à la main, rien n'empêchait de faire passer l'estampille d'une version de prompt à la
+    suivante sans avoir relancé une seule analyse."""
+    from datetime import date
+
+    from . import calibration
+
+    meta = httpx.get(f"{_api()}/v1/meta", timeout=30).json()
+    cas = []
+    for entree, resultat in zip(entrees, resultats):
+        identifiant = entree.get("fichier") or entree.get("capture") or entree.get("url") or resultat["etiquette"]
+        enregistrement = {
+            "id": identifiant,
+            "titre": entree.get("titre") or identifiant,
+            "titre_en": entree.get("titre_en") or entree.get("titre") or identifiant,
+        }
+        if "carte" in resultat:
+            carte = resultat["carte"]
+            enregistrement |= {
+                "categorie": carte["categorie"],
+                "grade": carte["note"]["grade"],
+                "score": carte["note"]["score"],
+                "techniques": sorted(t["id"] for t in carte["techniques_detectees"]),
+                "ecarts": resultat["ecarts"],
+            }
+        else:
+            # Un cas non mesuré figure quand même : l'effacer du tableau donnerait un corpus
+            # qui rétrécit sans qu'on sache pourquoi.
+            detail = resultat.get("ignore") or resultat.get("erreur") or "raison inconnue"
+            enregistrement["ecarts"] = [{"gravite": "grave", "type": "non_mesure", "detail": detail}]
+        cas.append(enregistrement)
+
+    # Une passe intégralement resservie depuis l'annuaire n'est pas un nouveau tirage : elle
+    # rejoue une mesure déjà faite. Le compter permet de ne pas prendre trois copies d'une
+    # même analyse pour trois passes indépendantes.
+    depuis_cache = sum(1 for r in resultats if r.get("en_cache"))
+    passe = {
+        "date": date.today().isoformat(),
+        "depuis_cache": depuis_cache,
+        "modele": meta["modele"],
+        "fournisseur": meta.get("fournisseur") or "",
+        "temperature": meta.get("temperature", 0),
+        "prompt_version": meta["prompt_version"],
+        "corpus": calibration.empreinte(corpus),
+        "conformes": conformes,
+        "mesures": mesures,
+        "cas": cas,
+    }
+    journal = corpus.parent / "passes.jsonl"
+    calibration.enregistrer(journal, passe)
+    console.print(f"[dim]Passe enregistrée dans {journal}[/dim]")
+
+    for chemin, langue in _rapports_publies(corpus.parent):
+        if not chemin.is_file():
+            continue
+        liste = calibration.passes(journal, meta["prompt_version"])
+        if calibration.remplacer_bloc(chemin, calibration.bloc(liste, langue)):
+            console.print(f"[dim]Tableau réengendré dans {chemin}[/dim]")
+    _restamper_traductions(corpus.parent)
+
+
+def _rapports_publies(dossier: Path) -> list[tuple[Path, str]]:
+    """Le rapport dans chaque langue servie. L'original en premier : les traductions
+    portent son empreinte, et il faut donc l'écrire avant de les réestampiller."""
+    from .portail.i18n import LANGUE_SOURCE, LANGUES
+
+    rapports = [(dossier / "RESULTATS.md", LANGUE_SOURCE)]
+    rapports += [(dossier / langue / "RESULTATS.md", langue)
+                 for langue in LANGUES if langue != LANGUE_SOURCE]
+    return rapports
+
+
+def _restamper_traductions(dossier: Path) -> None:
+    """Le tableau vient de changer dans les deux langues : l'empreinte doit suivre.
+
+    Sans ça, `verifier.sh` déclarerait la traduction en retard alors qu'elle vient d'être
+    réengendrée depuis les mêmes mesures."""
+    import re
+
+    from . import calibration
+    from .portail.i18n import LANGUE_SOURCE, LANGUES
+
+    original = dossier / "RESULTATS.md"
+    if not original.is_file():
+        return
+    empreinte = calibration.empreinte(original)
+    for langue in LANGUES:
+        if langue == LANGUE_SOURCE:
+            continue
+        traduction = dossier / langue / "RESULTATS.md"
+        if not traduction.is_file():
+            continue
+        texte = traduction.read_text(encoding="utf-8")
+        remplace = re.sub(r"(traduit-de:\s*\S+\s+sha256:)[0-9a-f]+", r"\g<1>" + empreinte,
+                          texte, count=1)
+        if remplace != texte:
+            traduction.write_text(remplace, encoding="utf-8")
 
 
 class CaptureManquante(Exception):
@@ -332,9 +445,13 @@ def _corps_demande(entree: dict, racine: Path) -> dict | None:
     return None
 
 
-def _comparer(entree: dict, carte: dict) -> tuple[list[str], list[str]]:
-    """Compare une carte aux attentes. Retourne (écarts graves, écarts mineurs)."""
-    graves, mineurs = [], []
+def _ecarts(entree: dict, carte: dict) -> list[dict]:
+    """Compare une carte à ses attentes et rend les écarts sous forme de faits.
+
+    Des faits, et non des phrases : le rapport de calibration est publié en français et en
+    anglais, et une phrase française ne s'y traduirait pas. Chaque écart porte sa gravité,
+    son type, et ce qu'il fallait comparer."""
+    ecarts = []
     grades = ["A", "B", "C", "D", "E"]
 
     # `categorie_attendue` (exacte) ou `categories_acceptables` (liste). Certains contenus
@@ -345,22 +462,25 @@ def _comparer(entree: dict, carte: dict) -> tuple[list[str], list[str]]:
     attendue = entree.get("categorie_attendue")
     if acceptables:
         if carte["categorie"] not in acceptables:
-            graves.append(f"catégorie {carte['categorie']} ∉ {acceptables}")
+            ecarts.append({"gravite": "grave", "type": "categorie",
+                           "obtenu": carte["categorie"], "attendu": acceptables})
     elif attendue and carte["categorie"] != attendue:
-        graves.append(f"catégorie {carte['categorie']} ≠ {attendue}")
+        ecarts.append({"gravite": "grave", "type": "categorie",
+                       "obtenu": carte["categorie"], "attendu": attendue})
 
     fourchette = entree.get("grade_attendu")
     if fourchette and carte["note"]["grade"] not in fourchette:
         obtenu = carte["note"]["grade"]
         # Un cran d'écart = mineur ; au-delà = grave.
         distance = min(abs(grades.index(obtenu) - grades.index(g)) for g in fourchette if g in grades)
-        (mineurs if distance <= 1 else graves).append(f"grade {obtenu} ∉ {fourchette}")
+        ecarts.append({"gravite": "mineur" if distance <= 1 else "grave", "type": "grade",
+                       "obtenu": obtenu, "attendu": fourchette})
 
     ids = {t["id"] for t in carte["techniques_detectees"]}
     for manquante in [t for t in entree.get("techniques_attendues", []) if t not in ids]:
-        graves.append(f"technique manquante : {manquante}")
+        ecarts.append({"gravite": "grave", "type": "technique_manquante", "id": manquante})
     for faux_positif in [t for t in entree.get("techniques_interdites", []) if t in ids]:
-        graves.append(f"faux positif : {faux_positif}")
+        ecarts.append({"gravite": "grave", "type": "faux_positif", "id": faux_positif})
 
     # La langue de rédaction est une attente comme une autre depuis le prompt v0.1.2 :
     # une analyse rendue dans la mauvaise langue est inutilisable pour qui lit la page,
@@ -369,13 +489,42 @@ def _comparer(entree: dict, carte: dict) -> tuple[list[str], list[str]]:
     if langue_attendue:
         obtenue = (carte.get("langue") or "")[:2]
         if obtenue != langue_attendue[:2]:
-            graves.append(f"langue {obtenue or '(absente)'} ≠ {langue_attendue}")
+            ecarts.append({"gravite": "grave", "type": "langue",
+                           "obtenu": obtenue or "(absente)", "attendu": langue_attendue})
 
     plancher = entree.get("confiance_min")
     if plancher is not None and carte["note"]["confiance"] < plancher:
-        mineurs.append(f"confiance {carte['note']['confiance']:.2f} < {plancher}")
+        ecarts.append({"gravite": "mineur", "type": "confiance",
+                       "obtenu": f"{carte['note']['confiance']:.2f}", "attendu": plancher})
 
-    return graves, mineurs
+    return ecarts
+
+
+def _phrase_console(ecart: dict) -> str:
+    """L'écart tel qu'il s'affiche dans le terminal, en français et en compact.
+
+    Le rapport publié a son propre rendu, dans les deux langues : c'est pourquoi les écarts
+    circulent sous forme de faits, et non de phrases déjà écrites."""
+    type_ecart = ecart["type"]
+    if type_ecart == "categorie":
+        relation = "∉" if isinstance(ecart["attendu"], list) else "≠"
+        return f"catégorie {ecart['obtenu']} {relation} {ecart['attendu']}"
+    if type_ecart == "grade":
+        return f"grade {ecart['obtenu']} ∉ {ecart['attendu']}"
+    if type_ecart == "technique_manquante":
+        return f"technique manquante : {ecart['id']}"
+    if type_ecart == "faux_positif":
+        return f"faux positif : {ecart['id']}"
+    if type_ecart == "langue":
+        return f"langue {ecart['obtenu']} ≠ {ecart['attendu']}"
+    return f"confiance {ecart['obtenu']} < {ecart['attendu']}"
+
+
+def _comparer(entree: dict, carte: dict) -> tuple[list[str], list[str]]:
+    """Les écarts d'un cas, séparés en graves et mineurs, prêts pour le terminal."""
+    ecarts = _ecarts(entree, carte)
+    return ([_phrase_console(e) for e in ecarts if e["gravite"] == "grave"],
+            [_phrase_console(e) for e in ecarts if e["gravite"] == "mineur"])
 
 
 def _entetes_admin() -> dict:
@@ -777,6 +926,63 @@ def traductions(
         console.print(f"[red]{len(defauts)} traduction(s) en retard sur leur original. "
                       f"Relire, puis mettre à jour la ligne « traduit-de ».[/red]")
         raise typer.Exit(1)
+
+
+@app.command("calibration")
+def calibration_publiee(
+    corpus: Path = typer.Option(Path("corpus/corpus.yaml"), "--corpus", help="corpus de référence"),
+    reengendrer: bool = typer.Option(
+        False, "--reengendrer",
+        help="réécrire le tableau depuis le journal, sans relancer d'analyse",
+    ),
+):
+    """Vérifie que les chiffres publiés viennent bien d'une passe enregistrée.
+
+    Le tableau de `corpus/RESULTATS.md` est engendré depuis `corpus/passes.jsonl`, journal
+    des passes réellement exécutées. Cette commande le réengendre et le compare à ce qui est
+    publié : un chiffre modifié à la main, une estampille de version avancée sans mesure, ou
+    une traduction dont le tableau n'a pas suivi, tout cela devient un échec au lieu de
+    passer inaperçu.
+    """
+    from . import calibration
+    from .moteur import prompt as moteur_prompt
+
+    journal = corpus.parent / "passes.jsonl"
+    version = moteur_prompt.versions_disponibles()[-1]
+    liste = calibration.passes(journal, version)
+    if not liste:
+        console.print(
+            f"[red]Aucune passe enregistrée pour le prompt v{version}.[/red]\n"
+            f"Les chiffres publiés ne se rapporteraient à rien. Lancer :\n"
+            f"  lynceus calibrer {corpus} --ecrire"
+        )
+        raise typer.Exit(1)
+
+    ecarts = []
+    for chemin, langue in _rapports_publies(corpus.parent):
+        if not chemin.is_file():
+            continue
+        attendu = calibration.bloc(liste, langue)
+        # Le rendu peut changer sans que la mesure bouge : une colonne ajoutée, une phrase
+        # reformulée. Réengendrer évite alors de relancer des analyses pour rien.
+        if reengendrer:
+            if calibration.remplacer_bloc(chemin, attendu):
+                console.print(f"[dim]Tableau réengendré dans {chemin}[/dim]")
+            continue
+        if calibration.bloc_publie(chemin) != attendu:
+            ecarts.append(chemin)
+    if reengendrer:
+        _restamper_traductions(corpus.parent)
+
+    passes_str = ", ".join(f"{p['conformes']}/{p['mesures']}" for p in liste)
+    if ecarts:
+        console.print("[red]Le tableau publié ne correspond pas au journal des passes :[/red]")
+        for chemin in ecarts:
+            console.print(f"  [red]{chemin}[/red]")
+        console.print("Réengendrer avec « lynceus calibrer --ecrire », ou restaurer le fichier.")
+        raise typer.Exit(1)
+    console.print(f"[green]v{version} : {len(liste)} passe(s) enregistrée(s) ({passes_str}), "
+                  f"tableau publié conforme au journal.[/green]")
 
 
 @app.command("env")
