@@ -8,6 +8,7 @@ une page du site ne peut pas diverger de ce que le code fait, elle en est extrai
 
 from __future__ import annotations
 
+import hashlib
 import posixpath
 import re
 from functools import lru_cache
@@ -104,6 +105,64 @@ def document(nom: str, depot_fichiers: str = "", prefixe: str = "", langue: str 
     if langue and (trouver_racine() / traduction).exists():
         return {**markdown_publie(traduction, depot_fichiers, prefixe), "traduit": True}
     return {**markdown_publie(f"docs/{nom}.md", depot_fichiers, prefixe), "traduit": not langue}
+
+
+# Les documents du dépôt que le portail publie tels quels. Une traduction manquante ici se
+# voit à l'écran, pas dans le code : d'où cet inventaire, seul endroit à tenir à jour quand
+# un document devient publiable.
+DOCUMENTS_PUBLIES = [
+    ("docs/ETHIQUE.md", "/charte"),
+    ("docs/METHODOLOGIE.md", "/methodologie"),
+    ("docs/TAXONOMIE.md", "/taxonomie"),
+    ("corpus/RESULTATS.md", "/calibration"),
+]
+
+_EMPREINTE = re.compile(r"traduit-de:\s*(\S+)\s+sha256:([0-9a-f]+)")
+
+
+def _empreinte(chemin: Path) -> str:
+    """Les 16 premiers caractères du sha256 : assez pour repérer une modification, assez
+    court pour tenir dans une ligne de fichier sans la rendre illisible."""
+    return hashlib.sha256(chemin.read_bytes()).hexdigest()[:16]
+
+
+def chemin_traduction(source: str, langue: str) -> str:
+    """docs/ETHIQUE.md en anglais devient docs/en/ETHIQUE.md."""
+    dossier, _, fichier = source.rpartition("/")
+    return f"{dossier}/{langue}/{fichier}" if dossier else f"{langue}/{fichier}"
+
+
+def etat_traductions(langue: str) -> list[dict]:
+    """Où en est chaque document publié, dans une langue donnée.
+
+    Quatre états, et un seul est un défaut : « en retard » veut dire que l'original a changé
+    depuis la traduction, donc que le portail publie deux textes qui ne disent plus la même
+    chose. « manquante » est un travail à faire, pas une erreur."""
+    racine = trouver_racine()
+    inventaire = []
+    versions = versions_disponibles_du_prompt()
+    sources = [chemin for chemin, _ in DOCUMENTS_PUBLIES]
+    if versions:
+        sources.append(f"prompts/analyse/v{versions[-1]}.md")
+    for source in sources:
+        traduction = chemin_traduction(source, langue)
+        fichier = racine / traduction
+        if not fichier.exists():
+            etat = "manquante"
+        else:
+            trouve = _EMPREINTE.search(fichier.read_text(encoding="utf-8"))
+            if not trouve:
+                etat = "sans empreinte"
+            elif trouve.group(2) != _empreinte(racine / source):
+                etat = "en retard"
+            else:
+                etat = "à jour"
+        inventaire.append({"source": source, "traduction": traduction, "etat": etat})
+    return inventaire
+
+
+def versions_disponibles_du_prompt() -> list[str]:
+    return prompt.versions_disponibles()
 
 
 def versions_prompt() -> list[str]:

@@ -81,6 +81,13 @@ La chaîne ne remplace pas `./verifier.sh` avant de fusionner : elle constate, e
 - **Corpus** : ne jamais assouplir une attente pour faire passer un test sans avoir examiné le cas, et jamais sur `techniques_attendues` / `techniques_interdites`, qui sont le cœur de la mesure.
 - **Ids de taxonomie** : stables et définitifs, jamais renommés (l'annuaire les référence).
 - **Charte** : toute PR doit être compatible avec [docs/ETHIQUE.md](docs/ETHIQUE.md) : c'est le critère de revue numéro un.
+- **Traductions** : le portail est bilingue. Une phrase d'interface vit dans les catalogues (`api/lynceus/portail/traductions/*.po` pour le site, `extension/src/_locales/*/messages.json` pour l'extension) et les tests refusent une phrase employée sans traduction. Un document du dépôt publié par le portail se traduit dans un sous-dossier de langue : `docs/ETHIQUE.md` devient `docs/en/ETHIQUE.md`. Le fichier traduit porte en deuxième ligne l'empreinte de la version qu'il traduit :
+
+  ```
+  <!-- traduit-de: docs/ETHIQUE.md sha256:8aa471a51c89 -->
+  ```
+
+  `lynceus traductions` dit où en est chaque document, et `verifier.sh` échoue si une traduction est en retard sur son original. **Modifier un document traduit suppose donc de revoir sa traduction et de mettre à jour cette ligne** : sans ça, le portail publierait deux textes qui ne disent plus la même chose, sans que rien ne le signale.
 - **IA générative** : une contribution substantiellement produite par un assistant le déclare, avec les lignes `Assisted-by:` et `Prompt:` en fin de message de commit, contiguës à `Signed-off-by:`. Voir [docs/IA-GENERATIVE.md](docs/IA-GENERATIVE.md). Une contribution que son auteur ne sait pas expliquer en revue est refusée, assistant ou pas.
 
 ## Droits sur les contributions
