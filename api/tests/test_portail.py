@@ -159,10 +159,16 @@ def test_aucune_phrase_de_gabarit_n_est_laissee_sans_traduction():
 
     from lynceus.portail import i18n
 
+    # Les littéraux adjacents sont recollés : Python concatène « "a" "b" » en une seule
+    # phrase, et n'en chercher que la première moitié dans le catalogue ne prouverait rien.
+    morceau = r'"(?:[^"\\]|\\.)*"'
+    motif = re.compile(r"\bN?_\(\s*((?:" + morceau + r"\s*)+)")
+    fichiers = [*(RACINE / "gabarits").glob("*.html"), *RACINE.glob("*.py")]
     phrases = set()
-    for gabarit in (RACINE / "gabarits").glob("*.html"):
-        phrases |= set(re.findall(r'\b_\(\s*"((?:[^"\\]|\\.)*)"',
-                                  gabarit.read_text(encoding="utf-8")))
+    for fichier in fichiers:
+        for trouve in motif.findall(fichier.read_text(encoding="utf-8")):
+            phrases.add("".join(bout[1:-1].replace('\\"', '"')
+                                for bout in re.findall(morceau, trouve)))
     assert phrases, "aucune phrase marquée : le motif de détection ne correspond plus"
 
     for langue in i18n.LANGUES:
@@ -172,6 +178,27 @@ def test_aucune_phrase_de_gabarit_n_est_laissee_sans_traduction():
         manquantes = sorted(p for p in phrases if not catalogue.get(p))
         assert not manquantes, f"{langue} : {len(manquantes)} phrase(s) sans traduction, " \
                                f"à commencer par « {manquantes[0]} »"
+
+
+def test_une_phrase_traduite_garde_sa_mise_en_forme_et_echappe_ses_valeurs(portail):
+    """Les phrases portent souvent un lien ou une mise en valeur : échappées comme du texte
+    brut, elles afficheraient leurs balises. Ce qui vient du visiteur, en revanche, doit
+    rester échappé, sans quoi la traduction ouvrirait une injection."""
+    client, _ = portail
+    assert "<strong>adresse de page</strong>" in client.get("/annuaire").text
+    assert "<strong>page address</strong>" in client.get("/en/annuaire").text
+
+    hostile = client.get("/annuaire/recherche", params={"q": "<script>alerte()</script>"}).text
+    assert "<script>" not in hostile
+
+
+def test_les_libelles_venus_du_code_sont_traduits_aussi(portail):
+    """Les motifs de contestation sont définis en Python, avant qu'une langue existe.
+    Sans traduction au rendu, un formulaire anglais proposerait des choix en français."""
+    client, _ = portail
+    assert "I publish this site and I dispute this" in client.get("/en/contester").text
+    # L'apostrophe est échappée par Jinja : on cherche un fragment qui n'en porte pas.
+    assert "et je conteste" in client.get("/contester").text
 
 
 def test_le_prompt_publie_est_celui_que_le_moteur_applique(portail):
@@ -416,7 +443,7 @@ def test_la_recherche_par_domaine_affiche_le_profil(portail):
     client, _ = portail
     brancher_sur(client, _InstanceEspionne().app)
     html = client.get("/annuaire/recherche", params={"q": "Exemple.FR"}).text
-    assert "exemple.fr" in html and "3 pages analysées" in html
+    assert "exemple.fr" in html and "Pages analysées : 3" in html
 
 
 def test_une_instance_injoignable_degrade_sans_planter(portail):

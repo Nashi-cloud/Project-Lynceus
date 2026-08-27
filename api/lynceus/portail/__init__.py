@@ -33,6 +33,7 @@ from ..annuaire import LONGUEUR_PREFIXE
 from ..cles import emettre
 from ..normalisation import extraire_domaine, hacher_url, normaliser_url
 from . import contenu, i18n
+from .i18n import N_
 from .config import ParametresPortail, parametres_portail
 
 RACINE = Path(__file__).parent
@@ -43,13 +44,13 @@ RACINE = Path(__file__).parent
 FICHIER_PORTAIL = "portail.json"
 
 MOTIFS = [
-    ("analyse_erronee", "L'analyse est fausse"),
-    ("extrait_hors_contexte", "Une citation est déformée"),
-    ("categorie_erronee", "La catégorie est erronée (satire, opinion…)"),
-    ("note_injustifiee", "La note ne correspond pas au contenu"),
-    ("page_modifiee", "La page a changé depuis l'analyse"),
-    ("droit_de_reponse", "Je suis l'éditeur de ce site et je conteste"),
-    ("autre", "Autre"),
+    ("analyse_erronee", N_("L'analyse est fausse")),
+    ("extrait_hors_contexte", N_("Une citation est déformée")),
+    ("categorie_erronee", N_("La catégorie est erronée (satire, opinion…)")),
+    ("note_injustifiee", N_("La note ne correspond pas au contenu")),
+    ("page_modifiee", N_("La page a changé depuis l'analyse")),
+    ("droit_de_reponse", N_("Je suis l'éditeur de ce site et je conteste")),
+    ("autre", N_("Autre")),
 ]
 
 
@@ -196,6 +197,7 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
             legal=legal,
             depot=p.depot.rstrip("/"),
             langue=code,
+            langue_source=i18n.LANGUE_SOURCE,
             _=i18n.traducteur(code),
             # Toute adresse interne passe par « u » : sans elle, un lien écrit en dur
             # ramènerait le lecteur anglophone sur la version française de la page.
@@ -266,23 +268,29 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
 
     @app.get("/methodologie", response_class=HTMLResponse)
     def methodologie(requete: Request):
+        traduire = i18n.traducteur(requete.scope.get("lynceus_langue", i18n.LANGUE_SOURCE))
         return page(requete, "methodologie.html",
-                    ponderations=contenu.ponderations(), seuils=contenu.seuils(),
+                    ponderations=[dict(d, libelle=traduire(d["libelle"]))
+                                  for d in contenu.ponderations()],
+                    seuils=contenu.seuils(),
                     version_prompt=contenu.versions_prompt()[-1],
                     detail=contenu.document("METHODOLOGIE", p.depot_fichiers,
                                             prefixe_langue(requete)))
 
     @app.get("/taxonomie", response_class=HTMLResponse)
     def taxonomie(requete: Request):
+        traduire = i18n.traducteur(requete.scope.get("lynceus_langue", i18n.LANGUE_SOURCE))
         return page(requete, "taxonomie.html",
-                    familles=contenu.taxonomie_par_famille(), gravites=contenu.GRAVITES)
+                    familles=contenu.taxonomie_par_famille(),
+                    gravites={cle: traduire(libelle)
+                              for cle, libelle in contenu.GRAVITES.items()})
 
     @app.get("/charte", response_class=HTMLResponse)
     def charte(requete: Request):
         return page(requete, "document.html",
-                    surtitre="Document de référence",
-                    chapo="Ce texte est le fichier même que le projet applique. Il ne peut "
-                          "donc pas dire autre chose que ce qui engage le code.",
+                    surtitre=N_("Document de référence"),
+                    chapo=N_("Ce texte est le fichier même que le projet applique. Il ne "
+                             "peut donc pas dire autre chose que ce qui engage le code."),
                     document=contenu.document("ETHIQUE", p.depot_fichiers,
                                               prefixe_langue(requete)))
 
@@ -304,10 +312,10 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
     @app.get("/calibration", response_class=HTMLResponse)
     def calibration(requete: Request):
         return page(requete, "document.html",
-                    surtitre="Mesure",
-                    chapo="Ce que donne la méthode sur un corpus de cas connus d'avance, "
-                          "écarts compris. Publier le taux d'erreur fait partie de la "
-                          "méthode : sans lui, la note ne veut rien dire.",
+                    surtitre=N_("Mesure"),
+                    chapo=N_("Ce que donne la méthode sur un corpus de cas connus "
+                             "d'avance, écarts compris. Publier le taux d'erreur fait "
+                             "partie de la méthode : sans lui, la note ne veut rien dire."),
                     document=contenu.calibration(p.depot_fichiers,
                                                  prefixe_langue(requete)))
 
@@ -419,7 +427,9 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
 
     @app.get("/contester", response_class=HTMLResponse)
     def contester_page(requete: Request, analyse: int | None = None):
-        return page(requete, "contester.html", motifs=MOTIFS, analyse_id=analyse)
+        traduire = i18n.traducteur(requete.scope.get("lynceus_langue", i18n.LANGUE_SOURCE))
+        return page(requete, "contester.html", analyse_id=analyse,
+                    motifs=[(valeur, traduire(libelle)) for valeur, libelle in MOTIFS])
 
     @app.post("/contester", response_class=HTMLResponse)
     async def contester(

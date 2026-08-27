@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titre %}Conditions d'utilisation · {{ nom }}{% endblock %}
+{% block titre %}{{ _("Conditions d'utilisation") }} · {{ nom }}{% endblock %}
 {% block corps %}
 <header class="entete-page">
   <div class="contenu">
@@ -11,6 +11,7 @@
 </header>
 
 <article class="contenu corps-page">
+  {% if langue != langue_source %}{% include "_traduction_juridique.html" %}{% endif %}
   <h2 style="margin-top:0">Le service</h2>
   <p>Ce portail distribue une extension de navigateur libre et délivre des clés d'accès à
   une instance d'analyse. Le service est fourni <strong>gratuitement</strong>, sans compte

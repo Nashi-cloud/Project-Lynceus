@@ -17,10 +17,12 @@ from markdown_it import MarkdownIt
 
 from ..config import trouver_racine
 from ..moteur import notation, prompt
+from .i18n import N_
 
 _MOTIF_FAMILLE = re.compile(r"^##\s+Famille\s+([A-Z])\s+—\s+(.+?)\s*$", re.MULTILINE)
 
-GRAVITES = {"haute": "Gravité haute", "moyenne": "Gravité moyenne", "faible": "Gravité faible"}
+GRAVITES = {"haute": N_("Gravité haute"), "moyenne": N_("Gravité moyenne"),
+            "faible": N_("Gravité faible")}
 
 # Les documents de docs/ se lient entre eux par chemins relatifs. C'est juste dans le
 # dépôt, et faux ici : « METHODOLOGIE.md » deviendrait /METHODOLOGIE.md, une page qui
@@ -154,10 +156,10 @@ def nb_techniques() -> int:
 def ponderations() -> list[dict]:
     """Les poids réellement appliqués par le serveur, dans l'ordre décroissant."""
     libelles = {
-        "sources": "Qualité du sourçage",
-        "factualite": "Rigueur factuelle",
-        "ton": "Registre et procédés",
-        "transparence": "Transparence de l'éditeur",
+        "sources": N_("Qualité du sourçage"),
+        "factualite": N_("Rigueur factuelle"),
+        "ton": N_("Registre et procédés"),
+        "transparence": N_("Transparence de l'éditeur"),
     }
     return [
         {"cle": cle, "libelle": libelles.get(cle, cle), "poids": int(poids * 100)}

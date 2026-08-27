@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titre %}Politique de confidentialité · {{ nom }}{% endblock %}
+{% block titre %}{{ _("Politique de confidentialité") }} · {{ nom }}{% endblock %}
 {% block corps %}
 <header class="entete-page">
   <div class="contenu">
@@ -11,6 +11,7 @@
 </header>
 
 <article class="contenu corps-page">
+  {% if langue != langue_source %}{% include "_traduction_juridique.html" %}{% endif %}
   {% if not legal.complete %}{% include "_legal_incomplet.html" %}{% endif %}
 
   <div class="encart attention">

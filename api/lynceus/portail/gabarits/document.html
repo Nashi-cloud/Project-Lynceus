@@ -3,14 +3,14 @@
 {% block corps %}
 <header class="entete-page">
   <div class="contenu">
-    <span class="surtitre">{{ surtitre|default("Document de référence") }}</span>
+    <span class="surtitre">{{ _(surtitre|default("Document de référence")) }}</span>
     <h1>{{ document.titre }}</h1>
-    <p class="chapo">{{ chapo|default("Ce texte est le fichier même que le projet applique.") }}
-    Il est publié {% if depot %}<a href="{{ depot }}">dans le dépôt</a>{% else %}dans le
-    dépôt{% endif %}, et cette page en est le rendu direct.</p>
+    <p class="chapo">{{ _(chapo|default("Ce texte est le fichier même que le projet applique.")) }}
+    {% if depot %}{{ _("Il est publié <a href=\"%(depot)s\">dans le dépôt</a>, et cette page en est le rendu direct.", depot=depot) }}{% else %}{{ _("Il est publié dans le dépôt, et cette page en est le rendu direct.") }}{% endif %}</p>
   </div>
 </header>
 <article class="contenu corps-page">
+  {% if langue != langue_source %}{% include "_document_non_traduit.html" %}{% endif %}
   {{ document.html | safe }}
 </article>
 {% endblock %}

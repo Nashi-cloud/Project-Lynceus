@@ -1,17 +1,15 @@
 {# Fragment htmx : remplace #resultat. Jamais servi comme page entière. #}
 {% if vide %}
-  <p class="discret">Saisissez un domaine ou l'adresse d'une page.</p>
+  <p class="discret">{{ _("Saisissez un domaine ou l'adresse d'une page.") }}</p>
 
 {% elif injoignable %}
   <div class="encart attention">
-    <h3 style="margin-top:0">Instance injoignable</h3>
-    <p style="margin-bottom:0">Le portail n'a pas réussi à interroger l'instance. Le site
-    reste consultable, mais l'annuaire est momentanément indisponible. Réessayez dans un
-    moment.</p>
+    <h3 style="margin-top:0">{{ _("Instance injoignable") }}</h3>
+    <p style="margin-bottom:0">{{ _("Le portail n'a pas réussi à interroger l'instance. Le site reste consultable, mais l'annuaire est momentanément indisponible. Réessayez dans un moment.") }}</p>
   </div>
 
 {% elif invalide %}
-  <p class="discret">« {{ invalide }} » n'est pas une adresse exploitable.</p>
+  <p class="discret">{{ _("« %(saisie)s » n'est pas une adresse exploitable.", saisie=invalide) }}</p>
 
 {% else %}
   {% if carte %}
@@ -20,45 +18,41 @@
       <span class="pastille grande grade-{{ carte.note.grade }}">{{ carte.note.grade }}</span>
       <div>
         <div class="titre">{{ carte.titre or url_demandee }}</div>
-        <div class="discret">{% if carte.domaine or domaine %}{{ carte.domaine or domaine.domaine }} · {% endif %}{{ carte.categorie | replace("_", " ") }} · {{ carte.note.score }} sur 100</div>
+        <div class="discret">{% if carte.domaine or domaine %}{{ carte.domaine or domaine.domaine }} · {% endif %}{{ carte.categorie | replace("_", " ") }} · {{ _("%(score)s sur 100", score=carte.note.score) }}</div>
       </div>
     </div>
     {% if carte.resume_neutre %}<p style="margin-bottom:0">{{ carte.resume_neutre }}</p>{% endif %}
 
     {% if carte.techniques_detectees %}
-    <h3>Procédés relevés</h3>
+    <h3>{{ _("Procédés relevés") }}</h3>
     <ul class="liste-nue">
       {% for t in carte.techniques_detectees %}
-      <li><a href="/taxonomie#{{ t.id }}">{{ t.id | replace("_", " ") }}</a> : {{ t.explication }}</li>
+      <li><a href="{{ u('/taxonomie') }}#{{ t.id }}">{{ t.id | replace("_", " ") }}</a> : {{ t.explication }}</li>
       {% endfor %}
     </ul>
     {% endif %}
 
     {% if carte.points_positifs %}
-    <h3>Points positifs</h3>
+    <h3>{{ _("Points positifs") }}</h3>
     <ul class="liste-nue">{% for p in carte.points_positifs %}<li>{{ p }}</li>{% endfor %}</ul>
     {% endif %}
 
     <p class="discret" style="margin-top: 1rem">
-      Analyse n° {{ analyse_id }} · modèle {{ carte.meta.modele }} ·
-      {{ carte.meta.analyse_le[:10] }} ·
-      {{ signalements }} contestation{{ "s" if signalements > 1 else "" }} reçue{{ "s" if signalements > 1 else "" }}.
-      <a href="/contester?analyse={{ analyse_id }}">Contester cette analyse</a>
+      {{ _("Analyse n° %(id)s · modèle %(modele)s · %(date)s · contestations reçues : %(signalements)s.",
+            id=analyse_id, modele=carte.meta.modele, date=carte.meta.analyse_le[:10],
+            signalements=signalements) }}
+      <a href="{{ u('/contester') }}?analyse={{ analyse_id }}">{{ _("Contester cette analyse") }}</a>
     </p>
-    <p class="discret" style="margin-bottom:0"><em>Produite par une intelligence
-    artificielle : elle peut comporter des erreurs, et décrit des procédés, pas la valeur
-    des personnes qui partagent ce contenu.</em></p>
+    <p class="discret" style="margin-bottom:0"><em>{{ _("Produite par une intelligence artificielle : elle peut comporter des erreurs, et décrit des procédés, pas la valeur des personnes qui partagent ce contenu.") }}</em></p>
   </div>
   {% elif page_inconnue %}
-  <p class="discret">Cette page n'a pas encore été analysée par cette instance. L'extension
-  permet de le faire depuis la page elle-même.</p>
+  <p class="discret">{{ _("Cette page n'a pas encore été analysée par cette instance. L'extension permet de le faire depuis la page elle-même.") }}</p>
   {% endif %}
 
   {% if domaine %}
   <div class="encart">
     <h3 style="margin-top:0">{{ domaine.domaine }}</h3>
-    <p>{{ domaine.nb_analyses }} page{{ "s" if domaine.nb_analyses > 1 else "" }} analysée{{ "s" if domaine.nb_analyses > 1 else "" }},
-    note moyenne {{ domaine.score_moyen }} sur 100.</p>
+    <p>{{ _("Pages analysées : %(nombre)s · note moyenne %(moyenne)s sur 100.", nombre=domaine.nb_analyses, moyenne=domaine.score_moyen) }}</p>
     <div class="echelle">
       {% for grade in ["A", "B", "C", "D", "E"] %}
       <div class="grade-{{ grade }}" style="opacity: {{ 1 if domaine.distribution_grades.get(grade) else 0.26 }}">
@@ -66,11 +60,9 @@
       </div>
       {% endfor %}
     </div>
-    <p class="discret" style="margin-bottom:0">Un profil de domaine résume des pages
-    analysées, il ne qualifie pas un média. Quelques pages ne représentent pas l'ensemble
-    d'un site, et la moyenne d'un site généraliste mélange des genres très différents.</p>
+    <p class="discret" style="margin-bottom:0">{{ _("Un profil de domaine résume des pages analysées, il ne qualifie pas un média. Quelques pages ne représentent pas l'ensemble d'un site, et la moyenne d'un site généraliste mélange des genres très différents.") }}</p>
   </div>
   {% elif domaine_inconnu %}
-  <p class="discret">Aucune page de « {{ domaine_inconnu }} » n'est connue de cette instance.</p>
+  <p class="discret">{{ _("Aucune page de « %(domaine)s » n'est connue de cette instance.", domaine=domaine_inconnu) }}</p>
   {% endif %}
 {% endif %}
