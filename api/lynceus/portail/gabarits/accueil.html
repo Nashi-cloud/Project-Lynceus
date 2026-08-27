@@ -23,7 +23,7 @@
     border-top-color: rgba(120, 95, 60, 0.18);
     color: #5f4c39;
   }
-  .pleine-largeur .pied a, .pleine-largeur .pied strong { color: #4a3b2a; }
+  .pleine-largeur .pied a, .pleine-largeur .pied .nom-projet { color: #4a3b2a; }
 </style>
 {% endblock %}
 
@@ -175,6 +175,9 @@
       </div>
     </div>
   </section>
+
+  <!-- Lever du jour : bande de transition sans texte, cf. « .aube » dans la feuille. -->
+  <div class="aube" aria-hidden="true"></div>
 
   <!-- ========================================================== le jour -->
   <section class="scene jour revele">

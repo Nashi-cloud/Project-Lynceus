@@ -40,7 +40,7 @@
 <footer class="pied">
   <div class="contenu large">
     <div>
-      <strong style="color: var(--encre); font-family: var(--display); font-size: 1.05rem;">{{ nom }}</strong><br>
+      <strong class="nom-projet">{{ nom }}</strong><br>
       {{ _("Logiciel libre sous licence AGPL-3.0.") }}<br>
       {% if depot %}<a href="{{ depot }}">{{ _("Code source de cette instance") }}</a><br>{% endif %}
       {{ _("Portail v%(version)s.", version=version) }}
