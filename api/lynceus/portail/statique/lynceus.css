@@ -538,6 +538,26 @@ textarea.champ { resize: vertical; }
   margin-top: 1.4rem;
 }
 
+/* --- aparté ---
+   Un pas de côté dans le fil du texte : plus petit, en retrait derrière un filet de
+   laiton. Le récit de l'accueil se lisant sur fond de nuit, il lui faut ses propres
+   valeurs, les jetons clairs y seraient illisibles. */
+
+.aparte {
+  margin: 1.8rem 0 0;
+  padding-left: 1.15rem;
+  border-left: 2px solid var(--or);
+  color: var(--encre-2);
+  font: italic 400 0.98rem/1.7 var(--texte);
+}
+.aparte strong { font-style: normal; color: var(--encre); }
+.recit .aparte {
+  font-size: clamp(0.99rem, 0.95rem + 0.25vw, 1.1rem);
+  color: rgba(246, 232, 212, 0.74);
+  border-left-color: rgba(224, 169, 98, 0.45);
+}
+.recit .aparte strong { color: rgba(246, 232, 212, 0.95); }
+
 /* --- tuiles --- */
 
 .tuiles {
@@ -663,7 +683,16 @@ textarea.champ { resize: vertical; }
 .scene.jour .chapo, .scene.jour p { color: #4d3f30; }
 .scene.jour .bouton { background: #14415e; color: #fff; }
 .scene.jour .bouton.or { background: linear-gradient(180deg, #eebc7a, var(--or)); color: #38240c; }
-.scene.jour .bouton.creux { color: #3f3226; border-color: rgba(63, 50, 38, 0.4); }
+/* Le fond bleu de « .scene.jour .bouton » l'emportait sur le « background:
+   transparent » du bouton creux, moins spécifique : le bouton secondaire se
+   retrouvait en encre sombre sur bleu sombre, donc illisible. */
+.scene.jour .bouton.creux {
+  background: transparent;
+  color: #2f2519;
+  border-color: rgba(47, 37, 25, 0.55);
+  box-shadow: none;
+}
+.scene.jour .bouton.creux:hover { border-color: #2f2519; background: rgba(47, 37, 25, 0.05); }
 .scene.jour .actions { justify-content: center; margin-top: 1.8rem; }
 .scene.jour .chapitre { color: #96652a; }
 .scene.jour .chapitre::after { background: linear-gradient(90deg, rgba(150, 101, 42, 0.4), transparent); }
