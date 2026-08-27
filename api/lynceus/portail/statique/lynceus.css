@@ -80,7 +80,7 @@
      36rem, la mesure tombait sous 60 signes et la page paraissait étroite sur un
      écran d'ordinateur, sans rien gagner en confort. */
   --prose: 42rem;
-  --large: 66rem;
+  --large: 72rem;
   --display: "Fraunces", "Iowan Old Style", Georgia, ui-serif, serif;
   --texte: "Newsreader", Georgia, ui-serif, serif;
   --ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -280,6 +280,18 @@ main { display: block; }
 .contenu.large { max-width: var(--large); }
 
 .corps-page { padding-block: clamp(2rem, 5vw, 3.4rem) clamp(3.5rem, 8vw, 5.5rem); }
+
+/* Échappée : un tableau n'est pas de la prose et n'a pas à tenir dans sa mesure.
+   La colonne de texte reste calée sur ce qui se lit (environ 80 signes par ligne, au-delà
+   l'œil perd sa ligne en revenant à la marge). Un tableau de résultats, lui, a des colonnes
+   à comparer d'un coup d'œil : l'écraser dans la mesure du texte le rend illisible alors
+   que la place est disponible de chaque côté. Il déborde donc symétriquement, sans jamais
+   dépasser la fenêtre. */
+.corps-page table {
+  --echappee: min(var(--large), calc(100vw - 3rem));
+  width: var(--echappee);
+  margin-inline: calc((100% - var(--echappee)) / 2);
+}
 
 /* Bandeau de titre des pages intérieures : évite qu'une page commence par du
    texte posé sur du vide, ce qui donnait au site son aspect délavé. */
