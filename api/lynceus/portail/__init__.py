@@ -202,7 +202,7 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
     def methodologie(requete: Request):
         return page(requete, "methodologie.html",
                     ponderations=contenu.ponderations(), seuils=contenu.seuils(),
-                    detail=contenu.document("METHODOLOGIE"))
+                    detail=contenu.document("METHODOLOGIE", p.depot_fichiers))
 
     @app.get("/taxonomie", response_class=HTMLResponse)
     def taxonomie(requete: Request):
@@ -212,7 +212,33 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
     @app.get("/charte", response_class=HTMLResponse)
     def charte(requete: Request):
         return page(requete, "document.html",
+                    surtitre="Document de référence",
+                    chapo="Ce texte est le fichier même que le projet applique. Il ne peut "
+                          "donc pas dire autre chose que ce qui engage le code.",
                     document=contenu.document("ETHIQUE", p.depot_fichiers))
+
+    @app.get("/prompt", response_class=HTMLResponse)
+    def prompt_analyse(requete: Request, version: str | None = Query(None)):
+        """Le prompt réellement envoyé au modèle, dans sa version demandée.
+
+        La charte le promet public (§2). Le publier ailleurs que sur le site obligerait à
+        croire sur parole une instance qu'on ne connaît pas."""
+        versions = contenu.versions_prompt()
+        choisie = version or versions[-1]
+        if choisie not in versions:
+            raise HTTPException(404, f"Version de prompt inconnue : {choisie}")
+        return page(requete, "prompt.html",
+                    document=contenu.prompt_publie(choisie, p.depot_fichiers),
+                    versions=list(reversed(versions)), version_affichee=choisie)
+
+    @app.get("/calibration", response_class=HTMLResponse)
+    def calibration(requete: Request):
+        return page(requete, "document.html",
+                    surtitre="Mesure",
+                    chapo="Ce que donne la méthode sur un corpus de cas connus d'avance, "
+                          "écarts compris. Publier le taux d'erreur fait partie de la "
+                          "méthode : sans lui, la note ne veut rien dire.",
+                    document=contenu.calibration(p.depot_fichiers))
 
     @app.get("/auto-hebergement", response_class=HTMLResponse)
     def auto_hebergement(requete: Request):

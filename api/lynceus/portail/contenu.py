@@ -30,6 +30,10 @@ PAGES_DU_PORTAIL = {
     "docs/ETHIQUE.md": "/charte",
     "docs/METHODOLOGIE.md": "/methodologie",
     "docs/TAXONOMIE.md": "/taxonomie",
+    "prompts": "/prompt",
+    "prompts/analyse": "/prompt",
+    "corpus": "/calibration",
+    "corpus/RESULTATS.md": "/calibration",
 }
 
 
@@ -40,14 +44,14 @@ def _rendu() -> MarkdownIt:
     return MarkdownIt("commonmark").enable("table")
 
 
-def _reecrire_liens(jetons: list, depot_fichiers: str) -> None:
+def _reecrire_liens(jetons: list, depot_fichiers: str, dossier: str) -> None:
     """Recale les liens relatifs d'un document du dépôt sur les adresses du portail.
 
     Les liens absolus, les ancres et les adresses de courriel sont laissés tels quels."""
     neutraliser = 0
     for jeton in jetons:
         if jeton.children:
-            _reecrire_liens(jeton.children, depot_fichiers)
+            _reecrire_liens(jeton.children, depot_fichiers, dossier)
         if jeton.type == "link_close" and neutraliser:
             jeton.tag = "code"
             neutraliser -= 1
@@ -59,7 +63,7 @@ def _reecrire_liens(jetons: list, depot_fichiers: str) -> None:
         if not cible or cible.startswith(("/", "#")) or ":" in cible.split("/")[0]:
             continue
         barre = cible.endswith("/")
-        chemin = posixpath.normpath(posixpath.join("docs", cible.split("#")[0]))
+        chemin = posixpath.normpath(posixpath.join(dossier, cible.split("#")[0]))
         ancre = cible.partition("#")[2]
         if chemin in PAGES_DU_PORTAIL:
             jeton.attrSet("href", PAGES_DU_PORTAIL[chemin] + (f"#{ancre}" if ancre else ""))
@@ -73,16 +77,41 @@ def _reecrire_liens(jetons: list, depot_fichiers: str) -> None:
 
 
 @lru_cache
-def document(nom: str, depot_fichiers: str = "") -> dict:
-    """Rend docs/<NOM>.md en HTML. Retourne {titre, html}."""
-    chemin = trouver_racine() / "docs" / f"{nom}.md"
-    texte = chemin.read_text(encoding="utf-8")
+def markdown_publie(chemin: str, depot_fichiers: str = "") -> dict:
+    """Rend un fichier markdown du dépôt en HTML. `chemin` part de la racine du dépôt.
+
+    Le portail ne recopie aucun de ces textes : il sert le fichier que le moteur applique.
+    Un document qui ne serait pas publié ici resterait une promesse invérifiable."""
+    texte = (trouver_racine() / chemin).read_text(encoding="utf-8")
     premiere = next((l for l in texte.splitlines() if l.startswith("# ")), "# Document")
     corps = texte.split("\n", 1)[1] if texte.startswith("# ") else texte
     md = _rendu()
     jetons = md.parse(corps)
-    _reecrire_liens(jetons, depot_fichiers)
+    _reecrire_liens(jetons, depot_fichiers, posixpath.dirname(chemin))
     return {"titre": premiere[2:].strip(), "html": md.renderer.render(jetons, md.options, {})}
+
+
+def document(nom: str, depot_fichiers: str = "") -> dict:
+    """Rend docs/<NOM>.md en HTML. Retourne {titre, html}."""
+    return markdown_publie(f"docs/{nom}.md", depot_fichiers)
+
+
+def versions_prompt() -> list[str]:
+    """Les versions de prompt présentes dans le dépôt, de la plus ancienne à la plus récente."""
+    return prompt.versions_disponibles()
+
+
+def prompt_publie(version: str, depot_fichiers: str = "") -> dict:
+    """Rend le fichier de prompt d'une version donnée, tel qu'il est versionné."""
+    return markdown_publie(f"prompts/analyse/v{version}.md", depot_fichiers)
+
+
+def calibration(depot_fichiers: str = "") -> dict:
+    """Rend les résultats de la dernière passe de calibration.
+
+    Seuls les résultats sont publiés : le corpus contient des captures de pages réelles,
+    qui appartiennent à leurs auteurs et n'ont pas à être rediffusées ici."""
+    return markdown_publie("corpus/RESULTATS.md", depot_fichiers)
 
 
 @lru_cache
