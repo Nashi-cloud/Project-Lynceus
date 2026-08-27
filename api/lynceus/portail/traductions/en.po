@@ -439,3 +439,76 @@ msgstr "Register and techniques"
 
 msgid "Transparence de l'éditeur"
 msgstr "Openness of the publisher"
+
+# --- Résultats d'annuaire
+
+msgid "Saisissez un domaine ou l'adresse d'une page."
+msgstr "Enter a domain or the address of a page."
+
+msgid "Le portail n'a pas réussi à interroger l'instance. Le site reste consultable, mais l'annuaire est momentanément indisponible. Réessayez dans un moment."
+msgstr "The portal could not reach the instance. The site remains readable, but the directory is unavailable for the moment. Try again shortly."
+
+msgid "« %(saisie)s » n'est pas une adresse exploitable."
+msgstr "“%(saisie)s” is not an address we can use."
+
+msgid "%(score)s sur 100"
+msgstr "%(score)s out of 100"
+
+msgid "Procédés relevés"
+msgstr "Techniques found"
+
+msgid "Points positifs"
+msgstr "What it does well"
+
+msgid "Analyse n° %(id)s · modèle %(modele)s · %(date)s · contestations reçues : %(signalements)s."
+msgstr "Analysis no. %(id)s · model %(modele)s · %(date)s · disputes received: %(signalements)s."
+
+msgid "Contester cette analyse"
+msgstr "Dispute this analysis"
+
+msgid "Produite par une intelligence artificielle : elle peut comporter des erreurs, et décrit des procédés, pas la valeur des personnes qui partagent ce contenu."
+msgstr "Produced by an artificial intelligence: it may contain mistakes, and it describes techniques, not the worth of the people who share this content."
+
+msgid "Cette page n'a pas encore été analysée par cette instance. L'extension permet de le faire depuis la page elle-même."
+msgstr "This page has not been analysed by this instance yet. The extension can do it from the page itself."
+
+msgid "Pages analysées : %(nombre)s · note moyenne %(moyenne)s sur 100."
+msgstr "Pages analysed: %(nombre)s · average grade %(moyenne)s out of 100."
+
+msgid "Un profil de domaine résume des pages analysées, il ne qualifie pas un média. Quelques pages ne représentent pas l'ensemble d'un site, et la moyenne d'un site généraliste mélange des genres très différents."
+msgstr "A domain profile summarises the pages that have been analysed; it does not rate a news outlet. A handful of pages does not stand for a whole site, and the average of a general-interest site mixes very different genres."
+
+msgid "Aucune page de « %(domaine)s » n'est connue de cette instance."
+msgstr "This instance knows no page from “%(domaine)s”."
+
+# --- Documents du dépôt
+
+msgid "Document de référence"
+msgstr "Reference document"
+
+msgid "Ce texte est le fichier même que le projet applique."
+msgstr "This text is the very file the project applies."
+
+msgid "Il est publié <a href=\"%(depot)s\">dans le dépôt</a>, et cette page en est le rendu direct."
+msgstr "It is published <a href=\"%(depot)s\">in the repository</a>, and this page renders it directly."
+
+msgid "Il est publié dans le dépôt, et cette page en est le rendu direct."
+msgstr "It is published in the repository, and this page renders it directly."
+
+msgid "Mesure"
+msgstr "Measurement"
+
+msgid "Ce qui se passe ensuite, exactement."
+msgstr "What happens next, precisely."
+
+msgid "Le texte ci-dessous est l'instruction envoyée au modèle, telle qu'elle est versionnée. Le serveur y insère au moment de l'analyse <a href=\"%(taxonomie)s\">le référentiel de procédés</a> et le schéma de la réponse attendue, aux deux emplacements signalés dans le fichier."
+msgstr "The text below is the instruction sent to the model, exactly as it is versioned. At analysis time the server inserts <a href=\"%(taxonomie)s\">the catalogue of techniques</a> and the schema of the expected answer, at the two places marked in the file."
+
+msgid "Versions publiées :"
+msgstr "Published versions:"
+
+msgid "Ce que donne la méthode sur un corpus de cas connus d'avance, écarts compris. Publier le taux d'erreur fait partie de la méthode : sans lui, la note ne veut rien dire."
+msgstr "What the method produces on a corpus of cases known in advance, deviations included. Publishing the error rate is part of the method: without it, the grade means nothing."
+
+msgid "Ce texte est le fichier même que le projet applique. Il ne peut donc pas dire autre chose que ce qui engage le code."
+msgstr "This text is the very file the project applies. It therefore cannot say anything other than what binds the code."

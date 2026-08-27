@@ -288,9 +288,9 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
     @app.get("/charte", response_class=HTMLResponse)
     def charte(requete: Request):
         return page(requete, "document.html",
-                    surtitre="Document de référence",
-                    chapo="Ce texte est le fichier même que le projet applique. Il ne peut "
-                          "donc pas dire autre chose que ce qui engage le code.",
+                    surtitre=N_("Document de référence"),
+                    chapo=N_("Ce texte est le fichier même que le projet applique. Il ne "
+                             "peut donc pas dire autre chose que ce qui engage le code."),
                     document=contenu.document("ETHIQUE", p.depot_fichiers,
                                               prefixe_langue(requete)))
 
@@ -312,10 +312,10 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
     @app.get("/calibration", response_class=HTMLResponse)
     def calibration(requete: Request):
         return page(requete, "document.html",
-                    surtitre="Mesure",
-                    chapo="Ce que donne la méthode sur un corpus de cas connus d'avance, "
-                          "écarts compris. Publier le taux d'erreur fait partie de la "
-                          "méthode : sans lui, la note ne veut rien dire.",
+                    surtitre=N_("Mesure"),
+                    chapo=N_("Ce que donne la méthode sur un corpus de cas connus "
+                             "d'avance, écarts compris. Publier le taux d'erreur fait "
+                             "partie de la méthode : sans lui, la note ne veut rien dire."),
                     document=contenu.calibration(p.depot_fichiers,
                                                  prefixe_langue(requete)))
 

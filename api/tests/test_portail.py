@@ -159,12 +159,16 @@ def test_aucune_phrase_de_gabarit_n_est_laissee_sans_traduction():
 
     from lynceus.portail import i18n
 
-    motif = re.compile(r'\bN?_\(\s*"((?:[^"\\]|\\.)*)"')
+    # Les littéraux adjacents sont recollés : Python concatène « "a" "b" » en une seule
+    # phrase, et n'en chercher que la première moitié dans le catalogue ne prouverait rien.
+    morceau = r'"(?:[^"\\]|\\.)*"'
+    motif = re.compile(r"\bN?_\(\s*((?:" + morceau + r"\s*)+)")
     fichiers = [*(RACINE / "gabarits").glob("*.html"), *RACINE.glob("*.py")]
     phrases = set()
     for fichier in fichiers:
-        phrases |= {p.replace('\\"', '"')
-                    for p in motif.findall(fichier.read_text(encoding="utf-8"))}
+        for trouve in motif.findall(fichier.read_text(encoding="utf-8")):
+            phrases.add("".join(bout[1:-1].replace('\\"', '"')
+                                for bout in re.findall(morceau, trouve)))
     assert phrases, "aucune phrase marquée : le motif de détection ne correspond plus"
 
     for langue in i18n.LANGUES:
@@ -427,7 +431,7 @@ def test_la_recherche_par_domaine_affiche_le_profil(portail):
     client, _ = portail
     brancher_sur(client, _InstanceEspionne().app)
     html = client.get("/annuaire/recherche", params={"q": "Exemple.FR"}).text
-    assert "exemple.fr" in html and "3 pages analysées" in html
+    assert "exemple.fr" in html and "Pages analysées : 3" in html
 
 
 def test_une_instance_injoignable_degrade_sans_planter(portail):
