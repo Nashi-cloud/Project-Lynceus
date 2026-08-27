@@ -10,7 +10,7 @@
 </header>
 
 <article class="contenu large corps-page">
-  {% if langue != langue_source %}{% include "_document_non_traduit.html" %}{% endif %}
+  {% if langue != langue_source and not taxonomie_traduite %}{% include "_document_non_traduit.html" %}{% endif %}
 
   <p class="discret" style="max-width: var(--prose)">{{ _("La gravité indiquée est une indication générale, pas une sentence. Un même procédé peut être anodin dans un billet d'humeur et sérieux dans un article qui se présente comme une information.") }}</p>
 

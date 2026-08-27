@@ -95,16 +95,22 @@ def markdown_publie(chemin: str, depot_fichiers: str = "", prefixe: str = "") ->
     return {"titre": premiere[2:].strip(), "html": md.renderer.render(jetons, md.options, {})}
 
 
-def document(nom: str, depot_fichiers: str = "", prefixe: str = "", langue: str = "") -> dict:
-    """Rend docs/<NOM>.md en HTML, dans la langue demandée si elle existe.
+def publier(source: str, depot_fichiers: str = "", prefixe: str = "", langue: str = "") -> dict:
+    """Rend un document du dépôt, dans la langue demandée si elle existe.
 
-    Une traduction vit dans docs/<langue>/<NOM>.md. À défaut, l'original est servi tel quel :
-    mieux vaut le texte qui engage le projet, dans sa langue, qu'une page vide. Le drapeau
-    `traduit` permet à la page de le dire au lecteur au lieu de le laisser deviner."""
-    traduction = f"docs/{langue}/{nom}.md"
-    if langue and (trouver_racine() / traduction).exists():
-        return {**markdown_publie(traduction, depot_fichiers, prefixe), "traduit": True}
-    return {**markdown_publie(f"docs/{nom}.md", depot_fichiers, prefixe), "traduit": not langue}
+    Une traduction vit dans <dossier>/<langue>/<fichier>. À défaut, l'original est servi tel
+    quel : mieux vaut le texte qui engage le projet, dans sa langue, qu'une page vide. Le
+    drapeau `traduit` permet à la page de le dire au lecteur au lieu de le laisser deviner."""
+    if langue:
+        traduction = chemin_traduction(source, langue)
+        if (trouver_racine() / traduction).exists():
+            return {**markdown_publie(traduction, depot_fichiers, prefixe), "traduit": True}
+    return {**markdown_publie(source, depot_fichiers, prefixe), "traduit": not langue}
+
+
+def document(nom: str, depot_fichiers: str = "", prefixe: str = "", langue: str = "") -> dict:
+    """Rend docs/<NOM>.md en HTML. Retourne {titre, html, traduit}."""
+    return publier(f"docs/{nom}.md", depot_fichiers, prefixe, langue)
 
 
 # Les documents du dépôt que le portail publie tels quels. Une traduction manquante ici se
@@ -170,28 +176,64 @@ def versions_prompt() -> list[str]:
     return prompt.versions_disponibles()
 
 
-def prompt_publie(version: str, depot_fichiers: str = "", prefixe: str = "") -> dict:
-    """Rend le fichier de prompt d'une version donnée, tel qu'il est versionné."""
-    return markdown_publie(f"prompts/analyse/v{version}.md", depot_fichiers, prefixe)
+def prompt_publie(version: str, depot_fichiers: str = "", prefixe: str = "",
+                  langue: str = "") -> dict:
+    """Rend le fichier de prompt d'une version donnée, tel qu'il est versionné.
+
+    Une traduction n'est jamais envoyée au modèle : elle sert à lire ce qu'on lui demande.
+    Traduire le prompt appliqué changerait les analyses, qui sont calibrées en français."""
+    return publier(f"prompts/analyse/v{version}.md", depot_fichiers, prefixe, langue)
 
 
-def calibration(depot_fichiers: str = "", prefixe: str = "") -> dict:
+def calibration(depot_fichiers: str = "", prefixe: str = "", langue: str = "") -> dict:
     """Rend les résultats de la dernière passe de calibration.
 
     Seuls les résultats sont publiés : le corpus contient des captures de pages réelles,
     qui appartiennent à leurs auteurs et n'ont pas à être rediffusées ici."""
-    return markdown_publie("corpus/RESULTATS.md", depot_fichiers, prefixe)
+    return publier("corpus/RESULTATS.md", depot_fichiers, prefixe, langue)
+
+
+# Motifs tolérants, pour lire un référentiel traduit. Ils ne servent qu'à l'affichage :
+# la gravité, l'ordre et la liste des ids restent ceux du fichier français, seul appliqué.
+_FAMILLE_TRADUITE = re.compile(r"^##\s+(?:Famille|Family)\s+([A-Z])\s+[—-]\s+(.+?)\s*$",
+                               re.MULTILINE)
+_TECHNIQUE_TRADUITE = re.compile(r"^###\s+`([a-z_]+)`\s+[—-]\s+(.+?)\s*(?:·.*)?$", re.MULTILINE)
 
 
 @lru_cache
-def taxonomie_par_famille() -> list[dict]:
+def _libelles_traduits(langue: str) -> tuple[dict, dict]:
+    """(familles, techniques) d'un référentiel traduit, ou deux dictionnaires vides.
+
+    On ne reprend que les libellés et les définitions : un référentiel traduit qui
+    ajouterait ou renommerait un id ne serait pas suivi, et c'est voulu. La liste fermée
+    est celle du fichier français, que le serveur valide et que le modèle reçoit."""
+    chemin = trouver_racine() / chemin_traduction("docs/TAXONOMIE.md", langue)
+    if not langue or not chemin.exists():
+        return {}, {}
+    texte = chemin.read_text(encoding="utf-8")
+    familles = {m.group(1): m.group(2) for m in _FAMILLE_TRADUITE.finditer(texte)}
+    techniques = {}
+    trouvees = list(_TECHNIQUE_TRADUITE.finditer(texte))
+    for i, m in enumerate(trouvees):
+        fin = trouvees[i + 1].start() if i + 1 < len(trouvees) else len(texte)
+        bloc = texte[m.end():fin]
+        definition = next((l.strip() for l in bloc.splitlines() if l.strip()), "")
+        techniques[m.group(1)] = {"nom": m.group(2), "definition": definition}
+    return familles, techniques
+
+
+@lru_cache
+def taxonomie_par_famille(langue: str = "") -> list[dict]:
     """Les techniques du référentiel, regroupées par famille.
 
     Les identifiants et gravités viennent de `prompt.charger_taxonomie()` — donc du même
     parseur que celui qui alimente le modèle. Les familles, elles, ne servent qu'à
-    l'affichage : elles n'existent pas dans le référentiel technique."""
+    l'affichage : elles n'existent pas dans le référentiel technique. Une traduction ne
+    remplace que ce qui s'affiche."""
     texte = (trouver_racine() / "docs" / "TAXONOMIE.md").read_text(encoding="utf-8")
-    techniques = prompt.charger_taxonomie()
+    familles_traduites, techniques_traduites = _libelles_traduits(langue)
+    techniques = {tid: {**entree, **techniques_traduites.get(tid, {})}
+                  for tid, entree in prompt.charger_taxonomie().items()}
 
     bornes = [(m.start(), m.group(1), m.group(2)) for m in _MOTIF_FAMILLE.finditer(texte)]
     positions = {tid: texte.find(f"### `{tid}`") for tid in techniques}
@@ -205,7 +247,8 @@ def taxonomie_par_famille() -> list[dict]:
             if debut < pos < fin
         ]
         membres.sort(key=lambda t: positions[t["id"]])
-        familles.append({"lettre": lettre, "nom": nom, "techniques": membres})
+        familles.append({"lettre": lettre, "nom": familles_traduites.get(lettre, nom),
+                         "techniques": membres})
 
     orphelines = [t for f in familles for t in f["techniques"]]
     if len(orphelines) != len(techniques):  # pragma: no cover — filet contre un remaniement du fichier
@@ -213,6 +256,11 @@ def taxonomie_par_famille() -> list[dict]:
         familles.append({"lettre": "?", "nom": "Hors famille",
                          "techniques": [{"id": tid, **techniques[tid]} for tid in manquantes]})
     return familles
+
+
+def taxonomie_traduite(langue: str) -> bool:
+    """Le référentiel affiché est-il celui de la langue demandée ?"""
+    return bool(_libelles_traduits(langue)[1])
 
 
 def nb_techniques() -> int:

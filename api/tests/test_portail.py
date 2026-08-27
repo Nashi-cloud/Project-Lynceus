@@ -213,10 +213,18 @@ def test_un_document_traduit_est_servi_dans_la_langue_demandee(portail):
 
 def test_un_document_sans_traduction_sert_l_original_en_le_disant(portail):
     """Mieux vaut le texte qui engage le projet, dans sa langue, qu'une page vide. Mais le
-    lecteur doit savoir pourquoi il lit du français au milieu de l'anglais."""
+    lecteur doit savoir pourquoi il lit du français au milieu de l'anglais.
+
+    Les versions de prompt antérieures ne sont pas traduites, et n'ont pas à l'être : elles
+    restent lisibles parce que des analyses les annoncent, pas pour être relues."""
+    from lynceus.moteur import prompt as moteur_prompt
+
     client, _ = portail
-    html = client.get("/en/prompt").text
+    ancienne = moteur_prompt.versions_disponibles()[0]
+    html = client.get(f"/en/prompt?version={ancienne}").text
     assert "published in its original language" in html
+    # Une phrase du fichier français, sans apostrophe : Jinja échappe les apostrophes.
+    assert "Tu es une vigie, pas un juge" in html
 
 
 def test_la_traduction_annonce_l_original_qui_fait_foi(portail):
@@ -328,6 +336,29 @@ def test_une_instance_muette_est_supposee_envoyer_le_texte_au_dehors(portail):
     client, _ = portail
     client.app.state.client = httpx.AsyncClient(base_url="http://instance-eteinte.invalid")
     assert "transmis à un fournisseur de modèle de langage tiers" in client.get("/confidentialite").text
+
+
+def test_le_referentiel_traduit_garde_les_ids_et_les_gravites_du_fichier_applique(portail):
+    """Une traduction ne remplace que ce qui s'affiche.
+
+    La liste fermée, les identifiants et les gravités restent ceux du fichier français :
+    c'est lui que le serveur valide et que le modèle reçoit. Un référentiel traduit qui
+    ajouterait ou renommerait un id ne doit pas pouvoir déplacer cette frontière."""
+    from lynceus.moteur import prompt as moteur_prompt
+    from lynceus.portail import contenu
+
+    reference = moteur_prompt.charger_taxonomie()
+    anglais = contenu.taxonomie_par_famille("en")
+    membres = {t["id"]: t for f in anglais for t in f["techniques"]}
+    assert set(membres) == set(reference)
+    for tid, entree in membres.items():
+        assert entree["gravite"] == reference[tid]["gravite"]
+    assert membres["appel_a_la_peur"]["nom"] == "Appeal to fear"
+
+    client, _ = portail
+    html = client.get("/en/taxonomie").text
+    assert "Emotional register" in html
+    assert "published in its original language" not in html
 
 
 def test_la_taxonomie_affichee_est_celle_du_moteur():
