@@ -94,9 +94,16 @@ def markdown_publie(chemin: str, depot_fichiers: str = "", prefixe: str = "") ->
     return {"titre": premiere[2:].strip(), "html": md.renderer.render(jetons, md.options, {})}
 
 
-def document(nom: str, depot_fichiers: str = "", prefixe: str = "") -> dict:
-    """Rend docs/<NOM>.md en HTML. Retourne {titre, html}."""
-    return markdown_publie(f"docs/{nom}.md", depot_fichiers, prefixe)
+def document(nom: str, depot_fichiers: str = "", prefixe: str = "", langue: str = "") -> dict:
+    """Rend docs/<NOM>.md en HTML, dans la langue demandée si elle existe.
+
+    Une traduction vit dans docs/<langue>/<NOM>.md. À défaut, l'original est servi tel quel :
+    mieux vaut le texte qui engage le projet, dans sa langue, qu'une page vide. Le drapeau
+    `traduit` permet à la page de le dire au lecteur au lieu de le laisser deviner."""
+    traduction = f"docs/{langue}/{nom}.md"
+    if langue and (trouver_racine() / traduction).exists():
+        return {**markdown_publie(traduction, depot_fichiers, prefixe), "traduit": True}
+    return {**markdown_publie(f"docs/{nom}.md", depot_fichiers, prefixe), "traduit": not langue}
 
 
 def versions_prompt() -> list[str]:

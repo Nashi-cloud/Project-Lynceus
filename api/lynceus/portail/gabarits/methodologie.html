@@ -47,7 +47,7 @@
 
   <details class="repli">
     <summary>{{ _("Lire la méthodologie complète") }}</summary>
-    {% if langue != langue_source %}{% include "_document_non_traduit.html" %}{% endif %}
+    {% if langue != langue_source and not detail.traduit %}{% include "_document_non_traduit.html" %}{% endif %}
     <div class="deroulant">{{ detail.html | safe }}</div>
   </details>
 </article>

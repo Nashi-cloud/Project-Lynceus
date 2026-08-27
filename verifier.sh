@@ -83,6 +83,35 @@ if [ -f VERSION ]; then
   fi
 fi
 
+# ---------- Traductions des documents de référence ----------
+# Une traduction est une copie : elle dérive dès que l'original bouge, et personne ne le
+# voit puisque les deux pages s'affichent aussi bien. Chaque fichier traduit porte donc
+# l'empreinte de la version qu'il traduit, et cette étape la recalcule.
+etape "Documents traduits — accord avec leur original"
+traductions=$(find docs -mindepth 2 -name "*.md" 2>/dev/null | sort)
+if [ -z "$traductions" ]; then
+  verdict 0 "aucune traduction à vérifier"
+else
+  decalees=""
+  for fichier in $traductions; do
+    original="docs/$(basename "$fichier")"
+    annoncee=$(grep -m1 -oE 'traduit-de: [^ ]+ sha256:[0-9a-f]+' "$fichier" | sed 's/.*sha256://')
+    reelle=$(sha256sum "$original" 2>/dev/null | cut -c1-16)
+    if [ -z "$annoncee" ]; then
+      decalees="$decalees $fichier(sans empreinte)"
+    elif [ "$annoncee" != "$reelle" ]; then
+      decalees="$decalees $fichier"
+    fi
+  done
+  if [ -z "$decalees" ]; then
+    verdict 0 "$(echo "$traductions" | wc -l) traduction(s) à jour"
+  else
+    printf "${ROUGE}  ✗ traduction(s) en retard sur leur original :%s${FIN}\n" "$decalees"
+    printf "${ROUGE}    Relire, puis mettre à jour la ligne « traduit-de » avec la nouvelle empreinte.${FIN}\n"
+    echecs=$((echecs + 1))
+  fi
+fi
+
 # ---------- Cohérence de la version de prompt ----------
 # Un seul compteur pour trois fichiers : le prompt, la méthodologie et la taxonomie
 # évoluent ensemble, et `prompt_version` est ce que chaque analyse annonce. Un décalage
