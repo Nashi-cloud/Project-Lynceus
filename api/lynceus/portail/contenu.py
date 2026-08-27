@@ -8,6 +8,8 @@ une page du site ne peut pas diverger de ce que le code fait, elle en est extrai
 
 from __future__ import annotations
 
+import hashlib
+import posixpath
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -16,10 +18,26 @@ from markdown_it import MarkdownIt
 
 from ..config import trouver_racine
 from ..moteur import notation, prompt
+from .i18n import N_
 
 _MOTIF_FAMILLE = re.compile(r"^##\s+Famille\s+([A-Z])\s+—\s+(.+?)\s*$", re.MULTILINE)
 
-GRAVITES = {"haute": "Gravité haute", "moyenne": "Gravité moyenne", "faible": "Gravité faible"}
+GRAVITES = {"haute": N_("Gravité haute"), "moyenne": N_("Gravité moyenne"),
+            "faible": N_("Gravité faible")}
+
+# Les documents de docs/ se lient entre eux par chemins relatifs. C'est juste dans le
+# dépôt, et faux ici : « METHODOLOGIE.md » deviendrait /METHODOLOGIE.md, une page qui
+# n'existe pas. Ce que le portail publie déjà est renvoyé vers sa page ; le reste vers le
+# dépôt s'il est annoncé, et à défaut le lien cède la place au chemin, en clair.
+PAGES_DU_PORTAIL = {
+    "docs/ETHIQUE.md": "/charte",
+    "docs/METHODOLOGIE.md": "/methodologie",
+    "docs/TAXONOMIE.md": "/taxonomie",
+    "prompts": "/prompt",
+    "prompts/analyse": "/prompt",
+    "corpus": "/calibration",
+    "corpus/RESULTATS.md": "/calibration",
+}
 
 
 @lru_cache
@@ -29,25 +47,193 @@ def _rendu() -> MarkdownIt:
     return MarkdownIt("commonmark").enable("table")
 
 
+def _reecrire_liens(jetons: list, depot_fichiers: str, dossier: str, prefixe: str) -> None:
+    """Recale les liens relatifs d'un document du dépôt sur les adresses du portail.
+
+    Les liens absolus, les ancres et les adresses de courriel sont laissés tels quels."""
+    neutraliser = 0
+    for jeton in jetons:
+        if jeton.children:
+            _reecrire_liens(jeton.children, depot_fichiers, dossier, prefixe)
+        if jeton.type == "link_close" and neutraliser:
+            jeton.tag = "code"
+            neutraliser -= 1
+            continue
+        if jeton.type != "link_open":
+            continue
+        cible = jeton.attrGet("href") or ""
+        # « mailto: », « https: » : le schéma se reconnaît avant la première barre.
+        if not cible or cible.startswith(("/", "#")) or ":" in cible.split("/")[0]:
+            continue
+        barre = cible.endswith("/")
+        chemin = posixpath.normpath(posixpath.join(dossier, cible.split("#")[0]))
+        ancre = cible.partition("#")[2]
+        if chemin in PAGES_DU_PORTAIL:
+            jeton.attrSet("href",
+                          prefixe + PAGES_DU_PORTAIL[chemin] + (f"#{ancre}" if ancre else ""))
+        elif depot_fichiers:
+            jeton.attrSet("href", f"{depot_fichiers.rstrip('/')}/{chemin}{'/' if barre else ''}"
+                                  + (f"#{ancre}" if ancre else ""))
+        else:
+            jeton.tag = "code"
+            jeton.attrs = {}
+            neutraliser += 1
+
+
 @lru_cache
-def document(nom: str) -> dict:
-    """Rend docs/<NOM>.md en HTML. Retourne {titre, html}."""
-    chemin = trouver_racine() / "docs" / f"{nom}.md"
-    texte = chemin.read_text(encoding="utf-8")
+def markdown_publie(chemin: str, depot_fichiers: str = "", prefixe: str = "") -> dict:
+    """Rend un fichier markdown du dépôt en HTML. `chemin` part de la racine du dépôt.
+
+    Le portail ne recopie aucun de ces textes : il sert le fichier que le moteur applique.
+    Un document qui ne serait pas publié ici resterait une promesse invérifiable."""
+    texte = (trouver_racine() / chemin).read_text(encoding="utf-8")
     premiere = next((l for l in texte.splitlines() if l.startswith("# ")), "# Document")
     corps = texte.split("\n", 1)[1] if texte.startswith("# ") else texte
-    return {"titre": premiere[2:].strip(), "html": _rendu().render(corps)}
+    md = _rendu()
+    jetons = md.parse(corps)
+    _reecrire_liens(jetons, depot_fichiers, posixpath.dirname(chemin), prefixe)
+    return {"titre": premiere[2:].strip(), "html": md.renderer.render(jetons, md.options, {})}
+
+
+def publier(source: str, depot_fichiers: str = "", prefixe: str = "", langue: str = "") -> dict:
+    """Rend un document du dépôt, dans la langue demandée si elle existe.
+
+    Une traduction vit dans <dossier>/<langue>/<fichier>. À défaut, l'original est servi tel
+    quel : mieux vaut le texte qui engage le projet, dans sa langue, qu'une page vide. Le
+    drapeau `traduit` permet à la page de le dire au lecteur au lieu de le laisser deviner."""
+    if langue:
+        traduction = chemin_traduction(source, langue)
+        if (trouver_racine() / traduction).exists():
+            return {**markdown_publie(traduction, depot_fichiers, prefixe), "traduit": True}
+    return {**markdown_publie(source, depot_fichiers, prefixe), "traduit": not langue}
+
+
+def document(nom: str, depot_fichiers: str = "", prefixe: str = "", langue: str = "") -> dict:
+    """Rend docs/<NOM>.md en HTML. Retourne {titre, html, traduit}."""
+    return publier(f"docs/{nom}.md", depot_fichiers, prefixe, langue)
+
+
+# Les documents du dépôt que le portail publie tels quels. Une traduction manquante ici se
+# voit à l'écran, pas dans le code : d'où cet inventaire, seul endroit à tenir à jour quand
+# un document devient publiable.
+DOCUMENTS_PUBLIES = [
+    ("docs/ETHIQUE.md", "/charte"),
+    ("docs/METHODOLOGIE.md", "/methodologie"),
+    ("docs/TAXONOMIE.md", "/taxonomie"),
+    ("corpus/RESULTATS.md", "/calibration"),
+]
+
+_EMPREINTE = re.compile(r"traduit-de:\s*(\S+)\s+sha256:([0-9a-f]+)")
+
+
+def _empreinte(chemin: Path) -> str:
+    """Les 16 premiers caractères du sha256 : assez pour repérer une modification, assez
+    court pour tenir dans une ligne de fichier sans la rendre illisible."""
+    return hashlib.sha256(chemin.read_bytes()).hexdigest()[:16]
+
+
+def chemin_traduction(source: str, langue: str) -> str:
+    """docs/ETHIQUE.md en anglais devient docs/en/ETHIQUE.md."""
+    dossier, _, fichier = source.rpartition("/")
+    return f"{dossier}/{langue}/{fichier}" if dossier else f"{langue}/{fichier}"
+
+
+def etat_traductions(langue: str) -> list[dict]:
+    """Où en est chaque document publié, dans une langue donnée.
+
+    Quatre états, et un seul est un défaut : « en retard » veut dire que l'original a changé
+    depuis la traduction, donc que le portail publie deux textes qui ne disent plus la même
+    chose. « manquante » est un travail à faire, pas une erreur."""
+    racine = trouver_racine()
+    inventaire = []
+    versions = versions_disponibles_du_prompt()
+    sources = [chemin for chemin, _ in DOCUMENTS_PUBLIES]
+    if versions:
+        sources.append(f"prompts/analyse/v{versions[-1]}.md")
+    for source in sources:
+        traduction = chemin_traduction(source, langue)
+        fichier = racine / traduction
+        if not fichier.exists():
+            etat = "manquante"
+        else:
+            trouve = _EMPREINTE.search(fichier.read_text(encoding="utf-8"))
+            if not trouve:
+                etat = "sans empreinte"
+            elif trouve.group(2) != _empreinte(racine / source):
+                etat = "en retard"
+            else:
+                etat = "à jour"
+        inventaire.append({"source": source, "traduction": traduction, "etat": etat})
+    return inventaire
+
+
+def versions_disponibles_du_prompt() -> list[str]:
+    return prompt.versions_disponibles()
+
+
+def versions_prompt() -> list[str]:
+    """Les versions de prompt présentes dans le dépôt, de la plus ancienne à la plus récente."""
+    return prompt.versions_disponibles()
+
+
+def prompt_publie(version: str, depot_fichiers: str = "", prefixe: str = "",
+                  langue: str = "") -> dict:
+    """Rend le fichier de prompt d'une version donnée, tel qu'il est versionné.
+
+    Une traduction n'est jamais envoyée au modèle : elle sert à lire ce qu'on lui demande.
+    Traduire le prompt appliqué changerait les analyses, qui sont calibrées en français."""
+    return publier(f"prompts/analyse/v{version}.md", depot_fichiers, prefixe, langue)
+
+
+def calibration(depot_fichiers: str = "", prefixe: str = "", langue: str = "") -> dict:
+    """Rend les résultats de la dernière passe de calibration.
+
+    Seuls les résultats sont publiés : le corpus contient des captures de pages réelles,
+    qui appartiennent à leurs auteurs et n'ont pas à être rediffusées ici."""
+    return publier("corpus/RESULTATS.md", depot_fichiers, prefixe, langue)
+
+
+# Motifs tolérants, pour lire un référentiel traduit. Ils ne servent qu'à l'affichage :
+# la gravité, l'ordre et la liste des ids restent ceux du fichier français, seul appliqué.
+_FAMILLE_TRADUITE = re.compile(r"^##\s+(?:Famille|Family)\s+([A-Z])\s+[—-]\s+(.+?)\s*$",
+                               re.MULTILINE)
+_TECHNIQUE_TRADUITE = re.compile(r"^###\s+`([a-z_]+)`\s+[—-]\s+(.+?)\s*(?:·.*)?$", re.MULTILINE)
 
 
 @lru_cache
-def taxonomie_par_famille() -> list[dict]:
+def _libelles_traduits(langue: str) -> tuple[dict, dict]:
+    """(familles, techniques) d'un référentiel traduit, ou deux dictionnaires vides.
+
+    On ne reprend que les libellés et les définitions : un référentiel traduit qui
+    ajouterait ou renommerait un id ne serait pas suivi, et c'est voulu. La liste fermée
+    est celle du fichier français, que le serveur valide et que le modèle reçoit."""
+    chemin = trouver_racine() / chemin_traduction("docs/TAXONOMIE.md", langue)
+    if not langue or not chemin.exists():
+        return {}, {}
+    texte = chemin.read_text(encoding="utf-8")
+    familles = {m.group(1): m.group(2) for m in _FAMILLE_TRADUITE.finditer(texte)}
+    techniques = {}
+    trouvees = list(_TECHNIQUE_TRADUITE.finditer(texte))
+    for i, m in enumerate(trouvees):
+        fin = trouvees[i + 1].start() if i + 1 < len(trouvees) else len(texte)
+        bloc = texte[m.end():fin]
+        definition = next((l.strip() for l in bloc.splitlines() if l.strip()), "")
+        techniques[m.group(1)] = {"nom": m.group(2), "definition": definition}
+    return familles, techniques
+
+
+@lru_cache
+def taxonomie_par_famille(langue: str = "") -> list[dict]:
     """Les techniques du référentiel, regroupées par famille.
 
     Les identifiants et gravités viennent de `prompt.charger_taxonomie()` — donc du même
     parseur que celui qui alimente le modèle. Les familles, elles, ne servent qu'à
-    l'affichage : elles n'existent pas dans le référentiel technique."""
+    l'affichage : elles n'existent pas dans le référentiel technique. Une traduction ne
+    remplace que ce qui s'affiche."""
     texte = (trouver_racine() / "docs" / "TAXONOMIE.md").read_text(encoding="utf-8")
-    techniques = prompt.charger_taxonomie()
+    familles_traduites, techniques_traduites = _libelles_traduits(langue)
+    techniques = {tid: {**entree, **techniques_traduites.get(tid, {})}
+                  for tid, entree in prompt.charger_taxonomie().items()}
 
     bornes = [(m.start(), m.group(1), m.group(2)) for m in _MOTIF_FAMILLE.finditer(texte)]
     positions = {tid: texte.find(f"### `{tid}`") for tid in techniques}
@@ -61,7 +247,8 @@ def taxonomie_par_famille() -> list[dict]:
             if debut < pos < fin
         ]
         membres.sort(key=lambda t: positions[t["id"]])
-        familles.append({"lettre": lettre, "nom": nom, "techniques": membres})
+        familles.append({"lettre": lettre, "nom": familles_traduites.get(lettre, nom),
+                         "techniques": membres})
 
     orphelines = [t for f in familles for t in f["techniques"]]
     if len(orphelines) != len(techniques):  # pragma: no cover — filet contre un remaniement du fichier
@@ -71,6 +258,11 @@ def taxonomie_par_famille() -> list[dict]:
     return familles
 
 
+def taxonomie_traduite(langue: str) -> bool:
+    """Le référentiel affiché est-il celui de la langue demandée ?"""
+    return bool(_libelles_traduits(langue)[1])
+
+
 def nb_techniques() -> int:
     return len(prompt.charger_taxonomie())
 
@@ -78,10 +270,10 @@ def nb_techniques() -> int:
 def ponderations() -> list[dict]:
     """Les poids réellement appliqués par le serveur, dans l'ordre décroissant."""
     libelles = {
-        "sources": "Qualité du sourçage",
-        "factualite": "Rigueur factuelle",
-        "ton": "Registre et procédés",
-        "transparence": "Transparence de l'éditeur",
+        "sources": N_("Qualité du sourçage"),
+        "factualite": N_("Rigueur factuelle"),
+        "ton": N_("Registre et procédés"),
+        "transparence": N_("Transparence de l'éditeur"),
     }
     return [
         {"cle": cle, "libelle": libelles.get(cle, cle), "poids": int(poids * 100)}

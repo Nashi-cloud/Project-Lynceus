@@ -1,20 +1,18 @@
 {% extends "base.html" %}
-{% block titre %}Les procédés reconnus · {{ nom }}{% endblock %}
+{% block titre %}{{ _("Les procédés reconnus") }} · {{ nom }}{% endblock %}
 {% block corps %}
 <header class="entete-page">
   <div class="contenu large">
-    <span class="surtitre">Référentiel</span>
-    <h1>Les {{ nb_techniques }} procédés reconnus</h1>
-    <p class="chapo" style="max-width: var(--prose)">Cette liste est <strong>fermée</strong> :
-    l'analyse ne peut rien nommer qui ne s'y trouve pas. C'est aussi celle qui est transmise
-    au modèle, et cette page en est l'affichage direct, pas une reformulation.</p>
+    <span class="surtitre">{{ _("Référentiel") }}</span>
+    <h1>{{ _("Les %(nombre)s procédés reconnus", nombre=nb_techniques) }}</h1>
+    <p class="chapo" style="max-width: var(--prose)">{{ _("Cette liste est <strong>fermée</strong> : l'analyse ne peut rien nommer qui ne s'y trouve pas. C'est aussi celle qui est transmise au modèle, et cette page en est l'affichage direct, pas une reformulation.") }}</p>
   </div>
 </header>
 
 <article class="contenu large corps-page">
-  <p class="discret" style="max-width: var(--prose)">La gravité indiquée est une indication
-  générale, pas une sentence. Un même procédé peut être anodin dans un billet d'humeur et
-  sérieux dans un article qui se présente comme une information.</p>
+  {% if langue != langue_source and not taxonomie_traduite %}{% include "_document_non_traduit.html" %}{% endif %}
+
+  <p class="discret" style="max-width: var(--prose)">{{ _("La gravité indiquée est une indication générale, pas une sentence. Un même procédé peut être anodin dans un billet d'humeur et sérieux dans un article qui se présente comme une information.") }}</p>
 
   {% for famille in familles %}
   <section class="famille">
@@ -34,8 +32,6 @@
   </section>
   {% endfor %}
 
-  <p class="discret" style="max-width: var(--prose)">Le référentiel évolue lentement et
-  publiquement. Ajouter un procédé change les analyses futures, jamais celles déjà
-  produites : chaque analyse conserve la version qui l'a produite.</p>
+  <p class="discret" style="max-width: var(--prose)">{{ _("Le référentiel évolue lentement et publiquement. Ajouter un procédé change les analyses futures, jamais celles déjà produites : chaque analyse conserve la version qui l'a produite.") }}</p>
 </article>
 {% endblock %}

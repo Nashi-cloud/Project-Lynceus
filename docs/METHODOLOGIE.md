@@ -1,6 +1,6 @@
 # Méthodologie d'analyse
 
-Version : **0.1.0**. Toute modification de ce document ou des prompts incrémente `prompt_version` (semver) et déclenche une passe sur le [corpus de calibration](../corpus/).
+Version : **0.1.2**. Toute modification de ce document ou des prompts incrémente `prompt_version` (semver) et déclenche une passe sur le [corpus de calibration](../corpus/).
 
 ## Vue d'ensemble
 
@@ -93,7 +93,8 @@ L'**indice de confiance** (0–1, fourni par le LLM) est affiché séparément :
 
 - Le [corpus](../corpus/) contient des pages de référence avec catégorie et fourchette de grade attendues.
 - Toute évolution de prompt ou de méthodologie est évaluée contre le corpus avant merge : pas de régression silencieuse.
-- Cas sentinelles obligatoires : un site satirique (jamais « désinformation »), un éditorial de qualité (jamais pénalisé pour sa position), un site pseudo-médical marchand (le conflit d'intérêt doit être détecté).
+- Cas sentinelles obligatoires : un site satirique (jamais « désinformation »), un éditorial de qualité (jamais pénalisé pour sa position), un site pseudo-médical marchand (le conflit d'intérêt doit être détecté), et une page en anglais (l'analyse doit être rédigée dans la langue de la page).
+- Le modèle n'est pas déterministe : deux passes sur le même contenu peuvent différer. Un écart isolé n'est donc pas une régression, et une régression se constate en rejouant le cas. Les écarts observés sont publiés avec leurs résultats plutôt que corrigés en assouplissant l'attente.
 
 ## Limites connues et assumées
 

@@ -3,12 +3,54 @@ Couvre OpenRouter, Ollama, vLLM, LiteLLM… Le choix du fournisseur appartient �
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import re
+from urllib.parse import urlsplit
 
 import httpx
 
 from ..config import Parametres
+
+# Un modèle joint sur une de ces adresses tourne chez l'exploitant : le texte analysé ne
+# quitte pas son infrastructure. La liste est volontairement large, un faux « local »
+# ferait promettre au portail une confidentialité qui n'existe pas.
+_HOTES_LOCAUX = {"localhost", "host.docker.internal"}
+_SUFFIXES_LOCAUX = (".local", ".lan", ".internal", ".intranet", ".home.arpa")
+
+
+def _est_local(hote: str) -> bool:
+    if not hote:
+        return False
+    if hote in _HOTES_LOCAUX or hote.endswith(_SUFFIXES_LOCAUX):
+        return True
+    if "." not in hote:
+        # Nom de service Docker (« ollama », « vllm ») ou machine du réseau local.
+        return True
+    try:
+        adresse = ipaddress.ip_address(hote)
+    except ValueError:
+        return False
+    return adresse.is_private or adresse.is_loopback
+
+
+def fournisseur_annonce(base_url: str, libelle: str = "") -> tuple[str, bool]:
+    """Comment nommer publiquement le fournisseur de modèle, et si le texte sort de l'instance.
+
+    Deux raisons de ne pas se contenter du nom d'hôte, comme c'était le cas jusqu'ici.
+    D'abord il est faux dès qu'il y a un intermédiaire : un routeur d'inférence porte son
+    propre nom, pas celui de l'entreprise qui exécute le modèle. Ensuite le nom d'hôte d'un
+    endpoint privé n'a rien à faire dans une carte publiée : il ne dit rien au lecteur et
+    renseigne le réseau de l'exploitant. D'où un libellé configurable, et un repli qui
+    annonce un modèle auto-hébergé pour ce qu'il est, sans nommer la machine."""
+    hote = (urlsplit(base_url).hostname or "").lower()
+    if not hote:
+        # Instance non configurée : rien ne permet de promettre que le texte reste ici.
+        return (libelle or "non renseigné"), True
+    distant = not _est_local(hote)
+    if libelle:
+        return libelle, distant
+    return (hote if distant else "modèle auto-hébergé"), distant
 
 
 class ErreurLLM(Exception):

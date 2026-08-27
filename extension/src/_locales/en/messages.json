@@ -1,0 +1,416 @@
+{
+  "nom_extension": {
+    "message": "Lynceus, the lookout for information"
+  },
+  "description_extension": {
+    "message": "Analyses how trustworthy a web page is and explains, without judging, the persuasion techniques it uses. Free software (AGPL-3.0), and self-hostable."
+  },
+  "action_titre": {
+    "message": "Analyse this page with Lynceus"
+  },
+  "menu_analyser": {
+    "message": "🔭 Analyse this page with Lynceus"
+  },
+  "nom_court": {
+    "message": "Lynceus"
+  },
+  "reglages": {
+    "message": "Settings"
+  },
+  "annuler": {
+    "message": "Cancel"
+  },
+  "envoyer": {
+    "message": "Send"
+  },
+  "enregistrer": {
+    "message": "Save"
+  },
+  "reessayer": {
+    "message": "Try again"
+  },
+  "secondes": {
+    "message": "seconds"
+  },
+  "points_positifs": {
+    "message": "What it does well"
+  },
+  "envoi_en_cours": {
+    "message": "Sending…"
+  },
+  "envoi_echec": {
+    "message": "Sending failed. Try again later."
+  },
+  "envoi_echec_detail": {
+    "message": "Sending failed: $1"
+  },
+  "erreur_inconnue": {
+    "message": "unknown error"
+  },
+  "demande_en_cours": {
+    "message": "Requesting…"
+  },
+  "connexion_en_cours": {
+    "message": "Connecting…"
+  },
+  "cle_obtenue": {
+    "message": "Key obtained."
+  },
+  "inscription_echouee": {
+    "message": "Registration failed."
+  },
+  "contester_cette_analyse": {
+    "message": "Dispute this analysis"
+  },
+  "erreur_extraction_vide": {
+    "message": "Extraction returned nothing."
+  },
+  "erreur_page_inaccessible": {
+    "message": "Lynceus cannot reach this page. If it is an internal browser page or the Web Store, it cannot be analysed. Otherwise: start again with a right-click → “Analyse this page with Lynceus” (access expires when you navigate away). You can also turn on the passive badge in the settings so that this button keeps working after navigation."
+  },
+  "erreur_adresse_vide": {
+    "message": "Enter the portal address (https://…)."
+  },
+  "erreur_adresse_invalide": {
+    "message": "“$1” is not a valid address."
+  },
+  "erreur_adresse_schema": {
+    "message": "Only http(s) addresses are accepted."
+  },
+  "erreur_billet_invalide": {
+    "message": "That portal did not return a usable key."
+  },
+  "billet_quota": {
+    "message": "$1 analyses per day"
+  },
+  "billet_quota_inconnu": {
+    "message": "quota not stated"
+  },
+  "billet_echeance": {
+    "message": "valid until $1"
+  },
+  "billet_echeance_inconnue": {
+    "message": "no expiry stated"
+  },
+  "billet_resume": {
+    "message": "Instance: $1 · key $2 · $3."
+  },
+  "categorie_information": {
+    "message": "News"
+  },
+  "categorie_opinion": {
+    "message": "Opinion"
+  },
+  "categorie_analyse_expertise": {
+    "message": "Analysis / expertise"
+  },
+  "categorie_satire": {
+    "message": "Satire"
+  },
+  "categorie_publicite_sponsorise": {
+    "message": "Commercial content"
+  },
+  "categorie_temoignage": {
+    "message": "Personal account"
+  },
+  "categorie_contenu_confessionnel": {
+    "message": "Religious content"
+  },
+  "categorie_pseudo_science": {
+    "message": "Pseudoscience"
+  },
+  "categorie_theorie_du_complot": {
+    "message": "Conspiracy theory"
+  },
+  "categorie_autre": {
+    "message": "Other"
+  },
+  "dimension_sources": {
+    "message": "Sourcing"
+  },
+  "dimension_factualite": {
+    "message": "Factual rigour"
+  },
+  "dimension_ton": {
+    "message": "Register and techniques"
+  },
+  "dimension_transparence": {
+    "message": "Openness"
+  },
+  "gravite_faible": {
+    "message": "low severity"
+  },
+  "gravite_moyenne": {
+    "message": "medium severity"
+  },
+  "gravite_haute": {
+    "message": "high severity"
+  },
+  "motif_analyse_erronee": {
+    "message": "The analysis is wrong"
+  },
+  "motif_extrait_hors_contexte": {
+    "message": "A quotation is taken out of context"
+  },
+  "motif_categorie_erronee": {
+    "message": "The category is wrong (e.g. satire misread)"
+  },
+  "motif_note_injustifiee": {
+    "message": "The grade does not match the content"
+  },
+  "motif_page_modifiee": {
+    "message": "The page has changed since the analysis"
+  },
+  "motif_droit_de_reponse": {
+    "message": "I publish this site and I dispute this"
+  },
+  "motif_autre": {
+    "message": "Other"
+  },
+  "panneau_profil_pages": {
+    "message": "Pages analysed on $1: $2"
+  },
+  "panneau_profil_moyenne": {
+    "message": "Site average: $1/100."
+  },
+  "panneau_profil_repartition": {
+    "message": "Breakdown: $1."
+  },
+  "panneau_profil_avertissement": {
+    "message": "This describes other pages on this site, not this one: its content has not been read yet."
+  },
+  "panneau_repos_titre": {
+    "message": "Analyse this page?"
+  },
+  "panneau_repos_texte": {
+    "message": "Lynceus reads the content, then describes the persuasion techniques it uses: excerpts, explanations and strong points. You draw the conclusion."
+  },
+  "panneau_analyser": {
+    "message": "🔭 Analyse this page"
+  },
+  "panneau_repos_vie_privee": {
+    "message": "Nothing is sent without this action: the content of the page goes to your Lynceus instance only when you ask for the analysis."
+  },
+  "panneau_reconnaissance_texte": {
+    "message": "Lynceus can also recognise already-analysed pages on its own, and show their grade without you clicking."
+  },
+  "panneau_reconnaissance_activer": {
+    "message": "Turn on automatic recognition"
+  },
+  "panneau_reconnaissance_activee": {
+    "message": "✓ Automatic recognition is on."
+  },
+  "panneau_attente_extraction": {
+    "message": "Extracting the content, locally in your browser…"
+  },
+  "panneau_attente_analyse": {
+    "message": "Analysis under way, the model is reading the page…"
+  },
+  "panneau_erreur_titre": {
+    "message": "Analysis failed"
+  },
+  "panneau_indice": {
+    "message": "Score $1/100"
+  },
+  "panneau_indice_confiance": {
+    "message": "Score $1/100 · confidence in the analysis: $2%"
+  },
+  "panneau_deja_annuaire": {
+    "message": "Already in the directory"
+  },
+  "panneau_deja_annuaire_cache": {
+    "message": "Already in the directory, instant answer"
+  },
+  "panneau_chargement_detail": {
+    "message": "Loading the details…"
+  },
+  "panneau_techniques": {
+    "message": "Techniques found"
+  },
+  "panneau_aucune_technique": {
+    "message": "✓ No manipulation technique found."
+  },
+  "panneau_detail_indice": {
+    "message": "How the score breaks down"
+  },
+  "panneau_aucun_point_positif": {
+    "message": "None noted by the analysis."
+  },
+  "panneau_questions": {
+    "message": "Questions to ask yourself"
+  },
+  "panneau_detections_ecartees": {
+    "message": "$1 detection(s) proposed by the model were discarded by the server (quotation not found in the page, or outside the catalogue)."
+  },
+  "panneau_meta_publics": {
+    "message": "methodology and prompts public (AGPL-3.0)"
+  },
+  "panneau_contestation_impossible": {
+    "message": "This analysis cannot be disputed from this panel (no identifier)."
+  },
+  "panneau_formulaire_titre": {
+    "message": "What needs correcting?"
+  },
+  "panneau_formulaire_invite": {
+    "message": "Explain in a few words (10 characters minimum)…"
+  },
+  "panneau_formulaire_trop_court": {
+    "message": "Please say a little more: 10 characters minimum."
+  },
+  "options_titre_page": {
+    "message": "Lynceus settings"
+  },
+  "options_surtitre": {
+    "message": "Configuration"
+  },
+  "options_titre": {
+    "message": "Settings"
+  },
+  "options_instance": {
+    "message": "Lynceus instance"
+  },
+  "options_instance_aide": {
+    "message": "The address of the server that analyses pages and keeps the directory. You can use your own: the server kit is free software and self-hostable."
+  },
+  "options_tester": {
+    "message": "Test the connection"
+  },
+  "options_badge": {
+    "message": "Passive badge and outline"
+  },
+  "options_badge_intitule": {
+    "message": "Show the grade on the icon, and a discreet outline on pages graded at risk (D/E), when a page you visit is already in the directory, without having to click “Analyse”."
+  },
+  "options_badge_aide": {
+    "message": "What Lynceus <strong>sends over the network</strong> does not change: only a hash (fingerprint) of the page address, never the address itself nor its content, and nothing is logged. The content of a page is sent only when you click “Analyse this page”, and that text is then passed by the instance to the model provider it uses, sometimes outside the European Union.<br><br>What this setting changes: Chrome will ask you to allow Lynceus to <strong>access all your pages</strong> (a technical browser permission). That is what makes it possible to know the address continuously (for the badge) and to draw or remove the outline, including on sites that navigate internally such as YouTube. This permission also makes the panel's “Analyse this page” button reliable after navigation (the one-off access granted by the right-click expires each time you move).<br><br>Off by default. Without this setting, everything stays at the minimum: an explicit action (right-click) is needed on every page."
+  },
+  "options_cle": {
+    "message": "Access key"
+  },
+  "options_cle_aide": {
+    "message": "Some instances require a key to run analyses (directory lookups stay open). A Lynceus key <strong>is not an account</strong>: it contains no name, no address, no identifier about you, only an expiry date and a number of analyses per day. Leave it empty if your instance does not ask for one."
+  },
+  "options_cle_invite": {
+    "message": "LYNC1.… (optional)"
+  },
+  "options_portail_aide": {
+    "message": "Don't have one? A <strong>portal</strong> can issue one immediately, and will fill in the address of the instance it gives access to at the same time. The portal is a separate service from the instance: it alone signs keys."
+  },
+  "options_portail_invite": {
+    "message": "https://… (portal address)"
+  },
+  "options_obtenir_cle": {
+    "message": "Get a key from this portal"
+  },
+  "options_delai": {
+    "message": "Network safety net"
+  },
+  "options_delai_aide": {
+    "message": "Maximum time an analysis may take before it is abandoned. A timer and a “Cancel” button remain available in the panel while you wait. This delay is only a last resort if the connection hangs without ever answering. The server has its own ceiling (180 s by default, up to 360 s with an automatic retry): keep this value well above it so that a legitimate analysis is never cut short."
+  },
+  "options_permission_refusee": {
+    "message": "Permission refused. The passive badge and outline stay off."
+  },
+  "options_enregistres": {
+    "message": "Settings saved."
+  },
+  "options_modele": {
+    "message": "Model: $1 · $2"
+  },
+  "options_prompt": {
+    "message": "Analysis prompt: v$1 · $2 techniques in the catalogue"
+  },
+  "options_cle_requise": {
+    "message": "This instance requires an access key for analyses."
+  },
+  "options_cle_libre": {
+    "message": "This instance requires no key."
+  },
+  "options_transparence": {
+    "message": "It publishes its methodology: that is the Lynceus transparency contract."
+  },
+  "options_instance_injoignable": {
+    "message": "Instance unreachable ($1). Is the server running?"
+  },
+  "options_version": {
+    "message": "Lynceus, extension v$1"
+  },
+  "accueil_surtitre": {
+    "message": "Installation"
+  },
+  "accueil_titre": {
+    "message": "Welcome to Lynceus"
+  },
+  "accueil_chapo": {
+    "message": "The lookout for information. Lynceus describes the persuasion techniques a page uses, without judging: you draw the conclusion."
+  },
+  "accueil_inscription_titre": {
+    "message": "First, connect Lynceus to an instance"
+  },
+  "accueil_inscription_aide": {
+    "message": "Lynceus does not work on its own: it needs an instance to analyse pages. A portal can point you to one and issue you an access key: <strong>no account, no email address, one click</strong>."
+  },
+  "accueil_portail_label": {
+    "message": "Portal address"
+  },
+  "accueil_obtenir_cle": {
+    "message": "Get an access key"
+  },
+  "accueil_deja_instance": {
+    "message": "I already have an instance"
+  },
+  "accueil_cle_existante": {
+    "message": "A key is already stored. Asking for a new one will replace it."
+  },
+  "accueil_cle_contenu": {
+    "message": "the key contains <strong>no name, no address, no account identifier</strong>: only an expiry date and a number of analyses per day;"
+  },
+  "accueil_cle_auto_heberge": {
+    "message": "if you host your own instance, you need no key at all: just enter its address in the settings."
+  },
+  "accueil_reconnaissance_titre": {
+    "message": "Would you rather be told automatically?"
+  },
+  "accueil_reconnaissance_aide": {
+    "message": "Lynceus can recognise pages already analysed by others, with nothing for you to do:"
+  },
+  "accueil_reconnaissance_1": {
+    "message": "the grade appears <strong>on the icon</strong> as soon as a known page opens;"
+  },
+  "accueil_reconnaissance_2": {
+    "message": "the panel shows <strong>the card straight away</strong>, without clicking “Analyse”;"
+  },
+  "accueil_reconnaissance_3": {
+    "message": "a <strong>discreet outline</strong> surrounds pages graded at risk (D or E);"
+  },
+  "accueil_reconnaissance_4": {
+    "message": "works on sites that change content without reloading (YouTube and the like)."
+  },
+  "accueil_activer": {
+    "message": "Turn on automatic recognition"
+  },
+  "accueil_plus_tard_bouton": {
+    "message": "Later"
+  },
+  "accueil_reconnaissance_activee": {
+    "message": "Automatic recognition is on. You can close this tab and browse normally."
+  },
+  "accueil_permission_refusee": {
+    "message": "Permission refused. Lynceus still works through the right-click menu. You can turn this on later in the settings."
+  },
+  "accueil_plus_tard": {
+    "message": "Understood. Use the right-click menu, then “Analyse this page”. Automatic recognition stays available in the settings."
+  },
+  "accueil_ce_qui_est_envoye": {
+    "message": "<strong>What Lynceus sends, in both cases.</strong> To recognise a page, only a <strong>fingerprint</strong> (hash) of its address is sent: neither the address itself, nor its content, and nothing is logged. The content of a page is transmitted only when <strong>you</strong> click “Analyse this page”. That text then goes to the instance, which passes it to the <strong>language model provider</strong> it uses, sometimes established outside the European Union. That is unavoidable in order to analyse, and a public instance must set it out in its privacy policy. A self-hosted instance with a local model sends nothing outside. Chrome will ask for access to your pages: that is the technical permission needed to read the address continuously and draw the outline, and it changes nothing about what travels over the network. Reversible at any time in the settings."
+  },
+  "accueil_sans_activer_titre": {
+    "message": "Without turning it on, Lynceus still works"
+  },
+  "accueil_sans_activer_aide": {
+    "message": "Right-click on a page, then “🔭 Analyse this page with Lynceus”. Permissions kept to the strict minimum, but every page needs that action, including after navigating."
+  },
+  "accueil_pied": {
+    "message": "The instance address and the key can be changed at any time in the"
+  }
+}

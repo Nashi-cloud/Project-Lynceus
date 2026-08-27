@@ -11,7 +11,6 @@ import time
 
 import anyio
 from datetime import datetime, timezone
-from urllib.parse import urlsplit
 
 import jsonschema
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -231,7 +230,7 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             ])),
             "meta": {
                 "modele": p.llm_model,
-                "fournisseur": urlsplit(p.llm_base_url).hostname or "inconnu",
+                "fournisseur": llm.fournisseur_annonce(p.llm_base_url, p.llm_fournisseur)[0],
                 "prompt_version": version,
                 "analyse_le": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                 "duree_ms": duree_ms,
@@ -243,7 +242,10 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
         if titre:
             carte["titre"] = titre[:500]
         if langue or sortie.get("langue"):
-            carte["langue"] = langue or sortie.get("langue")
+            # Ce que le modèle déclare l'emporte sur ce que le client a annoncé : depuis le
+            # prompt v0.1.2, ce champ est la langue de l'ANALYSE, pas celle que la page
+            # prétendait parler. C'est lui qui permet de vérifier la règle.
+            carte["langue"] = sortie.get("langue") or langue
 
         jsonschema.validate(carte, prompt.charger_schema_carte())  # ceinture et bretelles
         return carte
@@ -534,13 +536,17 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
     @app.get("/v1/meta")
     def meta():
         """Transparence de l'instance : qui analyse, avec quoi, selon quelle version."""
+        fournisseur, distant = llm.fournisseur_annonce(p.llm_base_url, p.llm_fournisseur)
         return {
             "nom": "lynceus-api",
             "version": __version__,
             "schema_version": VERSION_SCHEMA,
             "prompt_version": prompt.resoudre_version(p.prompt_version),
             "modele": p.llm_model,
-            "fournisseur": urlsplit(p.llm_base_url).hostname or "inconnu",
+            "fournisseur": fournisseur,
+            # Le texte analysé quitte-t-il l'instance ? C'est ce que le portail annonce sur
+            # sa page de confidentialité, et la réponse change tout pour le lecteur.
+            "fournisseur_distant": distant,
             "taxonomie": {"nb_techniques": len(prompt.charger_taxonomie())},
             "limites": {
                 "contenu_max_cars": p.contenu_max_cars,

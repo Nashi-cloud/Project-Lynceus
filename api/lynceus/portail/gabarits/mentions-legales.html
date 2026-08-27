@@ -1,63 +1,47 @@
 {% extends "base.html" %}
-{% block titre %}Mentions légales · {{ nom }}{% endblock %}
+{% block titre %}{{ _("Mentions légales") }} · {{ nom }}{% endblock %}
 {% block corps %}
 <header class="entete-page">
   <div class="contenu">
-    <span class="surtitre">Informations légales</span>
-    <h1>Mentions légales</h1>
-    <p class="chapo">Qui édite ce service, qui l'héberge, et sous quelle licence son code
-    est publié.</p>
+    <span class="surtitre">{{ _("Informations légales") }}</span>
+    <h1>{{ _("Mentions légales") }}</h1>
+    <p class="chapo">{{ _("Qui édite ce service, qui l'héberge, et sous quelle licence son code est publié.") }}</p>
   </div>
 </header>
 
 <article class="contenu corps-page">
+  {% if langue != langue_source %}{% include "_traduction_juridique.html" %}{% endif %}
   {% if not legal.complete %}
     {% include "_legal_incomplet.html" %}
   {% else %}
-  <h2 style="margin-top:0">Éditeur du service</h2>
+  <h2 style="margin-top:0">{{ _("Éditeur du service") }}</h2>
   <table>
-    <tr><th>Éditeur</th><td>{{ legal.nom }}{% if legal.statut %}, {{ legal.statut }}{% endif %}</td></tr>
-    <tr><th>Adresse</th><td>{{ legal.adresse }}</td></tr>
-    {% if legal.identifiant %}<tr><th>Identification</th><td>{{ legal.identifiant }}</td></tr>{% endif %}
-    {% if legal.directeur %}<tr><th>Directeur de la publication</th><td>{{ legal.directeur }}</td></tr>{% endif %}
-    <tr><th>Contact</th><td><a href="mailto:{{ legal.contact }}">{{ legal.contact }}</a></td></tr>
+    <tr><th>{{ _("Éditeur") }}</th><td>{{ legal.nom }}{% if legal.statut %}, {{ legal.statut }}{% endif %}</td></tr>
+    <tr><th>{{ _("Adresse") }}</th><td>{{ legal.adresse }}</td></tr>
+    {% if legal.identifiant %}<tr><th>{{ _("Identification") }}</th><td>{{ legal.identifiant }}</td></tr>{% endif %}
+    {% if legal.directeur %}<tr><th>{{ _("Directeur de la publication") }}</th><td>{{ legal.directeur }}</td></tr>{% endif %}
+    <tr><th>{{ _("Contact") }}</th><td><a href="mailto:{{ legal.contact }}">{{ legal.contact }}</a></td></tr>
   </table>
 
-  <h2>Hébergeur</h2>
+  <h2>{{ _("Hébergeur") }}</h2>
   <table>
-    <tr><th>Hébergeur</th><td>{{ legal.hebergeur.nom }}</td></tr>
-    {% if legal.hebergeur.adresse %}<tr><th>Adresse</th><td>{{ legal.hebergeur.adresse }}</td></tr>{% endif %}
-    {% if legal.hebergeur.site %}<tr><th>Site</th><td><a href="{{ legal.hebergeur.site }}" rel="noopener">{{ legal.hebergeur.site }}</a></td></tr>{% endif %}
+    <tr><th>{{ _("Hébergeur") }}</th><td>{{ legal.hebergeur.nom }}</td></tr>
+    {% if legal.hebergeur.adresse %}<tr><th>{{ _("Adresse") }}</th><td>{{ legal.hebergeur.adresse }}</td></tr>{% endif %}
+    {% if legal.hebergeur.site %}<tr><th>{{ _("Site") }}</th><td><a href="{{ legal.hebergeur.site }}" rel="noopener">{{ legal.hebergeur.site }}</a></td></tr>{% endif %}
   </table>
   {% endif %}
 
-  <h2>Propriété intellectuelle et licence</h2>
-  <p>Le code de Lynceus, sa méthodologie, son référentiel de procédés et ses prompts sont
-  publiés sous licence <strong>GNU Affero General Public License version 3</strong>. Vous
-  pouvez les utiliser, les étudier, les modifier et les redistribuer, y compris pour un
-  usage commercial, à la condition que toute version modifiée mise à disposition par le
-  réseau publie elle aussi ses sources.</p>
-  <p>Cette licence est un choix de méthode autant que de principe : un outil qui prétend
-  expliquer comment on manipule ne peut pas demander qu'on le croie sur parole. Le code
-  qui produit les analyses doit être vérifiable par ceux qui les lisent.</p>
+  <h2>{{ _("Propriété intellectuelle et licence") }}</h2>
+  <p>{{ _("Le code de Lynceus, sa méthodologie, son référentiel de procédés et ses prompts sont publiés sous licence <strong>GNU Affero General Public License version 3</strong>. Vous pouvez les utiliser, les étudier, les modifier et les redistribuer, y compris pour un usage commercial, à la condition que toute version modifiée mise à disposition par le réseau publie elle aussi ses sources.") }}</p>
+  <p>{{ _("Cette licence est un choix de méthode autant que de principe : un outil qui prétend expliquer comment on manipule ne peut pas demander qu'on le croie sur parole. Le code qui produit les analyses doit être vérifiable par ceux qui les lisent.") }}</p>
 
-  <h2>Contenus analysés</h2>
-  <p>Les analyses publiées portent sur des <strong>contenus accessibles publiquement</strong>
-  et décrivent des procédés rhétoriques. Elles citent des extraits courts à fin d'analyse
-  et de commentaire, avec mention de la source. Elles ne portent pas de jugement sur les
-  personnes qui publient ou partagent ces contenus.</p>
-  <p>Toute analyse est contestable, y compris et surtout par l'éditeur du site concerné :
-  voir <a href="/contester">contester une analyse</a>. Le nombre de contestations reçues
-  est affiché publiquement sous chaque analyse.</p>
+  <h2>{{ _("Contenus analysés") }}</h2>
+  <p>{{ _("Les analyses publiées portent sur des <strong>contenus accessibles publiquement</strong> et décrivent des procédés rhétoriques. Elles citent des extraits courts à fin d'analyse et de commentaire, avec mention de la source. Elles ne portent pas de jugement sur les personnes qui publient ou partagent ces contenus.") }}</p>
+  <p>{{ _("Toute analyse est contestable, y compris et surtout par l'éditeur du site concerné : voir <a href=\"%(contester)s\">contester une analyse</a>. Le nombre de contestations reçues est affiché publiquement sous chaque analyse.", contester=u('/contester')) }}</p>
 
-  <h2>Responsabilité</h2>
-  <p>Les analyses sont produites par un modèle de langage et <strong>peuvent comporter des
-  erreurs</strong>. Elles constituent un support d'éducation aux médias, pas une
-  qualification juridique ni une vérification de faits. L'éditeur ne garantit ni
-  l'exactitude ni l'exhaustivité des analyses, et ne saurait être tenu responsable de
-  l'usage qui en est fait.</p>
+  <h2>{{ _("Responsabilité") }}</h2>
+  <p>{{ _("Les analyses sont produites par un modèle de langage et <strong>peuvent comporter des erreurs</strong>. Elles constituent un support d'éducation aux médias, pas une qualification juridique ni une vérification de faits. L'éditeur ne garantit ni l'exactitude ni l'exhaustivité des analyses, et ne saurait être tenu responsable de l'usage qui en est fait.") }}</p>
 
-  <p class="discret">Voir aussi la <a href="/confidentialite">politique de
-  confidentialité</a> et les <a href="/conditions">conditions d'utilisation</a>.</p>
+  <p class="discret">{{ _("Voir aussi la <a href=\"%(confidentialite)s\">politique de confidentialité</a> et les <a href=\"%(conditions)s\">conditions d'utilisation</a>.", confidentialite=u('/confidentialite'), conditions=u('/conditions')) }}</p>
 </article>
 {% endblock %}

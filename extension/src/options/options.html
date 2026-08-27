@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Réglages de Lynceus</title>
+  <title data-i18n="options_titre_page">Réglages de Lynceus</title>
   <meta name="color-scheme" content="light dark">
   <link rel="stylesheet" href="../commun/lynceus.css">
   <style>
@@ -41,71 +41,43 @@
 </header>
 
 <main>
-  <p class="surtitre">Configuration</p>
-  <h1>Réglages</h1>
+  <p class="surtitre" data-i18n="options_surtitre">Configuration</p>
+  <h1 data-i18n="options_titre">Réglages</h1>
 
-  <h2>Instance Lynceus</h2>
-  <p class="aide">L'adresse du serveur qui analyse et tient l'annuaire. Vous pouvez utiliser la
-    vôtre : le kit serveur est libre et auto-hébergeable.</p>
+  <h2 data-i18n="options_instance">Instance Lynceus</h2>
+  <p class="aide" data-i18n="options_instance_aide">L'adresse du serveur qui analyse et tient l'annuaire.</p>
   <input type="url" id="instance" class="champ" placeholder="http://localhost:8000">
   <div class="actions">
-    <button class="bouton creux" id="tester">Tester la connexion</button>
+    <button class="bouton creux" id="tester" data-i18n="options_tester">Tester la connexion</button>
   </div>
   <div id="instance-infos" class="cache"></div>
 
-  <h2>Badge et contour passifs</h2>
+  <h2 data-i18n="options_badge">Badge et contour passifs</h2>
   <label class="interrupteur">
     <input type="checkbox" id="badge">
-    <span>Afficher la note sur l'icône, et un contour discret sur les pages jugées à risque (D/E),
-      quand une page visitée est déjà dans l'annuaire, sans avoir à cliquer sur « Analyser ».<br>
-      <span class="aide">
-        Ce que Lynceus <strong>envoie au réseau</strong> ne change pas : uniquement un hash
-        (empreinte) de l'adresse de la page, jamais l'adresse elle-même ni son contenu, et rien
-        n'est journalisé. Le contenu d'une page n'est envoyé que lorsque vous cliquez sur
-        « Analyser cette page », et ce texte est alors transmis par l'instance au
-        fournisseur de modèle qu'elle utilise, parfois hors de l'Union européenne.<br><br>
-        Ce que change ce réglage : Chrome vous demandera d'autoriser Lynceus à
-        <strong>accéder à toutes vos pages</strong> (permission technique du navigateur). C'est
-        ce qui permet de connaître l'adresse en continu (pour le badge) et de poser ou retirer le
-        contour, y compris sur les sites à navigation interne comme YouTube. Cette permission
-        rend aussi le bouton « Analyser cette page » du panneau fiable après un changement de page
-        (l'accès ponctuel accordé par le clic droit expire à chaque navigation).<br><br>
-        Désactivé par défaut. Sans ce réglage, tout reste au minimum : un geste explicite
-        (clic droit) est nécessaire à chaque page.
-      </span></span>
+    <span><span data-i18n="options_badge_intitule">Afficher la note sur l'icône…</span><br>
+      <span class="aide" data-i18n-html="options_badge_aide">…</span></span>
   </label>
 
-  <h2>Clé d'accès</h2>
-  <p class="aide">Certaines instances demandent une clé pour lancer des analyses (les
-    consultations de l'annuaire restent libres). Une clé Lynceus <strong>n'est pas un
-    compte</strong> : elle ne contient ni nom, ni adresse, ni identifiant vous concernant,
-    seulement une date d'expiration et un nombre d'analyses par jour. Laissez vide si votre
-    instance n'en demande pas.</p>
-  <input type="text" id="cle" class="champ" placeholder="LYNC1.… (facultatif)" autocomplete="off">
+  <h2 data-i18n="options_cle">Clé d'accès</h2>
+  <p class="aide" data-i18n-html="options_cle_aide">…</p>
+  <input type="text" id="cle" class="champ" data-i18n-attr="placeholder:options_cle_invite" autocomplete="off">
 
-  <p class="aide" style="margin-top:1rem;">Vous n'en avez pas ? Un <strong>portail</strong>
-    peut vous en délivrer une immédiatement, et renseignera du même coup l'adresse de
-    l'instance à laquelle elle donne accès. Le portail est un service distinct de
-    l'instance : lui seul signe les clés.</p>
-  <input type="url" id="portail" class="champ" placeholder="https://… (adresse du portail)"
+  <p class="aide" style="margin-top:1rem;" data-i18n-html="options_portail_aide">…</p>
+  <input type="url" id="portail" class="champ" data-i18n-attr="placeholder:options_portail_invite"
          autocomplete="off">
   <div class="actions">
-    <button class="bouton creux" id="obtenir-cle">Obtenir une clé auprès de ce portail</button>
+    <button class="bouton creux" id="obtenir-cle" data-i18n="options_obtenir_cle">Obtenir une clé</button>
   </div>
   <div id="etat-inscription" class="cache"></div>
 
-  <h2>Filet de sécurité réseau</h2>
-  <p class="aide">Délai maximum d'une analyse avant abandon automatique. Un chronomètre et un
-    bouton « Annuler » restent de toute façon disponibles dans le panneau pendant l'attente.
-    Ce délai n'est qu'un dernier recours si la connexion reste bloquée sans jamais répondre.
-    Le serveur a son propre plafond (par défaut 180 s, jusqu'à 360 s avec une nouvelle tentative
-    automatique) : gardez cette valeur nettement au-dessus pour ne jamais couper une analyse
-    légitime en cours.</p>
+  <h2 data-i18n="options_delai">Filet de sécurité réseau</h2>
+  <p class="aide" data-i18n="options_delai_aide">…</p>
   <input type="number" id="delai" class="champ" min="30" max="1800" step="10">
-  <span class="unite">secondes</span>
+  <span class="unite" data-i18n="secondes">secondes</span>
 
   <div class="actions" style="margin-top:1.4rem;">
-    <button class="bouton" id="enregistrer">Enregistrer</button>
+    <button class="bouton" id="enregistrer" data-i18n="enregistrer">Enregistrer</button>
   </div>
   <div id="etat" role="status"></div>
 

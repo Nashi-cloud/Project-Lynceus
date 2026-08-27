@@ -1,11 +1,15 @@
 <!doctype html>
-<html lang="fr">
+<html lang="{{ langue }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block titre %}{{ nom }}{% endblock %}</title>
-<meta name="description" content="{% block description %}{{ nom }} : une extension libre qui explique les procédés de persuasion d'une page web, sans dire à personne ce qu'il doit penser.{% endblock %}">
+<meta name="description" content="{% block description %}{{ _("%(nom)s : une extension libre qui explique les procédés de persuasion d'une page web, sans dire à personne ce qu'il doit penser.", nom=nom) }}{% endblock %}">
 <meta name="color-scheme" content="light dark">
+{# Chaque page annonce ses autres langues : c'est ce qui permet à un moteur de recherche
+   de servir la bonne, et à un lecteur de la trouver sans passer par la racine. #}
+{% for l in langues %}<link rel="alternate" hreflang="{{ l.code }}" href="{{ adresse_portail }}{{ l.url }}">
+{% endfor %}<link rel="alternate" hreflang="x-default" href="{{ adresse_portail }}/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cg fill='none' stroke='%23e0a962' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M3.6 16S8.2 8.4 16 8.4 28.4 16 28.4 16 23.8 23.6 16 23.6 3.6 16 3.6 16Z'/%3E%3C/g%3E%3Ccircle cx='16' cy='16' r='4' fill='%23e0a962'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/statique/lynceus.css">
 <link rel="preload" href="/statique/polices/fraunces-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -16,17 +20,18 @@
 <body{% block classe_corps %}{% endblock %}>
 
 <header class="bandeau">
-  <a class="marque" href="/">
+  <a class="marque" href="{{ u('/') }}">
     {% include "_logo.html" %}
     {{ nom }}
   </a>
-  <nav aria-label="Navigation principale">
-    <a href="/installer">Installer</a>
-    <a href="/methodologie">Méthode</a>
-    <a href="/taxonomie">Procédés</a>
-    <a href="/annuaire">Annuaire</a>
-    <a href="/charte">Charte</a>
-    <a href="/auto-hebergement">S'héberger</a>
+  <nav aria-label="{{ _("Navigation principale") }}">
+    <a href="{{ u('/installer') }}">{{ _("Installer") }}</a>
+    <a href="{{ u('/methodologie') }}">{{ _("Méthode") }}</a>
+    <a href="{{ u('/taxonomie') }}">{{ _("Procédés") }}</a>
+    <a href="{{ u('/annuaire') }}">{{ _("Annuaire") }}</a>
+    <a href="{{ u('/charte') }}">{{ _("Charte") }}</a>
+    <a href="{{ u('/auto-hebergement') }}">{{ _("Héberger") }}</a>
+    <span class="langues">{% for l in langues %}{% if l.courante %}<strong lang="{{ l.code }}">{{ l.code|upper }}</strong>{% else %}<a href="{{ l.url }}" hreflang="{{ l.code }}" lang="{{ l.code }}">{{ l.code|upper }}</a>{% endif %}{% endfor %}</span>
   </nav>
 </header>
 
@@ -34,28 +39,51 @@
 
 <footer class="pied">
   <div class="contenu large">
-    <div>
-      <strong style="color: var(--encre); font-family: var(--display); font-size: 1.05rem;">{{ nom }}</strong><br>
-      Logiciel libre sous licence AGPL-3.0.<br>
-      Portail v{{ version }}.
+    <div class="pied-identite">
+      <strong class="nom-projet">{{ nom }}</strong>
+      <p>{{ _("Logiciel libre sous licence AGPL-3.0.") }}</p>
+      {% if depot %}
+      <p><a class="lien-forge" href="{{ depot }}" rel="noopener">{% include "_logo_forge.html" %}{{ _("Code source de cette instance") }}</a></p>
+      {% endif %}
+      <p>{{ _("Portail v%(version)s.", version=version) }}</p>
       {% if paquet %}
       {# Lien direct et stable : /telecharger sert toujours la version la plus haute
          publiée par ce portail. C'est l'adresse à transmettre à quelqu'un. #}
-      <br><a href="/telecharger" download>Télécharger l'extension v{{ paquet.version }}</a>
-      ({{ paquet.taille_ko }} Ko)
+      <p><a href="/telecharger" download>{{ _("Télécharger l'extension v%(version)s", version=paquet.version) }}</a>
+      ({{ _("%(taille)s Ko", taille=paquet.taille_ko) }})</p>
       {% endif %}
     </div>
-    <div class="liens">
-      <a href="/charte">Charte éthique</a>
-      <a href="/methodologie">Méthodologie</a>
-      <a href="/taxonomie">Les {{ nb_techniques }} procédés</a>
-      <a href="/contester">Contester une analyse</a>
-      <a href="/auto-hebergement">Héberger sa propre instance</a>
-      <a href="/mentions-legales">Mentions légales</a>
-      <a href="/confidentialite">Confidentialité</a>
-      <a href="/conditions">Conditions d'utilisation</a>
-      {% if contact %}<a href="mailto:{{ contact }}">{{ contact }}</a>{% endif %}
-    </div>
+
+    <nav class="pied-groupe" aria-labelledby="pied-comprendre">
+      <p class="pied-titre" id="pied-comprendre">{{ _("Comprendre") }}</p>
+      <ul>
+        <li><a href="{{ u('/charte') }}">{{ _("Charte éthique") }}</a></li>
+        <li><a href="{{ u('/methodologie') }}">{{ _("Méthodologie") }}</a></li>
+        <li><a href="{{ u('/taxonomie') }}">{{ _("Les %(nombre)s procédés", nombre=nb_techniques) }}</a></li>
+        <li><a href="{{ u('/prompt') }}">{{ _("Prompt d'analyse") }}</a></li>
+        <li><a href="{{ u('/calibration') }}">{{ _("Résultats de calibration") }}</a></li>
+      </ul>
+    </nav>
+
+    <nav class="pied-groupe" aria-labelledby="pied-utiliser">
+      <p class="pied-titre" id="pied-utiliser">{{ _("Utiliser") }}</p>
+      <ul>
+        <li><a href="{{ u('/installer') }}">{{ _("Installer l'extension") }}</a></li>
+        <li><a href="{{ u('/annuaire') }}">{{ _("Consulter l'annuaire") }}</a></li>
+        <li><a href="{{ u('/contester') }}">{{ _("Contester une analyse") }}</a></li>
+        <li><a href="{{ u('/auto-hebergement') }}">{{ _("Héberger sa propre instance") }}</a></li>
+      </ul>
+    </nav>
+
+    <nav class="pied-groupe" aria-labelledby="pied-legal">
+      <p class="pied-titre" id="pied-legal">{{ _("Cadre légal") }}</p>
+      <ul>
+        <li><a href="{{ u('/mentions-legales') }}">{{ _("Mentions légales") }}</a></li>
+        <li><a href="{{ u('/confidentialite') }}">{{ _("Confidentialité") }}</a></li>
+        <li><a href="{{ u('/conditions') }}">{{ _("Conditions d'utilisation") }}</a></li>
+        {% if contact %}<li><a href="mailto:{{ contact }}">{{ contact }}</a></li>{% endif %}
+      </ul>
+    </nav>
   </div>
 </footer>
 

@@ -1,61 +1,43 @@
 {% extends "base.html" %}
-{% block titre %}Conditions d'utilisation · {{ nom }}{% endblock %}
+{% block titre %}{{ _("Conditions d'utilisation") }} · {{ nom }}{% endblock %}
 {% block corps %}
 <header class="entete-page">
   <div class="contenu">
-    <span class="surtitre">Conditions</span>
-    <h1>Conditions d'utilisation</h1>
-    <p class="chapo">Ce que ce service vous offre, ce qu'il ne garantit pas, et ce qu'il
-    vous demande.</p>
+    <span class="surtitre">{{ _("Conditions") }}</span>
+    <h1>{{ _("Conditions d'utilisation") }}</h1>
+    <p class="chapo">{{ _("Ce que ce service vous offre, ce qu'il ne garantit pas, et ce qu'il vous demande.") }}</p>
   </div>
 </header>
 
 <article class="contenu corps-page">
-  <h2 style="margin-top:0">Le service</h2>
-  <p>Ce portail distribue une extension de navigateur libre et délivre des clés d'accès à
-  une instance d'analyse. Le service est fourni <strong>gratuitement</strong>, sans compte
-  et sans publicité. Il peut être interrompu, limité ou arrêté à tout moment, notamment
-  parce que chaque analyse a un coût réel supporté par l'exploitant.</p>
+  {% if langue != langue_source %}{% include "_traduction_juridique.html" %}{% endif %}
+  <h2 style="margin-top:0">{{ _("Le service") }}</h2>
+  <p>{{ _("Ce portail distribue une extension de navigateur libre et délivre des clés d'accès à une instance d'analyse. Le service est fourni <strong>gratuitement</strong>, sans compte et sans publicité. Il peut être interrompu, limité ou arrêté à tout moment, notamment parce que chaque analyse a un coût réel supporté par l'exploitant.") }}</p>
 
-  <h2>Ce que vous acceptez en l'utilisant</h2>
+  <h2>{{ _("Ce que vous acceptez en l'utilisant") }}</h2>
   <ul>
-    <li>Ne pas contourner les quotas ni les limites de débit, ni automatiser des demandes
-    en masse. Ces garde-fous existent parce qu'un usage abusif se traduit directement par
-    une facture.</li>
-    <li>Ne pas présenter une analyse comme une vérification de faits, une décision de
-    justice ou un jugement sur une personne. Ce n'en est aucune.</li>
-    <li>Ne pas soumettre de contenus dont la transmission à un tiers vous est interdite,
-    par exemple des documents confidentiels ou des données de santé. Le texte analysé est
-    transmis à un fournisseur de modèle : voir la
-    <a href="/confidentialite">politique de confidentialité</a>.</li>
+    <li>{{ _("Ne pas contourner les quotas ni les limites de débit, ni automatiser des demandes en masse. Ces garde-fous existent parce qu'un usage abusif se traduit directement par une facture.") }}</li>
+    <li>{{ _("Ne pas présenter une analyse comme une vérification de faits, une décision de justice ou un jugement sur une personne. Ce n'en est aucune.") }}</li>
+    <li>{{ _("Ne pas soumettre de contenus dont la transmission à un tiers vous est interdite, par exemple des documents confidentiels ou des données de santé. Le texte analysé est transmis à un fournisseur de modèle : voir la <a href=\"%(confidentialite)s\">politique de confidentialité</a>.", confidentialite=u('/confidentialite')) }}</li>
   </ul>
 
-  <h2>Absence de garantie</h2>
-  <p>Les analyses sont produites par un modèle de langage. Elles <strong>peuvent être
-  fausses</strong>, incomplètes, ou mal calibrées. Le service est fourni en l'état, sans
-  garantie d'exactitude, de disponibilité ni d'adéquation à un usage particulier, dans les
-  limites permises par le droit applicable.</p>
-  <p>Si une analyse vous paraît erronée, <a href="/contester">contestez-la</a>. C'est un
-  engagement de la <a href="/charte">charte</a>, pas une politesse.</p>
+  <h2>{{ _("Absence de garantie") }}</h2>
+  <p>{{ _("Les analyses sont produites par un modèle de langage. Elles <strong>peuvent être fausses</strong>, incomplètes, ou mal calibrées. Le service est fourni en l'état, sans garantie d'exactitude, de disponibilité ni d'adéquation à un usage particulier, dans les limites permises par le droit applicable.") }}</p>
+  <p>{{ _("Si une analyse vous paraît erronée, <a href=\"%(contester)s\">contestez-la</a>. C'est un engagement de la <a href=\"%(charte)s\">charte</a>, pas une politesse.", contester=u('/contester'), charte=u('/charte')) }}</p>
 
-  <h2>Clés d'accès</h2>
-  <p>Une clé n'est pas un compte : elle ne contient aucune information sur son porteur,
-  seulement une date d'expiration et un nombre d'analyses par jour. Elle peut être révoquée
-  en cas d'usage abusif. Sa perte n'est pas un incident : demandez-en une autre.</p>
+  <h2>{{ _("Clés d'accès") }}</h2>
+  <p>{{ _("Une clé n'est pas un compte : elle ne contient aucune information sur son porteur, seulement une date d'expiration et un nombre d'analyses par jour. Elle peut être révoquée en cas d'usage abusif. Sa perte n'est pas un incident : demandez-en une autre.") }}</p>
 
-  <h2>Licence du logiciel</h2>
-  <p>Le logiciel est distribué sous licence AGPL-3.0. Ces conditions portent sur
-  <strong>ce service hébergé</strong>, pas sur le logiciel lui-même : vos droits sur le
-  code sont ceux que la licence vous donne, et rien ici ne les restreint.</p>
+  <h2>{{ _("Licence du logiciel") }}</h2>
+  <p>{{ _("Le logiciel est distribué sous licence AGPL-3.0. Ces conditions portent sur <strong>ce service hébergé</strong>, pas sur le logiciel lui-même : vos droits sur le code sont ceux que la licence vous donne, et rien ici ne les restreint.") }}</p>
 
-  <h2>Évolution et droit applicable</h2>
-  <p>Ces conditions peuvent être modifiées. Les modifications sont publiques, puisque cette
-  page est versionnée dans le dépôt au même titre que le code.</p>
+  <h2>{{ _("Évolution et droit applicable") }}</h2>
+  <p>{% if depot %}{{ _("Ces conditions peuvent être modifiées. Les modifications sont publiques, puisque cette page est versionnée <a href=\"%(depot)s\">dans le dépôt</a> au même titre que le code.", depot=depot) }}{% else %}{{ _("Ces conditions peuvent être modifiées. Les modifications sont publiques, puisque cette page est versionnée dans le dépôt au même titre que le code.") }}{% endif %}</p>
   {% if legal.droit_applicable %}
-  <p>Les présentes conditions sont régies par le droit {{ legal.droit_applicable }}.</p>
+  <p>{{ _("Les présentes conditions sont régies par le droit %(droit)s.", droit=legal.droit_applicable) }}</p>
   {% endif %}
   {% if legal.contact %}
-  <p>Toute question : <a href="mailto:{{ legal.contact }}">{{ legal.contact }}</a>.</p>
+  <p>{{ _("Toute question : <a href=\"mailto:%(contact)s\">%(contact)s</a>.", contact=legal.contact) }}</p>
   {% endif %}
 </article>
 {% endblock %}

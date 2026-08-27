@@ -6,6 +6,7 @@ Deux propriétés comptent plus que l'affichage et sont testées comme telles :
 """
 
 import io
+import re
 import json as json_
 import zipfile
 
@@ -35,7 +36,7 @@ def parametres_portail_test(**surcharges) -> ParametresPortail:
                    editeur_nom="", editeur_statut="", editeur_adresse="",
                    editeur_identifiant="", editeur_directeur="", editeur_contact="",
                    hebergeur_nom="", hebergeur_adresse="", hebergeur_site="",
-                   droit_applicable="")
+                   droit_applicable="", depot="", depot_fichiers="")
     defauts.update(surcharges)
     return ParametresPortail(**defauts)
 
@@ -68,6 +69,329 @@ def test_les_pages_se_rendent(portail, chemin):
     reponse = client.get(chemin)
     assert reponse.status_code == 200
     assert reponse.headers["content-type"].startswith("text/html")
+
+
+PAGES = ["/", "/installer", "/methodologie", "/taxonomie", "/charte", "/prompt",
+         "/calibration", "/auto-hebergement", "/annuaire", "/contester", "/conditions",
+         "/confidentialite", "/mentions-legales"]
+
+
+@pytest.mark.parametrize("chemin", PAGES)
+def test_aucune_page_ne_publie_de_lien_relatif(portail, chemin):
+    """Un lien relatif servi par le portail est un lien mort.
+
+    Le cas vient des documents du dépôt : « METHODOLOGIE.md » est juste dans docs/, et
+    devient /METHODOLOGIE.md une fois rendu ici. Les cibles connues sont renvoyées vers
+    la page correspondante, les autres vers le dépôt, et à défaut le lien disparaît."""
+    client, _ = portail
+    liens = re.findall(r'href="([^"]*)"', client.get(chemin).text)
+    assert liens
+    for lien in liens:
+        assert lien.startswith(("/", "#", "http://", "https://", "mailto:", "data:")), lien
+
+
+# ------------------------------------------------------------------ langues
+
+def test_le_prefixe_de_langue_sert_la_meme_page_traduite(portail):
+    """« /en/charte » et « /charte » sont la même page. Le français reste à la racine :
+    aucune adresse déjà publiée ne change en devenant bilingue."""
+    client, _ = portail
+    assert client.get("/charte").status_code == 200
+    anglais = client.get("/en/charte")
+    assert anglais.status_code == 200
+    assert 'lang="en"' in anglais.text
+    assert ">Install<" in anglais.text          # bandeau traduit
+    assert ">Installer<" not in anglais.text
+
+
+def test_les_liens_internes_restent_dans_la_langue_de_la_page(portail):
+    """Un lien écrit en dur ramènerait le lecteur anglophone au français au premier clic."""
+    client, _ = portail
+    html = client.get("/en/charte").text
+    assert 'href="/en/methodologie"' in html
+    assert 'href="/methodologie"' not in html
+
+
+def test_la_racine_negocie_la_langue_du_navigateur(portail):
+    """Seule la racine nue négocie : ailleurs, le préfixe fait foi, sinon un lien partagé
+    s'ouvrirait dans une autre langue que celle où il a été écrit."""
+    client, _ = portail
+    reponse = client.get("/", headers={"accept-language": "en-GB,en;q=0.9"},
+                         follow_redirects=False)
+    assert reponse.status_code == 302
+    assert reponse.headers["location"] == "/en/"
+    assert "Accept-Language" in reponse.headers.get("vary", "")
+
+    assert client.get("/", headers={"accept-language": "fr-FR,fr;q=0.9"},
+                      follow_redirects=False).status_code == 200
+    # Une langue que le portail ne parle pas ne le fait pas hésiter.
+    assert client.get("/", headers={"accept-language": "de-DE,de"},
+                      follow_redirects=False).status_code == 200
+
+
+def test_une_adresse_explicite_ne_rebondit_jamais(portail):
+    """Le sélecteur vise « /fr/ » et non « / » : sinon un anglophone qui choisit le
+    français serait renvoyé à l'anglais par la négociation, sans pouvoir en sortir."""
+    client, _ = portail
+    reponse = client.get("/fr/", headers={"accept-language": "en-GB,en;q=0.9"},
+                         follow_redirects=False)
+    assert reponse.status_code == 200
+    assert ">Installer<" in reponse.text
+
+
+def test_chaque_page_annonce_ses_autres_langues(portail):
+    """Sans hreflang, un moteur de recherche sert la mauvaise version, et le lecteur ne
+    sait pas que l'autre existe."""
+    client, _ = portail
+    html = client.get("/en/annuaire").text
+    assert 'hreflang="fr" href="http://testserver/fr/annuaire"' in html
+    assert 'hreflang="en" href="http://testserver/en/annuaire"' in html
+    assert 'hreflang="x-default"' in html
+
+
+def test_aucune_phrase_de_gabarit_n_est_laissee_sans_traduction():
+    """Le garde-fou de la traduction.
+
+    Les msgid sont les phrases françaises : une phrase modifiée devient une phrase inconnue
+    du catalogue, et ce test la signale au lieu de laisser la version anglaise afficher
+    silencieusement l'ancien texte, ou du français au milieu de l'anglais."""
+    import re
+
+    from lynceus.portail import i18n
+
+    # Les littéraux adjacents sont recollés : Python concatène « "a" "b" » en une seule
+    # phrase, et n'en chercher que la première moitié dans le catalogue ne prouverait rien.
+    morceau = r'"(?:[^"\\]|\\.)*"'
+    motif = re.compile(r"\bN?_\(\s*((?:" + morceau + r"\s*)+)")
+    fichiers = [*(RACINE / "gabarits").glob("*.html"), *RACINE.glob("*.py")]
+    phrases = set()
+    for fichier in fichiers:
+        for trouve in motif.findall(fichier.read_text(encoding="utf-8")):
+            phrases.add("".join(bout[1:-1].replace('\\"', '"')
+                                for bout in re.findall(morceau, trouve)))
+    assert phrases, "aucune phrase marquée : le motif de détection ne correspond plus"
+
+    for langue in i18n.LANGUES:
+        if langue == i18n.LANGUE_SOURCE:
+            continue
+        catalogue = i18n.catalogue(langue)
+        manquantes = sorted(p for p in phrases if not catalogue.get(p))
+        assert not manquantes, f"{langue} : {len(manquantes)} phrase(s) sans traduction, " \
+                               f"à commencer par « {manquantes[0]} »"
+
+
+def test_une_phrase_traduite_garde_sa_mise_en_forme_et_echappe_ses_valeurs(portail):
+    """Les phrases portent souvent un lien ou une mise en valeur : échappées comme du texte
+    brut, elles afficheraient leurs balises. Ce qui vient du visiteur, en revanche, doit
+    rester échappé, sans quoi la traduction ouvrirait une injection."""
+    client, _ = portail
+    assert "<strong>adresse de page</strong>" in client.get("/annuaire").text
+    assert "<strong>page address</strong>" in client.get("/en/annuaire").text
+
+    hostile = client.get("/annuaire/recherche", params={"q": "<script>alerte()</script>"}).text
+    assert "<script>" not in hostile
+
+
+def test_les_libelles_venus_du_code_sont_traduits_aussi(portail):
+    """Les motifs de contestation sont définis en Python, avant qu'une langue existe.
+    Sans traduction au rendu, un formulaire anglais proposerait des choix en français."""
+    client, _ = portail
+    assert "I publish this site and I dispute this" in client.get("/en/contester").text
+    # L'apostrophe est échappée par Jinja : on cherche un fragment qui n'en porte pas.
+    assert "et je conteste" in client.get("/contester").text
+
+
+def test_un_document_traduit_est_servi_dans_la_langue_demandee(portail):
+    """La charte existe en anglais : c'est elle qui doit s'afficher, sans l'encart qui
+    signale un document non traduit."""
+    client, _ = portail
+    html = client.get("/en/charte").text
+    assert "Lynceus ethical charter" in html
+    assert "A lookout, not a judge" in html
+    assert "published in its original language" not in html
+
+
+def test_un_document_sans_traduction_sert_l_original_en_le_disant(portail):
+    """Mieux vaut le texte qui engage le projet, dans sa langue, qu'une page vide. Mais le
+    lecteur doit savoir pourquoi il lit du français au milieu de l'anglais.
+
+    Les versions de prompt antérieures ne sont pas traduites, et n'ont pas à l'être : elles
+    restent lisibles parce que des analyses les annoncent, pas pour être relues."""
+    from lynceus.moteur import prompt as moteur_prompt
+
+    client, _ = portail
+    ancienne = moteur_prompt.versions_disponibles()[0]
+    html = client.get(f"/en/prompt?version={ancienne}").text
+    assert "published in its original language" in html
+    # Une phrase du fichier français, sans apostrophe : Jinja échappe les apostrophes.
+    assert "Tu es une vigie, pas un juge" in html
+
+
+def test_la_traduction_annonce_l_original_qui_fait_foi(portail):
+    """Une traduction de texte normatif n'a pas la portée de l'original : le dire dans le
+    document lui-même, pas seulement sur la page qui le sert."""
+    client, _ = portail
+    assert "the one that binds the project" in client.get("/en/charte").text
+
+
+def test_le_prompt_publie_est_celui_que_le_moteur_applique(portail):
+    """La charte promet le prompt public (§2). Une page qui le recopierait ne prouverait
+    rien : c'est le fichier versionné qui est rendu, celui-là même que le moteur lit."""
+    from lynceus.moteur import prompt as moteur_prompt
+    client, _ = portail
+    version = moteur_prompt.versions_disponibles()[-1]
+    html = client.get("/prompt").text
+    assert f"v{version}" in html
+    # Une phrase de posture, présente dans le fichier, absente de tout gabarit.
+    assert "Tu es une vigie, pas un juge" in html
+
+
+def test_une_version_de_prompt_inconnue_ne_renvoie_pas_la_derniere(portail):
+    """Sinon une adresse fautive afficherait un texte qui n'est pas celui qu'on demande."""
+    client, _ = portail
+    assert client.get("/prompt?version=9.9.9").status_code == 404
+
+
+def test_les_anciennes_versions_de_prompt_restent_lisibles(portail):
+    """L'annuaire annonce la version qui a produit chaque analyse : elle doit rester
+    consultable, sinon la mention ne renvoie à rien."""
+    from lynceus.moteur import prompt as moteur_prompt
+    client, _ = portail
+    for version in moteur_prompt.versions_disponibles():
+        reponse = client.get(f"/prompt?version={version}")
+        assert reponse.status_code == 200, version
+        assert f"v{version}" in reponse.text
+
+
+def test_la_calibration_publie_les_resultats_pas_le_corpus(portail):
+    """Les captures du corpus appartiennent à leurs auteurs : le portail publie la mesure,
+    pas les pages mesurées."""
+    client, _ = portail
+    html = client.get("/calibration").text
+    assert "conformes" in html
+    assert "<img" not in html
+
+
+def test_un_document_renvoie_vers_les_pages_du_portail_avant_la_forge():
+    """Ce que le portail publie lui-même reste chez lui ; le reste part vers le dépôt.
+
+    L'ordre compte : envoyer le lecteur sur une forge pour lire un texte que le site sert
+    déjà, c'est lui demander de faire confiance à une copie qu'il ne peut pas vérifier."""
+    from lynceus.portail import contenu
+
+    html = contenu.document("CONFORMITE", "https://forge.test/lynceus/blob/main")["html"]
+    assert 'href="https://forge.test/lynceus/blob/main/DCO.txt"' in html
+
+    p = parametres_portail_test(instance="https://instance.test",
+                                depot="https://forge.test/lynceus",
+                                depot_fichiers="https://forge.test/lynceus/blob/main")
+    with TestClient(creer_portail(p)) as client:
+        charte = client.get("/charte").text
+    assert 'href="/prompt"' in charte
+    assert 'href="/methodologie"' in charte
+
+
+def test_la_marque_de_la_forge_suit_l_adresse_du_depot():
+    """Le projet est auto-hébergeable, son dépôt aussi : afficher la marque de GitHub
+    devant une adresse Forgejo serait faux. Une forge non reconnue reçoit un signe neutre."""
+    from lynceus.portail import forge_de
+
+    assert forge_de("https://github.com/org/projet") == "github"
+    assert forge_de("https://forge.exemple.fr/vous/lynceus") == ""
+    assert forge_de("") == ""
+
+
+def test_le_pied_de_page_montre_la_marque_de_la_forge():
+    """Le logo est dessiné dans la page, jamais chargé depuis un domaine tiers : la
+    politique de confidentialité promet qu'aucune ressource extérieure n'est appelée."""
+    p = parametres_portail_test(instance="https://instance.test",
+                                depot="https://github.com/org/projet")
+    with TestClient(creer_portail(p)) as client:
+        html = client.get("/").text
+    assert 'class="lien-forge"' in html
+    assert "<svg" in html.split('class="lien-forge"')[1][:400]
+    assert "githubusercontent" not in html and "githubassets" not in html
+
+
+def test_le_depot_d_origine_est_annonce_sans_configuration():
+    """Une instance qui fait tourner le code publié tel quel n'a rien à configurer : le
+    défaut renvoie au dépôt d'origine, ce qui est exact et satisfait l'AGPL (article 13).
+    L'exploitant qui modifie le code doit y mettre le sien, la configuration le dit."""
+    from lynceus.portail.config import ParametresPortail
+
+    p = ParametresPortail(_env_file=None)
+    assert p.depot.startswith("https://")
+    assert p.depot_fichiers.startswith(p.depot)
+
+
+def test_sans_depot_annonce_le_pied_de_page_ne_promet_pas_de_code_source(portail):
+    """Mieux vaut ne rien proposer qu'un lien vers une adresse inventée."""
+    client, _ = portail
+    assert "Code source de cette instance" not in client.get("/").text
+
+
+def test_le_depot_annonce_est_joignable_depuis_toutes_les_pages():
+    """L'AGPL (article 13) demande que le code soit proposé, donc atteignable partout."""
+    p = parametres_portail_test(instance="https://instance.test",
+                                depot="https://forge.test/lynceus")
+    with TestClient(creer_portail(p)) as client:
+        for chemin in PAGES:
+            assert 'href="https://forge.test/lynceus"' in client.get(chemin).text, chemin
+
+
+def test_la_confidentialite_nomme_le_fournisseur_annonce_par_l_instance(portail, tmp_path):
+    """La politique n'est pas écrite à la main : elle nomme ce que l'instance déclare.
+
+    Une politique de confidentialité recopiée diverge de la configuration au premier
+    changement de fournisseur, et personne ne s'en aperçoit."""
+    client, _ = portail
+    api = creer_application(parametres_test(
+        tmp_path, llm_base_url="https://api.mistral.ai/v1", llm_fournisseur="Mistral AI"))
+    brancher_sur(client, api)
+    html = client.get("/confidentialite").text
+    assert "Mistral AI" in html
+    assert "transmis à un fournisseur de modèle de langage tiers" in html
+
+
+def test_un_modele_auto_heberge_ne_fait_plus_de_promesse_de_transfert(portail, tmp_path):
+    """Chez un auto-hébergeur, le texte ne sort pas : annoncer un transfert vers un tiers
+    serait faux, et l'inverse de ce que le projet dit de l'auto-hébergement."""
+    client, _ = portail
+    api = creer_application(parametres_test(tmp_path, llm_base_url="http://ollama:11434/v1"))
+    brancher_sur(client, api)
+    html = client.get("/confidentialite").text
+    assert "hébergé par cette instance" in html
+    assert "transmis à un fournisseur de modèle de langage tiers" not in html
+
+
+def test_une_instance_muette_est_supposee_envoyer_le_texte_au_dehors(portail):
+    """Instance injoignable ou trop ancienne : on annonce le cas le moins favorable."""
+    client, _ = portail
+    client.app.state.client = httpx.AsyncClient(base_url="http://instance-eteinte.invalid")
+    assert "transmis à un fournisseur de modèle de langage tiers" in client.get("/confidentialite").text
+
+
+def test_le_referentiel_traduit_garde_les_ids_et_les_gravites_du_fichier_applique(portail):
+    """Une traduction ne remplace que ce qui s'affiche.
+
+    La liste fermée, les identifiants et les gravités restent ceux du fichier français :
+    c'est lui que le serveur valide et que le modèle reçoit. Un référentiel traduit qui
+    ajouterait ou renommerait un id ne doit pas pouvoir déplacer cette frontière."""
+    from lynceus.moteur import prompt as moteur_prompt
+    from lynceus.portail import contenu
+
+    reference = moteur_prompt.charger_taxonomie()
+    anglais = contenu.taxonomie_par_famille("en")
+    membres = {t["id"]: t for f in anglais for t in f["techniques"]}
+    assert set(membres) == set(reference)
+    for tid, entree in membres.items():
+        assert entree["gravite"] == reference[tid]["gravite"]
+    assert membres["appel_a_la_peur"]["nom"] == "Appeal to fear"
+
+    client, _ = portail
+    html = client.get("/en/taxonomie").text
+    assert "Emotional register" in html
+    assert "published in its original language" not in html
 
 
 def test_la_taxonomie_affichee_est_celle_du_moteur():
@@ -208,7 +532,7 @@ def test_la_recherche_par_domaine_affiche_le_profil(portail):
     client, _ = portail
     brancher_sur(client, _InstanceEspionne().app)
     html = client.get("/annuaire/recherche", params={"q": "Exemple.FR"}).text
-    assert "exemple.fr" in html and "3 pages analysées" in html
+    assert "exemple.fr" in html and "Pages analysées : 3" in html
 
 
 def test_une_instance_injoignable_degrade_sans_planter(portail):

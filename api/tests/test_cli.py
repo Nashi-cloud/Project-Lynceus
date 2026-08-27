@@ -429,10 +429,13 @@ def test_env_sortie_standard_directement_utilisable_comme_fichier():
 
 REPONSES_PRODUCTION = "\n".join([
     "registre.test/lynceus-api:latest",  # image
+    "",                                  # adresse du fournisseur : défaut
     "sk-fournisseur",                    # clé du modèle
     "",                                  # modèle : défaut
+    "Fournisseur de recette",            # nom public du fournisseur
     "https://api.test",                  # adresse de l'instance
     "https://portail.test",              # adresse du portail
+    "https://forge.test/lynceus",        # code source (AGPL, article 13)
     "jeton-instance",                    # tunnel de l'instance
     "jeton-portail",                     # tunnel du portail
     "o",                                 # joignable uniquement par le tunnel
@@ -448,8 +451,11 @@ def test_env_interactif_reporte_les_reponses():
     assert variables["LYNCEUS_IMAGE"] == "registre.test/lynceus-api:latest"
     assert variables["LYNCEUS_LLM_API_KEY"] == "sk-fournisseur"
     assert variables["LYNCEUS_LLM_MODEL"] == "z-ai/glm-5.2"  # défaut accepté
+    assert variables["LYNCEUS_LLM_BASE_URL"] == "https://openrouter.ai/api/v1"  # défaut accepté
+    assert variables["LYNCEUS_LLM_FOURNISSEUR"] == "Fournisseur de recette"
     assert variables["LYNCEUS_PORTAIL_INSTANCE"] == "https://api.test"
     assert variables["LYNCEUS_PORTAIL_ADRESSE"] == "https://portail.test"
+    assert variables["LYNCEUS_PORTAIL_DEPOT"] == "https://forge.test/lynceus"
 
 
 def test_env_interactif_ne_salit_pas_la_sortie_standard():
@@ -505,8 +511,8 @@ def test_env_entete_ip_seulement_si_le_tunnel_est_la_seule_voie():
     contourner la limite de débit en annonçant l'adresse qu'on veut."""
     # Sans jeton, la question n'est même pas posée : l'en-tête n'aurait aucun sens.
     sans_tunnel = "\n".join([
-        "registre.test/lynceus-api:latest", "sk-fournisseur", "", "https://api.test",
-        "https://portail.test", "", "", "n",
+        "registre.test/lynceus-api:latest", "", "sk-fournisseur", "", "",
+        "https://api.test", "https://portail.test", "", "", "", "n",
     ]) + "\n"
     variables = _blocs(
         runner.invoke(app, ["env", "production", "--questions"], input=sans_tunnel).stdout
@@ -543,8 +549,8 @@ def test_env_active_le_profil_du_tunnel_quand_un_jeton_est_donne():
     assert portail["COMPOSE_PROFILES"] == "tunnel"
 
     sans_tunnel = "\n".join([
-        "registre.test/lynceus-api:latest", "sk-fournisseur", "", "https://api.test",
-        "https://portail.test", "", "", "n",
+        "registre.test/lynceus-api:latest", "", "sk-fournisseur", "", "",
+        "https://api.test", "https://portail.test", "", "", "", "n",
     ]) + "\n"
     instance, portail = _blocs(
         runner.invoke(app, ["env", "production", "--questions"], input=sans_tunnel).stdout

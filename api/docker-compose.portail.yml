@@ -29,6 +29,12 @@ services:
       LYNCEUS_PORTAIL_NOM: ${LYNCEUS_PORTAIL_NOM:-Lynceus}
       LYNCEUS_PORTAIL_CONTACT: ${LYNCEUS_PORTAIL_CONTACT:-}
 
+      # --- Code source ---
+      # L'AGPL-3.0 impose (article 13) de proposer le code aux utilisateurs du service à
+      # distance. Vide, les pages parlent du dépôt sans pouvoir y renvoyer.
+      LYNCEUS_PORTAIL_DEPOT: ${LYNCEUS_PORTAIL_DEPOT:-https://github.com/Nashi-cloud/Project-Lynceus}
+      LYNCEUS_PORTAIL_DEPOT_FICHIERS: ${LYNCEUS_PORTAIL_DEPOT_FICHIERS:-https://github.com/Nashi-cloud/Project-Lynceus/blob/main}
+
       # --- Émission de clés ---
       # Clé PRIVÉE Ed25519 (lynceus cles-paire). Sans elle, le portail sert ses pages mais
       # l'inscription répond 503 en le disant : utile pour une vitrine sans distribution.

@@ -57,3 +57,34 @@ def test_extraire_json_tolerant():
         llm.extraire_json("aucun objet ici")
     with pytest.raises(ValueError):
         llm.extraire_json('[1, 2]')
+
+
+# ---------------------------------------------------- nom public du fournisseur
+
+@pytest.mark.parametrize("adresse, attendu, distant", [
+    ("https://openrouter.ai/api/v1", "openrouter.ai", True),
+    ("https://api.mistral.ai/v1", "api.mistral.ai", True),
+    ("http://localhost:11434/v1", "modèle auto-hébergé", False),
+    ("http://ollama:11434/v1", "modèle auto-hébergé", False),        # service Docker
+    ("http://192.168.1.20:8000/v1", "modèle auto-hébergé", False),   # réseau privé
+    ("http://gpu.interne.lan/v1", "modèle auto-hébergé", False),
+])
+def test_un_modele_prive_est_annonce_sans_nommer_la_machine(adresse, attendu, distant):
+    """Le nom d'hôte d'un endpoint privé ne dit rien au lecteur et renseigne le réseau de
+    l'exploitant : il n'a pas à figurer dans une carte publiée."""
+    assert llm.fournisseur_annonce(adresse) == (attendu, distant)
+
+
+def test_le_libelle_configure_l_emporte_sur_le_nom_d_hote():
+    """Un routeur d'inférence porte son nom, pas celui de l'entreprise qui exécute le
+    modèle : seul l'exploitant peut le dire correctement."""
+    nom, distant = llm.fournisseur_annonce("https://openrouter.ai/api/v1",
+                                           "OpenRouter, qui sous-traite l'inférence")
+    assert nom == "OpenRouter, qui sous-traite l'inférence"
+    assert distant is True
+
+
+def test_sans_adresse_le_fournisseur_est_reput_distant():
+    """Promettre à tort que le texte ne sort pas ferait de la page de confidentialité un
+    mensonge : dans le doute, on annonce le cas le moins favorable."""
+    assert llm.fournisseur_annonce("") == ("non renseigné", True)

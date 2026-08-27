@@ -1,37 +1,30 @@
 {% extends "base.html" %}
-{% block titre %}Annuaire public · {{ nom }}{% endblock %}
+{% block titre %}{{ _("Annuaire public") }} · {{ nom }}{% endblock %}
 {% block corps %}
 <header class="entete-page">
   <div class="contenu">
-    <span class="surtitre">Sans rien installer</span>
-    <h1>Consulter l'annuaire</h1>
-    <p class="chapo">Ce que cette instance a déjà analysé est public. Un domaine pour son
-    profil général, une adresse complète pour l'analyse d'une page précise.</p>
+    <span class="surtitre">{{ _("Sans rien installer") }}</span>
+    <h1>{{ _("Consulter l'annuaire") }}</h1>
+    <p class="chapo">{{ _("Ce que cette instance a déjà analysé est public. Un domaine pour son profil général, une adresse complète pour l'analyse d'une page précise.") }}</p>
   </div>
 </header>
 
 <article class="contenu corps-page">
-  <form class="recherche" hx-get="/annuaire/recherche" hx-target="#resultat"
+  <form class="recherche" hx-get="{{ u('/annuaire/recherche') }}" hx-target="#resultat"
         hx-indicator="#attente" role="search">
     <input class="champ" type="search" name="q" required autocomplete="off"
-           placeholder="exemple.fr ou https://exemple.fr/article"
-           aria-label="Domaine ou adresse de page">
-    <button class="bouton" type="submit">Chercher</button>
+           placeholder="{{ _("exemple.fr ou https://exemple.fr/article") }}"
+           aria-label="{{ _("Domaine ou adresse de page") }}">
+    <button class="bouton" type="submit">{{ _("Chercher") }}</button>
   </form>
-  <p class="attente" id="attente"><span class="attente-cachee">Consultation de l'instance…</span></p>
+  <p class="attente" id="attente"><span class="attente-cachee">{{ _("Consultation de l'instance…") }}</span></p>
 
   <div id="resultat" class="resultat" aria-live="polite"></div>
 
   <div class="encart note" style="margin-top: 2.6rem">
-    <h3 style="margin-top:0">Ce que l'instance apprend de votre recherche</h3>
-    <p>Pour une <strong>adresse de page</strong>, ce portail n'envoie à l'instance que les
-    premiers caractères de l'empreinte, puis fait la correspondance finale lui-même.
-    L'instance voit passer une demande qui correspond à des milliers de pages possibles et
-    ne peut pas savoir laquelle vous intéresse. C'est le même mécanisme que dans
-    l'extension, et il s'applique aussi quand la demande vient d'un serveur.</p>
-    <p style="margin-bottom:0">Pour un <strong>domaine</strong>, la question est en revanche
-    transmise telle quelle : un profil de domaine est une donnée publique, et il ne dit
-    rien de la page que vous lisiez.</p>
+    <h3 style="margin-top:0">{{ _("Ce que l'instance apprend de votre recherche") }}</h3>
+    <p>{{ _("Pour une <strong>adresse de page</strong>, ce portail n'envoie à l'instance que les premiers caractères de l'empreinte, puis fait la correspondance finale lui-même. L'instance voit passer une demande qui correspond à des milliers de pages possibles et ne peut pas savoir laquelle vous intéresse. C'est le même mécanisme que dans l'extension, et il s'applique aussi quand la demande vient d'un serveur.") }}</p>
+    <p style="margin-bottom:0">{{ _("Pour un <strong>domaine</strong>, la question est en revanche transmise telle quelle : un profil de domaine est une donnée publique, et il ne dit rien de la page que vous lisiez.") }}</p>
   </div>
 </article>
 {% endblock %}
