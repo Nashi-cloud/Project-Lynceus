@@ -734,6 +734,41 @@ def _forge_connue(depot: str) -> bool:
     return hote in {"github.com", "gitlab.com"} or hote.startswith(("github.", "gitlab."))
 
 
+@app.command("traductions")
+def traductions(
+    langue: str = typer.Option("en", "--langue", help="code de la langue à inspecter"),
+):
+    """Où en est la traduction des documents que le portail publie.
+
+    Une traduction est une copie : elle dérive dès que l'original bouge, et rien ne le
+    signale puisque les deux pages s'affichent aussi bien. Cette commande est le seul
+    endroit où lire l'état réel, plutôt que d'ouvrir les pages une par une.
+    """
+    from .portail import contenu
+
+    inventaire = contenu.etat_traductions(langue)
+    couleurs = {"à jour": "green", "manquante": "yellow",
+                "en retard": "red", "sans empreinte": "red"}
+    table = Table(show_header=True, header_style="bold")
+    for colonne in ("Document", "Traduction", "État"):
+        table.add_column(colonne, overflow="fold")
+    for entree in inventaire:
+        etat = entree["etat"]
+        table.add_row(entree["source"], entree["traduction"],
+                      f"[{couleurs[etat]}]{etat}[/{couleurs[etat]}]")
+    console.print(table)
+
+    defauts = [e for e in inventaire if e["etat"] in ("en retard", "sans empreinte")]
+    manquantes = [e for e in inventaire if e["etat"] == "manquante"]
+    if manquantes:
+        console.print(f"[yellow]{len(manquantes)} document(s) encore à traduire : le portail "
+                      f"sert l'original en l'annonçant.[/yellow]")
+    if defauts:
+        console.print(f"[red]{len(defauts)} traduction(s) en retard sur leur original. "
+                      f"Relire, puis mettre à jour la ligne « traduit-de ».[/red]")
+        raise typer.Exit(1)
+
+
 @app.command("env")
 def env(
     cible: CibleEnv = typer.Argument(CibleEnv.production, help="Environnement à configurer."),

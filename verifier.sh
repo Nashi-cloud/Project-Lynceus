@@ -84,30 +84,17 @@ if [ -f VERSION ]; then
 fi
 
 # ---------- Traductions des documents de référence ----------
-# Une traduction est une copie : elle dérive dès que l'original bouge, et personne ne le
-# voit puisque les deux pages s'affichent aussi bien. Chaque fichier traduit porte donc
-# l'empreinte de la version qu'il traduit, et cette étape la recalcule.
+# Une traduction est une copie : elle dérive dès que l'original bouge, et rien ne le
+# signale puisque les deux pages s'affichent aussi bien. L'inventaire est tenu par
+# `lynceus traductions`, qui échoue si une traduction est en retard et se contente de
+# nommer celles qui manquent encore.
 etape "Documents traduits — accord avec leur original"
-traductions=$(find docs -mindepth 2 -name "*.md" 2>/dev/null | sort)
-if [ -z "$traductions" ]; then
-  verdict 0 "aucune traduction à vérifier"
-else
-  decalees=""
-  for fichier in $traductions; do
-    original="docs/$(basename "$fichier")"
-    annoncee=$(grep -m1 -oE 'traduit-de: [^ ]+ sha256:[0-9a-f]+' "$fichier" | sed 's/.*sha256://')
-    reelle=$(sha256sum "$original" 2>/dev/null | cut -c1-16)
-    if [ -z "$annoncee" ]; then
-      decalees="$decalees $fichier(sans empreinte)"
-    elif [ "$annoncee" != "$reelle" ]; then
-      decalees="$decalees $fichier"
-    fi
-  done
-  if [ -z "$decalees" ]; then
-    verdict 0 "$(echo "$traductions" | wc -l) traduction(s) à jour"
+if [ -x api/.venv/bin/lynceus ]; then
+  if sortie=$(api/.venv/bin/lynceus traductions 2>&1); then
+    verdict 0 "$(printf '%s' "$sortie" | grep -c 'à jour') traduction(s) à jour"
+    printf '%s\n' "$sortie" | grep -E "encore à traduire" | sed 's/^/  /' || true
   else
-    printf "${ROUGE}  ✗ traduction(s) en retard sur leur original :%s${FIN}\n" "$decalees"
-    printf "${ROUGE}    Relire, puis mettre à jour la ligne « traduit-de » avec la nouvelle empreinte.${FIN}\n"
+    printf '%s\n' "$sortie" | tail -3
     echecs=$((echecs + 1))
   fi
 fi
