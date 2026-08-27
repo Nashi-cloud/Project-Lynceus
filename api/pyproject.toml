@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lynceus-api"
-version = "0.4.5"
+version = "0.4.6"
 description = "Lynceus — API annuaire et moteur d'analyse de fiabilité de contenus web"
 license = "AGPL-3.0-or-later"
 requires-python = ">=3.11"
