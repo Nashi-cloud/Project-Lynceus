@@ -1,0 +1,82 @@
+# English translation of the Lynceus portal.
+#
+# Translating is not the same as rewriting: the French text is the original, and every
+# string here answers to one there. When a French sentence changes, its translation is
+# reported as missing by the test suite rather than silently kept.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: lynceus\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "%(nom)s : une extension libre qui explique les procédés de persuasion d'une page web, sans dire à personne ce qu'il doit penser."
+msgstr "%(nom)s: a free extension that shows how a web page tries to persuade you, without telling anyone what to think."
+
+msgid "Navigation principale"
+msgstr "Main navigation"
+
+msgid "Installer"
+msgstr "Install"
+
+msgid "Méthode"
+msgstr "Method"
+
+msgid "Procédés"
+msgstr "Techniques"
+
+msgid "Annuaire"
+msgstr "Directory"
+
+msgid "Charte"
+msgstr "Charter"
+
+msgid "S'héberger"
+msgstr "Self-host"
+
+msgid "Logiciel libre sous licence AGPL-3.0."
+msgstr "Free software, licensed under AGPL-3.0."
+
+msgid "Code source de cette instance"
+msgstr "Source code of this instance"
+
+msgid "Portail v%(version)s."
+msgstr "Portal v%(version)s."
+
+msgid "Télécharger l'extension v%(version)s"
+msgstr "Download the extension, v%(version)s"
+
+msgid "%(taille)s Ko"
+msgstr "%(taille)s kB"
+
+msgid "Charte éthique"
+msgstr "Ethical charter"
+
+msgid "Méthodologie"
+msgstr "Methodology"
+
+msgid "Les %(nombre)s procédés"
+msgstr "The %(nombre)s techniques"
+
+msgid "Prompt d'analyse"
+msgstr "Analysis prompt"
+
+msgid "Résultats de calibration"
+msgstr "Calibration results"
+
+msgid "Contester une analyse"
+msgstr "Dispute an analysis"
+
+msgid "Héberger sa propre instance"
+msgstr "Host your own instance"
+
+msgid "Mentions légales"
+msgstr "Legal notice"
+
+msgid "Confidentialité"
+msgstr "Privacy"
+
+msgid "Conditions d'utilisation"
+msgstr "Terms of use"

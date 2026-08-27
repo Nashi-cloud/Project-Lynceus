@@ -44,14 +44,14 @@ def _rendu() -> MarkdownIt:
     return MarkdownIt("commonmark").enable("table")
 
 
-def _reecrire_liens(jetons: list, depot_fichiers: str, dossier: str) -> None:
+def _reecrire_liens(jetons: list, depot_fichiers: str, dossier: str, prefixe: str) -> None:
     """Recale les liens relatifs d'un document du dépôt sur les adresses du portail.
 
     Les liens absolus, les ancres et les adresses de courriel sont laissés tels quels."""
     neutraliser = 0
     for jeton in jetons:
         if jeton.children:
-            _reecrire_liens(jeton.children, depot_fichiers, dossier)
+            _reecrire_liens(jeton.children, depot_fichiers, dossier, prefixe)
         if jeton.type == "link_close" and neutraliser:
             jeton.tag = "code"
             neutraliser -= 1
@@ -66,7 +66,8 @@ def _reecrire_liens(jetons: list, depot_fichiers: str, dossier: str) -> None:
         chemin = posixpath.normpath(posixpath.join(dossier, cible.split("#")[0]))
         ancre = cible.partition("#")[2]
         if chemin in PAGES_DU_PORTAIL:
-            jeton.attrSet("href", PAGES_DU_PORTAIL[chemin] + (f"#{ancre}" if ancre else ""))
+            jeton.attrSet("href",
+                          prefixe + PAGES_DU_PORTAIL[chemin] + (f"#{ancre}" if ancre else ""))
         elif depot_fichiers:
             jeton.attrSet("href", f"{depot_fichiers.rstrip('/')}/{chemin}{'/' if barre else ''}"
                                   + (f"#{ancre}" if ancre else ""))
@@ -77,7 +78,7 @@ def _reecrire_liens(jetons: list, depot_fichiers: str, dossier: str) -> None:
 
 
 @lru_cache
-def markdown_publie(chemin: str, depot_fichiers: str = "") -> dict:
+def markdown_publie(chemin: str, depot_fichiers: str = "", prefixe: str = "") -> dict:
     """Rend un fichier markdown du dépôt en HTML. `chemin` part de la racine du dépôt.
 
     Le portail ne recopie aucun de ces textes : il sert le fichier que le moteur applique.
@@ -87,13 +88,13 @@ def markdown_publie(chemin: str, depot_fichiers: str = "") -> dict:
     corps = texte.split("\n", 1)[1] if texte.startswith("# ") else texte
     md = _rendu()
     jetons = md.parse(corps)
-    _reecrire_liens(jetons, depot_fichiers, posixpath.dirname(chemin))
+    _reecrire_liens(jetons, depot_fichiers, posixpath.dirname(chemin), prefixe)
     return {"titre": premiere[2:].strip(), "html": md.renderer.render(jetons, md.options, {})}
 
 
-def document(nom: str, depot_fichiers: str = "") -> dict:
+def document(nom: str, depot_fichiers: str = "", prefixe: str = "") -> dict:
     """Rend docs/<NOM>.md en HTML. Retourne {titre, html}."""
-    return markdown_publie(f"docs/{nom}.md", depot_fichiers)
+    return markdown_publie(f"docs/{nom}.md", depot_fichiers, prefixe)
 
 
 def versions_prompt() -> list[str]:
@@ -101,17 +102,17 @@ def versions_prompt() -> list[str]:
     return prompt.versions_disponibles()
 
 
-def prompt_publie(version: str, depot_fichiers: str = "") -> dict:
+def prompt_publie(version: str, depot_fichiers: str = "", prefixe: str = "") -> dict:
     """Rend le fichier de prompt d'une version donnée, tel qu'il est versionné."""
-    return markdown_publie(f"prompts/analyse/v{version}.md", depot_fichiers)
+    return markdown_publie(f"prompts/analyse/v{version}.md", depot_fichiers, prefixe)
 
 
-def calibration(depot_fichiers: str = "") -> dict:
+def calibration(depot_fichiers: str = "", prefixe: str = "") -> dict:
     """Rend les résultats de la dernière passe de calibration.
 
     Seuls les résultats sont publiés : le corpus contient des captures de pages réelles,
     qui appartiennent à leurs auteurs et n'ont pas à être rediffusées ici."""
-    return markdown_publie("corpus/RESULTATS.md", depot_fichiers)
+    return markdown_publie("corpus/RESULTATS.md", depot_fichiers, prefixe)
 
 
 @lru_cache

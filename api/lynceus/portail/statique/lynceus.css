@@ -251,6 +251,20 @@ hr { border: 0; border-top: 1px solid var(--trait); margin: 2.5em 0; }
   padding: 0.35rem 0;
   border-bottom: 2px solid transparent;
 }
+/* Sélecteur de langue : un peu à l'écart des rubriques, dont il n'est pas une de plus. */
+.bandeau .langues {
+  display: inline-flex;
+  gap: 0.5rem;
+  margin-left: 0.35rem;
+  padding-left: 0.85rem;
+  border-left: 1px solid var(--trait);
+  font: 650 0.76rem/1 var(--ui);
+  letter-spacing: 0.06em;
+}
+.bandeau .langues strong { color: var(--laiton); }
+.bandeau .langues a { border-bottom: 0; color: var(--encre-2); }
+.bandeau .langues a:hover { color: var(--encre); }
+
 .bandeau nav a:hover { color: var(--encre); border-bottom-color: var(--laiton); }
 .bandeau nav a[aria-current="page"] { color: var(--encre); border-bottom-color: var(--laiton); }
 

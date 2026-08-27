@@ -24,7 +24,7 @@ from pathlib import Path
 import httpx
 from fastapi import FastAPI, Form, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -32,7 +32,7 @@ from .. import __version__
 from ..annuaire import LONGUEUR_PREFIXE
 from ..cles import emettre
 from ..normalisation import extraire_domaine, hacher_url, normaliser_url
-from . import contenu
+from . import contenu, i18n
 from .config import ParametresPortail, parametres_portail
 
 RACINE = Path(__file__).parent
@@ -78,6 +78,38 @@ class _CompteurCles:
         if self._compte.get(cle, 0) >= plafond:
             raise TropDeCles
         self._compte[cle] = self._compte.get(cle, 0) + 1
+
+
+class LangueDansLURL:
+    """Retire le préfixe de langue du chemin avant que le routeur ne le voie.
+
+    « /en/charte » et « /charte » désignent la même page, dans deux langues. Déclarer
+    chaque route une fois par langue ferait grossir le fichier à proportion du nombre de
+    langues, et il y en aura d'autres. Le préfixe est donc traité ici : le portail garde
+    un seul jeu de routes, et la langue voyage dans le scope de la requête.
+
+    Le français reste servi à la racine, sans préfixe : aucune adresse déjà publiée ne
+    change. « /fr/… » fonctionne malgré tout, et c'est ce que vise le sélecteur de langue,
+    parce qu'une adresse explicite ne repasse jamais par la négociation."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        chemin = scope["path"]
+        langue, explicite = i18n.LANGUE_SOURCE, False
+        for code in i18n.LANGUES:
+            if chemin == f"/{code}" or chemin.startswith(f"/{code}/"):
+                langue, explicite = code, True
+                chemin = chemin[len(code) + 1:] or "/"
+                break
+        scope = dict(scope, path=chemin, raw_path=chemin.encode())
+        scope["lynceus_langue"] = langue
+        scope["lynceus_chemin"] = chemin
+        scope["lynceus_langue_explicite"] = explicite
+        return await self.app(scope, receive, send)
 
 
 def identite_legale(p: ParametresPortail) -> dict:
@@ -146,19 +178,29 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
         allow_methods=["GET", "POST"],
         allow_headers=["*"],
     )
+    app.add_middleware(LangueDansLURL)
     app.mount("/statique", StaticFiles(directory=RACINE / "statique"), name="statique")
-    gabarits = Jinja2Templates(directory=str(RACINE / "gabarits"))
 
-    gabarits.env.globals.update(
-        nom=p.nom,
-        contact=p.contact,
-        version=__version__,
-        instance=instance_publique,
-        inscription_ouverte=bool(p.cle_privee and instance_publique),
-        nb_techniques=contenu.nb_techniques(),
-        legal=legal,
-        depot=p.depot.rstrip("/"),
-    )
+    # Un environnement par langue : les gabarits sont compilés une fois, et rien de ce qui
+    # dépend de la langue n'est un état partagé entre requêtes.
+    gabarits = {code: Jinja2Templates(directory=str(RACINE / "gabarits"))
+                for code in i18n.LANGUES}
+    for code, moteur_gabarits in gabarits.items():
+        moteur_gabarits.env.globals.update(
+            nom=p.nom,
+            contact=p.contact,
+            version=__version__,
+            instance=instance_publique,
+            inscription_ouverte=bool(p.cle_privee and instance_publique),
+            nb_techniques=contenu.nb_techniques(),
+            legal=legal,
+            depot=p.depot.rstrip("/"),
+            langue=code,
+            _=i18n.traducteur(code),
+            # Toute adresse interne passe par « u » : sans elle, un lien écrit en dur
+            # ramènerait le lecteur anglophone sur la version française de la page.
+            u=(lambda prefixe: lambda chemin: f"{prefixe}{chemin}")(i18n.prefixe(code)),
+        )
 
     def paquet_courant() -> dict | None:
         """Relu à chaque appel : déposer un zip dans le volume publie la mise à jour
@@ -187,23 +229,48 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
             base = f"{schema}://{base.split('://', 1)[1]}"
         return base
 
+    def prefixe_langue(requete: Request) -> str:
+        """Ce qui doit précéder toute adresse interne engendrée pour cette requête."""
+        return i18n.prefixe(requete.scope.get("lynceus_langue", i18n.LANGUE_SOURCE))
+
     def page(requete: Request, gabarit: str, **valeurs) -> HTMLResponse:
+        langue = requete.scope.get("lynceus_langue", i18n.LANGUE_SOURCE)
+        chemin = requete.scope.get("lynceus_chemin", requete.url.path)
         valeurs.setdefault("paquet", paquet_courant())
         valeurs.setdefault("adresse_portail", adresse_portail(requete))
-        return gabarits.TemplateResponse(requete, gabarit, valeurs)
+        # Le sélecteur vise des adresses explicitement préfixées, y compris pour le
+        # français : « / » négocie la langue, et renverrait un anglophone d'où il vient.
+        valeurs.setdefault("langues", [
+            {"code": code, "nom": nom, "courante": code == langue,
+             "url": f"/{code}{chemin}".rstrip("/") or f"/{code}"}
+            for code, nom in i18n.LANGUES.items()
+        ])
+        return gabarits[langue].TemplateResponse(requete, gabarit, valeurs)
 
     # ---------------------------------------------------------------- pages
 
     @app.get("/", response_class=HTMLResponse)
     def accueil(requete: Request):
-        return page(requete, "accueil.html")
+        """La racine nue est la seule adresse qui négocie la langue.
+
+        Ailleurs, le préfixe fait foi : un lien partagé doit ouvrir la page dans la langue
+        où il a été écrit, quel que soit le navigateur qui le suit."""
+        if not requete.scope.get("lynceus_langue_explicite"):
+            souhaitee = i18n.negocier(requete.headers.get("accept-language"))
+            if souhaitee != i18n.LANGUE_SOURCE:
+                return RedirectResponse(f"/{souhaitee}/", status_code=302,
+                                        headers={"vary": "Accept-Language"})
+        reponse = page(requete, "accueil.html")
+        reponse.headers["vary"] = "Accept-Language"
+        return reponse
 
     @app.get("/methodologie", response_class=HTMLResponse)
     def methodologie(requete: Request):
         return page(requete, "methodologie.html",
                     ponderations=contenu.ponderations(), seuils=contenu.seuils(),
                     version_prompt=contenu.versions_prompt()[-1],
-                    detail=contenu.document("METHODOLOGIE", p.depot_fichiers))
+                    detail=contenu.document("METHODOLOGIE", p.depot_fichiers,
+                                            prefixe_langue(requete)))
 
     @app.get("/taxonomie", response_class=HTMLResponse)
     def taxonomie(requete: Request):
@@ -216,7 +283,8 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
                     surtitre="Document de référence",
                     chapo="Ce texte est le fichier même que le projet applique. Il ne peut "
                           "donc pas dire autre chose que ce qui engage le code.",
-                    document=contenu.document("ETHIQUE", p.depot_fichiers))
+                    document=contenu.document("ETHIQUE", p.depot_fichiers,
+                                              prefixe_langue(requete)))
 
     @app.get("/prompt", response_class=HTMLResponse)
     def prompt_analyse(requete: Request, version: str | None = Query(None)):
@@ -229,7 +297,8 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
         if choisie not in versions:
             raise HTTPException(404, f"Version de prompt inconnue : {choisie}")
         return page(requete, "prompt.html",
-                    document=contenu.prompt_publie(choisie, p.depot_fichiers),
+                    document=contenu.prompt_publie(choisie, p.depot_fichiers,
+                                                   prefixe_langue(requete)),
                     versions=list(reversed(versions)), version_affichee=choisie)
 
     @app.get("/calibration", response_class=HTMLResponse)
@@ -239,7 +308,8 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
                     chapo="Ce que donne la méthode sur un corpus de cas connus d'avance, "
                           "écarts compris. Publier le taux d'erreur fait partie de la "
                           "méthode : sans lui, la note ne veut rien dire.",
-                    document=contenu.calibration(p.depot_fichiers))
+                    document=contenu.calibration(p.depot_fichiers,
+                                                 prefixe_langue(requete)))
 
     @app.get("/auto-hebergement", response_class=HTMLResponse)
     def auto_hebergement(requete: Request):
