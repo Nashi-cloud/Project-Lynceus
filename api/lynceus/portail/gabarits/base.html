@@ -42,7 +42,7 @@
     <div>
       <strong class="nom-projet">{{ nom }}</strong><br>
       {{ _("Logiciel libre sous licence AGPL-3.0.") }}<br>
-      {% if depot %}<a href="{{ depot }}">{{ _("Code source de cette instance") }}</a><br>{% endif %}
+      {% if depot %}<a class="lien-forge" href="{{ depot }}" rel="noopener">{% include "_logo_forge.html" %}{{ _("Code source de cette instance") }}</a><br>{% endif %}
       {{ _("Portail v%(version)s.", version=version) }}
       {% if paquet %}
       {# Lien direct et stable : /telecharger sert toujours la version la plus haute
