@@ -12,6 +12,10 @@ const { demanderCle, appliquerBillet, normaliserAdresse, resumerBillet, portailP
   await importerTs("src/commun/inscription.ts");
 const { chargerReglages } = await importerTs("src/commun/reglages.ts");
 
+// Les messages d'erreur viennent du catalogue : sans faux chrome, le module lèverait une
+// ReferenceError avant même d'arriver au refus qu'on veut vérifier.
+installerFauxChrome();
+
 const BILLET = {
   instance: "https://instance.test",
   cle: "LYNC1.charge.signature",

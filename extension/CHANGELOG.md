@@ -2,6 +2,12 @@
 
 Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension : utile pour vérifier qu'un rebuild a bien été rechargé.
 
+## 0.11.0 (2026-08-27)
+
+- **feat** : l'extension parle anglais. Le mécanisme est celui de Chrome (`_locales/<langue>/messages.json`, `chrome.i18n`), donc sans bibliothèque embarquée et sans sélecteur : le navigateur choisit d'après sa propre langue d'interface, et le français reste la langue de repli. Nom, description et menu contextuel compris, puisqu'ils viennent du manifeste.
+- **feat** : les libellés construits à l'exécution (catégories, dimensions, gravités, motifs de contestation) sont des clés dérivées de l'identifiant, jamais des tables de texte : l'identifiant reste ce que l'instance attend, seul son affichage change de langue.
+- **test** : `traductions.test.mjs` refuse une phrase employée sans traduction, une phrase devenue inutile, et une substitution `$1` perdue d'une langue à l'autre. Chrome ne signale pas une clé absente, il affiche un blanc.
+
 ## 0.10.1 (2026-08-27)
 
 - **fix** : la page Réglages annonçait « Modèle : X (via Y) ». Une instance peut désormais déclarer un modèle auto-hébergé, et « via modèle auto-hébergé » ne veut rien dire : les deux informations sont maintenant séparées par un point médian.

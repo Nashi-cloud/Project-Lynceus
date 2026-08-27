@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bienvenue dans Lynceus</title>
+  <title data-i18n="accueil_titre">Bienvenue dans Lynceus</title>
   <meta name="color-scheme" content="light dark">
   <link rel="stylesheet" href="../commun/lynceus.css">
   <style>
@@ -42,73 +42,54 @@
 </header>
 
 <main>
-  <p class="surtitre">Installation</p>
-  <h1>Bienvenue dans Lynceus</h1>
-  <p class="chapo">La vigie de l'information. Lynceus décrit les techniques de persuasion
-    employées par une page, sans juger : à vous de conclure.</p>
+  <p class="surtitre" data-i18n="accueil_surtitre">Installation</p>
+  <h1 data-i18n="accueil_titre">Bienvenue dans Lynceus</h1>
+  <p class="chapo" data-i18n="accueil_chapo">…</p>
 
   <div class="carte retenue" id="carte-inscription">
-    <h2>D'abord, connecter Lynceus à une instance</h2>
-    <p class="aide">Lynceus ne fonctionne pas seul : il a besoin d'une instance qui analyse les
-      pages. Un portail peut vous en indiquer une et vous délivrer une clé d'accès :
-      <strong>sans compte, sans adresse électronique, en un clic</strong>.</p>
-    <label for="portail">Adresse du portail</label>
+    <h2 data-i18n="accueil_inscription_titre">…</h2>
+    <p class="aide" data-i18n-html="accueil_inscription_aide">…</p>
+    <label for="portail" data-i18n="accueil_portail_label">Adresse du portail</label>
     <input type="url" id="portail" class="champ" placeholder="https://…" autocomplete="off">
     <div class="actions">
-      <button class="bouton" id="obtenir-cle">Obtenir une clé d'accès</button>
-      <button class="bouton creux" id="deja-instance">J'ai déjà une instance</button>
+      <button class="bouton" id="obtenir-cle" data-i18n="accueil_obtenir_cle">…</button>
+      <button class="bouton creux" id="deja-instance" data-i18n="accueil_deja_instance">…</button>
     </div>
     <div id="etat-inscription" role="status"></div>
     <ul>
-      <li>la clé ne contient <strong>ni nom, ni adresse, ni identifiant de compte</strong> :
-        seulement une date d'expiration et un nombre d'analyses par jour ;</li>
-      <li>si vous hébergez votre propre instance, vous n'avez besoin d'aucune clé :
-        indiquez simplement son adresse dans les réglages.</li>
+      <li data-i18n-html="accueil_cle_contenu">…</li>
+      <li data-i18n="accueil_cle_auto_heberge">…</li>
     </ul>
   </div>
 
   <div class="carte retenue">
-    <h2>Vous préférez être prévenu automatiquement ?</h2>
-    <p class="aide">Lynceus peut reconnaître les pages déjà analysées par la communauté, sans
-      aucune action de votre part :</p>
+    <h2 data-i18n="accueil_reconnaissance_titre">…</h2>
+    <p class="aide" data-i18n="accueil_reconnaissance_aide">…</p>
     <ul>
-      <li>la note s'affiche <strong>sur l'icône</strong> dès l'ouverture d'une page connue ;</li>
-      <li>le panneau montre <strong>directement la carte</strong>, sans cliquer sur « Analyser » ;</li>
-      <li>un <strong>contour discret</strong> entoure les pages jugées à risque (D ou E) ;</li>
-      <li>fonctionne aussi sur les sites qui changent de contenu sans recharger (YouTube…).</li>
+      <li data-i18n-html="accueil_reconnaissance_1">…</li>
+      <li data-i18n-html="accueil_reconnaissance_2">…</li>
+      <li data-i18n-html="accueil_reconnaissance_3">…</li>
+      <li data-i18n="accueil_reconnaissance_4">…</li>
     </ul>
     <div class="actions">
-      <button class="bouton" id="activer">Activer la reconnaissance automatique</button>
-      <button class="bouton creux" id="plus-tard">Plus tard</button>
+      <button class="bouton" id="activer" data-i18n="accueil_activer">…</button>
+      <button class="bouton creux" id="plus-tard" data-i18n="accueil_plus_tard_bouton">…</button>
     </div>
     <div id="etat" role="status"></div>
   </div>
 
   <div class="encart">
-    <p><strong>Ce que Lynceus envoie, dans les deux cas.</strong>
-    Pour reconnaître une page, seule une <strong>empreinte</strong> (hash) de son adresse est
-    envoyée : ni l'adresse elle-même, ni son contenu, et rien n'est journalisé.
-    Le contenu d'une page n'est transmis que lorsque <strong>vous</strong> cliquez sur
-    « Analyser cette page ». Ce texte part alors vers l'instance, qui le transmet au
-    <strong>fournisseur de modèle de langage</strong> qu'elle utilise, parfois établi hors
-    de l'Union européenne. C'est inévitable pour analyser, et l'instance publique doit le
-    détailler dans sa politique de confidentialité. Une instance auto-hébergée avec un
-    modèle local n'envoie rien au dehors. Chrome vous demandera l'accès à vos pages : c'est la
-    permission technique nécessaire pour lire l'adresse en continu et dessiner le contour, et
-    elle ne change rien à ce qui circule sur le réseau. Réversible à tout moment dans les
-    réglages.</p>
+    <p data-i18n-html="accueil_ce_qui_est_envoye">…</p>
   </div>
 
   <div class="carte">
-    <h2>Sans activer, Lynceus fonctionne quand même</h2>
-    <p class="aide">Clic droit sur une page, puis « 🔭 Analyser cette page avec Lynceus ».
-      Permissions réduites au strict minimum, mais chaque page demande ce geste, y compris
-      après un changement de page.</p>
+    <h2 data-i18n="accueil_sans_activer_titre">…</h2>
+    <p class="aide" data-i18n="accueil_sans_activer_aide">…</p>
   </div>
 
   <div class="pied">
-    <p>L'adresse de l'instance et la clé sont modifiables à tout moment dans les
-      <a href="#" id="lien-reglages">réglages</a>.</p>
+    <p><span data-i18n="accueil_pied">…</span>
+      <a href="#" id="lien-reglages" data-i18n="reglages">réglages</a>.</p>
     <p id="version"></p>
   </div>
 </main>

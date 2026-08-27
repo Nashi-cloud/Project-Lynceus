@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Lynceus, la vigie de l'information",
-  "version": "0.10.1",
-  "description": "Analyse la fiabilité d'une page web et explique, sans juger, les techniques de persuasion qu'elle emploie. Libre (AGPL-3.0) et auto-hébergeable.",
+  "name": "__MSG_nom_extension__",
+  "version": "0.11.0",
+  "default_locale": "fr",
+  "description": "__MSG_description_extension__",
   "minimum_chrome_version": "116",
   "permissions": [
     "sidePanel",
@@ -22,7 +23,7 @@
     "service_worker": "fond.js"
   },
   "action": {
-    "default_title": "Analyser cette page avec Lynceus",
+    "default_title": "__MSG_action_titre__",
     "default_icon": {
       "16": "icones/lynceus-16.png",
       "32": "icones/lynceus-32.png",
