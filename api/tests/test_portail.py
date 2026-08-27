@@ -180,6 +180,18 @@ def test_aucune_phrase_de_gabarit_n_est_laissee_sans_traduction():
                                f"à commencer par « {manquantes[0]} »"
 
 
+def test_une_phrase_traduite_garde_sa_mise_en_forme_et_echappe_ses_valeurs(portail):
+    """Les phrases portent souvent un lien ou une mise en valeur : échappées comme du texte
+    brut, elles afficheraient leurs balises. Ce qui vient du visiteur, en revanche, doit
+    rester échappé, sans quoi la traduction ouvrirait une injection."""
+    client, _ = portail
+    assert "<strong>adresse de page</strong>" in client.get("/annuaire").text
+    assert "<strong>page address</strong>" in client.get("/en/annuaire").text
+
+    hostile = client.get("/annuaire/recherche", params={"q": "<script>alerte()</script>"}).text
+    assert "<script>" not in hostile
+
+
 def test_les_libelles_venus_du_code_sont_traduits_aussi(portail):
     """Les motifs de contestation sont définis en Python, avant qu'une langue existe.
     Sans traduction au rendu, un formulaire anglais proposerait des choix en français."""

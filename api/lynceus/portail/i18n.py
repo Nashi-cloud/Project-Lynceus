@@ -24,6 +24,7 @@ from pathlib import Path
 
 from babel.core import negotiate_locale
 from babel.messages.pofile import read_po
+from markupsafe import Markup
 
 RACINE = Path(__file__).parent
 TRADUCTIONS = RACINE / "traductions"
@@ -68,11 +69,17 @@ def traducteur(langue: str):
 
     Elle accepte des paramètres nommés, au format `%(nom)s` : une phrase traduite ne place
     pas ses variables dans le même ordre qu'en français, et une concaténation dans le
-    gabarit interdirait de les déplacer."""
+    gabarit interdirait de les déplacer.
+
+    Le résultat est du balisage, pas du texte brut : beaucoup de phrases portent une mise
+    en valeur ou un lien, et l'échappement automatique de Jinja les afficherait en clair.
+    Les phrases viennent de nos propres fichiers, donc elles sont sûres ; les valeurs
+    interpolées, elles, sont échappées par Markup au moment de la substitution, ce qui
+    protège aussi bien ce qui vient d'une recherche ou d'une carte d'analyse."""
     phrases = catalogue(langue)
 
-    def _(message: str, **valeurs) -> str:
-        texte = phrases.get(message, message)
+    def _(message: str, **valeurs) -> Markup:
+        texte = Markup(phrases.get(message, message))
         return texte % valeurs if valeurs else texte
 
     return _
