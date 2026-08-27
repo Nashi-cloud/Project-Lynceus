@@ -322,14 +322,18 @@ distance**, modifications comprises. Servir Lynceus sans publier le code que vou
 tourner n'est pas conforme. Deux variables suffisent :
 
 ```ini
-LYNCEUS_PORTAIL_DEPOT=https://forge.exemple.fr/vous/lynceus
-LYNCEUS_PORTAIL_DEPOT_FICHIERS=https://forge.exemple.fr/vous/lynceus/blob/main
+LYNCEUS_PORTAIL_DEPOT=https://github.com/Nashi-cloud/Project-Lynceus
+LYNCEUS_PORTAIL_DEPOT_FICHIERS=https://github.com/Nashi-cloud/Project-Lynceus/blob/main
 ```
+
+Ce sont les valeurs par défaut : une instance qui fait tourner le code publié tel quel n'a
+rien à changer, et l'adresse annoncée est exacte. **Dès que vous modifiez le code, mettez
+celle de votre dépôt** : c'est votre version qui doit être proposée, pas la nôtre.
 
 La première alimente les liens « code source » du pied de page et des documents. La
 seconde sert à désigner un fichier précis, et sa forme dépend de la forge : `/blob/main`
-sur GitHub et GitLab, `/src/branch/main` sur Forgejo. Non renseignées, les pages parlent
-du dépôt sans pouvoir y renvoyer, et le portail l'écrit au démarrage.
+sur GitHub et GitLab, `/src/branch/main` sur Forgejo. Vidées, les pages parlent du dépôt
+sans pouvoir y renvoyer, et le portail l'écrit au démarrage.
 
 Leur contenu vient de la configuration, pas du code, parce que chaque instance a son propre
 exploitant :

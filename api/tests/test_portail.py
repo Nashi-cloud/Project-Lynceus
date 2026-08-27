@@ -291,6 +291,17 @@ def test_un_document_renvoie_vers_les_pages_du_portail_avant_la_forge():
     assert 'href="/methodologie"' in charte
 
 
+def test_le_depot_d_origine_est_annonce_sans_configuration():
+    """Une instance qui fait tourner le code publié tel quel n'a rien à configurer : le
+    défaut renvoie au dépôt d'origine, ce qui est exact et satisfait l'AGPL (article 13).
+    L'exploitant qui modifie le code doit y mettre le sien, la configuration le dit."""
+    from lynceus.portail.config import ParametresPortail
+
+    p = ParametresPortail(_env_file=None)
+    assert p.depot.startswith("https://")
+    assert p.depot_fichiers.startswith(p.depot)
+
+
 def test_sans_depot_annonce_le_pied_de_page_ne_promet_pas_de_code_source(portail):
     """Mieux vaut ne rien proposer qu'un lien vers une adresse inventée."""
     client, _ = portail
