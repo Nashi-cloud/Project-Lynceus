@@ -18,7 +18,7 @@ from markdown_it import MarkdownIt
 
 from ..config import trouver_racine
 from ..moteur import notation, prompt
-from .i18n import N_
+from .i18n import LANGUE_SOURCE, N_
 
 _MOTIF_FAMILLE = re.compile(r"^##\s+Famille\s+([A-Z])\s+—\s+(.+?)\s*$", re.MULTILINE)
 
@@ -123,6 +123,33 @@ DOCUMENTS_PUBLIES = [
     ("corpus/RESULTATS.md", "/calibration"),
 ]
 
+# Deux documents du dépôt ne sont pas publiés par le portail mais se traduisent quand même :
+# personne ne lira la conformité ou l'architecture en français par hasard. Ils suivent la
+# même règle et le même contrôle de fraîcheur que les autres.
+DOCUMENTS_NON_PUBLIES = [
+    "docs/ARCHITECTURE.md",
+    "docs/CONFORMITE.md",
+    "docs/IA-GENERATIVE.md",
+]
+
+# La façade du dépôt : ce qu'on lit en arrivant sur la forge. Là, l'anglais est l'original,
+# parce qu'un visiteur qui ne peut pas lire la première page ne lira pas la deuxième. Les
+# textes qui engagent le projet gardent au contraire le français pour original : là où un
+# fichier est une porte, l'anglais est à la porte ; là où un fichier fait loi, le français
+# reste l'original.
+LANGUE_FACADE = "en"
+FACADE = [
+    "README.md",
+    "CONTRIBUTING.md",
+    "INSTALLATION.md",
+    "AUTHORS.md",
+    "api/README.md",
+    "api/DEPLOIEMENT.md",
+    "extension/README.md",
+    "corpus/README.md",
+    "corpus/specimens/README.md",
+]
+
 _EMPREINTE = re.compile(r"traduit-de:\s*(\S+)\s+sha256:([0-9a-f]+)")
 
 
@@ -138,25 +165,50 @@ def chemin_traduction(source: str, langue: str) -> str:
     return f"{dossier}/{langue}/{fichier}" if dossier else f"{langue}/{fichier}"
 
 
+def chemin_traduction_facade(source: str, langue: str) -> str:
+    """README.md en français devient README.fr.md.
+
+    Un sous-dossier de langue conviendrait mal ici : une forge affiche le README du dossier
+    qu'on ouvre, et le déplacer reviendrait à n'en plus avoir."""
+    base, _, extension = source.rpartition(".")
+    return f"{base}.{langue}.{extension}"
+
+
+def paires_traduites(langue: str) -> list[tuple[str, str]]:
+    """Chaque original suivi et le fichier censé le traduire dans cette langue.
+
+    Les deux conventions se rejoignent ici, et chacune s'efface quand la langue demandée est
+    déjà celle de son original : demander l'état du français ne concerne que la façade,
+    demander celui de l'anglais ne concerne que les textes qui engagent le projet."""
+    paires = []
+    if langue != LANGUE_SOURCE:
+        sources = [chemin for chemin, _ in DOCUMENTS_PUBLIES] + DOCUMENTS_NON_PUBLIES
+        versions = versions_disponibles_du_prompt()
+        if versions:
+            sources.append(f"prompts/analyse/v{versions[-1]}.md")
+        paires += [(source, chemin_traduction(source, langue)) for source in sources]
+    if langue != LANGUE_FACADE:
+        paires += [(source, chemin_traduction_facade(source, langue)) for source in FACADE]
+    return paires
+
+
 def etat_traductions(langue: str) -> list[dict]:
-    """Où en est chaque document publié, dans une langue donnée.
+    """Où en est chaque document suivi, dans une langue donnée.
 
     Quatre états, et un seul est un défaut : « en retard » veut dire que l'original a changé
-    depuis la traduction, donc que le portail publie deux textes qui ne disent plus la même
+    depuis la traduction, donc que le dépôt porte deux textes qui ne disent plus la même
     chose. « manquante » est un travail à faire, pas une erreur."""
     racine = trouver_racine()
     inventaire = []
-    versions = versions_disponibles_du_prompt()
-    sources = [chemin for chemin, _ in DOCUMENTS_PUBLIES]
-    if versions:
-        sources.append(f"prompts/analyse/v{versions[-1]}.md")
-    for source in sources:
-        traduction = chemin_traduction(source, langue)
+    for source, traduction in paires_traduites(langue):
         fichier = racine / traduction
         if not fichier.exists():
             etat = "manquante"
         else:
-            trouve = _EMPREINTE.search(fichier.read_text(encoding="utf-8"))
+            # Les premières lignes seulement : plus bas, un document peut très bien
+            # montrer la forme du marqueur en exemple, et CONTRIBUTING le fait.
+            tete = "\n".join(fichier.read_text(encoding="utf-8").splitlines()[:6])
+            trouve = _EMPREINTE.search(tete)
             if not trouve:
                 etat = "sans empreinte"
             elif trouve.group(2) != _empreinte(racine / source):

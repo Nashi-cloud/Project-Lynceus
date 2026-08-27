@@ -68,6 +68,24 @@
   "erreur_page_inaccessible": {
     "message": "Lynceus n'a pas accès à cette page. Si c'est une page interne du navigateur ou le Web Store, elle n'est pas analysable. Sinon : relancez via le clic droit → « Analyser cette page avec Lynceus » (l'accès expire après un changement de page). Vous pouvez aussi activer le badge passif dans les réglages pour que ce bouton fonctionne aussi après une navigation."
   },
+  "erreur_delai_depasse": {
+    "message": "L'instance n'a pas répondu dans le délai imparti ($1 s). Le fournisseur de modèle configuré est peut-être lent ou indisponible ; vous pouvez augmenter ce délai dans les réglages, ou réessayer plus tard."
+  },
+  "erreur_instance_injoignable": {
+    "message": "Instance Lynceus injoignable ($1). Le serveur est-il démarré ? L'adresse se règle dans les options de l'extension."
+  },
+  "erreur_cle_requise": {
+    "message": "Renseignez votre clé d'accès dans les réglages de l'extension."
+  },
+  "erreur_portail_injoignable": {
+    "message": "Portail injoignable ($1). Vérifiez l'adresse et votre connexion."
+  },
+  "erreur_contenu_introuvable": {
+    "message": "Contenu principal introuvable sur cette page (page d'accueil, application… ?)."
+  },
+  "erreur_extraction_impossible": {
+    "message": "Extraction impossible : $1"
+  },
   "erreur_adresse_vide": {
     "message": "Indiquez l'adresse du portail (https://…)."
   },
@@ -208,6 +226,9 @@
   },
   "panneau_erreur_titre": {
     "message": "Analyse impossible"
+  },
+  "panneau_contestations_enregistrees": {
+    "message": "$1 contestation(s) déjà enregistrée(s) sur cette analyse."
   },
   "panneau_indice": {
     "message": "Indice $1/100"
