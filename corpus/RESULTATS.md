@@ -1,53 +1,61 @@
 # Résultats de calibration
 
-Dernière passe : **2026-08-24** · modèle `z-ai/glm-5.2` (via OpenRouter) · prompt **v0.1.1**
+Dernière passe : **2026-08-27** · modèle `z-ai/glm-5.2` (via OpenRouter) · prompt **v0.1.2**
 
-**12/12 conformes** — 0 écart mineur, 0 échec grave. Dont **2 pages réelles capturées** (les 10 autres sont des spécimens écrits pour l'exercice).
+**11/13 conformes** — 1 écart mineur, 1 échec grave. Dont **2 pages réelles capturées** et **1 spécimen en anglais** ; les 10 autres sont des spécimens écrits pour l'exercice.
 
 | Cas | Catégorie | Grade | Techniques détectées |
 |---|---|---|---|
-| Le conseil municipal vote à l'unanimité contre l'una | satire | **B** (68) | — |
+| Le conseil municipal vote à l'unanimité contre l'una | satire | **A** (88) | — |
 | Pourquoi je pense que notre commune se trompe sur le | opinion | **A** (84) | — |
-| La racine oubliée que les laboratoires préfèrent vou | publicite_sponsorise | **E** (6) | `verite_cachee`, `autorite_anonyme`, `eux_contre_nous`, `preuve_anecdotique`, `solution_miracle`, `appel_a_la_nature`, `conflit_interet_commercial`, `urgence_artificielle` |
-| Le pont de la Vieille-Écluse fermé pour travaux du 3 | information | **A** (85) | — |
-| Méditation de l'Avent : l'attente comme chemin | contenu_confessionnel | **A** (89) | — |
-| Coupure électrique de novembre : trois questions qui | theorie_du_complot | **E** (8) | `je_pose_des_questions`, `eux_contre_nous`, `verite_cachee`, `heros_persecute`, `hyper_intentionnalisme`, `correlation_causation`, `absence_de_sources` |
-| Cinq habitudes du soir pour mieux dormir | publicite_sponsorise | **C** (52) | `autorite_anonyme`, `conflit_interet_commercial` |
-| Fluoration de l'eau : le débat reste ouvert | information | **D** (39) | `faux_equilibre`, `attentes_impossibles`, `je_pose_des_questions` |
-| Pourquoi le ciel est bleu, et pourquoi cette explica | analyse_expertise | **B** (71) | — |
-| Ce que trois ans d'errance médicale m'ont appris | temoignage | **B** (74) | — |
-| *Wikipédia — Biais de confirmation* (réel) | information | **A** (83) | — |
-| *SOTT — Changements terrestres* (réel) | theorie_du_complot | **D** (35) | `verite_cachee`, `eux_contre_nous`, `conflit_interet_commercial`, `correlation_causation`, `generalisation_abusive`, `je_pose_des_questions` |
+| La racine oubliée que les laboratoires préfèrent vou | publicite_sponsorise | **E** (7) | `verite_cachee`, `eux_contre_nous`, `autorite_anonyme`, `preuve_anecdotique`, `solution_miracle`, `proces_d_intention`, `conflit_interet_commercial`, `urgence_artificielle` |
+| Le pont de la Vieille-Écluse fermé pour travaux du 3 | information | **A** (84) | — |
+| Méditation de l'Avent : l'attente comme chemin | contenu_confessionnel | **C** (57) | — |
+| Coupure électrique de novembre : trois questions qui | theorie_du_complot | **E** (9) | `je_pose_des_questions`, `correlation_causation`, `hyper_intentionnalisme`, `eux_contre_nous`, `verite_cachee`, `heros_persecute`, `urgence_artificielle` |
+| *What They Won't Tell You About the New Water Treatment Plant* (anglais) | theorie_du_complot | **E** (2) | `verite_cachee`, `autorite_anonyme`, `je_pose_des_questions`, `eux_contre_nous`, `heros_persecute`, `urgence_artificielle` |
+| Cinq habitudes du soir pour mieux dormir | publicite_sponsorise | **B** (66) | `conflit_interet_commercial` |
+| Fluoration de l'eau : le débat reste ouvert | opinion | **D** (40) | `faux_equilibre`, `attentes_impossibles`, `je_pose_des_questions`, `absence_de_sources` |
+| Pourquoi le ciel est bleu, et pourquoi cette explica | information | **B** (70) | — |
+| Ce que trois ans d'errance médicale m'ont appris | temoignage | **C** (60) | — |
+| *Wikipédia — Biais de confirmation* (réel) | information | **A** (92) | — |
+| *SOTT — Changements terrestres* (réel) | pseudo_science | **D** (30) | `cherry_picking`, `eux_contre_nous`, `verite_cachee`, `millefeuille_argumentatif`, `absence_de_sources`, `proces_d_intention`, `conflit_interet_commercial`, `appel_a_la_peur` |
 
 ## Lecture
 
-Les cinq sentinelles de [docs/METHODOLOGIE.md](../docs/METHODOLOGIE.md) §7 passent :
+Les six sentinelles de [docs/METHODOLOGIE.md](../docs/METHODOLOGIE.md) §7 passent :
 
 - **Satire** classée `satire`, jamais comme désinformation.
 - **Opinion argumentée** non pénalisée pour sa position (grade A).
 - **Pseudo-médecine marchande** : grade E et conflit d'intérêt commercial détecté.
 - **Information factuelle** bien notée, sans détection de complaisance.
 - **Contenu confessionnel** : aucune technique relevée, la foi n'est pas notée.
+- **Page en anglais** : analyse rédigée en anglais, mêmes procédés détectés que sur le spécimen français équivalent.
 
-Deux pièges plus difficiles sont également réussis :
+## Les deux écarts
 
-- le **faux équilibre** (ton posé, apparence neutre) est classé D malgré sa forme journalistique ;
-- la **vulgarisation scientifique** dense n'écope d'aucun faux positif `jargon_pseudo_scientifique`.
+**Échec grave.** « Pourquoi le ciel est bleu » classé `information` au lieu de `analyse_expertise`. La catégorie attendue n'est pas arbitraire : le texte est une vulgarisation qui expose ses limites, ce qui est le propre de l'analyse experte.
 
-## Pages réelles
+**Écart mineur.** « Cinq habitudes du soir » noté B (66) alors qu'un publireportage doit tomber en C ou D.
 
-Deux captures réelles complètent les spécimens depuis le 2026-08-24. La plus instructive est l'article SOTT : il accumule des faits vérifiables, avec des sources réelles (NOAA, USGS), reliés par un récit implicite qui contredit le consensus climatique. Un analyseur naïf verrait des sources sérieuses et noterait bien ; la difficulté est de reconnaître le procédé **sans nier les faits cités**. Grade D obtenu, avec les marqueurs rhétoriques relevés et aucune contestation des données elles-mêmes.
+Ces deux cas ont été rejoués, et c'est ce qui les rend intéressants :
 
-## Historique des ajustements du corpus
+| Cas | Prompt v0.1.1 (passe du 24 août) | v0.1.2, passe complète | v0.1.2, rejoué sur base neuve |
+|---|---|---|---|
+| Le ciel est bleu | `analyse_expertise` B (71) | `information` B (70) | `analyse_expertise` B |
+| Cinq habitudes | `publicite_sponsorise` C (52) | B (66), technique détectée | B (73), technique **non** détectée |
 
-Première passe (même modèle, même prompt) : 7/10, dont un échec sur la catégorie de la
-pseudo-médecine marchande, classée `publicite_sponsorise` au lieu de `pseudo_science`.
-Après examen, l'analyse était défendable — le texte est simultanément les deux — et c'est
-l'attente du corpus qui était trop rigide. Le format accepte désormais
-`categories_acceptables` pour les contenus hybrides ; les exigences sur les techniques et
-les grades sont restées inchangées. Les deux écarts mineurs (grade A obtenu là où B–C
-était attendu, sur des textes irréprochables) ont conduit à élargir ces fourchettes.
+Aucun des deux n'est stable d'une passe à l'autre. Le modèle est interrogé à température 0,2 : deux analyses du même texte ne sont pas identiques, et ces deux cas sont proches d'une frontière (vulgarisation ou analyse experte ; publireportage assumé ou conseil pratique). L'écart ne s'explique donc pas par le passage à v0.1.2.
 
-> Un corpus qu'on ajuste jusqu'à ce que tout passe ne mesure plus rien. Chaque
-> assouplissement doit être justifié par un examen du cas, et jamais porter sur les
-> techniques attendues ou interdites — le cœur du test.
+Ce n'est pas une raison de le classer sans suite. Deux choses en découlent, et elles sont ouvertes :
+
+1. **Mesurer l'instabilité plutôt que la subir** : rejouer le corpus plusieurs fois et publier la dispersion, pas seulement un tirage. Une note qui change d'un cran d'une analyse à l'autre est une information que l'utilisateur mérite.
+2. **Abaisser la température à 0** rendrait les analyses plus reproductibles, au prix d'une éventuelle rigidité. Le paramètre existe déjà par instance (`LYNCEUS_LLM_TEMPERATURE`), le défaut n'est pas tranché.
+
+Conformément à la règle du corpus, aucune attente n'a été assouplie pour faire passer ces deux cas.
+
+## Historique
+
+| Date | Prompt | Résultat |
+|---|---|---|
+| 2026-08-27 | v0.1.2 | 11/13 conformes, 1 mineur, 1 grave (13 cas, dont un en anglais) |
+| 2026-08-24 | v0.1.1 | 12/12 conformes |

@@ -242,7 +242,10 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
         if titre:
             carte["titre"] = titre[:500]
         if langue or sortie.get("langue"):
-            carte["langue"] = langue or sortie.get("langue")
+            # Ce que le modèle déclare l'emporte sur ce que le client a annoncé : depuis le
+            # prompt v0.1.2, ce champ est la langue de l'ANALYSE, pas celle que la page
+            # prétendait parler. C'est lui qui permet de vérifier la règle.
+            carte["langue"] = sortie.get("langue") or langue
 
         jsonschema.validate(carte, prompt.charger_schema_carte())  # ceinture et bretelles
         return carte
