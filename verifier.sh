@@ -83,6 +83,28 @@ if [ -f VERSION ]; then
   fi
 fi
 
+# ---------- Cohérence de la version de prompt ----------
+# Un seul compteur pour trois fichiers : le prompt, la méthodologie et la taxonomie
+# évoluent ensemble, et `prompt_version` est ce que chaque analyse annonce. Un décalage
+# ici, et le portail publie une méthodologie qui dit appliquer une version que le moteur
+# n'utilise plus. RESULTATS.md est du même lot : la calibration porte sur une version
+# précise, sans quoi le taux d'erreur affiché ne se rapporte à rien.
+etape "Prompt, méthodologie et calibration — cohérence des versions"
+v_prompt=$(ls prompts/analyse/v*.md 2>/dev/null | sed 's|.*/v||;s|\.md$||' | sort -V | tail -1)
+if [ -n "$v_prompt" ]; then
+  v_methode=$(grep -m1 -oE 'Version : \*\*[0-9.]+\*\*' docs/METHODOLOGIE.md | tr -dc '0-9.')
+  v_taxo=$(grep -m1 -oE 'Version : \*\*[0-9.]+\*\*' docs/TAXONOMIE.md | tr -dc '0-9.')
+  v_calib=$(grep -m1 -oE 'prompt \*\*v[0-9.]+\*\*' corpus/RESULTATS.md | tr -dc '0-9.')
+  if [ "$v_prompt" = "$v_methode" ] && [ "$v_prompt" = "$v_taxo" ] && [ "$v_prompt" = "$v_calib" ]; then
+    verdict 0 "v$v_prompt cohérente (prompt, méthodologie, taxonomie, calibration)"
+  else
+    printf "${ROUGE}  ✗ prompt (%s) ≠ méthodologie (%s) ≠ taxonomie (%s) ≠ calibration (%s)${FIN}\n" \
+      "$v_prompt" "$v_methode" "$v_taxo" "$v_calib"
+    printf "${ROUGE}    Une passe de calibration est due, ou une estampille n'a pas suivi.${FIN}\n"
+    echecs=$((echecs + 1))
+  fi
+fi
+
 # ---------- Calibration (optionnelle : serveur requis, consomme des tokens) ----------
 if [ "${1:-}" = "--calibrer" ]; then
   etape "Calibration du corpus (appels LLM réels)"

@@ -53,6 +53,8 @@ Détail des étapes, si besoin de les lancer séparément :
 | Build extension | `cd extension && npm run build` | avant de recharger dans Chrome |
 | Calibration | `lynceus calibrer corpus/corpus.yaml` | **obligatoire** si `prompts/`, `docs/METHODOLOGIE.md`, `docs/TAXONOMIE.md` ou le modèle changent |
 
+`verifier.sh` refuse aussi un décalage entre la version la plus haute de `prompts/analyse/`, les estampilles de `docs/METHODOLOGIE.md` et `docs/TAXONOMIE.md`, et la version sur laquelle porte `corpus/RESULTATS.md`. Ces quatre-là partagent un seul compteur, `prompt_version`, celui que chaque analyse annonce.
+
 ## Ce que déclenche une poussée
 
 Le dépôt est bâti pour une forge dotée d'un runner auto-hébergé (voir [api/DEPLOIEMENT.md](api/DEPLOIEMENT.md)). Les tests y rejouent ce que `verifier.sh` fait en local, dans des conteneurs jetables.

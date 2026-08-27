@@ -202,6 +202,7 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
     def methodologie(requete: Request):
         return page(requete, "methodologie.html",
                     ponderations=contenu.ponderations(), seuils=contenu.seuils(),
+                    version_prompt=contenu.versions_prompt()[-1],
                     detail=contenu.document("METHODOLOGIE", p.depot_fichiers))
 
     @app.get("/taxonomie", response_class=HTMLResponse)

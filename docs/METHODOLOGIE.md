@@ -1,6 +1,6 @@
 # Méthodologie d'analyse
 
-Version : **0.1.0**. Toute modification de ce document ou des prompts incrémente `prompt_version` (semver) et déclenche une passe sur le [corpus de calibration](../corpus/).
+Version : **0.1.1**. Toute modification de ce document ou des prompts incrémente `prompt_version` (semver) et déclenche une passe sur le [corpus de calibration](../corpus/).
 
 ## Vue d'ensemble
 
