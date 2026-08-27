@@ -693,14 +693,14 @@ class Questionneur:
                                show_default=bool(defaut), err=True)
         return (reponse or "").strip()
 
-    def adresse(self, question: str) -> str:
+    def adresse(self, question: str, *, defaut: str = "") -> str:
         """Une adresse publique, vérifiée sommairement.
 
         Une adresse sans schéma est le genre d'erreur qui passe la configuration et se
         manifeste chez l'utilisateur : l'extension reçoit une adresse qu'elle ne sait pas
         joindre, longtemps après le déploiement."""
         while True:
-            reponse = self.texte(question)
+            reponse = self.texte(question, defaut=defaut)
             if not reponse or reponse.startswith(("http://", "https://")):
                 return reponse.rstrip("/")
             aide.print("[yellow]Il faut une adresse complète, commençant par http:// ou https://[/yellow]")
@@ -845,7 +845,8 @@ def env(
         # L'AGPL-3.0 impose (article 13) de proposer le code correspondant aux personnes
         # qui utilisent le service à distance. C'est une adresse à donner, pas une case à
         # cocher : le portail avertit au démarrage tant qu'elle manque.
-        depot = demande.adresse("Adresse publique du code source (AGPL, article 13)")
+        depot = demande.adresse("Adresse publique du code source (AGPL, article 13)",
+                                defaut="https://github.com/Nashi-cloud/Project-Lynceus")
         depot_fichiers = f"{depot.rstrip('/')}/blob/main" if _forge_connue(depot) else ""
 
         # Deux machines, donc deux tunnels : un jeton par tunnel, jamais le même.
