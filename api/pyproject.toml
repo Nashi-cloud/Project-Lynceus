@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lynceus-api"
-version = "0.5.0"
+version = "0.6.0"
 description = "Lynceus — API annuaire et moteur d'analyse de fiabilité de contenus web"
 license = "AGPL-3.0-or-later"
 requires-python = ">=3.11"
@@ -28,6 +28,9 @@ dependencies = [
     # est requis dès qu'une route lit un formulaire.
     "jinja2>=3.1",
     "markdown-it-py>=3.0",
+    # Lecture des catalogues .po du portail (lynceus.portail.i18n). Présent jusqu'ici par
+    # dépendance transitive, donc à déclarer : le portail ne démarre pas sans lui.
+    "babel>=2.14",
     "python-multipart>=0.0.9",
 ]
 

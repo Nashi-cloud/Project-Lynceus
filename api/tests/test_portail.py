@@ -90,6 +90,90 @@ def test_aucune_page_ne_publie_de_lien_relatif(portail, chemin):
         assert lien.startswith(("/", "#", "http://", "https://", "mailto:", "data:")), lien
 
 
+# ------------------------------------------------------------------ langues
+
+def test_le_prefixe_de_langue_sert_la_meme_page_traduite(portail):
+    """« /en/charte » et « /charte » sont la même page. Le français reste à la racine :
+    aucune adresse déjà publiée ne change en devenant bilingue."""
+    client, _ = portail
+    assert client.get("/charte").status_code == 200
+    anglais = client.get("/en/charte")
+    assert anglais.status_code == 200
+    assert 'lang="en"' in anglais.text
+    assert ">Install<" in anglais.text          # bandeau traduit
+    assert ">Installer<" not in anglais.text
+
+
+def test_les_liens_internes_restent_dans_la_langue_de_la_page(portail):
+    """Un lien écrit en dur ramènerait le lecteur anglophone au français au premier clic."""
+    client, _ = portail
+    html = client.get("/en/charte").text
+    assert 'href="/en/methodologie"' in html
+    assert 'href="/methodologie"' not in html
+
+
+def test_la_racine_negocie_la_langue_du_navigateur(portail):
+    """Seule la racine nue négocie : ailleurs, le préfixe fait foi, sinon un lien partagé
+    s'ouvrirait dans une autre langue que celle où il a été écrit."""
+    client, _ = portail
+    reponse = client.get("/", headers={"accept-language": "en-GB,en;q=0.9"},
+                         follow_redirects=False)
+    assert reponse.status_code == 302
+    assert reponse.headers["location"] == "/en/"
+    assert "Accept-Language" in reponse.headers.get("vary", "")
+
+    assert client.get("/", headers={"accept-language": "fr-FR,fr;q=0.9"},
+                      follow_redirects=False).status_code == 200
+    # Une langue que le portail ne parle pas ne le fait pas hésiter.
+    assert client.get("/", headers={"accept-language": "de-DE,de"},
+                      follow_redirects=False).status_code == 200
+
+
+def test_une_adresse_explicite_ne_rebondit_jamais(portail):
+    """Le sélecteur vise « /fr/ » et non « / » : sinon un anglophone qui choisit le
+    français serait renvoyé à l'anglais par la négociation, sans pouvoir en sortir."""
+    client, _ = portail
+    reponse = client.get("/fr/", headers={"accept-language": "en-GB,en;q=0.9"},
+                         follow_redirects=False)
+    assert reponse.status_code == 200
+    assert ">Installer<" in reponse.text
+
+
+def test_chaque_page_annonce_ses_autres_langues(portail):
+    """Sans hreflang, un moteur de recherche sert la mauvaise version, et le lecteur ne
+    sait pas que l'autre existe."""
+    client, _ = portail
+    html = client.get("/en/annuaire").text
+    assert 'hreflang="fr" href="http://testserver/fr/annuaire"' in html
+    assert 'hreflang="en" href="http://testserver/en/annuaire"' in html
+    assert 'hreflang="x-default"' in html
+
+
+def test_aucune_phrase_de_gabarit_n_est_laissee_sans_traduction():
+    """Le garde-fou de la traduction.
+
+    Les msgid sont les phrases françaises : une phrase modifiée devient une phrase inconnue
+    du catalogue, et ce test la signale au lieu de laisser la version anglaise afficher
+    silencieusement l'ancien texte, ou du français au milieu de l'anglais."""
+    import re
+
+    from lynceus.portail import i18n
+
+    phrases = set()
+    for gabarit in (RACINE / "gabarits").glob("*.html"):
+        phrases |= set(re.findall(r'\b_\(\s*"((?:[^"\\]|\\.)*)"',
+                                  gabarit.read_text(encoding="utf-8")))
+    assert phrases, "aucune phrase marquée : le motif de détection ne correspond plus"
+
+    for langue in i18n.LANGUES:
+        if langue == i18n.LANGUE_SOURCE:
+            continue
+        catalogue = i18n.catalogue(langue)
+        manquantes = sorted(p for p in phrases if not catalogue.get(p))
+        assert not manquantes, f"{langue} : {len(manquantes)} phrase(s) sans traduction, " \
+                               f"à commencer par « {manquantes[0]} »"
+
+
 def test_le_prompt_publie_est_celui_que_le_moteur_applique(portail):
     """La charte promet le prompt public (§2). Une page qui le recopierait ne prouverait
     rien : c'est le fichier versionné qui est rendu, celui-là même que le moteur lit."""
