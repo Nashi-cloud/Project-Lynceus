@@ -1,39 +1,45 @@
 # Calibration results
 
-<!-- traduit-de: corpus/RESULTATS.md sha256:fd49cc72cbe8b276 -->
+<!-- traduit-de: corpus/RESULTATS.md sha256:a1d721e5971c128c -->
 
 > Translation for information. The French version, `corpus/RESULTATS.md`, is the record of reference: should the two ever diverge, it is the one that counts.
 
-Latest run: **2026-08-27** · model `z-ai/glm-5.2` (through OpenRouter) · prompt **v0.1.2** · temperature **0**
+<!-- calibration:début (engendré par « lynceus calibrer --ecrire », ne pas modifier à la main) -->
 
-**Three runs**, each on a fresh database to bypass the cache: **13/13**, **10/13** and **11/12** conforming. A single run would say nothing solid, since the model does not return the same analysis of the same text twice.
+Latest run: **2026-08-27** · model `z-ai/glm-5.2` (through openrouter.ai) · prompt **v0.1.2** · temperature **0**
+
+**One run** recorded on this prompt version: **11/13\*** conforming. A single run says nothing solid, since the model does not return the same analysis of the same text twice.
+
+Runs marked with an asterisk were served entirely from the directory cache: they replay an already recorded measurement instead of producing a new one. A genuinely independent draw needs a blank database.
 
 | Case | Category | Grade | Score | Discrepancies |
 |---|---|---|---|---|
-| The council votes unanimously against unanimity | satire | A | 91 to 98 | — |
-| Why I think our town has it wrong | opinion | A | 82 to 87 | — |
-| The forgotten root the laboratories would rather you did not know about | publicite_sponsorise | E | 7 to 14 | — |
-| The Vieille-Écluse bridge closed for works | information | A | 80 to 86 | — |
-| Advent meditation: waiting as a path | contenu_confessionnel | A | 82 to 89 | — |
-| The November power cut: three awkward questions | theorie_du_complot | E | 8 to 12 | — |
-| *What They Won't Tell You About the New Water Treatment Plant* (English) | opinion / theorie_du_complot | E | 10 to 11 | category `opinion` on one run |
-| Five evening habits for better sleep | publicite_sponsorise | C | 61 to 64 | technique missing on one run: `conflit_interet_commercial` |
-| Water fluoridation: the debate is still open | information / opinion | D D C | 46 to 52 | — |
-| Why the sky is blue, and why that explanation is incomplete | analyse_expertise | B C B | 64 to 75 | grade C outside the expected range on one run |
-| What three years of medical wandering taught me | temoignage | C | 55 to 63 | — |
-| *Wikipedia — Confirmation bias* (real) | information | A | 89 to 93 | — |
-| *SOTT — Earth changes* (real) | theorie_du_complot / opinion | D | 30 to 32 | category `opinion` on one run; page unreachable on another |
+| The council votes unanimously against unanimity | satire | A | 88 | — |
+| Why I think our town has it wrong about paid parking | opinion | A | 84 | — |
+| The forgotten root the laboratories would rather you did not know about | publicite_sponsorise | E | 7 | — |
+| The Vieille-Écluse bridge closed for works from 3 to 28 March | information | A | 84 | — |
+| Advent meditation: waiting as a path | contenu_confessionnel | C | 57 | — |
+| The November power cut: three awkward questions | theorie_du_complot | E | 9 | — |
+| What They Won't Tell You About the New Water Treatment Plant | theorie_du_complot | E | 2 | — |
+| Five evening habits for better sleep | publicite_sponsorise | B | 66 | grade B outside the expected range C, D |
+| Water fluoridation: the debate is still open | opinion | D | 40 | — |
+| Why the sky is blue, and why that explanation is incomplete | information | B | 70 | category `information` instead of analyse_expertise |
+| What three years of medical wandering taught me | temoignage | C | 60 | — |
+| Confirmation bias — Wikipedia | information | A | 92 | — |
+| SOTT Earth Changes Summary - June 2026 | pseudo_science | D | 30 | — |
+
+<!-- calibration:fin -->
 
 ## How to read it
 
-The six sentinels of [METHODOLOGIE.md](../../docs/en/METHODOLOGIE.md) §7 pass on all three runs:
+Only one run is recorded on this prompt version, and it was served from the directory cache. It therefore says what the instance returns today, not what a fresh draw would give. The runs carried out before the journal existed appear in the history at the end of the page, with the figures as they were noted at the time.
 
-- **Satire** classified as `satire`, never as disinformation.
-- **Argued opinion** not penalised for its position (grade A).
-- **Commercial pseudo-medicine**: grade E, and the commercial conflict of interest detected.
-- **Factual news** graded well, with no detection of complacency.
-- **Religious content**: no technique found, faith is not graded.
-- **A page in English**: the analysis written in English, with the same techniques detected as on the equivalent French specimen.
+The five sentinels of [METHODOLOGIE.md](../../docs/en/METHODOLOGIE.md) §7 hold: satire stays classified as `satire`, argued opinion is not penalised for its position, commercial pseudo-medicine comes out at E, factual news at A, and religious content stays in its category with none of the forbidden techniques found. The English specimen is analysed in English, which the corpus checks explicitly through `langue_attendue`.
+
+Two discrepancies out of thirteen cases:
+
+- **Science writing** classified as `information` instead of `analyse_expertise`. The line between the two is thin: an article explaining a phenomenon while citing the state of knowledge fits both readings. It is nonetheless a serious failure as far as the corpus is concerned, because the category there is an exact expectation and not an appreciation.
+- **Disguised advertising** graded B where the expected range is C to D. One notch above: the device is seen, its seriousness judged lower. A minor discrepancy.
 
 ## The temperature, measured
 
@@ -64,8 +70,11 @@ A single run will therefore keep being published with its discrepancies, never s
 
 ## History
 
+The lines predating the journal were noted by hand, before `lynceus calibrer --ecrire` existed. They are kept as they are: rewriting them would give them a guarantee they do not have.
+
 | Date | Prompt | Temperature | Result |
 |---|---|---|---|
+| 2026-08-27 | v0.1.2 | 0 | 11/13, first run recorded in the journal (served from the cache) |
 | 2026-08-27 | v0.1.2 | 0 | 13/13, 10/13, 11/12 over three runs |
 | 2026-08-27 | v0.1.2 | 0.2 | 11/13 on one run, then 9, 11, 9 over three control runs |
 | 2026-08-24 | v0.1.1 | 0.2 | 12/12 conforming (single run, 12 cases) |

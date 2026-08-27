@@ -121,11 +121,26 @@ if [ -n "$v_prompt" ]; then
   fi
 fi
 
+# ---------- Provenance des chiffres publiés ----------
+# L'étape précédente vérifie que les estampilles s'accordent. Elle ne dit rien de la
+# provenance des chiffres : rien n'empêcherait d'avancer une version sans avoir relancé la
+# moindre analyse. Le tableau publié est donc engendré depuis `corpus/passes.jsonl`, journal
+# des passes réellement exécutées, et cette étape le réengendre pour le comparer.
+etape "Calibration — les chiffres publiés viennent d'une passe enregistrée"
+if [ -x api/.venv/bin/lynceus ]; then
+  if sortie=$(api/.venv/bin/lynceus calibration 2>&1); then
+    verdict 0 "$(printf '%s' "$sortie" | tr -d '\n' | sed 's/^[[:space:]]*//')"
+  else
+    printf '%s\n' "$sortie" | sed 's/^/  /'
+    echecs=$((echecs + 1))
+  fi
+fi
+
 # ---------- Calibration (optionnelle : serveur requis, consomme des tokens) ----------
 if [ "${1:-}" = "--calibrer" ]; then
   etape "Calibration du corpus (appels LLM réels)"
   if curl -sf --max-time 5 "${LYNCEUS_API_URL:-http://localhost:8000}/v1/meta" > /dev/null; then
-    api/.venv/bin/lynceus calibrer corpus/corpus.yaml 2>&1 | tail -3
+    api/.venv/bin/lynceus calibrer corpus/corpus.yaml --ecrire 2>&1 | tail -4
     verdict "${PIPESTATUS[0]}" "corpus conforme"
   else
     printf "${ROUGE}  ✗ instance injoignable — démarrer : cd api && .venv/bin/uvicorn lynceus.main:creer_application --factory --host 0.0.0.0${FIN}\n"

@@ -14,6 +14,10 @@
 #   techniques_interdites  ids dont la détection serait un faux positif grave
 #   confiance_min          plancher de l'indice de confiance
 #   langue_attendue        code de la langue dans laquelle l'analyse doit être rédigée
+#
+# `titre` et `titre_en` nomment le cas dans le tableau publié de RESULTATS.md, qui existe
+# dans les deux langues. Le titre anglais vit ici, avec le cas, plutôt que dans le rapport :
+# c'est le corpus qui décide de la liste des cas, et le rapport qui la rend.
 
 # ---------------------------------------------------------------------------
 # Cas sentinelles — les cinq garde-fous de docs/METHODOLOGIE.md §7
@@ -21,6 +25,7 @@
 
 - fichier: specimens/04-fictif-satire.md
   titre: Le conseil municipal vote à l'unanimité contre l'unanimité
+  titre_en: The council votes unanimously against unanimity
   categorie_attendue: satire
   grade_attendu: [A, B, C]
   techniques_interdites: [verite_cachee, hyper_intentionnalisme, eux_contre_nous]
@@ -30,6 +35,7 @@
 
 - fichier: specimens/03-fictif-opinion-assumee.md
   titre: Pourquoi je pense que notre commune se trompe sur le stationnement payant
+  titre_en: Why I think our town has it wrong about paid parking
   categorie_attendue: opinion
   grade_attendu: [A, B, C]
   techniques_interdites: [epouvantail, ad_hominem, proces_d_intention, faux_dilemme]
@@ -39,6 +45,7 @@
 
 - fichier: specimens/01-fictif-pseudo-medecine-marchande.md
   titre: La racine oubliée que les laboratoires préfèrent vous cacher
+  titre_en: The forgotten root the laboratories would rather you did not know about
   categories_acceptables: [pseudo_science, publicite_sponsorise]
   grade_attendu: [D, E]
   techniques_attendues: [conflit_interet_commercial, solution_miracle]
@@ -51,6 +58,7 @@
 
 - fichier: specimens/02-fictif-information-factuelle.md
   titre: Le pont de la Vieille-Écluse fermé pour travaux du 3 au 28 mars
+  titre_en: The Vieille-Écluse bridge closed for works from 3 to 28 March
   categorie_attendue: information
   grade_attendu: [A, B]
   techniques_interdites: [appel_a_la_peur, absence_de_sources, urgence_artificielle]
@@ -60,6 +68,7 @@
 
 - fichier: specimens/05-fictif-confessionnel-respectueux.md
   titre: "Méditation de l'Avent : l'attente comme chemin"
+  titre_en: "Advent meditation: waiting as a path"
   categorie_attendue: contenu_confessionnel
   grade_attendu: [A, B, C]
   techniques_interdites: [appel_a_la_peur, urgence_artificielle, eux_contre_nous, solution_miracle]
@@ -73,6 +82,7 @@
 
 - fichier: specimens/06-fictif-complotisme.md
   titre: "Coupure électrique de novembre : trois questions qui dérangent"
+  titre_en: "The November power cut: three awkward questions"
   categorie_attendue: theorie_du_complot
   grade_attendu: [D, E]
   techniques_attendues: [je_pose_des_questions, hyper_intentionnalisme]
@@ -82,6 +92,7 @@
 
 - fichier: specimens/11-fictif-anglais-verite-cachee.md
   titre: What They Won't Tell You About the New Water Treatment Plant
+  titre_en: What They Won't Tell You About the New Water Treatment Plant
   langue: en
   langue_attendue: en
   categorie_attendue: theorie_du_complot
@@ -96,6 +107,7 @@
 
 - fichier: specimens/08-fictif-publicite-deguisee.md
   titre: Cinq habitudes du soir pour mieux dormir
+  titre_en: Five evening habits for better sleep
   categorie_attendue: publicite_sponsorise
   grade_attendu: [C, D]
   techniques_attendues: [conflit_interet_commercial]
@@ -110,6 +122,7 @@
 
 - fichier: specimens/07-fictif-faux-equilibre.md
   titre: "Fluoration de l'eau : le débat reste ouvert"
+  titre_en: "Water fluoridation: the debate is still open"
   grade_attendu: [C, D]
   techniques_attendues: [faux_equilibre]
   notes: |
@@ -119,6 +132,7 @@
 
 - fichier: specimens/09-fictif-vulgarisation-solide.md
   titre: Pourquoi le ciel est bleu, et pourquoi cette explication est incomplète
+  titre_en: Why the sky is blue, and why that explanation is incomplete
   categorie_attendue: analyse_expertise
   grade_attendu: [A, B]
   techniques_interdites: [jargon_pseudo_scientifique, autorite_anonyme]
@@ -129,6 +143,7 @@
 
 - fichier: specimens/10-fictif-temoignage-emotionnel.md
   titre: Ce que trois ans d'errance médicale m'ont appris
+  titre_en: What three years of medical wandering taught me
   categorie_attendue: temoignage
   grade_attendu: [B, C, D]
   techniques_interdites: [conflit_interet_commercial, solution_miracle, faux_expert]
@@ -148,6 +163,7 @@
 - capture: captures/wikipedia-biais-confirmation.md
   url: https://fr.wikipedia.org/wiki/Biais_de_confirmation
   titre: Biais de confirmation — Wikipédia
+  titre_en: Confirmation bias — Wikipedia
   content_hash: c9efee992b48b58c714a92272e011caef73c140b9312532ee580d2c8356d6a49
   capture_le: 2026-08-24
   categorie_attendue: information
@@ -162,6 +178,7 @@
 - capture: captures/sott-changements-terrestres.md
   url: https://fr.sott.net/article/44562-Resume-SOTT-des-changements-terrestres-Juin-2026-Conditions-meteorologiques-extremes-revolte-de-la-planete-et-boules-de-feu
   titre: Résumé SOTT des changements terrestres - Juin 2026
+  titre_en: SOTT Earth Changes Summary - June 2026
   content_hash: 2b6f5d49e2384b0d8d928661368d45369dfde42454254ade549d481b5e4719a6
   capture_le: 2026-08-24
   categories_acceptables: [theorie_du_complot, pseudo_science]

@@ -80,8 +80,18 @@ The order matters: fixing an expectation before having seen the result amounts t
 
 **Choosing the expected techniques.** Models vary in what they detect: only require the **stable** markers, the ones several models pick up. The SOTT case in the corpus requires a single technique (`verite_cachee`), the only one common to both models tested; the rest varied.
 
-## Results
+## Results, and where the figures come from
 
-See [en/RESULTATS.md](en/RESULTATS.md). Latest run: three passes with `z-ai/glm-5.2` and prompt v0.1.2 at temperature 0, giving 13/13, 10/13 and 11/12 conforming.
+The table in [en/RESULTATS.md](en/RESULTATS.md) is not written by hand: it is **generated** from `passes.jsonl`, the journal of runs actually executed.
+
+```bash
+lynceus calibrer corpus/corpus.yaml --ecrire
+```
+
+The command appends the run to the journal, then regenerates the table between its two markers, in both languages. Everything outside the markers, the reading of the results and what they teach, stays hand-written: a machine cannot say what a discrepancy means.
+
+That is what makes the published figure checkable. `verifier.sh` regenerates the table and fails if it differs from the published one, or if no run exists for the prompt version in force. Before that, only the version stamp was checked: nothing stopped anyone from moving it forward without having run a single analysis, and the build would still have gone green.
+
+The journal only ever grows, and the git history shows every addition: walking something back becomes a visible act. A run served entirely from the directory cache is counted as such, since it replays a measurement instead of producing a new one.
 
 > A corpus adjusted until everything passes measures nothing any more. Every relaxed expectation must be justified by an examination of the case, and must never bear on the expected or forbidden techniques, which are the heart of the test.
