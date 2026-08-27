@@ -71,8 +71,8 @@ def test_les_pages_se_rendent(portail, chemin):
     assert reponse.headers["content-type"].startswith("text/html")
 
 
-PAGES = ["/", "/installer", "/methodologie", "/taxonomie", "/charte",
-         "/auto-hebergement", "/annuaire", "/contester", "/conditions",
+PAGES = ["/", "/installer", "/methodologie", "/taxonomie", "/charte", "/prompt",
+         "/calibration", "/auto-hebergement", "/annuaire", "/contester", "/conditions",
          "/confidentialite", "/mentions-legales"]
 
 
@@ -90,16 +90,61 @@ def test_aucune_page_ne_publie_de_lien_relatif(portail, chemin):
         assert lien.startswith(("/", "#", "http://", "https://", "mailto:", "data:")), lien
 
 
-def test_un_document_renvoie_vers_la_forge_quand_elle_est_annoncee():
-    """Ce que le portail ne publie pas lui-même se lit dans le dépôt, s'il est joignable."""
+def test_le_prompt_publie_est_celui_que_le_moteur_applique(portail):
+    """La charte promet le prompt public (§2). Une page qui le recopierait ne prouverait
+    rien : c'est le fichier versionné qui est rendu, celui-là même que le moteur lit."""
+    from lynceus.moteur import prompt as moteur_prompt
+    client, _ = portail
+    version = moteur_prompt.versions_disponibles()[-1]
+    html = client.get("/prompt").text
+    assert f"v{version}" in html
+    # Une phrase de posture, présente dans le fichier, absente de tout gabarit.
+    assert "Tu es une vigie, pas un juge" in html
+
+
+def test_une_version_de_prompt_inconnue_ne_renvoie_pas_la_derniere(portail):
+    """Sinon une adresse fautive afficherait un texte qui n'est pas celui qu'on demande."""
+    client, _ = portail
+    assert client.get("/prompt?version=9.9.9").status_code == 404
+
+
+def test_les_anciennes_versions_de_prompt_restent_lisibles(portail):
+    """L'annuaire annonce la version qui a produit chaque analyse : elle doit rester
+    consultable, sinon la mention ne renvoie à rien."""
+    from lynceus.moteur import prompt as moteur_prompt
+    client, _ = portail
+    for version in moteur_prompt.versions_disponibles():
+        reponse = client.get(f"/prompt?version={version}")
+        assert reponse.status_code == 200, version
+        assert f"v{version}" in reponse.text
+
+
+def test_la_calibration_publie_les_resultats_pas_le_corpus(portail):
+    """Les captures du corpus appartiennent à leurs auteurs : le portail publie la mesure,
+    pas les pages mesurées."""
+    client, _ = portail
+    html = client.get("/calibration").text
+    assert "conformes" in html
+    assert "<img" not in html
+
+
+def test_un_document_renvoie_vers_les_pages_du_portail_avant_la_forge():
+    """Ce que le portail publie lui-même reste chez lui ; le reste part vers le dépôt.
+
+    L'ordre compte : envoyer le lecteur sur une forge pour lire un texte que le site sert
+    déjà, c'est lui demander de faire confiance à une copie qu'il ne peut pas vérifier."""
+    from lynceus.portail import contenu
+
+    html = contenu.document("CONFORMITE", "https://forge.test/lynceus/blob/main")["html"]
+    assert 'href="https://forge.test/lynceus/blob/main/DCO.txt"' in html
+
     p = parametres_portail_test(instance="https://instance.test",
                                 depot="https://forge.test/lynceus",
                                 depot_fichiers="https://forge.test/lynceus/blob/main")
     with TestClient(creer_portail(p)) as client:
-        html = client.get("/charte").text
-    assert 'href="https://forge.test/lynceus/blob/main/prompts/"' in html
-    # Ce qui a une page sur le portail y reste : inutile d'envoyer le lecteur sur la forge.
-    assert 'href="/methodologie"' in html
+        charte = client.get("/charte").text
+    assert 'href="/prompt"' in charte
+    assert 'href="/methodologie"' in charte
 
 
 def test_sans_depot_annonce_le_pied_de_page_ne_promet_pas_de_code_source(portail):
