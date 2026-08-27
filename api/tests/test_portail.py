@@ -201,6 +201,31 @@ def test_les_libelles_venus_du_code_sont_traduits_aussi(portail):
     assert "et je conteste" in client.get("/contester").text
 
 
+def test_un_document_traduit_est_servi_dans_la_langue_demandee(portail):
+    """La charte existe en anglais : c'est elle qui doit s'afficher, sans l'encart qui
+    signale un document non traduit."""
+    client, _ = portail
+    html = client.get("/en/charte").text
+    assert "Lynceus ethical charter" in html
+    assert "A lookout, not a judge" in html
+    assert "published in its original language" not in html
+
+
+def test_un_document_sans_traduction_sert_l_original_en_le_disant(portail):
+    """Mieux vaut le texte qui engage le projet, dans sa langue, qu'une page vide. Mais le
+    lecteur doit savoir pourquoi il lit du français au milieu de l'anglais."""
+    client, _ = portail
+    html = client.get("/en/prompt").text
+    assert "published in its original language" in html
+
+
+def test_la_traduction_annonce_l_original_qui_fait_foi(portail):
+    """Une traduction de texte normatif n'a pas la portée de l'original : le dire dans le
+    document lui-même, pas seulement sur la page qui le sert."""
+    client, _ = portail
+    assert "the one that binds the project" in client.get("/en/charte").text
+
+
 def test_le_prompt_publie_est_celui_que_le_moteur_applique(portail):
     """La charte promet le prompt public (§2). Une page qui le recopierait ne prouverait
     rien : c'est le fichier versionné qui est rendu, celui-là même que le moteur lit."""

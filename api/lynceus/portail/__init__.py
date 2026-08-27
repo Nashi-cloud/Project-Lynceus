@@ -231,6 +231,11 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
             base = f"{schema}://{base.split('://', 1)[1]}"
         return base
 
+    def langue(requete: Request) -> str:
+        """La langue demandée, vide si c'est celle d'écriture du projet."""
+        code = requete.scope.get("lynceus_langue", i18n.LANGUE_SOURCE)
+        return "" if code == i18n.LANGUE_SOURCE else code
+
     def prefixe_langue(requete: Request) -> str:
         """Ce qui doit précéder toute adresse interne engendrée pour cette requête."""
         return i18n.prefixe(requete.scope.get("lynceus_langue", i18n.LANGUE_SOURCE))
@@ -275,7 +280,7 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
                     seuils=contenu.seuils(),
                     version_prompt=contenu.versions_prompt()[-1],
                     detail=contenu.document("METHODOLOGIE", p.depot_fichiers,
-                                            prefixe_langue(requete)))
+                                            prefixe_langue(requete), langue(requete)))
 
     @app.get("/taxonomie", response_class=HTMLResponse)
     def taxonomie(requete: Request):
@@ -292,7 +297,7 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
                     chapo=N_("Ce texte est le fichier même que le projet applique. Il ne "
                              "peut donc pas dire autre chose que ce qui engage le code."),
                     document=contenu.document("ETHIQUE", p.depot_fichiers,
-                                              prefixe_langue(requete)))
+                                              prefixe_langue(requete), langue(requete)))
 
     @app.get("/prompt", response_class=HTMLResponse)
     def prompt_analyse(requete: Request, version: str | None = Query(None)):
