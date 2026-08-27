@@ -512,3 +512,6 @@ msgstr "What the method produces on a corpus of cases known in advance, deviatio
 
 msgid "Ce texte est le fichier même que le projet applique. Il ne peut donc pas dire autre chose que ce qui engage le code."
 msgstr "This text is the very file the project applies. It therefore cannot say anything other than what binds the code."
+
+msgid "Cette page n'existe pour l'instant qu'en français, la langue dans laquelle elle engage l'exploitant. Une traduction serait une commodité, pas un texte de droit : en cas de divergence, c'est la version française qui vaut."
+msgstr "This page exists only in French for now, the language in which it binds the operator. A translation would be a convenience, not a legal text: should the two ever diverge, the French version is the one that counts."
