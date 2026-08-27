@@ -15,15 +15,26 @@
 
   <div class="encart attention">
     <h3 style="margin-top:0">Le point à lire en premier</h3>
+    {% if moteur and moteur.fournisseur and not moteur.distant %}
+    <p>Quand vous demandez l'analyse d'une page, son texte est traité par un modèle
+    <strong>hébergé par cette instance</strong> ({{ moteur.fournisseur }}, modèle
+    <code>{{ moteur.modele }}</code>). Il n'est transmis à aucun fournisseur tiers et ne
+    quitte pas l'infrastructure de l'exploitant.</p>
+    <p style="margin-bottom:0">Reste ce que l'exploitant lui-même voit passer, décrit plus
+    bas. Et cette page ne vaut que pour cette instance : une autre peut faire un tout autre
+    choix, c'est à elle de le dire sur sa propre page.</p>
+    {% else %}
     <p>Quand vous demandez l'analyse d'une page, <strong>le texte de cette page est
     transmis à un fournisseur de modèle de langage tiers</strong>
-    {% if moteur and moteur.fournisseur %}(actuellement <code>{{ moteur.fournisseur }}</code>,
-    modèle <code>{{ moteur.modele }}</code>){% endif %}. Ce fournisseur peut être établi
-    hors de l'Union européenne.</p>
+    {% if moteur and moteur.fournisseur %}(actuellement {{ moteur.fournisseur }}, modèle
+    <code>{{ moteur.modele }}</code>){% endif %}. Ce fournisseur peut être
+    établi hors de l'Union européenne, et peut lui-même confier l'exécution du modèle à
+    un autre.</p>
     <p style="margin-bottom:0">C'est le transfert le plus important du système, et le seul
     que vous ne pouvez pas éviter en utilisant ce service. Si cela ne vous convient pas,
     <a href="/auto-hebergement">hébergez votre propre instance</a> avec un modèle local :
     le texte ne quitte alors pas votre machine, et le logiciel est conçu pour ça.</p>
+    {% endif %}
   </div>
 
   <h2>Responsable du traitement</h2>
@@ -78,9 +89,11 @@
 
   <h2>Destinataires</h2>
   <ul>
+    {% if not (moteur and moteur.fournisseur and not moteur.distant) %}
     <li><strong>Le fournisseur de modèle de langage</strong>
-    {% if moteur and moteur.fournisseur %}(<code>{{ moteur.fournisseur }}</code>){% endif %},
+    {% if moteur and moteur.fournisseur %}({{ moteur.fournisseur }}){% endif %},
     qui reçoit le texte des pages analysées. Voir l'encadré en tête de page.</li>
+    {% endif %}
     {% if legal.hebergeur.nom %}<li><strong>{{ legal.hebergeur.nom }}</strong>, hébergeur des serveurs.</li>{% endif %}
     <li>Le cas échéant, le fournisseur du tunnel qui achemine les requêtes vers ce
     serveur, qui voit passer les adresses IP des visiteurs.</li>

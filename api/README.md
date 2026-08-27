@@ -35,7 +35,8 @@ Variables `LYNCEUS_*` (`.env` accepté) — liste complète dans [docs/ARCHITECT
 |---|---|---|
 | `LYNCEUS_LLM_BASE_URL` | `https://openrouter.ai/api/v1` | Tout endpoint compatible OpenAI. Ollama : `http://localhost:11434/v1` |
 | `LYNCEUS_LLM_API_KEY` | — | Clé du fournisseur |
-| `LYNCEUS_LLM_MODEL` | `anthropic/claude-sonnet-5` | Slug du modèle chez le fournisseur (vérifier sur openrouter.ai/models) |
+| `LYNCEUS_LLM_MODEL` | `anthropic/claude-sonnet-5` | Slug du modèle chez le fournisseur |
+| `LYNCEUS_LLM_FOURNISSEUR` | *(déduit)* | Nom publié du fournisseur. Vide = nom d'hôte, ou « modèle auto-hébergé » sur une adresse privée |
 | `LYNCEUS_DATABASE_URL` | `sqlite:///./lynceus.sqlite3` | PostgreSQL recommandé en production |
 
 ## Structure

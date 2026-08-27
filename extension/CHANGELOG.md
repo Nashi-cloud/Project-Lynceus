@@ -2,6 +2,10 @@
 
 Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension : utile pour vérifier qu'un rebuild a bien été rechargé.
 
+## 0.10.1 (2026-08-27)
+
+- **fix** : la page Réglages annonçait « Modèle : X (via Y) ». Une instance peut désormais déclarer un modèle auto-hébergé, et « via modèle auto-hébergé » ne veut rien dire : les deux informations sont maintenant séparées par un point médian.
+
 ## 0.10.0 (2026-08-25)
 
 - **design** : l'extension prend l'identité visuelle du portail. Même papier chaud, même encre, mêmes accents laiton, mêmes polices (Fraunces pour les titres, Newsreader pour les textes qui se lisent), même pastille de grade en carré arrondi. Le panneau garde sa densité et la police d'interface du système : c'est une colonne étroite qu'on parcourt du coin de l'œil, pas une page qu'on lit. Jusqu'ici le site et l'extension avaient l'air de deux logiciels différents, ce qui est gênant quand l'un sert à télécharger l'autre.

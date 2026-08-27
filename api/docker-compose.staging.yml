@@ -56,6 +56,9 @@ services:
       LYNCEUS_LLM_BASE_URL: ${LYNCEUS_LLM_BASE_URL:-https://openrouter.ai/api/v1}
       LYNCEUS_LLM_API_KEY: ${LYNCEUS_LLM_API_KEY:?clé du fournisseur LLM requise}
       LYNCEUS_LLM_MODEL: ${LYNCEUS_LLM_MODEL:-z-ai/glm-5.2}
+      # Nom publié du fournisseur (/v1/meta, analyses, pages légales du portail).
+      # Vide = déduit de l'adresse : nom d'hôte, ou « modèle auto-hébergé » si elle est privée.
+      LYNCEUS_LLM_FOURNISSEUR: ${LYNCEUS_LLM_FOURNISSEUR:-}
 
       # Même exposée à trois personnes, une instance de recette appelle un modèle facturé.
       # La clé d'accès reste obligatoire ici aussi.

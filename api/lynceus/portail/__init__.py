@@ -478,6 +478,10 @@ async def _meta_instance(client: httpx.AsyncClient, instance: str) -> dict | Non
     return {
         "modele": donnees.get("modele"),
         "fournisseur": donnees.get("fournisseur"),
+        # Défaut prudent : une instance trop ancienne pour répondre sur ce point est
+        # traitée comme envoyant le texte au dehors. Promettre l'inverse à tort ferait
+        # de la page de confidentialité un mensonge.
+        "distant": donnees.get("fournisseur_distant", True),
         "contenu_max_cars": donnees.get("limites", {}).get("contenu_max_cars"),
     }
 

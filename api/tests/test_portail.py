@@ -162,6 +162,38 @@ def test_le_depot_annonce_est_joignable_depuis_toutes_les_pages():
             assert 'href="https://forge.test/lynceus"' in client.get(chemin).text, chemin
 
 
+def test_la_confidentialite_nomme_le_fournisseur_annonce_par_l_instance(portail, tmp_path):
+    """La politique n'est pas écrite à la main : elle nomme ce que l'instance déclare.
+
+    Une politique de confidentialité recopiée diverge de la configuration au premier
+    changement de fournisseur, et personne ne s'en aperçoit."""
+    client, _ = portail
+    api = creer_application(parametres_test(
+        tmp_path, llm_base_url="https://api.mistral.ai/v1", llm_fournisseur="Mistral AI"))
+    brancher_sur(client, api)
+    html = client.get("/confidentialite").text
+    assert "Mistral AI" in html
+    assert "transmis à un fournisseur de modèle de langage tiers" in html
+
+
+def test_un_modele_auto_heberge_ne_fait_plus_de_promesse_de_transfert(portail, tmp_path):
+    """Chez un auto-hébergeur, le texte ne sort pas : annoncer un transfert vers un tiers
+    serait faux, et l'inverse de ce que le projet dit de l'auto-hébergement."""
+    client, _ = portail
+    api = creer_application(parametres_test(tmp_path, llm_base_url="http://ollama:11434/v1"))
+    brancher_sur(client, api)
+    html = client.get("/confidentialite").text
+    assert "hébergé par cette instance" in html
+    assert "transmis à un fournisseur de modèle de langage tiers" not in html
+
+
+def test_une_instance_muette_est_supposee_envoyer_le_texte_au_dehors(portail):
+    """Instance injoignable ou trop ancienne : on annonce le cas le moins favorable."""
+    client, _ = portail
+    client.app.state.client = httpx.AsyncClient(base_url="http://instance-eteinte.invalid")
+    assert "transmis à un fournisseur de modèle de langage tiers" in client.get("/confidentialite").text
+
+
 def test_la_taxonomie_affichee_est_celle_du_moteur():
     """La page ne recopie pas le référentiel : elle l'affiche. Aucune technique ne doit
     manquer, sans quoi le site promettrait une liste fermée qu'il ne montre pas en entier."""

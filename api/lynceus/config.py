@@ -20,6 +20,12 @@ class Parametres(BaseSettings):
     llm_base_url: str = "https://openrouter.ai/api/v1"
     llm_api_key: str = ""
     llm_model: str = "anthropic/claude-sonnet-5"
+    # Nom du fournisseur tel qu'il sera publié : dans /v1/meta, dans chaque analyse et sur
+    # les pages légales du portail. Vide = déduit de l'adresse ci-dessus, ce qui suffit
+    # rarement : un routeur d'inférence n'est pas celui qui exécute le modèle, et le nom
+    # d'hôte d'un modèle auto-hébergé n'a pas à être publié. Exemples : « Mistral AI »,
+    # « OpenRouter, qui sous-traite l'inférence », « Ollama sur la machine de l'instance ».
+    llm_fournisseur: str = ""
     llm_temperature: float = 0.2
     llm_timeout_s: float = 180.0
     # none : le prompt exige du JSON (universel) · json_object / json_schema : si le fournisseur les supporte

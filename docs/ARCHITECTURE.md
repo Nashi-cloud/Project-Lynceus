@@ -128,7 +128,8 @@ L'étape 5 inclut la **vérification anti-hallucination des extraits** : tout `e
 | `LYNCEUS_DATABASE_URL` | aucun | PostgreSQL |
 | `LYNCEUS_LLM_BASE_URL` | `https://openrouter.ai/api/v1` | Tout endpoint compatible OpenAI (Ollama : `http://localhost:11434/v1`) |
 | `LYNCEUS_LLM_API_KEY` | aucun | Clé du fournisseur |
-| `LYNCEUS_LLM_MODEL` | `anthropic/claude-sonnet-5` *(slug OpenRouter, à vérifier sur openrouter.ai/models)* | Modèle d'analyse |
+| `LYNCEUS_LLM_MODEL` | `anthropic/claude-sonnet-5` | Modèle d'analyse, au format attendu par le fournisseur |
+| `LYNCEUS_LLM_FOURNISSEUR` | *(déduit de l'adresse)* | Nom publié du fournisseur : `/v1/meta`, chaque analyse, pages légales du portail |
 | `LYNCEUS_LLM_TEMPERATURE` | `0.2` | Faible : on veut de la constance |
 | `LYNCEUS_CONTENU_MAX_CARS` | `60000` | Garde-fou taille (≈ tokens × 4) |
 | `LYNCEUS_RATE_LIMIT` | `10/minute` | Par IP, sur `/v1/analyses` |
