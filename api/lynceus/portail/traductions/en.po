@@ -994,3 +994,14 @@ msgstr "Whoever operates this portal has not filled in their legal identity. Sin
 
 msgid "Si vous exploitez cette instance et qu'elle est ouverte au public, renseignez les variables <code>LYNCEUS_PORTAIL_EDITEUR_*</code> et <code>LYNCEUS_PORTAIL_HEBERGEUR_*</code> décrites dans le guide de déploiement."
 msgstr "If you operate this instance and it is open to the public, fill in the <code>LYNCEUS_PORTAIL_EDITEUR_*</code> and <code>LYNCEUS_PORTAIL_HEBERGEUR_*</code> variables described in the deployment guide."
+
+# --- Pied de page
+
+msgid "Comprendre"
+msgstr "Understand"
+
+msgid "Utiliser"
+msgstr "Use it"
+
+msgid "Cadre légal"
+msgstr "Legal"
