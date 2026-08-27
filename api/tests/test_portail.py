@@ -6,6 +6,7 @@ Deux propriétés comptent plus que l'affichage et sont testées comme telles :
 """
 
 import io
+import re
 import json as json_
 import zipfile
 
@@ -35,7 +36,7 @@ def parametres_portail_test(**surcharges) -> ParametresPortail:
                    editeur_nom="", editeur_statut="", editeur_adresse="",
                    editeur_identifiant="", editeur_directeur="", editeur_contact="",
                    hebergeur_nom="", hebergeur_adresse="", hebergeur_site="",
-                   droit_applicable="")
+                   droit_applicable="", depot="", depot_fichiers="")
     defauts.update(surcharges)
     return ParametresPortail(**defauts)
 
@@ -68,6 +69,52 @@ def test_les_pages_se_rendent(portail, chemin):
     reponse = client.get(chemin)
     assert reponse.status_code == 200
     assert reponse.headers["content-type"].startswith("text/html")
+
+
+PAGES = ["/", "/installer", "/methodologie", "/taxonomie", "/charte",
+         "/auto-hebergement", "/annuaire", "/contester", "/conditions",
+         "/confidentialite", "/mentions-legales"]
+
+
+@pytest.mark.parametrize("chemin", PAGES)
+def test_aucune_page_ne_publie_de_lien_relatif(portail, chemin):
+    """Un lien relatif servi par le portail est un lien mort.
+
+    Le cas vient des documents du dépôt : « METHODOLOGIE.md » est juste dans docs/, et
+    devient /METHODOLOGIE.md une fois rendu ici. Les cibles connues sont renvoyées vers
+    la page correspondante, les autres vers le dépôt, et à défaut le lien disparaît."""
+    client, _ = portail
+    liens = re.findall(r'href="([^"]*)"', client.get(chemin).text)
+    assert liens
+    for lien in liens:
+        assert lien.startswith(("/", "#", "http://", "https://", "mailto:", "data:")), lien
+
+
+def test_un_document_renvoie_vers_la_forge_quand_elle_est_annoncee():
+    """Ce que le portail ne publie pas lui-même se lit dans le dépôt, s'il est joignable."""
+    p = parametres_portail_test(instance="https://instance.test",
+                                depot="https://forge.test/lynceus",
+                                depot_fichiers="https://forge.test/lynceus/blob/main")
+    with TestClient(creer_portail(p)) as client:
+        html = client.get("/charte").text
+    assert 'href="https://forge.test/lynceus/blob/main/prompts/"' in html
+    # Ce qui a une page sur le portail y reste : inutile d'envoyer le lecteur sur la forge.
+    assert 'href="/methodologie"' in html
+
+
+def test_sans_depot_annonce_le_pied_de_page_ne_promet_pas_de_code_source(portail):
+    """Mieux vaut ne rien proposer qu'un lien vers une adresse inventée."""
+    client, _ = portail
+    assert "Code source de cette instance" not in client.get("/").text
+
+
+def test_le_depot_annonce_est_joignable_depuis_toutes_les_pages():
+    """L'AGPL (article 13) demande que le code soit proposé, donc atteignable partout."""
+    p = parametres_portail_test(instance="https://instance.test",
+                                depot="https://forge.test/lynceus")
+    with TestClient(creer_portail(p)) as client:
+        for chemin in PAGES:
+            assert 'href="https://forge.test/lynceus"' in client.get(chemin).text, chemin
 
 
 def test_la_taxonomie_affichee_est_celle_du_moteur():

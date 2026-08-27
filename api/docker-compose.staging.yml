@@ -94,6 +94,12 @@ services:
       LYNCEUS_PORTAIL_NOM: ${LYNCEUS_PORTAIL_NOM:-Lynceus (recette)}
       LYNCEUS_PORTAIL_CONTACT: ${LYNCEUS_PORTAIL_CONTACT:-}
 
+      # --- Code source ---
+      # L'AGPL-3.0 impose (article 13) de proposer le code aux utilisateurs du service à
+      # distance. Vide, les pages parlent du dépôt sans pouvoir y renvoyer.
+      LYNCEUS_PORTAIL_DEPOT: ${LYNCEUS_PORTAIL_DEPOT:-}
+      LYNCEUS_PORTAIL_DEPOT_FICHIERS: ${LYNCEUS_PORTAIL_DEPOT_FICHIERS:-}
+
       LYNCEUS_PORTAIL_CLE_PRIVEE: ${LYNCEUS_PORTAIL_CLE_PRIVEE:?clé privée requise, sinon l'inscription ne peut pas être testée}
       # Adresse annoncée aux extensions : elle doit être joignable depuis le navigateur de
       # celui qui essaie, donc l'adresse publique de la recette, pas un nom de service.

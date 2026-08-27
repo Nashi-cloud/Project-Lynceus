@@ -50,7 +50,8 @@
 
   <h2>Évolution et droit applicable</h2>
   <p>Ces conditions peuvent être modifiées. Les modifications sont publiques, puisque cette
-  page est versionnée dans le dépôt au même titre que le code.</p>
+  page est versionnée {% if depot %}<a href="{{ depot }}">dans le dépôt</a>{% else %}dans le
+  dépôt{% endif %} au même titre que le code.</p>
   {% if legal.droit_applicable %}
   <p>Les présentes conditions sont régies par le droit {{ legal.droit_applicable }}.</p>
   {% endif %}

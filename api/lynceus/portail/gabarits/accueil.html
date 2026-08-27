@@ -221,7 +221,9 @@
         <a class="bouton creux" href="/auto-hebergement">Héberger une instance</a>
       </div>
       <p class="discret" style="margin-top: 2.2rem; color: #6b5a48">
-        Code source sous AGPL-3.0 · méthodologie publiée · analyses contestables
+        {% if depot %}<a href="{{ depot }}">Code source</a>{% else %}Code source{% endif %}
+        sous AGPL-3.0 · <a href="/methodologie">méthodologie publiée</a> ·
+        <a href="/contester">analyses contestables</a>
       </p>
     </div>
   </section>
