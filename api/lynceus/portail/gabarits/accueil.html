@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block titre %}{{ nom }}, la vigie de l'information{% endblock %}
+{% block titre %}{{ _("%(nom)s, la vigie de l'information", nom=nom) }}{% endblock %}
 {% block classe_corps %} class="pleine-largeur"{% endblock %}
 {% block tete %}
 <script>
@@ -23,7 +23,7 @@
     border-top-color: rgba(120, 95, 60, 0.18);
     color: #5f4c39;
   }
-  .pleine-largeur .pied a, .pleine-largeur .pied strong { color: #4a3b2a; }
+  .pleine-largeur .pied a, .pleine-largeur .pied .nom-projet { color: #4a3b2a; }
 </style>
 {% endblock %}
 
@@ -43,60 +43,49 @@
         <path d="M16 1.2v2.4M16 28.4v2.4M1.2 16h2.4M28.4 16h2.4" opacity="0.5"/>
       </svg>
       <h1 class="titre-nu">Lynceus</h1>
-      <p class="devise">L'œil met du temps à s'habituer à l'obscurité.<br>Ensuite, il voit.</p>
+      <p class="devise">{{ _("L'œil met du temps à s'habituer à l'obscurité.<br>Ensuite, il voit.") }}</p>
       <div class="actions">
-        <a class="bouton or" href="/installer">Installer l'extension</a>
-        <a class="bouton creux" href="#recit">Lire d'abord</a>
+        <a class="bouton or" href="{{ u('/installer') }}">{{ _("Installer l'extension") }}</a>
+        <a class="bouton creux" href="#recit">{{ _("Lire d'abord") }}</a>
       </div>
-      <a class="filet-defilement" href="#recit">Faire défiler</a>
+      <a class="filet-defilement" href="#recit">{{ _("Faire défiler") }}</a>
     </div>
   </section>
 
   <!-- ========================================================== le récit -->
   <section class="scene revele" id="recit">
     <div class="contenu">
-      <p class="chapitre">I. Un homme à la proue</p>
-      <h2>La vigie ne tenait pas la barre</h2>
-      <p>Les Argonautes avaient à leur bord un homme dont la vue passait pour
-      surnaturelle. Lyncée voyait, disait-on, à travers la pierre et jusque sous la mer.</p>
-      <p>On ne l'a pourtant jamais mis à la barre. Sa place était à l'avant du navire, et
-      son rôle tenait en une phrase : <strong>annoncer les écueils</strong>. Il ne
-      choisissait pas la route. Il disait ce qu'il y avait devant, et l'équipage décidait.</p>
+      <p class="chapitre">{{ _("I. Un homme à la proue") }}</p>
+      <h2>{{ _("La vigie ne tenait pas la barre") }}</h2>
+      <p>{{ _("Les Argonautes avaient à leur bord un homme dont la vue passait pour surnaturelle. Lyncée voyait, disait-on, à travers la pierre et jusque sous la mer.") }}</p>
+      <p>{{ _("On ne l'a pourtant jamais mis à la barre. Sa place était à l'avant du navire, et son rôle tenait en une phrase : <strong>annoncer les écueils</strong>. Il ne choisissait pas la route. Il disait ce qu'il y avait devant, et l'équipage décidait.") }}</p>
+      <p class="aparte">{{ _("<strong>« Un œil de lynx »</strong> vient de là, à une confusion près : le félin porte en grec un nom presque identique, et il a fini par recueillir le compliment. Mais voir à travers la pierre était le don du guetteur, pas celui du chasseur. La nuance tient tout entière dans l'usage qu'on en fait : le fauve regarde pour lui, la vigie regarde pour les autres.") }}</p>
     </div>
   </section>
 
   <section class="scene revele">
     <div class="contenu">
-      <p class="citation">« Il ne décidait pas du cap.<br>Il disait seulement ce qu'il y
-      avait devant. »<cite>Le rôle que ce projet s'est donné.</cite></p>
+      <p class="citation">{{ _("« Il ne décidait pas du cap.<br>Il disait seulement ce qu'il y avait devant. »") }}<cite>{{ _("Le rôle que ce projet s'est donné.") }}</cite></p>
     </div>
   </section>
 
   <!-- =================================================== le retournement -->
   <section class="scene revele">
     <div class="contenu">
-      <p class="chapitre">II. Le défaut de la légende</p>
-      <h2>Personne ne se croit crédule</h2>
-      <p>La légende est flatteuse, et c'est son défaut. Elle laisse croire qu'il existerait
-      deux sortes de gens : ceux qui voient, et ceux qui se trompent. C'est faux, et c'est
-      même le début du problème.</p>
-      <p>Nous nous laissons tous convaincre par ce qui nous ressemble, par ce qui nous
-      rassure, par ce qui arrive au moment où nous en avions besoin. Un texte bien
-      construit désarme la vigilance de n'importe qui, la vôtre comme la mienne.</p>
-      <p>Ce qui se travaille n'est donc pas la lucidité. C'est une chose beaucoup plus
-      modeste : <em>reconnaître un procédé quand on le croise</em>. Une fois qu'on a vu
-      comment fonctionne l'urgence fabriquée, on la voit partout, et elle cesse d'agir.</p>
+      <p class="chapitre">{{ _("II. Le défaut de la légende") }}</p>
+      <h2>{{ _("Personne ne se croit crédule") }}</h2>
+      <p>{{ _("La légende est flatteuse, et c'est son défaut. Elle laisse croire qu'il existerait deux sortes de gens : ceux qui voient, et ceux qui se trompent. C'est faux, et c'est même le début du problème.") }}</p>
+      <p>{{ _("Nous nous laissons tous convaincre par ce qui nous ressemble, par ce qui nous rassure, par ce qui arrive au moment où nous en avions besoin. Un texte bien construit désarme la vigilance de n'importe qui, la vôtre comme la mienne.") }}</p>
+      <p>{{ _("Ce qui se travaille n'est donc pas la lucidité. C'est une chose beaucoup plus modeste : <em>reconnaître un procédé quand on le croise</em>. Une fois qu'on a vu comment fonctionne l'urgence fabriquée, on la voit partout, et elle cesse d'agir.") }}</p>
     </div>
   </section>
 
   <!-- ====================================================== la démo -->
   <section class="scene revele">
     <div class="contenu">
-      <p class="chapitre">III. Ce que vous verrez</p>
-      <h2>Le passage exact, et le nom du procédé</h2>
-      <p>Lynceus lit la page que vous lisez et vous montre <strong>comment elle est
-      construite</strong>. Il cite le passage exact, jamais un résumé ni une
-      reformulation, puis nomme le procédé employé.</p>
+      <p class="chapitre">{{ _("III. Ce que vous verrez") }}</p>
+      <h2>{{ _("Le passage exact, et le nom du procédé") }}</h2>
+      <p>{{ _("Lynceus lit la page que vous lisez et vous montre <strong>comment elle est construite</strong>. Il cite le passage exact, jamais un résumé ni une reformulation, puis nomme le procédé employé.") }}</p>
     </div>
 
     <div class="contenu large" style="margin-top: 2.4rem">
@@ -109,62 +98,51 @@
           <div class="tete">
             <span class="pastille grande grade-E">E</span>
             <div>
-              <div class="note">28 sur 100</div>
-              <div class="sous">Théorie du complot · veillecitoyenne.example</div>
+              <div class="note">{{ _("28 sur 100") }}</div>
+              <div class="sous">{{ _("Théorie du complot · veillecitoyenne.example") }}</div>
             </div>
           </div>
-          <p class="page">Ce que les autorités ne veulent pas que vous lisiez sur l'eau du robinet</p>
+          <p class="page">{{ _("Ce que les autorités ne veulent pas que vous lisiez sur l'eau du robinet") }}</p>
 
           <div class="procede">
-            <div><span class="nom">Rhétorique de la vérité cachée</span><span class="etiquette">gravité haute</span></div>
-            <p class="extrait">« Ce que les autorités ne veulent surtout pas que vous lisiez »</p>
-            <p class="explication">Le titre pose l'existence d'un secret sans jamais dire
-            qui le garderait, ni comment il tiendrait.</p>
+            <div><span class="nom">{{ _("Rhétorique de la vérité cachée") }}</span><span class="etiquette">{{ _("gravité haute") }}</span></div>
+            <p class="extrait">{{ _("« Ce que les autorités ne veulent surtout pas que vous lisiez »") }}</p>
+            <p class="explication">{{ _("Le titre pose l'existence d'un secret sans jamais dire qui le garderait, ni comment il tiendrait.") }}</p>
           </div>
 
           <div class="procede">
-            <div><span class="nom">Autorité anonyme</span><span class="etiquette">gravité haute</span></div>
-            <p class="extrait">« selon plusieurs chercheurs indépendants »</p>
-            <p class="explication">Aucun nom, aucune publication, aucune date. La source
-            est invérifiable par construction.</p>
+            <div><span class="nom">{{ _("Autorité anonyme") }}</span><span class="etiquette">{{ _("gravité haute") }}</span></div>
+            <p class="extrait">{{ _("« selon plusieurs chercheurs indépendants »") }}</p>
+            <p class="explication">{{ _("Aucun nom, aucune publication, aucune date. La source est invérifiable par construction.") }}</p>
           </div>
 
-          <p class="positifs"><strong>Ce qui va bien :</strong> l'article est daté et son
-          auteur est identifiable.</p>
+          <p class="positifs">{{ _("<strong>Ce qui va bien :</strong> l'article est daté et son auteur est identifiable.") }}</p>
         </div>
-        <p class="mention">Produite par une intelligence artificielle : elle peut comporter
-        des erreurs. Elle décrit des procédés rhétoriques, pas la valeur des personnes qui
-        partagent ce contenu.</p>
+        <p class="mention">{{ _("Produite par une intelligence artificielle : elle peut comporter des erreurs. Elle décrit des procédés rhétoriques, pas la valeur des personnes qui partagent ce contenu.") }}</p>
       </div>
-      <p class="legende-demo">Exemple fictif. Voilà ce qui s'affiche dans le panneau, à
-      côté de la page que vous lisez.</p>
+      <p class="legende-demo">{{ _("Exemple fictif. Voilà ce qui s'affiche dans le panneau, à côté de la page que vous lisez.") }}</p>
     </div>
 
     <div class="contenu large" style="margin-top: 2.8rem">
       <div class="tuiles">
         <div class="tuile">
           <span class="numero">01</span>
-          <h3>Une note, pas un verdict</h3>
-          <p>De A à E, comme un Nutri-Score. Elle est calculée par le serveur avec des
-          pondérations publiées, pas décidée par le modèle de langage, qui se contente de
-          décrire.</p>
+          <h3>{{ _("Une note, pas un verdict") }}</h3>
+          <p>{{ _("De A à E, comme un Nutri-Score. Elle est calculée par le serveur avec des pondérations publiées, pas décidée par le modèle de langage, qui se contente de décrire.") }}</p>
         </div>
         <div class="tuile">
           <span class="numero">02</span>
-          <h3>Ce qui va bien aussi</h3>
-          <p>Chaque analyse relève systématiquement les points positifs de la page. Un
-          article n'est pas un camp : il a des qualités et des faiblesses.</p>
+          <h3>{{ _("Ce qui va bien aussi") }}</h3>
+          <p>{{ _("Chaque analyse relève systématiquement les points positifs de la page. Un article n'est pas un camp : il a des qualités et des faiblesses.") }}</p>
         </div>
         <div class="tuile">
           <span class="numero">03</span>
-          <h3>Des questions, pas des ordres</h3>
-          <p>À la fin, quelques questions à se poser soi-même. C'est vous qui concluez.
-          L'extension ne conclut jamais à votre place.</p>
+          <h3>{{ _("Des questions, pas des ordres") }}</h3>
+          <p>{{ _("À la fin, quelques questions à se poser soi-même. C'est vous qui concluez. L'extension ne conclut jamais à votre place.") }}</p>
         </div>
       </div>
       <p style="margin-top: 1.6rem; font-size: 1rem; color: rgba(246,232,212,.72)">
-        <a href="/taxonomie">{{ nb_techniques }} procédés au référentiel</a> : une liste
-        fermée, publiée, que vous pouvez lire en entier avant d'installer quoi que ce soit.
+        {{ _("<a href=\"%(taxonomie)s\">%(nombre)s procédés au référentiel</a> : une liste fermée, publiée, que vous pouvez lire en entier avant d'installer quoi que ce soit.", taxonomie=u('/taxonomie'), nombre=nb_techniques) }}
       </p>
     </div>
   </section>
@@ -172,51 +150,49 @@
   <!-- ============================================= ce qu'il ne fait pas -->
   <section class="scene revele">
     <div class="contenu">
-      <p class="chapitre">IV. Les limites</p>
-      <h2>Et surtout, ce qu'il ne fait pas</h2>
-      <p>Ces limites ne sont pas des précautions de façade. Elles sont écrites dans la
-      <a href="/charte">charte</a>, et le code s'y tient.</p>
+      <p class="chapitre">{{ _("IV. Les limites") }}</p>
+      <h2>{{ _("Et surtout, ce qu'il ne fait pas") }}</h2>
+      <p>{{ _("Ces limites ne sont pas des précautions de façade. Elles sont écrites dans la <a href=\"%(charte)s\">charte</a>, et le code s'y tient.", charte=u('/charte')) }}</p>
     </div>
     <div class="contenu large" style="margin-top: 2rem">
       <div class="tuiles paire-colonnes">
         <div class="tuile">
-          <h3>Il ne dit pas ce qui est vrai</h3>
-          <p>Il décrit la façon dont un texte cherche à convaincre. Établir les faits est
-          un autre métier, et il demande des humains.</p>
+          <h3>{{ _("Il ne dit pas ce qui est vrai") }}</h3>
+          <p>{{ _("Il décrit la façon dont un texte cherche à convaincre. Établir les faits est un autre métier, et il demande des humains.") }}</p>
         </div>
         <div class="tuile">
-          <h3>Il ne note pas les croyances</h3>
-          <p>Une conviction religieuse, politique ou philosophique ne reçoit pas de note.
-          Ce qui s'analyse est un procédé rhétorique, pas une foi.</p>
+          <h3>{{ _("Il ne note pas les croyances") }}</h3>
+          <p>{{ _("Une conviction religieuse, politique ou philosophique ne reçoit pas de note. Ce qui s'analyse est un procédé rhétorique, pas une foi.") }}</p>
         </div>
         <div class="tuile">
-          <h3>Il ne vous suit pas</h3>
-          <p>La consultation de l'annuaire est anonyme par construction : le serveur reçoit
-          quelques caractères d'empreinte, jamais l'adresse de la page.</p>
+          <h3>{{ _("Il ne vous suit pas") }}</h3>
+          <p>{{ _("La consultation de l'annuaire est anonyme par construction : le serveur reçoit quelques caractères d'empreinte, jamais l'adresse de la page.") }}</p>
         </div>
         <div class="tuile">
-          <h3>Il peut se tromper</h3>
-          <p>C'est une IA : elle produit des erreurs. Chaque analyse est contestable en
-          deux clics, y compris par l'éditeur du site concerné.</p>
+          <h3>{{ _("Il peut se tromper") }}</h3>
+          <p>{{ _("C'est une IA : elle produit des erreurs. Chaque analyse est contestable en deux clics, y compris par l'éditeur du site concerné.") }}</p>
         </div>
       </div>
     </div>
   </section>
 
+  <!-- Lever du jour : bande de transition sans texte, cf. « .aube » dans la feuille. -->
+  <div class="aube" aria-hidden="true"></div>
+
   <!-- ========================================================== le jour -->
   <section class="scene jour revele">
     <div class="contenu">
-      <p class="chapitre" style="justify-content:center">V. Le jour se lève</p>
-      <h2 class="titre-nu" style="font-size: clamp(2.2rem, 1.4rem + 4vw, 3.8rem)">Gratuit,
-      libre, sans compte</h2>
-      <p class="chapo">Vous pouvez l'installer en trois minutes, ou héberger votre propre
-      instance et n'avoir de comptes à rendre à personne, pas même à nous.</p>
+      <p class="chapitre" style="justify-content:center">{{ _("V. Le jour se lève") }}</p>
+      <h2 class="titre-nu" style="font-size: clamp(2.2rem, 1.4rem + 4vw, 3.8rem)">{{ _("Gratuit, libre, sans compte") }}</h2>
+      <p class="chapo">{{ _("Vous pouvez l'installer en trois minutes, ou héberger votre propre instance et n'avoir de comptes à rendre à personne, pas même à nous.") }}</p>
       <div class="actions">
-        <a class="bouton" href="/installer">Installer l'extension</a>
-        <a class="bouton creux" href="/auto-hebergement">Héberger une instance</a>
+        <a class="bouton" href="{{ u('/installer') }}">{{ _("Installer l'extension") }}</a>
+        <a class="bouton creux" href="{{ u('/auto-hebergement') }}">{{ _("Héberger une instance") }}</a>
       </div>
       <p class="discret" style="margin-top: 2.2rem; color: #6b5a48">
-        Code source sous AGPL-3.0 · méthodologie publiée · analyses contestables
+        {% if depot %}{{ _("<a href=\"%(depot)s\">Code source</a> sous AGPL-3.0", depot=depot) }}{% else %}{{ _("Code source sous AGPL-3.0") }}{% endif %} ·
+        <a href="{{ u('/methodologie') }}">{{ _("méthodologie publiée") }}</a> ·
+        <a href="{{ u('/contester') }}">{{ _("analyses contestables") }}</a>
       </p>
     </div>
   </section>

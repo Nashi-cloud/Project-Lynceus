@@ -10,6 +10,7 @@
  * plutôt que de l'appliquer en silence. */
 
 import { enregistrerReglages } from "./reglages";
+import { msg } from "./i18n";
 
 /** Portail inscrit à la compilation (`node build.mjs --portail=…`). Utile pour un paquet
  * qu'on construit soi-même ; vide dans l'archive publiée, qui doit rester valable pour
@@ -55,15 +56,15 @@ const DELAI_MS = 20_000;
 
 export function normaliserAdresse(adresse: string): string {
   const propre = adresse.trim().replace(/\/+$/, "");
-  if (!propre) throw new Error("Indiquez l'adresse du portail (https://…).");
+  if (!propre) throw new Error(msg("erreur_adresse_vide"));
   let analysee: URL;
   try {
     analysee = new URL(propre);
   } catch {
-    throw new Error(`« ${propre} » n'est pas une adresse valide.`);
+    throw new Error(msg("erreur_adresse_invalide", propre));
   }
   if (analysee.protocol !== "https:" && analysee.protocol !== "http:") {
-    throw new Error("Seules les adresses http(s) sont acceptées.");
+    throw new Error(msg("erreur_adresse_schema"));
   }
   return propre;
 }
@@ -71,7 +72,7 @@ export function normaliserAdresse(adresse: string): string {
 function verifierBillet(donnees: unknown): Billet {
   const b = donnees as Partial<Billet>;
   if (typeof b?.cle !== "string" || !b.cle.startsWith("LYNC1.")) {
-    throw new Error("Ce portail n'a pas renvoyé de clé exploitable.");
+    throw new Error(msg("erreur_billet_invalide"));
   }
   // L'instance décide où partira le contenu des pages analysées : une valeur inattendue
   // ici enverrait le texte lu ailleurs que là où l'utilisateur croit.
@@ -124,7 +125,11 @@ export async function appliquerBillet(billet: Billet): Promise<void> {
 }
 
 export function resumerBillet(billet: Billet): string {
-  const quota = billet.quota_jour > 0 ? `${billet.quota_jour} analyses par jour` : "quota non précisé";
-  const echeance = billet.expire_le ? `valable jusqu'au ${billet.expire_le}` : "sans échéance annoncée";
-  return `Instance : ${billet.instance} · clé ${echeance} · ${quota}.`;
+  const quota = billet.quota_jour > 0
+    ? msg("billet_quota", String(billet.quota_jour))
+    : msg("billet_quota_inconnu");
+  const echeance = billet.expire_le
+    ? msg("billet_echeance", billet.expire_le)
+    : msg("billet_echeance_inconnue");
+  return msg("billet_resume", billet.instance, echeance, quota);
 }

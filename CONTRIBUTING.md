@@ -13,14 +13,24 @@ feat/*  fix/*  docs/*        (branches spécifiques, depuis dev)
       ▼  lot jugé stable
      next                     (pré-production : stabilisation, tests d'instance)
       │
-      ▼  release taguée (vX.Y.Z)
+      ▼  PR validée sur GitHub, puis tag (vX.Y.Z)
      main                     (stable : c'est ce que les instances déploient)
 ```
 
-- **`main`** : stable uniquement. Ne reçoit que des merges depuis `next`, chaque release est taguée.
+- **`main`** : stable uniquement. Ne reçoit que des merges depuis `next`, par une pull request que le mainteneur valide sur GitHub, et chaque release y est taguée.
 - **`next`** : pré-production. Reçoit `dev` quand un ensemble cohérent est prêt ; on y stabilise.
 - **`dev`** : branche d'intégration. Toutes les branches spécifiques en partent et y reviennent.
 - **Branches spécifiques** : `feat/<sujet>`, `fix/<sujet>`, `docs/<sujet>` : courtes, focalisées, mergées dans `dev` via PR.
+
+### La promotion, dans l'ordre
+
+1. **Développer** sur une branche spécifique partie de `dev`.
+2. **Fusionner dans `dev`** une fois `./verifier.sh` passé, avec `--no-ff`. La chaîne rejoue les tests et publie `:dev`.
+3. **Fusionner `dev` dans `next`** quand le lot tient debout. La chaîne publie `:next` et déploie sur staging : c'est là qu'on éprouve la mise à jour sur une vraie instance, migrations comprises.
+4. **Ouvrir une PR `next` → `main`** sur GitHub, que le mainteneur valide lui-même. Le merge déclenche la publication de `:latest` et `:v<VERSION>`, et le déploiement en production.
+5. **Poser le tag annoté** `vX.Y.Z` sur le commit de fusion, en accord avec le fichier `VERSION`.
+
+Une étape ne se saute pas : rien n'arrive dans `main` qui ne soit passé par staging.
 
 ## Routine de vérification
 
@@ -43,6 +53,8 @@ Détail des étapes, si besoin de les lancer séparément :
 | Build extension | `cd extension && npm run build` | avant de recharger dans Chrome |
 | Calibration | `lynceus calibrer corpus/corpus.yaml` | **obligatoire** si `prompts/`, `docs/METHODOLOGIE.md`, `docs/TAXONOMIE.md` ou le modèle changent |
 
+`verifier.sh` refuse aussi un décalage entre la version la plus haute de `prompts/analyse/`, les estampilles de `docs/METHODOLOGIE.md` et `docs/TAXONOMIE.md`, et la version sur laquelle porte `corpus/RESULTATS.md`. Ces quatre-là partagent un seul compteur, `prompt_version`, celui que chaque analyse annonce.
+
 ## Ce que déclenche une poussée
 
 Le dépôt est bâti pour une forge dotée d'un runner auto-hébergé (voir [api/DEPLOIEMENT.md](api/DEPLOIEMENT.md)). Les tests y rejouent ce que `verifier.sh` fait en local, dans des conteneurs jetables.
@@ -62,12 +74,21 @@ La chaîne ne remplace pas `./verifier.sh` avant de fusionner : elle constate, e
 
 - **Commits** : style Conventional Commits, en français : `feat: …`, `fix: …`, `docs: …`, `chore: …`, `test: …`.
 - **Une branche par sujet**, mergée dans `dev` avec `--no-ff` (l'historique garde la trace du regroupement).
+- **Fusions de promotion** : `dev` → `next` et `next` → `main` en `--no-ff` également. Ces deux branches ne divergent jamais, donc un fast-forward passerait, mais on y perdrait le commit `merge: next → main (vX.Y.Z)` qui rend le graphe lisible et donne un point de retour arrière évident. Le fast-forward reste acceptable pour rattraper `next` sur `dev` quand il n'y a rien à marquer.
 - **Tests obligatoires** pour toute correction de bug : le test doit échouer avant le correctif. Pour une fonctionnalité, tester au moins la logique métier isolable des API du navigateur.
 - **Versions de l'extension** : toute modification de `extension/` incrémente la version dans `manifest.json` **et** `package.json`, avec une entrée dans `extension/CHANGELOG.md` (patch pour un correctif, mineure pour une fonctionnalité). Sans ça, impossible de savoir quel build est chargé dans Chrome.
 - **Prompts et méthodologie** : toute modification de `prompts/`, `docs/METHODOLOGIE.md` ou `docs/TAXONOMIE.md` incrémente `prompt_version` (semver) et doit passer la calibration sur `corpus/`. Reporter le résultat dans [corpus/RESULTATS.md](corpus/RESULTATS.md).
 - **Corpus** : ne jamais assouplir une attente pour faire passer un test sans avoir examiné le cas, et jamais sur `techniques_attendues` / `techniques_interdites`, qui sont le cœur de la mesure.
 - **Ids de taxonomie** : stables et définitifs, jamais renommés (l'annuaire les référence).
 - **Charte** : toute PR doit être compatible avec [docs/ETHIQUE.md](docs/ETHIQUE.md) : c'est le critère de revue numéro un.
+- **Traductions** : le portail est bilingue. Une phrase d'interface vit dans les catalogues (`api/lynceus/portail/traductions/*.po` pour le site, `extension/src/_locales/*/messages.json` pour l'extension) et les tests refusent une phrase employée sans traduction. Un document du dépôt publié par le portail se traduit dans un sous-dossier de langue : `docs/ETHIQUE.md` devient `docs/en/ETHIQUE.md`. Le fichier traduit porte en deuxième ligne l'empreinte de la version qu'il traduit :
+
+  ```
+  <!-- traduit-de: docs/ETHIQUE.md sha256:8aa471a51c89 -->
+  ```
+
+  `lynceus traductions` dit où en est chaque document, et `verifier.sh` échoue si une traduction est en retard sur son original. **Modifier un document traduit suppose donc de revoir sa traduction et de mettre à jour cette ligne** : sans ça, le portail publierait deux textes qui ne disent plus la même chose, sans que rien ne le signale.
+- **IA générative** : une contribution substantiellement produite par un assistant le déclare, avec les lignes `Assisted-by:` et `Prompt:` en fin de message de commit, contiguës à `Signed-off-by:`. Voir [docs/IA-GENERATIVE.md](docs/IA-GENERATIVE.md). Une contribution que son auteur ne sait pas expliquer en revue est refusée, assistant ou pas.
 
 ## Droits sur les contributions
 

@@ -1,6 +1,6 @@
 /** Compile un module TypeScript de l'extension en module ESM importable par node:test. */
 
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { buildSync } from "esbuild";
@@ -23,10 +23,21 @@ export async function importerTs(chemin) {
   return import(sortie);
 }
 
-/** Faux chrome.storage.sync minimal, suffisant pour chargerReglages/enregistrerReglages. */
+/** Le catalogue français, lu tel quel : les tests vérifient les phrases réellement
+ * livrées, pas une copie qui pourrait diverger. */
+const MESSAGES = JSON.parse(readFileSync("src/_locales/fr/messages.json", "utf-8"));
+
+/** Faux chrome minimal : stockage synchronisé et traduction. */
 export function installerFauxChrome(valeursInitiales = {}) {
   const stockage = { ...valeursInitiales };
   globalThis.chrome = {
+    i18n: {
+      getMessage(cle, valeurs = []) {
+        const message = MESSAGES[cle]?.message ?? "";
+        return message.replace(/\$(\d)/g, (_, rang) => valeurs[Number(rang) - 1] ?? "");
+      },
+      getUILanguage: () => "fr",
+    },
     storage: {
       sync: {
         async get(defauts) {

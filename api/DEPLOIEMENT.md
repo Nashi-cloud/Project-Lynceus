@@ -316,6 +316,25 @@ Surveillez le nombre d'analyses **réelles** (section « Surveiller les coûts �
 Dès que le portail est accessible à d'autres que vous, trois pages deviennent nécessaires,
 et le portail les sert : `/mentions-legales`, `/confidentialite` et `/conditions`.
 
+S'y ajoute une obligation qui ne vient pas de la loi mais de la licence. L'AGPL-3.0 impose
+(article 13) de proposer le code correspondant aux personnes qui **utilisent le service à
+distance**, modifications comprises. Servir Lynceus sans publier le code que vous faites
+tourner n'est pas conforme. Deux variables suffisent :
+
+```ini
+LYNCEUS_PORTAIL_DEPOT=https://github.com/Nashi-cloud/Project-Lynceus
+LYNCEUS_PORTAIL_DEPOT_FICHIERS=https://github.com/Nashi-cloud/Project-Lynceus/blob/main
+```
+
+Ce sont les valeurs par défaut : une instance qui fait tourner le code publié tel quel n'a
+rien à changer, et l'adresse annoncée est exacte. **Dès que vous modifiez le code, mettez
+celle de votre dépôt** : c'est votre version qui doit être proposée, pas la nôtre.
+
+La première alimente les liens « code source » du pied de page et des documents. La
+seconde sert à désigner un fichier précis, et sa forme dépend de la forge : `/blob/main`
+sur GitHub et GitLab, `/src/branch/main` sur Forgejo. Vidées, les pages parlent du dépôt
+sans pouvoir y renvoyer, et le portail l'écrit au démarrage.
+
 Leur contenu vient de la configuration, pas du code, parce que chaque instance a son propre
 exploitant :
 

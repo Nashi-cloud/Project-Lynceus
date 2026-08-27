@@ -1,124 +1,99 @@
 {% extends "base.html" %}
-{% block titre %}Politique de confidentialité · {{ nom }}{% endblock %}
+{% block titre %}{{ _("Politique de confidentialité") }} · {{ nom }}{% endblock %}
 {% block corps %}
 <header class="entete-page">
   <div class="contenu">
-    <span class="surtitre">Données personnelles</span>
-    <h1>Politique de confidentialité</h1>
-    <p class="chapo">Ce que ce service reçoit, ce qu'il en fait, à qui il le transmet, et
-    combien de temps il le garde. Y compris ce qui nous arrange le moins.</p>
+    <span class="surtitre">{{ _("Données personnelles") }}</span>
+    <h1>{{ _("Politique de confidentialité") }}</h1>
+    <p class="chapo">{{ _("Ce que ce service reçoit, ce qu'il en fait, à qui il le transmet, et combien de temps il le garde. Y compris ce qui nous arrange le moins.") }}</p>
   </div>
 </header>
 
 <article class="contenu corps-page">
+  {% if langue != langue_source %}{% include "_traduction_juridique.html" %}{% endif %}
   {% if not legal.complete %}{% include "_legal_incomplet.html" %}{% endif %}
 
   <div class="encart attention">
-    <h3 style="margin-top:0">Le point à lire en premier</h3>
-    <p>Quand vous demandez l'analyse d'une page, <strong>le texte de cette page est
-    transmis à un fournisseur de modèle de langage tiers</strong>
-    {% if moteur and moteur.fournisseur %}(actuellement <code>{{ moteur.fournisseur }}</code>,
-    modèle <code>{{ moteur.modele }}</code>){% endif %}. Ce fournisseur peut être établi
-    hors de l'Union européenne.</p>
-    <p style="margin-bottom:0">C'est le transfert le plus important du système, et le seul
-    que vous ne pouvez pas éviter en utilisant ce service. Si cela ne vous convient pas,
-    <a href="/auto-hebergement">hébergez votre propre instance</a> avec un modèle local :
-    le texte ne quitte alors pas votre machine, et le logiciel est conçu pour ça.</p>
+    <h3 style="margin-top:0">{{ _("Le point à lire en premier") }}</h3>
+    {% if moteur and moteur.fournisseur and not moteur.distant %}
+    <p>{{ _("Quand vous demandez l'analyse d'une page, son texte est traité par un modèle <strong>hébergé par cette instance</strong> (%(fournisseur)s, modèle <code>%(modele)s</code>). Il n'est transmis à aucun fournisseur tiers et ne quitte pas l'infrastructure de l'exploitant.", fournisseur=moteur.fournisseur, modele=moteur.modele) }}</p>
+    <p style="margin-bottom:0">{{ _("Reste ce que l'exploitant lui-même voit passer, décrit plus bas. Et cette page ne vaut que pour cette instance : une autre peut faire un tout autre choix, c'est à elle de le dire sur sa propre page.") }}</p>
+    {% else %}
+    <p>{{ _("Quand vous demandez l'analyse d'une page, <strong>le texte de cette page est transmis à un fournisseur de modèle de langage tiers</strong>") }}{% if moteur and moteur.fournisseur %} {{ _("(actuellement %(fournisseur)s, modèle <code>%(modele)s</code>)", fournisseur=moteur.fournisseur, modele=moteur.modele) }}{% endif %}. {{ _("Ce fournisseur peut être établi hors de l'Union européenne, et peut lui-même confier l'exécution du modèle à un autre.") }}</p>
+    <p style="margin-bottom:0">{{ _("C'est le transfert le plus important du système, et le seul que vous ne pouvez pas éviter en utilisant ce service. Si cela ne vous convient pas, <a href=\"%(auto)s\">hébergez votre propre instance</a> avec un modèle local : le texte ne quitte alors pas votre machine, et le logiciel est conçu pour ça.", auto=u('/auto-hebergement')) }}</p>
+    {% endif %}
   </div>
 
-  <h2>Responsable du traitement</h2>
+  <h2>{{ _("Responsable du traitement") }}</h2>
   {% if legal.complete %}
   <p>{{ legal.nom }}{% if legal.statut %}, {{ legal.statut }}{% endif %}, {{ legal.adresse }}.
-  Contact : <a href="mailto:{{ legal.contact }}">{{ legal.contact }}</a>.</p>
+  {{ _("Contact : <a href=\"mailto:%(contact)s\">%(contact)s</a>.", contact=legal.contact) }}</p>
   {% else %}
-  <p class="discret">Non renseigné sur cette instance.</p>
+  <p class="discret">{{ _("Non renseigné sur cette instance.") }}</p>
   {% endif %}
 
-  <h2>Ce qui est traité, et pourquoi</h2>
+  <h2>{{ _("Ce qui est traité, et pourquoi") }}</h2>
   <div class="deroulant">
   <table>
     <tr>
-      <th>Traitement</th><th>Données</th><th>Base légale</th><th>Conservation</th>
+      <th>{{ _("Traitement") }}</th><th>{{ _("Données") }}</th><th>{{ _("Base légale") }}</th><th>{{ _("Conservation") }}</th>
     </tr>
     <tr>
-      <td><strong>Consultation de l'annuaire</strong><br>badge de l'extension, recherche sur le site</td>
-      <td>Les premiers caractères de l'empreinte de l'adresse, jamais l'adresse. Adresse IP le temps de la requête.</td>
-      <td>Intérêt légitime : rendre le service demandé.</td>
-      <td><strong>Aucune conservation.</strong> Ni journal des consultations, ni couple adresse IP et page.</td>
+      <td>{{ _("<strong>Consultation de l'annuaire</strong><br>badge de l'extension, recherche sur le site") }}</td>
+      <td>{{ _("Les premiers caractères de l'empreinte de l'adresse, jamais l'adresse. Adresse IP le temps de la requête.") }}</td>
+      <td>{{ _("Intérêt légitime : rendre le service demandé.") }}</td>
+      <td>{{ _("<strong>Aucune conservation.</strong> Ni journal des consultations, ni couple adresse IP et page.") }}</td>
     </tr>
     <tr>
-      <td><strong>Analyse d'une page</strong></td>
-      <td>Le texte de la page, son titre, son adresse. Adresse IP pour la limite de débit.</td>
-      <td>Intérêt légitime : exécuter l'analyse que vous demandez.</td>
-      <td>L'analyse produite est conservée sans limite dans l'annuaire public. Elle n'est
-      rattachée à aucune personne : rien n'indique qui l'a demandée.</td>
+      <td>{{ _("<strong>Analyse d'une page</strong>") }}</td>
+      <td>{{ _("Le texte de la page, son titre, son adresse. Adresse IP pour la limite de débit.") }}</td>
+      <td>{{ _("Intérêt légitime : exécuter l'analyse que vous demandez.") }}</td>
+      <td>{{ _("L'analyse produite est conservée sans limite dans l'annuaire public. Elle n'est rattachée à aucune personne : rien n'indique qui l'a demandée.") }}</td>
     </tr>
     <tr>
-      <td><strong>Limite de débit</strong></td>
-      <td>Adresse IP et compteur.</td>
-      <td>Intérêt légitime : empêcher qu'un seul visiteur épuise le service et son budget.</td>
-      <td>En mémoire, sur une fenêtre glissante d'une minute. Rien n'est écrit sur disque.</td>
+      <td>{{ _("<strong>Limite de débit</strong>") }}</td>
+      <td>{{ _("Adresse IP et compteur.") }}</td>
+      <td>{{ _("Intérêt légitime : empêcher qu'un seul visiteur épuise le service et son budget.") }}</td>
+      <td>{{ _("En mémoire, sur une fenêtre glissante d'une minute. Rien n'est écrit sur disque.") }}</td>
     </tr>
     <tr>
-      <td><strong>Contestation d'une analyse</strong></td>
-      <td>Votre message, et le contact si vous en donnez un. Le contact est facultatif.</td>
-      <td>Intérêt légitime : instruire une contestation et permettre un droit de réponse.</td>
-      <td>Conservée tant que l'analyse contestée est publiée, la décision devant rester
-      auditable.</td>
+      <td>{{ _("<strong>Contestation d'une analyse</strong>") }}</td>
+      <td>{{ _("Votre message, et le contact si vous en donnez un. Le contact est facultatif.") }}</td>
+      <td>{{ _("Intérêt légitime : instruire une contestation et permettre un droit de réponse.") }}</td>
+      <td>{{ _("Conservée tant que l'analyse contestée est publiée, la décision devant rester auditable.") }}</td>
     </tr>
     <tr>
-      <td><strong>Délivrance d'une clé d'accès</strong></td>
-      <td>Aucune. La clé ne porte qu'une date d'expiration et un quota.</td>
-      <td>Sans objet.</td>
-      <td><strong>Rien n'est enregistré.</strong> Ce portail serait incapable de dire qui a
-      obtenu quelle clé.</td>
+      <td>{{ _("<strong>Délivrance d'une clé d'accès</strong>") }}</td>
+      <td>{{ _("Aucune. La clé ne porte qu'une date d'expiration et un quota.") }}</td>
+      <td>{{ _("Sans objet.") }}</td>
+      <td>{{ _("<strong>Rien n'est enregistré.</strong> Ce portail serait incapable de dire qui a obtenu quelle clé.") }}</td>
     </tr>
   </table>
   </div>
 
-  <h2>Destinataires</h2>
+  <h2>{{ _("Destinataires") }}</h2>
   <ul>
-    <li><strong>Le fournisseur de modèle de langage</strong>
-    {% if moteur and moteur.fournisseur %}(<code>{{ moteur.fournisseur }}</code>){% endif %},
-    qui reçoit le texte des pages analysées. Voir l'encadré en tête de page.</li>
-    {% if legal.hebergeur.nom %}<li><strong>{{ legal.hebergeur.nom }}</strong>, hébergeur des serveurs.</li>{% endif %}
-    <li>Le cas échéant, le fournisseur du tunnel qui achemine les requêtes vers ce
-    serveur, qui voit passer les adresses IP des visiteurs.</li>
+    {% if not (moteur and moteur.fournisseur and not moteur.distant) %}
+    <li>{{ _("<strong>Le fournisseur de modèle de langage</strong>") }}{% if moteur and moteur.fournisseur %} ({{ moteur.fournisseur }}){% endif %}, {{ _("qui reçoit le texte des pages analysées. Voir l'encadré en tête de page.") }}</li>
+    {% endif %}
+    {% if legal.hebergeur.nom %}<li>{{ _("<strong>%(hebergeur)s</strong>, hébergeur des serveurs.", hebergeur=legal.hebergeur.nom) }}</li>{% endif %}
+    <li>{{ _("Le cas échéant, le fournisseur du tunnel qui achemine les requêtes vers ce serveur, qui voit passer les adresses IP des visiteurs.") }}</li>
   </ul>
-  <p>Aucune donnée n'est vendue, échangée, ni transmise à des fins publicitaires. Il n'y a
-  pas de régie, pas de mesure d'audience tierce, pas de traceur.</p>
+  <p>{{ _("Aucune donnée n'est vendue, échangée, ni transmise à des fins publicitaires. Il n'y a pas de régie, pas de mesure d'audience tierce, pas de traceur.") }}</p>
 
-  <h2>Cookies et traceurs</h2>
-  <p>Ce site <strong>ne dépose aucun cookie</strong> et ne charge aucune ressource depuis
-  un domaine tiers. Les polices de caractères, les feuilles de style et les scripts sont
-  servis par ce serveur. C'est pourquoi vous n'avez pas vu de bandeau de consentement :
-  il n'y a rien à consentir.</p>
+  <h2>{{ _("Cookies et traceurs") }}</h2>
+  <p>{{ _("Ce site <strong>ne dépose aucun cookie</strong> et ne charge aucune ressource depuis un domaine tiers. Les polices de caractères, les feuilles de style et les scripts sont servis par ce serveur. C'est pourquoi vous n'avez pas vu de bandeau de consentement : il n'y a rien à consentir.") }}</p>
 
-  <h2>Ce que l'extension envoie, et quand</h2>
-  <p>L'extension ne transmet rien tant que vous ne le demandez pas. Le contenu d'une page
-  part uniquement quand vous cliquez sur « Analyser cette page ». La reconnaissance
-  automatique, si vous l'activez, n'envoie que quelques caractères d'empreinte, ce qui
-  correspond à plus d'un million d'adresses possibles : le serveur ne peut pas déterminer
-  la page que vous lisez.</p>
-  <p>L'extraction du texte se fait <strong>dans votre navigateur</strong>. Le serveur ne
-  visite jamais les pages à votre place, et n'apprend donc rien de votre navigation.</p>
+  <h2>{{ _("Ce que l'extension envoie, et quand") }}</h2>
+  <p>{{ _("L'extension ne transmet rien tant que vous ne le demandez pas. Le contenu d'une page part uniquement quand vous cliquez sur « Analyser cette page ». La reconnaissance automatique, si vous l'activez, n'envoie que quelques caractères d'empreinte, ce qui correspond à plus d'un million d'adresses possibles : le serveur ne peut pas déterminer la page que vous lisez.") }}</p>
+  <p>{{ _("L'extraction du texte se fait <strong>dans votre navigateur</strong>. Le serveur ne visite jamais les pages à votre place, et n'apprend donc rien de votre navigation.") }}</p>
 
-  <h2>Vos droits</h2>
-  <p>Vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation,
-  d'opposition et de portabilité{% if legal.contact %}, exerçable à
-  <a href="mailto:{{ legal.contact }}">{{ legal.contact }}</a>{% endif %}.</p>
-  <p>Une limite qu'il faut connaître : comme rien n'est rattaché à une personne, nous
-  n'avons en pratique <strong>aucun moyen de retrouver « vos » données</strong>. Ce n'est
-  pas une échappatoire, c'est la conséquence directe du fait de ne rien conserver. Une
-  contestation que vous auriez déposée avec un contact est en revanche identifiable, et
-  effaçable sur demande.</p>
-  <p>Vous pouvez introduire une réclamation auprès de l'autorité de protection des données
-  dont vous relevez.</p>
+  <h2>{{ _("Vos droits") }}</h2>
+  <p>{{ _("Vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité") }}{% if legal.contact %}{{ _(", exerçable à <a href=\"mailto:%(contact)s\">%(contact)s</a>", contact=legal.contact) }}{% endif %}.</p>
+  <p>{{ _("Une limite qu'il faut connaître : comme rien n'est rattaché à une personne, nous n'avons en pratique <strong>aucun moyen de retrouver « vos » données</strong>. Ce n'est pas une échappatoire, c'est la conséquence directe du fait de ne rien conserver. Une contestation que vous auriez déposée avec un contact est en revanche identifiable, et effaçable sur demande.") }}</p>
+  <p>{{ _("Vous pouvez introduire une réclamation auprès de l'autorité de protection des données dont vous relevez.") }}</p>
 
-  <h2>Analyses produites par une intelligence artificielle</h2>
-  <p>Chaque analyse porte la mention qu'elle est produite par une intelligence
-  artificielle et peut comporter des erreurs. Cette mention est ajoutée par le serveur, et
-  ne peut pas être retirée par le client. Elle répond à l'exigence de transparence
-  applicable aux systèmes d'IA qui interagissent avec des personnes.</p>
+  <h2>{{ _("Analyses produites par une intelligence artificielle") }}</h2>
+  <p>{{ _("Chaque analyse porte la mention qu'elle est produite par une intelligence artificielle et peut comporter des erreurs. Cette mention est ajoutée par le serveur, et ne peut pas être retirée par le client. Elle répond à l'exigence de transparence applicable aux systèmes d'IA qui interagissent avec des personnes.") }}</p>
 </article>
 {% endblock %}

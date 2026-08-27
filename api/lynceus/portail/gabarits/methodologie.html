@@ -1,19 +1,17 @@
 {% extends "base.html" %}
-{% block titre %}Méthodologie · {{ nom }}{% endblock %}
+{% block titre %}{{ _("Méthodologie") }} · {{ nom }}{% endblock %}
 {% block corps %}
 <header class="entete-page">
   <div class="contenu">
-    <span class="surtitre">Transparence</span>
-    <h1>Comment la note est calculée</h1>
-    <p class="chapo">Les chiffres de cette page ne sont pas recopiés : ils sont lus dans le
-    code qui les applique. S'ils changent un jour, cette page change avec eux.</p>
+    <span class="surtitre">{{ _("Transparence") }}</span>
+    <h1>{{ _("Comment la note est calculée") }}</h1>
+    <p class="chapo">{% if depot %}{{ _("Les chiffres de cette page ne sont pas recopiés : ils sont lus dans <a href=\"%(depot)s\">le code qui les applique</a>. S'ils changent un jour, cette page change avec eux.", depot=depot) }}{% else %}{{ _("Les chiffres de cette page ne sont pas recopiés : ils sont lus dans le code qui les applique. S'ils changent un jour, cette page change avec eux.") }}{% endif %}</p>
   </div>
 </header>
 
 <article class="contenu corps-page">
-  <h2 style="margin-top:0">Quatre dimensions, quatre poids</h2>
-  <p>Le modèle de langage attribue une note de 0 à 100 à chacune de ces quatre dimensions,
-  et justifie chacune. Il ne calcule pas la note globale.</p>
+  <h2 style="margin-top:0">{{ _("Quatre dimensions, quatre poids") }}</h2>
+  <p>{{ _("Le modèle de langage attribue une note de 0 à 100 à chacune de ces quatre dimensions, et justifie chacune. Il ne calcule pas la note globale.") }}</p>
 
   <div class="barres">
     {% for d in ponderations %}
@@ -28,11 +26,8 @@
     {% endfor %}
   </div>
 
-  <h2>La note globale est calculée par le serveur</h2>
-  <p>C'est un point de méthode, pas un détail d'implémentation. Une moyenne pondérée est
-  <strong>déterministe et vérifiable</strong> : deux personnes qui appliquent la même
-  formule aux mêmes dimensions obtiennent le même résultat. Laisser un modèle de langage
-  produire directement une note reviendrait à rendre le chiffre inauditable.</p>
+  <h2>{{ _("La note globale est calculée par le serveur") }}</h2>
+  <p>{{ _("C'est un point de méthode, pas un détail d'implémentation. Une moyenne pondérée est <strong>déterministe et vérifiable</strong> : deux personnes qui appliquent la même formule aux mêmes dimensions obtiennent le même résultat. Laisser un modèle de langage produire directement une note reviendrait à rendre le chiffre inauditable.") }}</p>
 
   <div class="echelle">
     {% for s in seuils %}
@@ -40,21 +35,19 @@
     {% endfor %}
   </div>
 
-  <h2>Chaque citation est vérifiée</h2>
-  <p>Un modèle de langage invente parfois des citations. Le serveur refuse donc toute
-  détection dont l'extrait n'est pas retrouvé <strong>mot pour mot</strong> dans la page
-  analysée, et toute technique absente du référentiel. Ce qui a été écarté figure dans la
-  réponse : la transparence porte aussi sur les erreurs du modèle.</p>
+  <h2>{{ _("Chaque citation est vérifiée") }}</h2>
+  <p>{{ _("Un modèle de langage invente parfois des citations. Le serveur refuse donc toute détection dont l'extrait n'est pas retrouvé <strong>mot pour mot</strong> dans la page analysée, et toute technique absente du référentiel. Ce qui a été écarté figure dans la réponse : la transparence porte aussi sur les erreurs du modèle.") }}</p>
 
   <div class="encart note">
-    <h3 style="margin-top:0">Une note ne dit pas si un texte est vrai</h3>
-    <p style="margin-bottom:0">Elle mesure la façon dont il est construit : sourçage,
-    rigueur, registre, transparence de l'éditeur. Un texte factuellement juste mais écrit
-    à coups de procédés d'urgence obtiendra une note moyenne, et c'est voulu.</p>
+    <h3 style="margin-top:0">{{ _("Une note ne dit pas si un texte est vrai") }}</h3>
+    <p style="margin-bottom:0">{{ _("Elle mesure la façon dont il est construit : sourçage, rigueur, registre, transparence de l'éditeur. Un texte factuellement juste mais écrit à coups de procédés d'urgence obtiendra une note moyenne, et c'est voulu.") }}</p>
   </div>
 
+  <p class="discret">{{ _("Version de prompt en vigueur : <strong>v%(version)s</strong>. <a href=\"%(prompt)s\">Lire le prompt intégral</a>, ou les <a href=\"%(calibration)s\">résultats de la dernière passe de calibration</a>.", version=version_prompt, prompt=u('/prompt'), calibration=u('/calibration')) }}</p>
+
   <details class="repli">
-    <summary>Lire la méthodologie complète</summary>
+    <summary>{{ _("Lire la méthodologie complète") }}</summary>
+    {% if langue != langue_source and not detail.traduit %}{% include "_document_non_traduit.html" %}{% endif %}
     <div class="deroulant">{{ detail.html | safe }}</div>
   </details>
 </article>

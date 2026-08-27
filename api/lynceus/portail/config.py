@@ -76,6 +76,24 @@ class ParametresPortail(BaseSettings):
     # Juridiction dont relèvent les conditions d'utilisation. Vide = non précisée.
     droit_applicable: str = ""
 
+    # --- Code source ---
+    # Adresse publique du code source de CETTE instance. L'AGPL-3.0 impose (article 13) de
+    # proposer le code correspondant, modifications comprises, aux personnes qui utilisent
+    # le service à distance : un portail ouvert au public sans cette adresse n'est pas en
+    # règle avec sa propre licence.
+    #
+    # Le défaut renvoie au dépôt d'origine, ce qui est exact tant que l'instance fait
+    # tourner le code publié tel quel. **Dès que vous le modifiez, remplacez cette adresse
+    # par celle de VOTRE dépôt** : c'est votre version qui doit être proposée, pas la
+    # nôtre. Vide = les pages parlent du dépôt sans lien, et le portail avertit au
+    # démarrage.
+    depot: str = "https://github.com/Nashi-cloud/Project-Lynceus"
+    # Préfixe pour désigner un fichier précis du dépôt, branche comprise :
+    # « https://…/blob/main » sur GitHub ou GitLab, « …/src/branch/main » sur Forgejo.
+    # Chaque forge a sa forme, d'où une variable distincte plutôt qu'une adresse devinée.
+    # Vide = les chemins cités dans les documents s'affichent sans lien.
+    depot_fichiers: str = "https://github.com/Nashi-cloud/Project-Lynceus/blob/main"
+
     # --- Réseau ---
     # L'extension appelle /v1/inscription depuis chrome-extension://<id>, identifiant qui
     # change à chaque installation non empaquetée : le CORS ne peut pas servir de filtre ici.

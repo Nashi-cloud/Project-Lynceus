@@ -72,6 +72,7 @@ Résumé de la [charte éthique](docs/ETHIQUE.md) :
 | [docs/METHODOLOGIE.md](docs/METHODOLOGIE.md) | Catégories, dimensions, barème, calcul de la note, cas particuliers |
 | [docs/TAXONOMIE.md](docs/TAXONOMIE.md) | Les 31 techniques détectées, documentées et sourcées |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | API, modèle de données, déduplication, couche LLM, fédération |
+| [docs/IA-GENERATIVE.md](docs/IA-GENERATIVE.md) | Comment l'IA générative est utilisée pour développer le projet |
 | [prompts/](prompts/) | Prompts d'analyse versionnés (publics, comme tout le reste) |
 | [corpus/](corpus/) | Corpus de calibration des prompts |
 | [api/DEPLOIEMENT.md](api/DEPLOIEMENT.md) | Héberger une instance et un portail : secrets, exposition, clés, coûts, montée en charge |
@@ -102,6 +103,21 @@ Résumé de la [charte éthique](docs/ETHIQUE.md) :
 - [x] **Phase 3b, portail public** : site (récit, méthodologie, référentiel, annuaire consultable), distribution de l'extension, inscription en un clic sans compte
 - [ ] **Phase 3c** : instance et portail de référence hébergés publiquement
 - [ ] **Phase 4, réseau** : fédération d'annuaires entre instances, i18n, portage Firefox
+
+## Comment ce projet est fabriqué
+
+Lynceus demande aux pages qu'il analyse d'être transparentes sur leurs procédés, il se
+doit de l'être sur les siens. **Le code, les tests et la documentation sont écrits avec
+l'assistance d'un modèle de langage**, sous la responsabilité d'un humain qui relit, teste
+et assume chaque ligne fusionnée. La charte, la taxonomie et les pondérations de la note ne
+sont pas déléguées.
+
+Détail de la pratique, convention de provenance dans les commits et ce qui est demandé aux
+contributions extérieures : [docs/IA-GENERATIVE.md](docs/IA-GENERATIVE.md).
+
+À ne pas confondre avec l'IA que le produit **emploie** pour analyser une page, qui est
+décrite dans [docs/METHODOLOGIE.md](docs/METHODOLOGIE.md) et
+[docs/CONFORMITE.md](docs/CONFORMITE.md).
 
 ## Contribuer
 

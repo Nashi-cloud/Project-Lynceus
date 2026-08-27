@@ -13,6 +13,7 @@
 #   techniques_attendues   ids qui DOIVENT être détectés
 #   techniques_interdites  ids dont la détection serait un faux positif grave
 #   confiance_min          plancher de l'indice de confiance
+#   langue_attendue        code de la langue dans laquelle l'analyse doit être rédigée
 
 # ---------------------------------------------------------------------------
 # Cas sentinelles — les cinq garde-fous de docs/METHODOLOGIE.md §7
@@ -78,6 +79,20 @@
   notes: |
     Rhétorique complotiste complète : insinuation par questions, intentionnalité prêtée à
     tout, « eux » indifférencié, posture du persécuté (article « déjà supprimé deux fois »).
+
+- fichier: specimens/11-fictif-anglais-verite-cachee.md
+  titre: What They Won't Tell You About the New Water Treatment Plant
+  langue: en
+  langue_attendue: en
+  categorie_attendue: theorie_du_complot
+  grade_attendu: [D, E]
+  techniques_attendues: [verite_cachee, autorite_anonyme]
+  notes: |
+    SENTINELLE 6 : l'analyse d'une page anglaise doit être rédigée en anglais.
+    Le prompt est en français, et rien ne demandait au modèle d'en changer avant
+    v0.1.2 : un lecteur anglophone recevait une explication en français.
+    Les mêmes procédés que le spécimen 06, dans une autre langue : si la détection
+    dépendait de la langue du contenu, l'écart se verrait ici.
 
 - fichier: specimens/08-fictif-publicite-deguisee.md
   titre: Cinq habitudes du soir pour mieux dormir

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block titre %}{{ _("Prompt d'analyse") }} · {{ nom }}{% endblock %}
+{% block corps %}
+<header class="entete-page">
+  <div class="contenu">
+    <span class="surtitre">{{ _("Transparence") }}</span>
+    <h1>{{ document.titre }}</h1>
+    <p class="chapo">{{ _("Le texte ci-dessous est l'instruction envoyée au modèle, telle qu'elle est versionnée. Le serveur y insère au moment de l'analyse <a href=\"%(taxonomie)s\">le référentiel de procédés</a> et le schéma de la réponse attendue, aux deux emplacements signalés dans le fichier.", taxonomie=u('/taxonomie')) }}</p>
+  </div>
+</header>
+<article class="contenu corps-page">
+  {% if langue != langue_source and not document.traduit %}{% include "_document_non_traduit.html" %}{% endif %}
+  {% if versions|length > 1 %}
+  {# Les anciennes versions restent lisibles : une analyse de l'annuaire annonce la version
+     qui l'a produite, et cette page est le seul endroit où l'on peut aller la relire. #}
+  <p class="discret">{{ _("Versions publiées :") }}
+    {%- for v in versions %}
+    {% if v == version_affichee %}<strong>v{{ v }}</strong>{% else %}<a href="{{ u('/prompt') }}?version={{ v }}">v{{ v }}</a>{% endif %}{{ "" if loop.last else " ·" }}
+    {%- endfor %}
+  </p>
+  {% endif %}
+  {{ document.html | safe }}
+</article>
+{% endblock %}

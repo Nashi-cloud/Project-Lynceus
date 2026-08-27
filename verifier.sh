@@ -83,6 +83,44 @@ if [ -f VERSION ]; then
   fi
 fi
 
+# ---------- Traductions des documents de référence ----------
+# Une traduction est une copie : elle dérive dès que l'original bouge, et rien ne le
+# signale puisque les deux pages s'affichent aussi bien. L'inventaire est tenu par
+# `lynceus traductions`, qui échoue si une traduction est en retard et se contente de
+# nommer celles qui manquent encore.
+etape "Documents traduits — accord avec leur original"
+if [ -x api/.venv/bin/lynceus ]; then
+  if sortie=$(api/.venv/bin/lynceus traductions 2>&1); then
+    verdict 0 "$(printf '%s' "$sortie" | grep -c 'à jour') traduction(s) à jour"
+    printf '%s\n' "$sortie" | grep -E "encore à traduire" | sed 's/^/  /' || true
+  else
+    printf '%s\n' "$sortie" | tail -3
+    echecs=$((echecs + 1))
+  fi
+fi
+
+# ---------- Cohérence de la version de prompt ----------
+# Un seul compteur pour trois fichiers : le prompt, la méthodologie et la taxonomie
+# évoluent ensemble, et `prompt_version` est ce que chaque analyse annonce. Un décalage
+# ici, et le portail publie une méthodologie qui dit appliquer une version que le moteur
+# n'utilise plus. RESULTATS.md est du même lot : la calibration porte sur une version
+# précise, sans quoi le taux d'erreur affiché ne se rapporte à rien.
+etape "Prompt, méthodologie et calibration — cohérence des versions"
+v_prompt=$(ls prompts/analyse/v*.md 2>/dev/null | sed 's|.*/v||;s|\.md$||' | sort -V | tail -1)
+if [ -n "$v_prompt" ]; then
+  v_methode=$(grep -m1 -oE 'Version : \*\*[0-9.]+\*\*' docs/METHODOLOGIE.md | tr -dc '0-9.')
+  v_taxo=$(grep -m1 -oE 'Version : \*\*[0-9.]+\*\*' docs/TAXONOMIE.md | tr -dc '0-9.')
+  v_calib=$(grep -m1 -oE 'prompt \*\*v[0-9.]+\*\*' corpus/RESULTATS.md | tr -dc '0-9.')
+  if [ "$v_prompt" = "$v_methode" ] && [ "$v_prompt" = "$v_taxo" ] && [ "$v_prompt" = "$v_calib" ]; then
+    verdict 0 "v$v_prompt cohérente (prompt, méthodologie, taxonomie, calibration)"
+  else
+    printf "${ROUGE}  ✗ prompt (%s) ≠ méthodologie (%s) ≠ taxonomie (%s) ≠ calibration (%s)${FIN}\n" \
+      "$v_prompt" "$v_methode" "$v_taxo" "$v_calib"
+    printf "${ROUGE}    Une passe de calibration est due, ou une estampille n'a pas suivi.${FIN}\n"
+    echecs=$((echecs + 1))
+  fi
+fi
+
 # ---------- Calibration (optionnelle : serveur requis, consomme des tokens) ----------
 if [ "${1:-}" = "--calibrer" ]; then
   etape "Calibration du corpus (appels LLM réels)"

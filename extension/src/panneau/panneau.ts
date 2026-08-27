@@ -2,6 +2,7 @@
  * Tout le rendu passe par textContent : aucun contenu de page ni de carte
  * n'est jamais interprété comme du HTML. */
 
+import { msg, traduireDocument } from "../commun/i18n";
 import type {
   CarteAnalyse,
   CorrespondancePrefixe,
@@ -11,25 +12,17 @@ import type {
   Technique,
 } from "../commun/types";
 
-const CATEGORIES: Record<string, string> = {
-  information: "Information",
-  opinion: "Opinion",
-  analyse_expertise: "Analyse / expertise",
-  satire: "Satire, second degré",
-  publicite_sponsorise: "Contenu commercial",
-  temoignage: "Témoignage",
-  contenu_confessionnel: "Contenu confessionnel",
-  pseudo_science: "Pseudo-science",
-  theorie_du_complot: "Théorie du complot",
-  autre: "Autre",
-};
+// Les ids de catégorie et de dimension viennent du serveur et ne se traduisent pas : ce
+// sont des identifiants. Seul leur libellé change de langue, d'où la clé construite.
+const CATEGORIES = ["information", "opinion", "analyse_expertise", "satire",
+                    "publicite_sponsorise", "temoignage", "contenu_confessionnel",
+                    "pseudo_science", "theorie_du_complot", "autre"] as const;
 
-const DIMENSIONS: [keyof CarteAnalyse["dimensions"], string][] = [
-  ["sources", "Sources"],
-  ["factualite", "Rigueur factuelle"],
-  ["ton", "Ton et procédés"],
-  ["transparence", "Transparence"],
-];
+const libelleCategorie = (id: string): string =>
+  CATEGORIES.includes(id as (typeof CATEGORIES)[number]) ? msg(`categorie_${id}`) : id;
+
+const DIMENSIONS: (keyof CarteAnalyse["dimensions"])[] =
+  ["sources", "factualite", "ton", "transparence"];
 
 const app = document.getElementById("app") as HTMLElement;
 let ongletCourant: number | null = null;
@@ -95,20 +88,22 @@ function rendreProfilDomaine(profil: ProfilDomaine): HTMLElement {
 
   const entete = el("div", "profil-entete");
   entete.append(el("span", `pastille-mini grade-${grade}`, grade));
-  const pages = profil.nb_analyses > 1 ? "pages analysées" : "page analysée";
-  entete.append(el("span", undefined, `${profil.nb_analyses} ${pages} sur ${profil.domaine}`));
+  // Compte en fin de phrase plutôt qu'accordé : les règles d'accord en nombre diffèrent
+  // d'une langue à l'autre, et un libellé suivi de son compte se traduit partout.
+  entete.append(el("span", undefined,
+    msg("panneau_profil_pages", profil.domaine, String(profil.nb_analyses))));
   bloc.append(entete);
 
-  bloc.append(el("div", "profil-detail", `Indice moyen du site : ${moyenne}/100.`));
+  bloc.append(el("div", "profil-detail", msg("panneau_profil_moyenne", String(moyenne))));
 
   const distribution = Object.entries(profil.distribution_grades ?? {}).sort();
   if (distribution.length > 1) {
     bloc.append(el("div", "profil-detail",
-      "Répartition : " + distribution.map(([g, n]) => `${n} en ${g}`).join(", ") + "."));
+      msg("panneau_profil_repartition",
+          distribution.map(([g, n]) => `${n} × ${g}`).join(", "))));
   }
 
-  bloc.append(el("div", "profil-avertissement",
-    "Cela décrit d'autres pages de ce site, pas celle-ci : son contenu n'a pas encore été lu."));
+  bloc.append(el("div", "profil-avertissement", msg("panneau_profil_avertissement")));
   return bloc;
 }
 
@@ -116,20 +111,16 @@ function rendreRepos(domaine?: ProfilDomaine): void {
   app.replaceChildren();
   const bloc = el("div", "bloc-centre");
   bloc.append(
-    el("h2", undefined, "Analyser cette page ?"),
-    el("div", undefined,
-      "Lynceus lit le contenu, puis décrit les techniques de persuasion qu'il emploie : " +
-      "extraits, explications et points positifs. À vous de conclure."),
+    el("h2", undefined, msg("panneau_repos_titre")),
+    el("div", undefined, msg("panneau_repos_texte")),
   );
-  const bouton = el("button", "bouton", "🔭 Analyser cette page");
+  const bouton = el("button", "bouton", msg("panneau_analyser"));
   bouton.addEventListener("click", () => {
     if (ongletCourant !== null) {
       chrome.runtime.sendMessage({ type: "lynceus:analyser", tabId: ongletCourant }).catch(() => {});
     }
   });
-  bloc.append(bouton, el("div", "note-vie-privee",
-    "Rien n'est envoyé sans ce geste : le contenu de la page part vers votre instance Lynceus " +
-    "uniquement quand vous demandez l'analyse."));
+  bloc.append(bouton, el("div", "note-vie-privee", msg("panneau_repos_vie_privee")));
   app.append(bloc);
   if (domaine) app.append(rendreProfilDomaine(domaine));
   void proposerReconnaissanceAuto(bloc);
@@ -146,10 +137,8 @@ async function proposerReconnaissanceAuto(bloc: HTMLElement): Promise<void> {
   if (dejaAccorde) return;
 
   const invitation = el("div", "invitation");
-  invitation.append(el("div", undefined,
-    "Lynceus peut aussi reconnaître seul les pages déjà analysées, et afficher leur note " +
-    "sans que vous ayez à cliquer."));
-  const lien = el("button", "lien-invitation", "Activer la reconnaissance automatique");
+  invitation.append(el("div", undefined, msg("panneau_reconnaissance_texte")));
+  const lien = el("button", "lien-invitation", msg("panneau_reconnaissance_activer"));
   lien.addEventListener("click", async () => {
     const accorde = await chrome.permissions.request({
       permissions: ["tabs"],
@@ -157,7 +146,7 @@ async function proposerReconnaissanceAuto(bloc: HTMLElement): Promise<void> {
     });
     if (accorde) {
       await chrome.storage.sync.set({ badgeActif: true });
-      invitation.replaceChildren(el("div", undefined, "✓ Reconnaissance automatique activée."));
+      invitation.replaceChildren(el("div", undefined, msg("panneau_reconnaissance_activee")));
     }
   });
   invitation.append(lien);
@@ -169,13 +158,11 @@ function rendreAttente(phase: "extraction" | "analyse", depuis: number): void {
   const bloc = el("div", "bloc-centre");
   bloc.append(el("div", "spinner"));
   bloc.append(el("div", undefined,
-    phase === "extraction"
-      ? "Extraction du contenu, localement dans votre navigateur…"
-      : "Analyse en cours, le modèle lit la page…"));
+    msg(phase === "extraction" ? "panneau_attente_extraction" : "panneau_attente_analyse")));
   const minuteur = el("div", "minuteur", formaterDuree(Date.now() - depuis));
   bloc.append(minuteur);
 
-  const boutonAnnuler = el("button", "bouton bouton-secondaire", "Annuler");
+  const boutonAnnuler = el("button", "bouton bouton-secondaire", msg("annuler"));
   boutonAnnuler.addEventListener("click", () => {
     if (ongletCourant !== null) {
       chrome.runtime.sendMessage({ type: "lynceus:annuler", tabId: ongletCourant }).catch(() => {});
@@ -192,8 +179,8 @@ function rendreAttente(phase: "extraction" | "analyse", depuis: number): void {
 function rendreErreur(message: string): void {
   app.replaceChildren();
   const bloc = el("div", "erreur");
-  bloc.append(el("strong", undefined, "Analyse impossible"), el("p", undefined, message));
-  const bouton = el("button", "bouton", "Réessayer");
+  bloc.append(el("strong", undefined, msg("panneau_erreur_titre")), el("p", undefined, message));
+  const bouton = el("button", "bouton", msg("reessayer"));
   // () => : sans cela, l'événement de clic serait passé comme profil de domaine.
   bouton.addEventListener("click", () => rendreRepos());
   bloc.append(bouton);
@@ -208,14 +195,14 @@ function rendreResume(resume: CorrespondancePrefixe): void {
   const enTete = el("div", "resume-note");
   enTete.append(el("div", `pastille grade-${resume.grade}`, resume.grade));
   const infos = el("div", "infos");
-  infos.append(el("div", "categorie", CATEGORIES[resume.categorie] ?? resume.categorie));
-  infos.append(el("div", "sous-info", `Indice ${resume.score}/100`));
-  infos.append(el("div", "badge-cache", "Déjà dans l'annuaire"));
+  infos.append(el("div", "categorie", libelleCategorie(resume.categorie)));
+  infos.append(el("div", "sous-info", msg("panneau_indice", String(resume.score))));
+  infos.append(el("div", "badge-cache", msg("panneau_deja_annuaire")));
   enTete.append(infos);
   app.append(enTete);
 
   const attente = el("div", "bloc-centre");
-  attente.append(el("div", "spinner"), el("div", undefined, "Chargement du détail…"));
+  attente.append(el("div", "spinner"), el("div", undefined, msg("panneau_chargement_detail")));
   app.append(attente);
 
   if (ongletCourant !== null) {
@@ -237,10 +224,11 @@ function rendreCarte(
   const enTete = el("div", "resume-note");
   enTete.append(el("div", `pastille grade-${carte.note.grade}`, carte.note.grade));
   const infos = el("div", "infos");
-  infos.append(el("div", "categorie", CATEGORIES[carte.categorie] ?? carte.categorie));
+  infos.append(el("div", "categorie", libelleCategorie(carte.categorie)));
   infos.append(el("div", "sous-info",
-    `Indice ${carte.note.score}/100 · confiance de l'analyse : ${Math.round(carte.note.confiance * 100)} %`));
-  if (enCache) infos.append(el("div", "badge-cache", "Déjà dans l'annuaire, réponse instantanée"));
+    msg("panneau_indice_confiance", String(carte.note.score),
+        String(Math.round(carte.note.confiance * 100)))));
+  if (enCache) infos.append(el("div", "badge-cache", msg("panneau_deja_annuaire_cache")));
   enTete.append(infos);
   app.append(enTete);
 
@@ -249,21 +237,22 @@ function rendreCarte(
 
   // Techniques — le cœur pédagogique, ouvert par défaut
   const techniques = carte.techniques_detectees;
-  const [blocTech, contenuTech] = section("Techniques relevées", true, String(techniques.length));
+  const [blocTech, contenuTech] = section(msg("panneau_techniques"), true, String(techniques.length));
   if (techniques.length === 0) {
-    contenuTech.append(el("div", "aucune-technique", "✓ Aucune technique de manipulation relevée."));
+    contenuTech.append(el("div", "aucune-technique", msg("panneau_aucune_technique")));
   } else {
     for (const technique of techniques) contenuTech.append(rendreTechnique(technique));
   }
   app.append(blocTech);
 
   // Dimensions
-  const [blocDim, contenuDim] = section("Le détail de l'indice", false);
-  for (const [cle, etiquette] of DIMENSIONS) {
+  const [blocDim, contenuDim] = section(msg("panneau_detail_indice"), false);
+  for (const cle of DIMENSIONS) {
     const dimension = carte.dimensions[cle];
     const ligne = el("div", "dimension");
     const entete = el("div", "dimension-entete");
-    entete.append(el("span", undefined, etiquette), el("span", undefined, `${dimension.score}/100`));
+    entete.append(el("span", undefined, msg(`dimension_${cle}`)),
+                  el("span", undefined, `${dimension.score}/100`));
     const jauge = el("div", "jauge");
     const remplissage = el("div");
     remplissage.style.width = `${Math.max(0, Math.min(100, dimension.score))}%`;
@@ -274,15 +263,16 @@ function rendreCarte(
   app.append(blocDim);
 
   // Points positifs — l'équité rend crédible
-  const [blocPositifs, contenuPositifs] = section("Points positifs", false, String(carte.points_positifs.length));
+  const [blocPositifs, contenuPositifs] =
+    section(msg("points_positifs"), false, String(carte.points_positifs.length));
   const listePositifs = el("ul");
   for (const point of carte.points_positifs) listePositifs.append(el("li", undefined, `✓ ${point}`));
-  if (carte.points_positifs.length === 0) listePositifs.append(el("li", undefined, "Aucun relevé par l'analyse."));
+  if (carte.points_positifs.length === 0) listePositifs.append(el("li", undefined, msg("panneau_aucun_point_positif")));
   contenuPositifs.append(listePositifs);
   app.append(blocPositifs);
 
   // Questions à se poser — le lecteur reste l'enquêteur
-  const [blocQuestions, contenuQuestions] = section("Questions à se poser", true);
+  const [blocQuestions, contenuQuestions] = section(msg("panneau_questions"), true);
   const listeQuestions = el("ul");
   for (const question of carte.questions_a_se_poser) listeQuestions.append(el("li", undefined, question));
   contenuQuestions.append(listeQuestions);
@@ -295,26 +285,19 @@ function rendreCarte(
   }
   if (rejetees > 0) {
     avertissements.append(el("div", "avertissement",
-      `ℹ ${rejetees} détection(s) proposée(s) par le modèle ont été écartées par le serveur ` +
-      "(citation introuvable dans la page ou hors référentiel)."));
+      `ℹ ${msg("panneau_detections_ecartees", String(rejetees))}`));
   }
   app.append(avertissements);
   app.append(el("div", "meta",
-    `${carte.meta.modele} · prompt v${carte.meta.prompt_version} · ${carte.meta.analyse_le.slice(0, 10)} · ` +
-    "méthodologie et prompts publics (AGPL-3.0)"));
+    `${carte.meta.modele} · prompt v${carte.meta.prompt_version} · ` +
+    `${carte.meta.analyse_le.slice(0, 10)} · ${msg("panneau_meta_publics")}`));
 
   app.append(rendreContestation(carte, signalements));
 }
 
-const MOTIFS: [string, string][] = [
-  ["analyse_erronee", "L'analyse est fausse"],
-  ["extrait_hors_contexte", "Une citation est sortie de son contexte"],
-  ["categorie_erronee", "La catégorie est erronée (ex. satire mal classée)"],
-  ["note_injustifiee", "La note ne correspond pas au contenu"],
-  ["page_modifiee", "La page a changé depuis l'analyse"],
-  ["droit_de_reponse", "Je suis l'éditeur de ce site et je conteste"],
-  ["autre", "Autre"],
-];
+// Les valeurs sont des identifiants attendus par l'instance : seul le libellé se traduit.
+const MOTIFS = ["analyse_erronee", "extrait_hors_contexte", "categorie_erronee",
+                "note_injustifiee", "page_modifiee", "droit_de_reponse", "autre"];
 
 /** Contester une analyse — charte §6 : toute analyse est faillible et contestable, y compris
  * par l'éditeur du site analysé. Le lien reste discret : c'est un recours, pas une invitation
@@ -326,14 +309,13 @@ function rendreContestation(carte: CarteAnalyse, signalements: number): HTMLElem
       `${signalements} contestation(s) déjà enregistrée(s) sur cette analyse.`));
   }
 
-  const lien = el("button", "lien-invitation", "Contester cette analyse");
+  const lien = el("button", "lien-invitation", msg("contester_cette_analyse"));
   bloc.append(lien);
 
   const analyseId = extraireIdAnalyse(carte);
   lien.addEventListener("click", () => {
     if (analyseId === null) {
-      bloc.replaceChildren(el("div", "signalements-info",
-        "Cette analyse ne peut pas être contestée depuis ce panneau (identifiant absent)."));
+      bloc.replaceChildren(el("div", "signalements-info", msg("panneau_contestation_impossible")));
       return;
     }
     bloc.replaceChildren(construireFormulaire(analyseId, bloc));
@@ -343,14 +325,14 @@ function rendreContestation(carte: CarteAnalyse, signalements: number): HTMLElem
 
 function construireFormulaire(analyseId: number, bloc: HTMLElement): HTMLElement {
   const formulaire = el("div", "formulaire");
-  formulaire.append(el("div", "formulaire-titre", "Que faut-il corriger ?"));
+  formulaire.append(el("div", "formulaire-titre", msg("panneau_formulaire_titre")));
 
   const selection = document.createElement("select");
   selection.className = "champ";
-  for (const [valeur, etiquette] of MOTIFS) {
+  for (const valeur of MOTIFS) {
     const option = document.createElement("option");
     option.value = valeur;
-    option.textContent = etiquette;
+    option.textContent = msg(`motif_${valeur}`);
     selection.append(option);
   }
   formulaire.append(selection);
@@ -358,30 +340,31 @@ function construireFormulaire(analyseId: number, bloc: HTMLElement): HTMLElement
   const zone = document.createElement("textarea");
   zone.className = "champ";
   zone.rows = 4;
-  zone.placeholder = "Expliquez en quelques mots (10 caractères minimum)…";
+  zone.placeholder = msg("panneau_formulaire_invite");
   formulaire.append(zone);
 
-  const envoyer = el("button", "bouton", "Envoyer");
-  const annuler = el("button", "bouton bouton-secondaire", "Annuler");
+  const envoyer = el("button", "bouton", msg("envoyer"));
+  const annuler = el("button", "bouton bouton-secondaire", msg("annuler"));
   const etat = el("div", "signalements-info");
 
   envoyer.addEventListener("click", () => {
     const message = zone.value.trim();
     if (message.length < 10) {
-      etat.textContent = "Merci de préciser un peu : 10 caractères minimum.";
+      etat.textContent = msg("panneau_formulaire_trop_court");
       return;
     }
     envoyer.setAttribute("disabled", "true");
-    etat.textContent = "Envoi…";
+    etat.textContent = msg("envoi_en_cours");
     chrome.runtime
       .sendMessage({ type: "lynceus:signaler", analyseId, motif: selection.value, message })
       .then((reponse: { ok: boolean; message: string }) => {
         bloc.replaceChildren(el("div", "signalements-info",
-          reponse?.ok ? reponse.message : `Échec de l'envoi : ${reponse?.message ?? "erreur inconnue"}`));
+          reponse?.ok ? reponse.message
+                      : msg("envoi_echec_detail", reponse?.message ?? msg("erreur_inconnue"))));
       })
       .catch(() => {
         envoyer.removeAttribute("disabled");
-        etat.textContent = "Échec de l'envoi. Réessayez plus tard.";
+        etat.textContent = msg("envoi_echec");
       });
   });
   annuler.addEventListener("click", () => bloc.replaceChildren(rendreContestation({} as CarteAnalyse, 0)));
@@ -403,7 +386,8 @@ function rendreTechnique(technique: Technique): HTMLElement {
   const entete = el("div", "technique-entete");
   const nom = technique.id.replace(/_/g, " ");
   entete.append(el("span", "technique-nom", nom.charAt(0).toUpperCase() + nom.slice(1)));
-  entete.append(el("span", `gravite gravite-${technique.gravite}`, `gravité ${technique.gravite}`));
+  entete.append(el("span", `gravite gravite-${technique.gravite}`,
+                    msg(`gravite_${technique.gravite}`)));
   bloc.append(entete);
   bloc.append(el("blockquote", "extrait", `« ${technique.extrait} »`));
   bloc.append(el("div", "explication", technique.explication));
@@ -447,4 +431,5 @@ document.getElementById("lien-options")?.addEventListener("click", (evenement) =
   chrome.runtime.openOptionsPage();
 });
 
+traduireDocument();
 void rafraichir();

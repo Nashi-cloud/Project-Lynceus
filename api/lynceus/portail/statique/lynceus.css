@@ -75,8 +75,12 @@
   /* Grades : identiques à ceux du panneau de l'extension, volontairement. */
   --a: #1a7f37; --b: #5a8f29; --c: #b58900; --d: #c9662a; --e: #b3261e;
 
-  --prose: 36rem;
-  --large: 62rem;
+  /* Largeur de la colonne de texte, padding compris (box-sizing: border-box) : il
+     reste 38rem de lecture, soit environ 70 signes par ligne dans le corps serif. À
+     36rem, la mesure tombait sous 60 signes et la page paraissait étroite sur un
+     écran d'ordinateur, sans rien gagner en confort. */
+  --prose: 42rem;
+  --large: 72rem;
   --display: "Fraunces", "Iowan Old Style", Georgia, ui-serif, serif;
   --texte: "Newsreader", Georgia, ui-serif, serif;
   --ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -108,8 +112,10 @@
 
 html {
   scroll-behavior: smooth;
-  /* Garde-fou : aucune page du portail ne doit défiler horizontalement. */
-  overflow-x: hidden;
+  /* Garde-fou : aucune page du portail ne doit défiler horizontalement. « clip » plutôt
+     que « hidden » : hidden fait de l'élément un conteneur de défilement, ce qui annule
+     le « position: sticky » du bandeau sans rien signaler. */
+  overflow-x: clip;
 }
 
 body {
@@ -120,7 +126,7 @@ body {
   font-variation-settings: "opsz" 16;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 img, svg, video { max-width: 100%; height: auto; }
@@ -247,6 +253,20 @@ hr { border: 0; border-top: 1px solid var(--trait); margin: 2.5em 0; }
   padding: 0.35rem 0;
   border-bottom: 2px solid transparent;
 }
+/* Sélecteur de langue : un peu à l'écart des rubriques, dont il n'est pas une de plus. */
+.bandeau .langues {
+  display: inline-flex;
+  gap: 0.5rem;
+  margin-left: 0.35rem;
+  padding-left: 0.85rem;
+  border-left: 1px solid var(--trait);
+  font: 650 0.76rem/1 var(--ui);
+  letter-spacing: 0.06em;
+}
+.bandeau .langues strong { color: var(--laiton); }
+.bandeau .langues a { border-bottom: 0; color: var(--encre-2); }
+.bandeau .langues a:hover { color: var(--encre); }
+
 .bandeau nav a:hover { color: var(--encre); border-bottom-color: var(--laiton); }
 .bandeau nav a[aria-current="page"] { color: var(--encre); border-bottom-color: var(--laiton); }
 
@@ -260,6 +280,18 @@ main { display: block; }
 .contenu.large { max-width: var(--large); }
 
 .corps-page { padding-block: clamp(2rem, 5vw, 3.4rem) clamp(3.5rem, 8vw, 5.5rem); }
+
+/* Échappée : un tableau n'est pas de la prose et n'a pas à tenir dans sa mesure.
+   La colonne de texte reste calée sur ce qui se lit (environ 80 signes par ligne, au-delà
+   l'œil perd sa ligne en revenant à la marge). Un tableau de résultats, lui, a des colonnes
+   à comparer d'un coup d'œil : l'écraser dans la mesure du texte le rend illisible alors
+   que la place est disponible de chaque côté. Il déborde donc symétriquement, sans jamais
+   dépasser la fenêtre. */
+.corps-page table {
+  --echappee: min(var(--large), calc(100vw - 3rem));
+  width: var(--echappee);
+  margin-inline: calc((100% - var(--echappee)) / 2);
+}
 
 /* Bandeau de titre des pages intérieures : évite qu'une page commence par du
    texte posé sur du vide, ce qui donnait au site son aspect délavé. */
@@ -298,10 +330,43 @@ main { display: block; }
   color: var(--encre-2);
   font: 0.92rem/1.7 var(--ui);
 }
-.pied .contenu { display: grid; gap: 0.9rem 2rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+/* La marque de la forge se lit comme un mot de la phrase, pas comme un bouton : même
+   taille, même couleur, alignée sur la ligne de base du texte qui la suit. */
+.pied .lien-forge { display: inline-flex; align-items: center; gap: 0.42rem; }
+.pied .lien-forge svg { flex: none; opacity: 0.85; }
+
+.pied .nom-projet {
+  color: var(--encre);
+  font-family: var(--display);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+/* Quatre colonnes : qui parle, puis trois intentions de lecture. Une liste unique de dix
+   liens obligeait à tout parcourir pour en trouver un ; regroupés et titrés, ils se
+   choisissent d'un coup d'œil. La grille se replie d'elle-même sur un écran étroit. */
+.pied .contenu {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+}
+/* Au large, la colonne d'identité reçoit plus de place que les listes : elle porte des
+   phrases, pas des étiquettes, et se coupait au milieu de « AGPL-3.0 ». */
+@media (min-width: 56rem) {
+  .pied .contenu { grid-template-columns: 1.6fr 1fr 1fr 1fr; }
+}
 .pied a { color: var(--encre-2); }
 .pied a:hover { color: var(--encre); }
-.pied .liens { display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; }
+.pied-identite p { margin: 0 0 0.4em; text-wrap: pretty; }
+.pied-titre {
+  font: 650 0.72rem/1 var(--ui);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--laiton);
+  margin: 0.15rem 0 0.85rem;
+}
+.pied-groupe ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.pied-groupe a { text-decoration: none; }
+.pied-groupe a:hover { text-decoration: underline; }
 
 /* ------------------------------------------------------------- éléments */
 
@@ -538,6 +603,26 @@ textarea.champ { resize: vertical; }
   margin-top: 1.4rem;
 }
 
+/* --- aparté ---
+   Un pas de côté dans le fil du texte : plus petit, en retrait derrière un filet de
+   laiton. Le récit de l'accueil se lisant sur fond de nuit, il lui faut ses propres
+   valeurs, les jetons clairs y seraient illisibles. */
+
+.aparte {
+  margin: 1.8rem 0 0;
+  padding-left: 1.15rem;
+  border-left: 2px solid var(--or);
+  color: var(--encre-2);
+  font: italic 400 0.98rem/1.7 var(--texte);
+}
+.aparte strong { font-style: normal; color: var(--encre); }
+.recit .aparte {
+  font-size: clamp(0.99rem, 0.95rem + 0.25vw, 1.1rem);
+  color: rgba(246, 232, 212, 0.74);
+  border-left-color: rgba(224, 169, 98, 0.45);
+}
+.recit .aparte strong { color: rgba(246, 232, 212, 0.95); }
+
 /* --- tuiles --- */
 
 .tuiles {
@@ -652,10 +737,26 @@ textarea.champ { resize: vertical; }
   color: rgba(246, 232, 212, 0.62);
 }
 
+/* --- lever du jour ---
+   Le passage de la braise au papier demande de la distance. Le faire à l'intérieur de la
+   dernière scène obligerait à éclaircir le fond sous un texte déjà sombre, donc à le rendre
+   illisible en chemin : d'où une bande sans texte, assez haute pour que le jour se lève au
+   même rythme que le reste de la page. */
+
+.aube {
+  height: clamp(20rem, 55vh, 34rem);
+  background: linear-gradient(180deg,
+    rgba(189, 107, 60, 0) 0%,
+    rgba(214, 138, 84, 0.6) 24%,
+    rgba(233, 183, 130, 0.9) 54%,
+    #f2e2c8 82%,
+    #f8eeda 100%);
+}
+
 /* --- dernière scène : le jour --- */
 
 .scene.jour {
-  background: linear-gradient(180deg, rgba(250, 244, 232, 0) 0%, #f8eeda 28%, #fbf6ec 100%);
+  background: linear-gradient(180deg, #f8eeda 0%, #fbf6ec 100%);
   color: #3f3226;
   text-align: center;
 }
@@ -663,7 +764,16 @@ textarea.champ { resize: vertical; }
 .scene.jour .chapo, .scene.jour p { color: #4d3f30; }
 .scene.jour .bouton { background: #14415e; color: #fff; }
 .scene.jour .bouton.or { background: linear-gradient(180deg, #eebc7a, var(--or)); color: #38240c; }
-.scene.jour .bouton.creux { color: #3f3226; border-color: rgba(63, 50, 38, 0.4); }
+/* Le fond bleu de « .scene.jour .bouton » l'emportait sur le « background:
+   transparent » du bouton creux, moins spécifique : le bouton secondaire se
+   retrouvait en encre sombre sur bleu sombre, donc illisible. */
+.scene.jour .bouton.creux {
+  background: transparent;
+  color: #2f2519;
+  border-color: rgba(47, 37, 25, 0.55);
+  box-shadow: none;
+}
+.scene.jour .bouton.creux:hover { border-color: #2f2519; background: rgba(47, 37, 25, 0.05); }
 .scene.jour .actions { justify-content: center; margin-top: 1.8rem; }
 .scene.jour .chapitre { color: #96652a; }
 .scene.jour .chapitre::after { background: linear-gradient(90deg, rgba(150, 101, 42, 0.4), transparent); }

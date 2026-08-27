@@ -17,6 +17,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import httpx
 import typer
@@ -361,6 +362,15 @@ def _comparer(entree: dict, carte: dict) -> tuple[list[str], list[str]]:
     for faux_positif in [t for t in entree.get("techniques_interdites", []) if t in ids]:
         graves.append(f"faux positif : {faux_positif}")
 
+    # La langue de rédaction est une attente comme une autre depuis le prompt v0.1.2 :
+    # une analyse rendue dans la mauvaise langue est inutilisable pour qui lit la page,
+    # même si tout le reste est juste.
+    langue_attendue = entree.get("langue_attendue")
+    if langue_attendue:
+        obtenue = (carte.get("langue") or "")[:2]
+        if obtenue != langue_attendue[:2]:
+            graves.append(f"langue {obtenue or '(absente)'} ≠ {langue_attendue}")
+
     plancher = entree.get("confiance_min")
     if plancher is not None and carte["note"]["confiance"] < plancher:
         mineurs.append(f"confiance {carte['note']['confiance']:.2f} < {plancher}")
@@ -683,14 +693,14 @@ class Questionneur:
                                show_default=bool(defaut), err=True)
         return (reponse or "").strip()
 
-    def adresse(self, question: str) -> str:
+    def adresse(self, question: str, *, defaut: str = "") -> str:
         """Une adresse publique, vérifiée sommairement.
 
         Une adresse sans schéma est le genre d'erreur qui passe la configuration et se
         manifeste chez l'utilisateur : l'extension reçoit une adresse qu'elle ne sait pas
         joindre, longtemps après le déploiement."""
         while True:
-            reponse = self.texte(question)
+            reponse = self.texte(question, defaut=defaut)
             if not reponse or reponse.startswith(("http://", "https://")):
                 return reponse.rstrip("/")
             aide.print("[yellow]Il faut une adresse complète, commençant par http:// ou https://[/yellow]")
@@ -713,6 +723,50 @@ class Questionneur:
             if reponse in ("n", "non", "no"):
                 return False
             aide.print("[yellow]Répondez par o ou n.[/yellow]")
+
+
+def _forge_connue(depot: str) -> bool:
+    """Sait-on construire l'adresse d'un fichier à partir de celle du dépôt ?
+
+    Seulement pour les forges dont la forme est connue. Ailleurs, mieux vaut laisser la
+    variable vide, que l'exploitant remplira, qu'une adresse fabriquée qui tombe à côté."""
+    hote = urlsplit(depot).hostname or ""
+    return hote in {"github.com", "gitlab.com"} or hote.startswith(("github.", "gitlab."))
+
+
+@app.command("traductions")
+def traductions(
+    langue: str = typer.Option("en", "--langue", help="code de la langue à inspecter"),
+):
+    """Où en est la traduction des documents que le portail publie.
+
+    Une traduction est une copie : elle dérive dès que l'original bouge, et rien ne le
+    signale puisque les deux pages s'affichent aussi bien. Cette commande est le seul
+    endroit où lire l'état réel, plutôt que d'ouvrir les pages une par une.
+    """
+    from .portail import contenu
+
+    inventaire = contenu.etat_traductions(langue)
+    couleurs = {"à jour": "green", "manquante": "yellow",
+                "en retard": "red", "sans empreinte": "red"}
+    table = Table(show_header=True, header_style="bold")
+    for colonne in ("Document", "Traduction", "État"):
+        table.add_column(colonne, overflow="fold")
+    for entree in inventaire:
+        etat = entree["etat"]
+        table.add_row(entree["source"], entree["traduction"],
+                      f"[{couleurs[etat]}]{etat}[/{couleurs[etat]}]")
+    console.print(table)
+
+    defauts = [e for e in inventaire if e["etat"] in ("en retard", "sans empreinte")]
+    manquantes = [e for e in inventaire if e["etat"] == "manquante"]
+    if manquantes:
+        console.print(f"[yellow]{len(manquantes)} document(s) encore à traduire : le portail "
+                      f"sert l'original en l'annonçant.[/yellow]")
+    if defauts:
+        console.print(f"[red]{len(defauts)} traduction(s) en retard sur leur original. "
+                      f"Relire, puis mettre à jour la ligne « traduit-de ».[/red]")
+        raise typer.Exit(1)
 
 
 @app.command("env")
@@ -777,10 +831,23 @@ def env(
     # détournement met à l'abri de ce genre de fuite, celle-ci comme les prochaines.
     with contextlib.redirect_stdout(sys.stderr):
         image = demande.texte("Adresse de l'image (registre compris)")
+        base_llm = demande.texte("Adresse du fournisseur de modèle (API compatible OpenAI)",
+                                 defaut="https://openrouter.ai/api/v1")
         cle_llm = demande.texte("Clé du fournisseur de modèle", secret=True)
         modele = demande.texte("Modèle d'analyse", defaut="z-ai/glm-5.2")
+        # Ce nom est publié : /v1/meta, chaque analyse de l'annuaire, la page de
+        # confidentialité du portail. Vide, il est déduit de l'adresse, ce qui donne le nom
+        # d'hôte, faux dès qu'il y a un intermédiaire.
+        libelle_llm = demande.texte("Nom public de ce fournisseur (vide = déduit de l'adresse)")
         adresse_instance = demande.adresse("Adresse publique de l'instance")
         adresse_portail = demande.adresse("Adresse publique du portail")
+
+        # L'AGPL-3.0 impose (article 13) de proposer le code correspondant aux personnes
+        # qui utilisent le service à distance. C'est une adresse à donner, pas une case à
+        # cocher : le portail avertit au démarrage tant qu'elle manque.
+        depot = demande.adresse("Adresse publique du code source (AGPL, article 13)",
+                                defaut="https://github.com/Nashi-cloud/Project-Lynceus")
+        depot_fichiers = f"{depot.rstrip('/')}/blob/main" if _forge_connue(depot) else ""
 
         # Deux machines, donc deux tunnels : un jeton par tunnel, jamais le même.
         jeton_tunnel_instance = demande.texte(
@@ -827,11 +894,15 @@ def env(
     )
 
     bloc_llm = [
-        Variable("LYNCEUS_LLM_BASE_URL", "https://openrouter.ai/api/v1"),
+        Variable("LYNCEUS_LLM_BASE_URL", base_llm),
         Variable("LYNCEUS_LLM_API_KEY", cle_llm,
                  note_si_vide="Sans elle, l'instance refuse de démarrer en le disant, ce qui\n"
                               "vaut mieux qu'une clé d'exemple qui échouerait à la première analyse."),
         Variable("LYNCEUS_LLM_MODEL", modele),
+        Variable("LYNCEUS_LLM_FOURNISSEUR", libelle_llm,
+                 note="Nom du fournisseur tel qu'il sera publié : /v1/meta, chaque analyse,\n"
+                      "et les pages légales du portail. Vide = déduit de l'adresse, ce qui\n"
+                      "donne « modèle auto-hébergé » sur une adresse privée."),
     ]
     note_entete = (
         "Adresse réelle du visiteur, transmise par le tunnel. À n'activer que si\n"
@@ -863,6 +934,8 @@ def env(
                          note="Adresse inscrite dans l'archive téléchargée. Sans elle, elle serait\n"
                               "déduite de la requête, donc peut-être en http derrière un tunnel."),
                 Variable("LYNCEUS_PORTAIL_NOM", "Lynceus (recette)"),
+                Variable("LYNCEUS_PORTAIL_DEPOT", depot),
+                Variable("LYNCEUS_PORTAIL_DEPOT_FICHIERS", depot_fichiers),
                 Variable("LYNCEUS_PORTAIL_QUOTA_JOUR", str(quota)),
                 Variable("LYNCEUS_PORTAIL_VALIDITE_JOURS", str(jours)),
                 "",
@@ -933,6 +1006,14 @@ def env(
                      note="Adresse publique de CE portail, inscrite dans l'archive téléchargée."),
             Variable("LYNCEUS_PORTAIL_NOM", "Lynceus"),
             Variable("LYNCEUS_PORTAIL_CONTACT", identite.get("EDITEUR_CONTACT", "")),
+            "",
+            "# Code source. L'AGPL-3.0 impose (article 13) de proposer le code correspondant",
+            "# aux personnes qui utilisent le service à distance. Vide, les pages parlent du",
+            "# dépôt sans pouvoir y renvoyer, et le portail avertit au démarrage.",
+            Variable("LYNCEUS_PORTAIL_DEPOT", depot),
+            Variable("LYNCEUS_PORTAIL_DEPOT_FICHIERS", depot_fichiers,
+                     note="Préfixe désignant un fichier du dépôt, branche comprise. GitHub et\n"
+                          "GitLab : <dépôt>/blob/main. Forgejo : <dépôt>/src/branch/main."),
             "",
             "# Identité légale. Obligatoire dès que le portail est ouvert au public (LCEN).",
             "# Non renseignée, chaque page légale l'annonce, et le portail avertit au",

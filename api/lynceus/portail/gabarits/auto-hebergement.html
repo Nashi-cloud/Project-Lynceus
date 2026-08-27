@@ -1,64 +1,41 @@
 {% extends "base.html" %}
-{% block titre %}Héberger sa propre instance · {{ nom }}{% endblock %}
+{% block titre %}{{ _("Héberger sa propre instance") }} · {{ nom }}{% endblock %}
 {% block corps %}
 <header class="entete-page">
   <div class="contenu">
     <span class="surtitre">AGPL-3.0</span>
-    <h1>Héberger sa propre instance</h1>
-    <p class="chapo">Ce projet n'a de sens que si personne n'est obligé de nous faire
-    confiance. Le code est libre : vous pouvez faire tourner votre instance, la modifier,
-    et l'offrir à qui vous voulez.</p>
+    <h1>{{ _("Héberger sa propre instance") }}</h1>
+    <p class="chapo">{{ _("Ce projet n'a de sens que si personne n'est obligé de nous faire confiance. Le code est libre : vous pouvez faire tourner votre instance, la modifier, et l'offrir à qui vous voulez.") }}</p>
   </div>
 </header>
 
 <article class="contenu corps-page">
-  <h2 style="margin-top:0">Pourquoi vous voudriez le faire</h2>
+  <h2 style="margin-top:0">{{ _("Pourquoi vous voudriez le faire") }}</h2>
   <ul>
-    <li><strong>Aucune clé à demander.</strong> Une instance personnelle n'exige pas de clé
-    d'accès. Le contrôle d'accès n'existe que pour protéger une instance publique d'une
-    facture de modèle qui s'envole.</li>
-    <li><strong>Vos analyses restent chez vous.</strong> Rien ne transite par ce portail.</li>
-    <li><strong>Votre modèle, votre coût.</strong> N'importe quel fournisseur compatible
-    OpenAI convient, y compris un modèle local via Ollama : l'analyse ne coûte alors rien
-    et ne sort pas de votre machine.</li>
-    <li><strong>Votre méthodologie.</strong> Les pondérations, le référentiel de procédés
-    et les prompts sont des fichiers du dépôt. Vous pouvez en discuter, et les changer.</li>
+    <li>{{ _("<strong>Aucune clé à demander.</strong> Une instance personnelle n'exige pas de clé d'accès. Le contrôle d'accès n'existe que pour protéger une instance publique d'une facture de modèle qui s'envole.") }}</li>
+    <li>{{ _("<strong>Vos analyses restent chez vous.</strong> Rien ne transite par ce portail.") }}</li>
+    <li>{{ _("<strong>Votre modèle, votre coût.</strong> N'importe quel fournisseur compatible OpenAI convient, y compris un modèle local via Ollama : l'analyse ne coûte alors rien et ne sort pas de votre machine.") }}</li>
+    <li>{% if depot %}{{ _("<strong>Votre méthodologie.</strong> Les pondérations, le référentiel de procédés et les prompts sont des fichiers <a href=\"%(depot)s\">du dépôt</a>. Vous pouvez en discuter, et les changer.", depot=depot) }}{% else %}{{ _("<strong>Votre méthodologie.</strong> Les pondérations, le référentiel de procédés et les prompts sont des fichiers du dépôt. Vous pouvez en discuter, et les changer.") }}{% endif %}</li>
   </ul>
 
-  <h2>Le minimum vital</h2>
-  <p>Avec Docker, une instance d'essai tient en une commande, sur SQLite, sans base à
-  installer :</p>
-  <pre><code>git clone &lt;dépôt&gt; lynceus &amp;&amp; cd lynceus/api
-cp .env.example .env        # y placer la clé du fournisseur de modèle
+  <h2>{{ _("Le minimum vital") }}</h2>
+  <p>{{ _("Avec Docker, une instance d'essai tient en une commande, sur SQLite, sans base à installer :") }}</p>
+  <pre><code>git clone {% if depot %}{{ depot }}.git{% else %}&lt;{{ _("dépôt") }}&gt;{% endif %} lynceus &amp;&amp; cd lynceus/api
+cp .env.example .env        # {{ _("y placer la clé du fournisseur de modèle") }}
 docker compose up -d</code></pre>
-  <p>Pour une instance destinée à d'autres personnes, le dépôt fournit un
-  <code>docker-compose.prod.yml</code> (PostgreSQL, migrations automatiques, exposition par
-  Cloudflare Tunnel) et un guide de déploiement détaillé, y compris la façon d'estimer la
-  dépense avant d'ouvrir les portes.</p>
+  <p>{% if depot %}{{ _("Pour une instance destinée à d'autres personnes, <a href=\"%(depot)s\">le dépôt</a> fournit un <code>docker-compose.prod.yml</code> (PostgreSQL, migrations automatiques, exposition par Cloudflare Tunnel) et un guide de déploiement détaillé, y compris la façon d'estimer la dépense avant d'ouvrir les portes.", depot=depot) }}{% else %}{{ _("Pour une instance destinée à d'autres personnes, le dépôt fournit un <code>docker-compose.prod.yml</code> (PostgreSQL, migrations automatiques, exposition par Cloudflare Tunnel) et un guide de déploiement détaillé, y compris la façon d'estimer la dépense avant d'ouvrir les portes.") }}{% endif %}</p>
 
   <div class="encart attention">
-    <h3 style="margin-top:0">La règle à ne pas oublier</h3>
-    <p style="margin-bottom:0">Une instance exposée sans clés d'accès permet à n'importe
-    qui de dépenser <em>votre</em> argent : chaque analyse appelle un modèle facturé à
-    l'usage. Le compose de production refuse d'ailleurs de démarrer sans clé publique
-    configurée. Ce n'est pas de la prudence excessive, c'est la première mauvaise surprise
-    qui guette.</p>
+    <h3 style="margin-top:0">{{ _("La règle à ne pas oublier") }}</h3>
+    <p style="margin-bottom:0">{{ _("Une instance exposée sans clés d'accès permet à n'importe qui de dépenser <em>votre</em> argent : chaque analyse appelle un modèle facturé à l'usage. Le compose de production refuse d'ailleurs de démarrer sans clé publique configurée. Ce n'est pas de la prudence excessive, c'est la première mauvaise surprise qui guette.") }}</p>
   </div>
 
-  <h2>Portail et instance sont deux choses</h2>
-  <p>Ce que vous lisez est un <strong>portail</strong> : il présente le projet, distribue
-  l'extension et délivre des clés. L'<strong>instance</strong>, elle, analyse et stocke.
-  Elles sont volontairement séparées, parce que le portail détient la clé privée qui signe
-  les clés d'accès : si l'instance était compromise, personne ne pourrait pour autant
-  émettre de clés en votre nom.</p>
-  <p>Un même portail peut d'ailleurs délivrer des clés valables sur plusieurs instances.
-  C'est la première pierre de ce qui deviendra un réseau d'instances fédérées, plutôt qu'un
-  service central de plus.</p>
+  <h2>{{ _("Portail et instance sont deux choses") }}</h2>
+  <p>{{ _("Ce que vous lisez est un <strong>portail</strong> : il présente le projet, distribue l'extension et délivre des clés. L'<strong>instance</strong>, elle, analyse et stocke. Elles sont volontairement séparées, parce que le portail détient la clé privée qui signe les clés d'accès : si l'instance était compromise, personne ne pourrait pour autant émettre de clés en votre nom.") }}</p>
+  <p>{{ _("Un même portail peut d'ailleurs délivrer des clés valables sur plusieurs instances. C'est la première pierre de ce qui deviendra un réseau d'instances fédérées, plutôt qu'un service central de plus.") }}</p>
 
-  <h2>Contribuer</h2>
-  <p>La discussion la plus utile ne porte pas sur le code. Elle porte sur le
-  <a href="/taxonomie">référentiel de procédés</a>, sur les
-  <a href="/methodologie">pondérations</a>, et sur les cas où l'analyse se trompe. Ces
-  fichiers sont publics précisément pour être contestés.</p>
+  <h2>{{ _("Contribuer") }}</h2>
+  <p>{{ _("La discussion la plus utile ne porte pas sur le code. Elle porte sur le <a href=\"%(taxonomie)s\">référentiel de procédés</a>, sur les <a href=\"%(methodologie)s\">pondérations</a>, et sur les cas où l'analyse se trompe. Ces fichiers sont publics précisément pour être contestés.", taxonomie=u('/taxonomie'), methodologie=u('/methodologie')) }}</p>
+
 </article>
 {% endblock %}
