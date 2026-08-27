@@ -8,6 +8,7 @@ une page du site ne peut pas diverger de ce que le code fait, elle en est extrai
 
 from __future__ import annotations
 
+import posixpath
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -21,6 +22,16 @@ _MOTIF_FAMILLE = re.compile(r"^##\s+Famille\s+([A-Z])\s+—\s+(.+?)\s*$", re.MUL
 
 GRAVITES = {"haute": "Gravité haute", "moyenne": "Gravité moyenne", "faible": "Gravité faible"}
 
+# Les documents de docs/ se lient entre eux par chemins relatifs. C'est juste dans le
+# dépôt, et faux ici : « METHODOLOGIE.md » deviendrait /METHODOLOGIE.md, une page qui
+# n'existe pas. Ce que le portail publie déjà est renvoyé vers sa page ; le reste vers le
+# dépôt s'il est annoncé, et à défaut le lien cède la place au chemin, en clair.
+PAGES_DU_PORTAIL = {
+    "docs/ETHIQUE.md": "/charte",
+    "docs/METHODOLOGIE.md": "/methodologie",
+    "docs/TAXONOMIE.md": "/taxonomie",
+}
+
 
 @lru_cache
 def _rendu() -> MarkdownIt:
@@ -29,14 +40,49 @@ def _rendu() -> MarkdownIt:
     return MarkdownIt("commonmark").enable("table")
 
 
+def _reecrire_liens(jetons: list, depot_fichiers: str) -> None:
+    """Recale les liens relatifs d'un document du dépôt sur les adresses du portail.
+
+    Les liens absolus, les ancres et les adresses de courriel sont laissés tels quels."""
+    neutraliser = 0
+    for jeton in jetons:
+        if jeton.children:
+            _reecrire_liens(jeton.children, depot_fichiers)
+        if jeton.type == "link_close" and neutraliser:
+            jeton.tag = "code"
+            neutraliser -= 1
+            continue
+        if jeton.type != "link_open":
+            continue
+        cible = jeton.attrGet("href") or ""
+        # « mailto: », « https: » : le schéma se reconnaît avant la première barre.
+        if not cible or cible.startswith(("/", "#")) or ":" in cible.split("/")[0]:
+            continue
+        barre = cible.endswith("/")
+        chemin = posixpath.normpath(posixpath.join("docs", cible.split("#")[0]))
+        ancre = cible.partition("#")[2]
+        if chemin in PAGES_DU_PORTAIL:
+            jeton.attrSet("href", PAGES_DU_PORTAIL[chemin] + (f"#{ancre}" if ancre else ""))
+        elif depot_fichiers:
+            jeton.attrSet("href", f"{depot_fichiers.rstrip('/')}/{chemin}{'/' if barre else ''}"
+                                  + (f"#{ancre}" if ancre else ""))
+        else:
+            jeton.tag = "code"
+            jeton.attrs = {}
+            neutraliser += 1
+
+
 @lru_cache
-def document(nom: str) -> dict:
+def document(nom: str, depot_fichiers: str = "") -> dict:
     """Rend docs/<NOM>.md en HTML. Retourne {titre, html}."""
     chemin = trouver_racine() / "docs" / f"{nom}.md"
     texte = chemin.read_text(encoding="utf-8")
     premiere = next((l for l in texte.splitlines() if l.startswith("# ")), "# Document")
     corps = texte.split("\n", 1)[1] if texte.startswith("# ") else texte
-    return {"titre": premiere[2:].strip(), "html": _rendu().render(corps)}
+    md = _rendu()
+    jetons = md.parse(corps)
+    _reecrire_liens(jetons, depot_fichiers)
+    return {"titre": premiere[2:].strip(), "html": md.renderer.render(jetons, md.options, {})}
 
 
 @lru_cache

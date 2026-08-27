@@ -37,6 +37,7 @@
     <div>
       <strong style="color: var(--encre); font-family: var(--display); font-size: 1.05rem;">{{ nom }}</strong><br>
       Logiciel libre sous licence AGPL-3.0.<br>
+      {% if depot %}<a href="{{ depot }}">Code source de cette instance</a><br>{% endif %}
       Portail v{{ version }}.
       {% if paquet %}
       {# Lien direct et stable : /telecharger sert toujours la version la plus haute

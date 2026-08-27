@@ -5,8 +5,9 @@
   <div class="contenu">
     <span class="surtitre">Transparence</span>
     <h1>Comment la note est calculée</h1>
-    <p class="chapo">Les chiffres de cette page ne sont pas recopiés : ils sont lus dans le
-    code qui les applique. S'ils changent un jour, cette page change avec eux.</p>
+    <p class="chapo">Les chiffres de cette page ne sont pas recopiés : ils sont lus dans
+    {% if depot %}<a href="{{ depot }}">le code qui les applique</a>{% else %}le code qui les
+    applique{% endif %}. S'ils changent un jour, cette page change avec eux.</p>
   </div>
 </header>
 

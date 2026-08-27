@@ -76,6 +76,19 @@ class ParametresPortail(BaseSettings):
     # Juridiction dont relèvent les conditions d'utilisation. Vide = non précisée.
     droit_applicable: str = ""
 
+    # --- Code source ---
+    # Adresse publique du code source de CETTE instance. L'AGPL-3.0 impose (article 13) de
+    # proposer le code correspondant, modifications comprises, aux personnes qui utilisent
+    # le service à distance : un portail ouvert au public sans cette adresse n'est pas en
+    # règle avec sa propre licence. Vide = les pages parlent du dépôt sans lien plutôt que
+    # d'en inventer un, et le portail avertit au démarrage.
+    depot: str = ""
+    # Préfixe pour désigner un fichier précis du dépôt, branche comprise :
+    # « https://…/blob/main » sur GitHub ou GitLab, « …/src/branch/main » sur Forgejo.
+    # Chaque forge a sa forme, d'où une variable distincte plutôt qu'une adresse devinée.
+    # Vide = les chemins cités dans les documents s'affichent sans lien.
+    depot_fichiers: str = ""
+
     # --- Réseau ---
     # L'extension appelle /v1/inscription depuis chrome-extension://<id>, identifiant qui
     # change à chaque installation non empaquetée : le CORS ne peut pas servir de filtre ici.

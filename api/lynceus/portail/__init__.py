@@ -115,6 +115,15 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
     compteur = _CompteurCles()
     legal = identite_legale(p)
 
+    if instance_publique and not p.depot:
+        print(
+            "⚠  Code source non annoncé (LYNCEUS_PORTAIL_DEPOT). L'AGPL-3.0 impose "
+            "(article 13) de proposer le code correspondant aux personnes qui utilisent "
+            "le service à distance : en l'état, les pages parlent du dépôt sans pouvoir "
+            "y renvoyer.",
+            file=sys.stderr,
+        )
+
     if instance_publique and not legal["complete"]:
         print(
             "⚠  Identité de l'exploitant incomplète (LYNCEUS_PORTAIL_EDITEUR_*, "
@@ -148,6 +157,7 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
         inscription_ouverte=bool(p.cle_privee and instance_publique),
         nb_techniques=contenu.nb_techniques(),
         legal=legal,
+        depot=p.depot.rstrip("/"),
     )
 
     def paquet_courant() -> dict | None:
@@ -201,7 +211,8 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
 
     @app.get("/charte", response_class=HTMLResponse)
     def charte(requete: Request):
-        return page(requete, "document.html", document=contenu.document("ETHIQUE"))
+        return page(requete, "document.html",
+                    document=contenu.document("ETHIQUE", p.depot_fichiers))
 
     @app.get("/auto-hebergement", response_class=HTMLResponse)
     def auto_hebergement(requete: Request):

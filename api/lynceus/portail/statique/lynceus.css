@@ -75,8 +75,12 @@
   /* Grades : identiques à ceux du panneau de l'extension, volontairement. */
   --a: #1a7f37; --b: #5a8f29; --c: #b58900; --d: #c9662a; --e: #b3261e;
 
-  --prose: 36rem;
-  --large: 62rem;
+  /* Largeur de la colonne de texte, padding compris (box-sizing: border-box) : il
+     reste 38rem de lecture, soit environ 70 signes par ligne dans le corps serif. À
+     36rem, la mesure tombait sous 60 signes et la page paraissait étroite sur un
+     écran d'ordinateur, sans rien gagner en confort. */
+  --prose: 42rem;
+  --large: 66rem;
   --display: "Fraunces", "Iowan Old Style", Georgia, ui-serif, serif;
   --texte: "Newsreader", Georgia, ui-serif, serif;
   --ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;

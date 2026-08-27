@@ -22,16 +22,18 @@
     OpenAI convient, y compris un modèle local via Ollama : l'analyse ne coûte alors rien
     et ne sort pas de votre machine.</li>
     <li><strong>Votre méthodologie.</strong> Les pondérations, le référentiel de procédés
-    et les prompts sont des fichiers du dépôt. Vous pouvez en discuter, et les changer.</li>
+    et les prompts sont des fichiers {% if depot %}<a href="{{ depot }}">du dépôt</a>{% else %}du
+    dépôt{% endif %}. Vous pouvez en discuter, et les changer.</li>
   </ul>
 
   <h2>Le minimum vital</h2>
   <p>Avec Docker, une instance d'essai tient en une commande, sur SQLite, sans base à
   installer :</p>
-  <pre><code>git clone &lt;dépôt&gt; lynceus &amp;&amp; cd lynceus/api
+  <pre><code>git clone {% if depot %}{{ depot }}.git{% else %}&lt;dépôt&gt;{% endif %} lynceus &amp;&amp; cd lynceus/api
 cp .env.example .env        # y placer la clé du fournisseur de modèle
 docker compose up -d</code></pre>
-  <p>Pour une instance destinée à d'autres personnes, le dépôt fournit un
+  <p>Pour une instance destinée à d'autres personnes, {% if depot %}<a href="{{ depot }}">le
+  dépôt</a>{% else %}le dépôt{% endif %} fournit un
   <code>docker-compose.prod.yml</code> (PostgreSQL, migrations automatiques, exposition par
   Cloudflare Tunnel) et un guide de déploiement détaillé, y compris la façon d'estimer la
   dépense avant d'ouvrir les portes.</p>
