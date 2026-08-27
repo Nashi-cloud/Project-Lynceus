@@ -1,6 +1,6 @@
 # Taxonomie des techniques — référentiel Lynceus
 
-Version : **0.1.1** — 31 techniques. Ce référentiel est la **liste fermée** des techniques détectables : toute détection dans une carte d'analyse doit porter un `id` de cette liste (validé par le serveur) et un extrait verbatim de la page.
+Version : **0.1.2** — 31 techniques. Ce référentiel est la **liste fermée** des techniques détectables : toute détection dans une carte d'analyse doit porter un `id` de cette liste (validé par le serveur) et un extrait verbatim de la page.
 
 Chaque entrée : définition, indices de détection, mécanisme psychologique. Alignée sur la taxonomie **FLICC** (John Cook), le *Debunking Handbook 2020* et les travaux sur l'inoculation (van der Linden). La gravité indiquée est *indicative* : le contexte prime.
 

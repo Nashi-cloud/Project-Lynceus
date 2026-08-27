@@ -362,6 +362,15 @@ def _comparer(entree: dict, carte: dict) -> tuple[list[str], list[str]]:
     for faux_positif in [t for t in entree.get("techniques_interdites", []) if t in ids]:
         graves.append(f"faux positif : {faux_positif}")
 
+    # La langue de rédaction est une attente comme une autre depuis le prompt v0.1.2 :
+    # une analyse rendue dans la mauvaise langue est inutilisable pour qui lit la page,
+    # même si tout le reste est juste.
+    langue_attendue = entree.get("langue_attendue")
+    if langue_attendue:
+        obtenue = (carte.get("langue") or "")[:2]
+        if obtenue != langue_attendue[:2]:
+            graves.append(f"langue {obtenue or '(absente)'} ≠ {langue_attendue}")
+
     plancher = entree.get("confiance_min")
     if plancher is not None and carte["note"]["confiance"] < plancher:
         mineurs.append(f"confiance {carte['note']['confiance']:.2f} < {plancher}")
