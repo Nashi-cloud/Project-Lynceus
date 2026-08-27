@@ -286,7 +286,8 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
     def taxonomie(requete: Request):
         traduire = i18n.traducteur(requete.scope.get("lynceus_langue", i18n.LANGUE_SOURCE))
         return page(requete, "taxonomie.html",
-                    familles=contenu.taxonomie_par_famille(),
+                    familles=contenu.taxonomie_par_famille(langue(requete)),
+                    taxonomie_traduite=contenu.taxonomie_traduite(langue(requete)),
                     gravites={cle: traduire(libelle)
                               for cle, libelle in contenu.GRAVITES.items()})
 
@@ -311,7 +312,7 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
             raise HTTPException(404, f"Version de prompt inconnue : {choisie}")
         return page(requete, "prompt.html",
                     document=contenu.prompt_publie(choisie, p.depot_fichiers,
-                                                   prefixe_langue(requete)),
+                                                   prefixe_langue(requete), langue(requete)),
                     versions=list(reversed(versions)), version_affichee=choisie)
 
     @app.get("/calibration", response_class=HTMLResponse)
@@ -322,7 +323,7 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
                              "d'avance, écarts compris. Publier le taux d'erreur fait "
                              "partie de la méthode : sans lui, la note ne veut rien dire."),
                     document=contenu.calibration(p.depot_fichiers,
-                                                 prefixe_langue(requete)))
+                                                 prefixe_langue(requete), langue(requete)))
 
     @app.get("/auto-hebergement", response_class=HTMLResponse)
     def auto_hebergement(requete: Request):
