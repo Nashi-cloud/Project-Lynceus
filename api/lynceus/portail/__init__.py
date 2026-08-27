@@ -20,6 +20,7 @@ import zipfile
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import httpx
 from fastapi import FastAPI, Form, HTTPException, Query, Request
@@ -79,6 +80,18 @@ class _CompteurCles:
         if self._compte.get(cle, 0) >= plafond:
             raise TropDeCles
         self._compte[cle] = self._compte.get(cle, 0) + 1
+
+
+def forge_de(depot: str) -> str:
+    """Quelle marque afficher à côté du lien vers le code source.
+
+    Le projet est auto-hébergeable, et son dépôt aussi : afficher la marque de GitHub
+    devant une adresse Forgejo serait faux. Une forge non reconnue reçoit un signe neutre,
+    ce qui vaut mieux qu'un logo emprunté."""
+    hote = (urlsplit(depot).hostname or "").lower()
+    if hote == "github.com" or hote.endswith(".github.com"):
+        return "github"
+    return ""
 
 
 class LangueDansLURL:
@@ -196,6 +209,7 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
             nb_techniques=contenu.nb_techniques(),
             legal=legal,
             depot=p.depot.rstrip("/"),
+            forge=forge_de(p.depot),
             langue=code,
             langue_source=i18n.LANGUE_SOURCE,
             _=i18n.traducteur(code),

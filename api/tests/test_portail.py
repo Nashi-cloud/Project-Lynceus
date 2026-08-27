@@ -291,6 +291,28 @@ def test_un_document_renvoie_vers_les_pages_du_portail_avant_la_forge():
     assert 'href="/methodologie"' in charte
 
 
+def test_la_marque_de_la_forge_suit_l_adresse_du_depot():
+    """Le projet est auto-hébergeable, son dépôt aussi : afficher la marque de GitHub
+    devant une adresse Forgejo serait faux. Une forge non reconnue reçoit un signe neutre."""
+    from lynceus.portail import forge_de
+
+    assert forge_de("https://github.com/org/projet") == "github"
+    assert forge_de("https://forge.exemple.fr/vous/lynceus") == ""
+    assert forge_de("") == ""
+
+
+def test_le_pied_de_page_montre_la_marque_de_la_forge():
+    """Le logo est dessiné dans la page, jamais chargé depuis un domaine tiers : la
+    politique de confidentialité promet qu'aucune ressource extérieure n'est appelée."""
+    p = parametres_portail_test(instance="https://instance.test",
+                                depot="https://github.com/org/projet")
+    with TestClient(creer_portail(p)) as client:
+        html = client.get("/").text
+    assert 'class="lien-forge"' in html
+    assert "<svg" in html.split('class="lien-forge"')[1][:400]
+    assert "githubusercontent" not in html and "githubassets" not in html
+
+
 def test_le_depot_d_origine_est_annonce_sans_configuration():
     """Une instance qui fait tourner le code publié tel quel n'a rien à configurer : le
     défaut renvoie au dépôt d'origine, ce qui est exact et satisfait l'AGPL (article 13).

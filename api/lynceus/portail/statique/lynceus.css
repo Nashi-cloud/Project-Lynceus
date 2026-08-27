@@ -318,6 +318,11 @@ main { display: block; }
   color: var(--encre-2);
   font: 0.92rem/1.7 var(--ui);
 }
+/* La marque de la forge se lit comme un mot de la phrase, pas comme un bouton : même
+   taille, même couleur, alignée sur la ligne de base du texte qui la suit. */
+.pied .lien-forge { display: inline-flex; align-items: center; gap: 0.42rem; }
+.pied .lien-forge svg { flex: none; opacity: 0.85; }
+
 .pied .nom-projet {
   color: var(--encre);
   font-family: var(--display);
