@@ -80,3 +80,274 @@ msgstr "Privacy"
 
 msgid "Conditions d'utilisation"
 msgstr "Terms of use"
+
+# --- Annuaire public
+
+msgid "Annuaire public"
+msgstr "Public directory"
+
+msgid "Sans rien installer"
+msgstr "Nothing to install"
+
+msgid "Consulter l'annuaire"
+msgstr "Search the directory"
+
+msgid "Ce que cette instance a déjà analysé est public. Un domaine pour son profil général, une adresse complète pour l'analyse d'une page précise."
+msgstr "Whatever this instance has already analysed is public. Enter a domain for its overall profile, or a full address for the analysis of one page."
+
+msgid "exemple.fr ou https://exemple.fr/article"
+msgstr "example.com or https://example.com/article"
+
+msgid "Domaine ou adresse de page"
+msgstr "Domain or page address"
+
+msgid "Chercher"
+msgstr "Search"
+
+msgid "Consultation de l'instance…"
+msgstr "Asking the instance…"
+
+msgid "Ce que l'instance apprend de votre recherche"
+msgstr "What the instance learns from your search"
+
+msgid "Pour une <strong>adresse de page</strong>, ce portail n'envoie à l'instance que les premiers caractères de l'empreinte, puis fait la correspondance finale lui-même. L'instance voit passer une demande qui correspond à des milliers de pages possibles et ne peut pas savoir laquelle vous intéresse. C'est le même mécanisme que dans l'extension, et il s'applique aussi quand la demande vient d'un serveur."
+msgstr "For a <strong>page address</strong>, this portal sends the instance only the first few characters of the fingerprint, then does the final matching itself. The instance sees a request that matches thousands of possible pages, and cannot tell which one you are interested in. This is the same mechanism the extension uses, and it applies just as much when the request comes from a server."
+
+msgid "Pour un <strong>domaine</strong>, la question est en revanche transmise telle quelle : un profil de domaine est une donnée publique, et il ne dit rien de la page que vous lisiez."
+msgstr "For a <strong>domain</strong>, the question is passed on as it stands: a domain profile is public data, and it says nothing about the page you were reading."
+
+# --- Contestation
+
+msgid "Contester une analyse"
+msgstr "Dispute an analysis"
+
+msgid "Charte, article 6"
+msgstr "Charter, article 6"
+
+msgid "Toute analyse est contestable, par n'importe qui, y compris et surtout par l'éditeur du site concerné."
+msgstr "Every analysis can be disputed, by anyone, and first of all by the publisher of the site it describes."
+
+msgid "Ce qui se passe ensuite, exactement"
+msgstr "What happens next, precisely"
+
+msgid "Votre contestation est enregistrée dans la base de l'instance avec son motif et son message, et le <strong>compteur de contestations devient public</strong> : il s'affiche sous l'analyse, pour tout le monde, avant même qu'elle soit examinée."
+msgstr "Your dispute is recorded in the instance database with its reason and its message, and the <strong>dispute counter becomes public</strong>: it appears below the analysis, for everyone, before anyone has even looked at it."
+
+msgid "Elle est ensuite mise à disposition de l'opérateur de cette instance, qui dispose d'un outil de modération : retirer l'analyse, la faire refaire, ou la maintenir en justifiant. Toute décision prise est conservée et auditable."
+msgstr "It is then handed to whoever operates this instance, who has a moderation tool: withdraw the analysis, have it redone, or uphold it with a stated reason. Every decision is kept and auditable."
+
+msgid "Un cas se règle sans intervention humaine. Si vous signalez que <strong>la page a changé</strong>, la prochaine visite produira une nouvelle analyse qui remplacera l'ancienne."
+msgstr "One case settles itself without human intervention. If you report that <strong>the page has changed</strong>, the next visit produces a new analysis, which replaces the old one."
+
+msgid "<strong>Ce que nous ne promettons pas :</strong> un délai. Cette instance est tenue par des personnes, pas par un service client. Si ce délai vous semble déraisonnable pour un droit de réponse, l'auto-hébergement reste ouvert : le code est libre."
+msgstr "<strong>What we do not promise:</strong> a deadline. This instance is run by people, not by a support department. If that wait seems unreasonable for a right of reply, self-hosting remains open to you: the code is free."
+
+msgid "Numéro de l'analyse"
+msgstr "Analysis number"
+
+msgid "Il figure en bas de chaque analyse, dans le panneau de l'extension comme dans <a href=\"%(annuaire)s\">l'annuaire public</a>."
+msgstr "It appears at the foot of every analysis, in the extension panel as well as in the <a href=\"%(annuaire)s\">public directory</a>."
+
+msgid "Motif"
+msgstr "Reason"
+
+msgid "Ce qui vous paraît faux"
+msgstr "What you believe is wrong"
+
+msgid "Soyez précis : quel passage, et pourquoi."
+msgstr "Be specific: which passage, and why."
+
+msgid "Contact (facultatif)"
+msgstr "Contact (optional)"
+
+msgid "Uniquement si vous souhaitez une réponse. Laissez vide pour contester anonymement : c'est traité de la même façon."
+msgstr "Only if you would like a reply. Leave it empty to dispute anonymously: it is handled exactly the same way."
+
+msgid "Envoyer la contestation"
+msgstr "Send the dispute"
+
+msgid "Envoi…"
+msgstr "Sending…"
+
+msgid "Instance injoignable"
+msgstr "Instance unreachable"
+
+msgid "La contestation n'a pas pu être transmise et n'est <strong>pas</strong> enregistrée. Conservez votre texte et réessayez plus tard."
+msgstr "The dispute could not be delivered and has <strong>not</strong> been recorded. Keep your text and try again later."
+
+msgid "Contestation refusée"
+msgstr "Dispute refused"
+
+msgid "Contestation enregistrée"
+msgstr "Dispute recorded"
+
+msgid "Elle est en base, et le compteur public de cette analyse vient d'augmenter."
+msgstr "It is in the database, and the public counter on this analysis has just gone up."
+
+msgid "Un opérateur de cette instance l'examinera. Aucun délai ne vous est promis."
+msgstr "Someone operating this instance will look at it. No deadline is promised."
+
+# --- Motifs de contestation
+
+msgid "L'analyse est fausse"
+msgstr "The analysis is wrong"
+
+msgid "Une citation est déformée"
+msgstr "A quotation is distorted"
+
+msgid "La catégorie est erronée (satire, opinion…)"
+msgstr "The category is wrong (satire, opinion…)"
+
+msgid "La note ne correspond pas au contenu"
+msgstr "The grade does not match the content"
+
+msgid "La page a changé depuis l'analyse"
+msgstr "The page has changed since the analysis"
+
+msgid "Je suis l'éditeur de ce site et je conteste"
+msgstr "I publish this site and I dispute this"
+
+msgid "Autre"
+msgstr "Other"
+
+# --- Installation
+
+msgid "Trois minutes"
+msgstr "Three minutes"
+
+msgid "Installer l'extension"
+msgstr "Install the extension"
+
+msgid "Aucun compte à créer, aucune adresse électronique à donner. L'extension demande sa clé d'accès toute seule au premier lancement."
+msgstr "No account to create, no email address to hand over. The extension asks for its access key by itself, the first time you run it."
+
+msgid "1. Télécharger"
+msgstr "1. Download"
+
+msgid "Version %(version)s, %(taille)s Ko, archive ZIP."
+msgstr "Version %(version)s, %(taille)s kB, ZIP archive."
+
+msgid "Télécharger l'extension"
+msgstr "Download the extension"
+
+msgid "Lien direct, à transmettre tel quel : <code>%(adresse)s/telecharger</code>. Il sert toujours la version la plus récente publiée ici, sans qu'il faille le mettre à jour."
+msgstr "A direct link, to pass on as it stands: <code>%(adresse)s/telecharger</code>. It always serves the most recent version published here, and never needs updating."
+
+msgid "L'archive que vous recevez contient un fichier <code>portail.json</code> portant l'adresse de ce portail, et rien d'autre : c'est ce qui permet à l'extension de demander sa clé sans que vous ayez à recopier quoi que ce soit. Tout le reste est reconstructible depuis les sources (<code>npm run paquet</code>) : rien de ce qui est distribué ici n'est opaque."
+msgstr "The archive you receive contains a <code>portail.json</code> file carrying the address of this portal, and nothing else: that is what lets the extension ask for its key without you copying anything by hand. Everything else can be rebuilt from source (<code>npm run paquet</code>): nothing distributed here is opaque."
+
+msgid "1. Construire l'extension depuis les sources"
+msgstr "1. Build the extension from source"
+
+msgid "Ce portail ne distribue pas d'archive pour le moment."
+msgstr "This portal does not distribute an archive at the moment."
+
+msgid "2. Charger l'extension dans Chrome"
+msgstr "2. Load the extension into Chrome"
+
+msgid "Décompressez l'archive dans un dossier que vous garderez, par exemple <code>Documents/lynceus</code>. Si vous le supprimez, l'extension disparaîtra."
+msgstr "Unzip the archive into a folder you intend to keep, for instance <code>Documents/lynceus</code>. Delete it and the extension goes with it."
+
+msgid "Ouvrez <code>chrome://extensions</code> dans la barre d'adresse."
+msgstr "Open <code>chrome://extensions</code> in the address bar."
+
+msgid "Activez <strong>Mode développeur</strong>, en haut à droite."
+msgstr "Turn on <strong>Developer mode</strong>, top right."
+
+msgid "Cliquez <strong>Charger l'extension non empaquetée</strong> et choisissez le dossier décompressé."
+msgstr "Click <strong>Load unpacked</strong> and choose the folder you unzipped."
+
+msgid "Ce détour par le mode développeur est le prix de la distribution directe. Nous le disons plutôt que de le cacher : tant que l'extension n'est pas sur le magasin de Chrome, c'est la seule façon de l'installer sans intermédiaire."
+msgstr "This detour through developer mode is the price of direct distribution. We say so rather than hide it: until the extension is in the Chrome store, this is the only way to install it without an intermediary."
+
+msgid "3. Obtenir la clé d'accès"
+msgstr "3. Get the access key"
+
+msgid "La page d'accueil de l'extension propose un bouton <strong>« Obtenir une clé »</strong>. Un clic suffit : elle interroge ce portail, reçoit une clé et l'adresse de l'instance, puis se configure seule."
+msgstr "The extension's welcome page offers a <strong>“Get a key”</strong> button. One click is enough: it asks this portal, receives a key and the address of the instance, then configures itself."
+
+msgid "Ce que contient la clé"
+msgstr "What the key contains"
+
+msgid "Une date d'expiration et un nombre d'analyses par jour. Rien d'autre."
+msgstr "An expiry date and a number of analyses per day. Nothing else."
+
+msgid "Pas de nom, pas d'adresse électronique, pas d'identifiant de compte, puisqu'il n'y a pas de compte. Ce portail ne conserve aucune trace des clés qu'il délivre : il serait incapable de dire qui a obtenu quoi."
+msgstr "No name, no email address, no account identifier, since there is no account. This portal keeps no record of the keys it issues: it would be unable to say who got what."
+
+msgid "Si le bouton échoue, l'adresse du portail à saisir manuellement dans les réglages est celle de cette page."
+msgstr "If the button fails, the portal address to enter by hand in the settings is the address of this page."
+
+msgid "Ce portail ne délivre pas de clés d'accès, faute de clé d'émission configurée. Renseignez à la main, dans les réglages de l'extension, l'adresse de l'instance que vous comptez utiliser, ou <a href=\"%(auto)s\">hébergez la vôtre</a> : une instance personnelle n'exige aucune clé."
+msgstr "This portal issues no access keys, having no signing key configured. Enter by hand, in the extension settings, the address of the instance you intend to use, or <a href=\"%(auto)s\">host your own</a>: a personal instance requires no key at all."
+
+msgid "4. Premiers pas"
+msgstr "4. First steps"
+
+msgid "Par défaut, l'extension <strong>ne fait rien tant que vous ne le demandez pas</strong> : clic droit sur une page, puis « Analyser cette page ». Le badge qui signale les pages déjà connues de l'annuaire est facultatif, et demande explicitement la permission avant de s'activer."
+msgstr "By default the extension <strong>does nothing until you ask it to</strong>: right-click on a page, then “Analyse this page”. The badge that flags pages already known to the directory is optional, and asks for permission explicitly before it turns on."
+
+msgid "Ce choix vient de la charte : le scan est volontaire, et la vie privée est le réglage d'usine."
+msgstr "That choice comes from the charter: scanning is deliberate, and privacy is the factory setting."
+
+# --- Auto-hébergement
+
+msgid "Ce projet n'a de sens que si personne n'est obligé de nous faire confiance. Le code est libre : vous pouvez faire tourner votre instance, la modifier, et l'offrir à qui vous voulez."
+msgstr "This project only makes sense if nobody is obliged to trust us. The code is free: you can run your own instance, change it, and offer it to whoever you like."
+
+msgid "Pourquoi vous voudriez le faire"
+msgstr "Why you might want to"
+
+msgid "<strong>Aucune clé à demander.</strong> Une instance personnelle n'exige pas de clé d'accès. Le contrôle d'accès n'existe que pour protéger une instance publique d'une facture de modèle qui s'envole."
+msgstr "<strong>No key to ask for.</strong> A personal instance requires no access key. Access control exists only to protect a public instance from a model bill that runs away."
+
+msgid "<strong>Vos analyses restent chez vous.</strong> Rien ne transite par ce portail."
+msgstr "<strong>Your analyses stay with you.</strong> Nothing passes through this portal."
+
+msgid "<strong>Votre modèle, votre coût.</strong> N'importe quel fournisseur compatible OpenAI convient, y compris un modèle local via Ollama : l'analyse ne coûte alors rien et ne sort pas de votre machine."
+msgstr "<strong>Your model, your cost.</strong> Any OpenAI-compatible provider will do, including a local model through Ollama: the analysis then costs nothing and never leaves your machine."
+
+msgid "<strong>Votre méthodologie.</strong> Les pondérations, le référentiel de procédés et les prompts sont des fichiers <a href=\"%(depot)s\">du dépôt</a>. Vous pouvez en discuter, et les changer."
+msgstr "<strong>Your methodology.</strong> The weightings, the catalogue of techniques and the prompts are files <a href=\"%(depot)s\">in the repository</a>. You can argue with them, and change them."
+
+msgid "<strong>Votre méthodologie.</strong> Les pondérations, le référentiel de procédés et les prompts sont des fichiers du dépôt. Vous pouvez en discuter, et les changer."
+msgstr "<strong>Your methodology.</strong> The weightings, the catalogue of techniques and the prompts are files in the repository. You can argue with them, and change them."
+
+msgid "Le minimum vital"
+msgstr "The bare minimum"
+
+msgid "Avec Docker, une instance d'essai tient en une commande, sur SQLite, sans base à installer :"
+msgstr "With Docker, a trial instance fits in one command, on SQLite, with no database to install:"
+
+msgid "dépôt"
+msgstr "repository"
+
+msgid "y placer la clé du fournisseur de modèle"
+msgstr "put your model provider key in it"
+
+msgid "Pour une instance destinée à d'autres personnes, <a href=\"%(depot)s\">le dépôt</a> fournit un <code>docker-compose.prod.yml</code> (PostgreSQL, migrations automatiques, exposition par Cloudflare Tunnel) et un guide de déploiement détaillé, y compris la façon d'estimer la dépense avant d'ouvrir les portes."
+msgstr "For an instance meant for other people, <a href=\"%(depot)s\">the repository</a> provides a <code>docker-compose.prod.yml</code> (PostgreSQL, automatic migrations, exposure through Cloudflare Tunnel) and a detailed deployment guide, including how to estimate the spend before opening the doors."
+
+msgid "Pour une instance destinée à d'autres personnes, le dépôt fournit un <code>docker-compose.prod.yml</code> (PostgreSQL, migrations automatiques, exposition par Cloudflare Tunnel) et un guide de déploiement détaillé, y compris la façon d'estimer la dépense avant d'ouvrir les portes."
+msgstr "For an instance meant for other people, the repository provides a <code>docker-compose.prod.yml</code> (PostgreSQL, automatic migrations, exposure through Cloudflare Tunnel) and a detailed deployment guide, including how to estimate the spend before opening the doors."
+
+msgid "La règle à ne pas oublier"
+msgstr "The rule not to forget"
+
+msgid "Une instance exposée sans clés d'accès permet à n'importe qui de dépenser <em>votre</em> argent : chaque analyse appelle un modèle facturé à l'usage. Le compose de production refuse d'ailleurs de démarrer sans clé publique configurée. Ce n'est pas de la prudence excessive, c'est la première mauvaise surprise qui guette."
+msgstr "An instance exposed without access keys lets anyone spend <em>your</em> money: every analysis calls a model billed by usage. The production compose file refuses to start without a public key configured. This is not excessive caution, it is the first nasty surprise waiting for you."
+
+msgid "Portail et instance sont deux choses"
+msgstr "Portal and instance are two different things"
+
+msgid "Ce que vous lisez est un <strong>portail</strong> : il présente le projet, distribue l'extension et délivre des clés. L'<strong>instance</strong>, elle, analyse et stocke. Elles sont volontairement séparées, parce que le portail détient la clé privée qui signe les clés d'accès : si l'instance était compromise, personne ne pourrait pour autant émettre de clés en votre nom."
+msgstr "What you are reading is a <strong>portal</strong>: it presents the project, distributes the extension and issues keys. The <strong>instance</strong> is what analyses and stores. They are kept apart on purpose, because the portal holds the private key that signs access keys: if the instance were compromised, nobody could issue keys in your name because of it."
+
+msgid "Un même portail peut d'ailleurs délivrer des clés valables sur plusieurs instances. C'est la première pierre de ce qui deviendra un réseau d'instances fédérées, plutôt qu'un service central de plus."
+msgstr "One portal can also issue keys valid on several instances. That is the first stone of what will become a federated network of instances, rather than one more central service."
+
+msgid "Contribuer"
+msgstr "Contributing"
+
+msgid "La discussion la plus utile ne porte pas sur le code. Elle porte sur le <a href=\"%(taxonomie)s\">référentiel de procédés</a>, sur les <a href=\"%(methodologie)s\">pondérations</a>, et sur les cas où l'analyse se trompe. Ces fichiers sont publics précisément pour être contestés."
+msgstr "The most useful discussion is not about the code. It is about the <a href=\"%(taxonomie)s\">catalogue of techniques</a>, the <a href=\"%(methodologie)s\">weightings</a>, and the cases where the analysis gets it wrong. Those files are public precisely so that they can be challenged."

@@ -159,10 +159,12 @@ def test_aucune_phrase_de_gabarit_n_est_laissee_sans_traduction():
 
     from lynceus.portail import i18n
 
+    motif = re.compile(r'\bN?_\(\s*"((?:[^"\\]|\\.)*)"')
+    fichiers = [*(RACINE / "gabarits").glob("*.html"), RACINE / "__init__.py"]
     phrases = set()
-    for gabarit in (RACINE / "gabarits").glob("*.html"):
-        phrases |= set(re.findall(r'\b_\(\s*"((?:[^"\\]|\\.)*)"',
-                                  gabarit.read_text(encoding="utf-8")))
+    for fichier in fichiers:
+        phrases |= {p.replace('\\"', '"')
+                    for p in motif.findall(fichier.read_text(encoding="utf-8"))}
     assert phrases, "aucune phrase marquée : le motif de détection ne correspond plus"
 
     for langue in i18n.LANGUES:
@@ -172,6 +174,15 @@ def test_aucune_phrase_de_gabarit_n_est_laissee_sans_traduction():
         manquantes = sorted(p for p in phrases if not catalogue.get(p))
         assert not manquantes, f"{langue} : {len(manquantes)} phrase(s) sans traduction, " \
                                f"à commencer par « {manquantes[0]} »"
+
+
+def test_les_libelles_venus_du_code_sont_traduits_aussi(portail):
+    """Les motifs de contestation sont définis en Python, avant qu'une langue existe.
+    Sans traduction au rendu, un formulaire anglais proposerait des choix en français."""
+    client, _ = portail
+    assert "I publish this site and I dispute this" in client.get("/en/contester").text
+    # L'apostrophe est échappée par Jinja : on cherche un fragment qui n'en porte pas.
+    assert "et je conteste" in client.get("/contester").text
 
 
 def test_le_prompt_publie_est_celui_que_le_moteur_applique(portail):

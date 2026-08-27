@@ -42,14 +42,23 @@ RACINE = Path(__file__).parent
 # sans que personne ait à recopier une adresse.
 FICHIER_PORTAIL = "portail.json"
 
+def N_(texte: str) -> str:
+    """Marque une phrase à traduire sans la traduire ici.
+
+    Ces libellés sont définis au chargement du module, avant qu'une requête et donc une
+    langue existent. Le marqueur les rend visibles de l'extraction et du test de
+    couverture ; la traduction a lieu au moment du rendu."""
+    return texte
+
+
 MOTIFS = [
-    ("analyse_erronee", "L'analyse est fausse"),
-    ("extrait_hors_contexte", "Une citation est déformée"),
-    ("categorie_erronee", "La catégorie est erronée (satire, opinion…)"),
-    ("note_injustifiee", "La note ne correspond pas au contenu"),
-    ("page_modifiee", "La page a changé depuis l'analyse"),
-    ("droit_de_reponse", "Je suis l'éditeur de ce site et je conteste"),
-    ("autre", "Autre"),
+    ("analyse_erronee", N_("L'analyse est fausse")),
+    ("extrait_hors_contexte", N_("Une citation est déformée")),
+    ("categorie_erronee", N_("La catégorie est erronée (satire, opinion…)")),
+    ("note_injustifiee", N_("La note ne correspond pas au contenu")),
+    ("page_modifiee", N_("La page a changé depuis l'analyse")),
+    ("droit_de_reponse", N_("Je suis l'éditeur de ce site et je conteste")),
+    ("autre", N_("Autre")),
 ]
 
 
@@ -419,7 +428,9 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
 
     @app.get("/contester", response_class=HTMLResponse)
     def contester_page(requete: Request, analyse: int | None = None):
-        return page(requete, "contester.html", motifs=MOTIFS, analyse_id=analyse)
+        traduire = i18n.traducteur(requete.scope.get("lynceus_langue", i18n.LANGUE_SOURCE))
+        return page(requete, "contester.html", analyse_id=analyse,
+                    motifs=[(valeur, traduire(libelle)) for valeur, libelle in MOTIFS])
 
     @app.post("/contester", response_class=HTMLResponse)
     async def contester(
