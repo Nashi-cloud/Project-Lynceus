@@ -1,37 +1,39 @@
-# Installer Lynceus
+# Installing Lynceus
 
-Deux façons d'utiliser Lynceus, selon ce que vous cherchez.
+**English** · [Français](INSTALLATION.fr.md)
 
-| | **Extension seule** | **Kit complet** |
+Two ways to use Lynceus, depending on what you are after.
+
+| | **Extension only** | **Full kit** |
 |---|---|---|
-| Ce que vous installez | l'extension Chrome | l'extension **et** votre propre serveur |
-| Il vous faut | l'adresse d'une instance Lynceus | une machine (ou un PC) et 20 minutes |
-| Vos données | passent par l'instance choisie | ne quittent jamais vos machines |
-| Coût | aucun | celui du modèle d'IA que vous choisissez (ou zéro avec un modèle local) |
+| What you install | the Chrome extension | the extension **and** your own server |
+| What you need | the address of a Lynceus instance | a machine (or a PC) and 20 minutes |
+| Your data | goes through the instance you chose | never leaves your own machines |
+| Cost | none | whatever the AI model you choose costs (or nothing, with a local model) |
 
-> **Il n'existe pas encore d'instance publique de référence.** En attendant, le kit complet est la voie normale, et de toute façon la plus respectueuse de votre vie privée.
+> **There is no public reference instance yet.** Until there is, the full kit is the normal route, and it is the one that respects your privacy most anyway.
 
 ---
 
-## Le kit complet, pas à pas
+## The full kit, step by step
 
-### Ce qu'il vous faut
+### What you need
 
-- Un ordinateur sous Linux, macOS ou Windows, allumé quand vous naviguez (un mini-PC ou un Raspberry Pi 4 suffisent).
-- **Python 3.11 ou plus récent** : vérifiez avec `python3 --version`.
-- **Node.js 20 ou plus récent** : vérifiez avec `node --version`.
-- Un accès à un modèle de langage. Deux possibilités :
-  - **Un service en ligne** (OpenRouter, par exemple) : quelques centimes par analyse, aucune installation ;
-  - **Un modèle local** avec [Ollama](https://ollama.com) : gratuit et privé, mais demande une machine costaude et donne des analyses moins fines.
+- A computer running Linux, macOS or Windows, switched on while you browse (a mini PC or a Raspberry Pi 4 is enough).
+- **Python 3.11 or newer**: check with `python3 --version`.
+- **Node.js 20 or newer**: check with `node --version`.
+- Access to a language model. Two options:
+  - **An online service** (OpenRouter, for instance): a few cents per analysis, nothing to install;
+  - **A local model** with [Ollama](https://ollama.com): free and private, but it needs a beefy machine and gives coarser analyses.
 
-### 1. Récupérer Lynceus
+### 1. Get Lynceus
 
 ```bash
-git clone <adresse-du-dépôt> Lynceus
+git clone https://github.com/Nashi-cloud/Project-Lynceus.git Lynceus
 cd Lynceus
 ```
 
-### 2. Installer le serveur
+### 2. Install the server
 
 ```bash
 cd api
@@ -39,21 +41,21 @@ python3 -m venv .venv
 .venv/bin/pip install -e .
 ```
 
-### 3. Le configurer
+### 3. Configure it
 
 ```bash
 cp .env.example .env
 ```
 
-Ouvrez `.env` dans un éditeur de texte et renseignez au minimum votre clé :
+Open `.env` in a text editor and fill in at least your key:
 
 ```ini
-LYNCEUS_LLM_API_KEY=votre-clé-ici
+LYNCEUS_LLM_API_KEY=your-key-here
 LYNCEUS_LLM_BASE_URL=https://openrouter.ai/api/v1
 LYNCEUS_LLM_MODEL=z-ai/glm-5.2
 ```
 
-*Avec Ollama à la place :*
+*With Ollama instead:*
 
 ```ini
 LYNCEUS_LLM_BASE_URL=http://localhost:11434/v1
@@ -61,19 +63,19 @@ LYNCEUS_LLM_MODEL=llama3.1
 LYNCEUS_LLM_API_KEY=ollama
 ```
 
-### 4. Démarrer le serveur
+### 4. Start the server
 
 ```bash
 .venv/bin/uvicorn lynceus.main:creer_application --factory
 ```
 
-Laissez cette fenêtre ouverte. Pour vérifier que tout va bien, ouvrez <http://localhost:8000/v1/meta> dans votre navigateur : vous devez voir apparaître le nom du modèle configuré.
+Leave that window open. To check everything is fine, open <http://localhost:8000/v1/meta> in your browser: you should see the name of the model you configured.
 
-> **Le navigateur est sur une autre machine que le serveur ?** Démarrez avec `--host 0.0.0.0` et indiquez l'adresse de la machine dans les réglages de l'extension. **N'exposez jamais le serveur sur Internet** : il n'a pas d'authentification et votre clé y est configurée. Un réseau privé (VPN, [Tailscale](https://tailscale.com)) est la bonne solution.
+> **Is the browser on a different machine from the server?** Start with `--host 0.0.0.0` and put the machine's address in the extension settings. **Never expose the server on the open internet**: it has no authentication and your key is configured in it. A private network (VPN, [Tailscale](https://tailscale.com)) is the right answer.
 
-### 5. Installer l'extension
+### 5. Install the extension
 
-Dans une autre fenêtre de terminal :
+In another terminal window:
 
 ```bash
 cd Lynceus/extension
@@ -81,55 +83,55 @@ npm install
 npm run build
 ```
 
-Puis dans Chrome :
+Then in Chrome:
 
-1. ouvrez `chrome://extensions` ;
-2. activez le **Mode développeur** (interrupteur en haut à droite) ;
-3. cliquez sur **Charger l'extension non empaquetée** ;
-4. choisissez le dossier `Lynceus/extension/dist`.
+1. open `chrome://extensions`;
+2. turn on **Developer mode** (the switch at the top right);
+3. click **Load unpacked**;
+4. choose the `Lynceus/extension/dist` folder.
 
-Une page d'accueil s'ouvre et vous propose d'activer la reconnaissance automatique. À vous de voir : sans elle, tout passe par le clic droit.
+A welcome page opens and offers to turn on automatic recognition. Up to you: without it, everything goes through the right-click menu.
 
-### 6. Essayer
+### 6. Try it
 
-Allez sur n'importe quel article, faites un **clic droit → « 🔭 Analyser cette page avec Lynceus »**. Le panneau s'ouvre sur la droite et l'analyse arrive en quelques secondes.
+Go to any article and **right click, then "🔭 Analyse this page with Lynceus"**. The panel opens on the right and the analysis arrives within seconds.
 
 ---
 
-## Avec Docker (plus simple si vous connaissez)
+## With Docker (simpler if you already know it)
 
 ```bash
 cd api
-LYNCEUS_LLM_API_KEY=votre-clé docker compose up --build
+LYNCEUS_LLM_API_KEY=your-key docker compose up --build
 ```
 
-Le serveur et sa base PostgreSQL démarrent ensemble. L'extension s'installe comme ci-dessus.
+The server and its PostgreSQL database start together. The extension is installed as above.
 
 ---
 
-## Questions courantes
+## Common questions
 
-**Combien ça coûte ?**
-Chaque page n'est analysée qu'une seule fois : ensuite elle est en cache, gratuitement et instantanément, pour tous les utilisateurs de votre instance. Comptez quelques centimes par nouvelle analyse selon le modèle choisi, ou rien du tout avec Ollama.
+**How much does it cost?**
+Each page is analysed only once: after that it is cached, free and instant, for every user of your instance. Reckon on a few cents per new analysis depending on the model you chose, or nothing at all with Ollama.
 
-**Mes pages visitées sont-elles envoyées quelque part ?**
-Le contenu d'une page n'est transmis que lorsque **vous** demandez une analyse. Si vous activez la reconnaissance automatique, seule une empreinte partielle de l'adresse circule (cinq caractères, partagés par plus d'un million d'adresses possibles) : votre instance ne peut pas savoir quelle page vous consultez. Rien n'est journalisé.
+**Are the pages I visit sent anywhere?**
+The content of a page is only transmitted when **you** ask for an analysis. If you turn on automatic recognition, only a partial digest of the address travels (five characters, shared by more than a million possible addresses): your instance cannot tell which page you are reading. Nothing is logged.
 
-**« Instance Lynceus injoignable »**
-Le serveur est-il démarré ? L'adresse dans les réglages de l'extension correspond-elle ? Après avoir modifié `.env`, il faut **redémarrer le serveur** : ce fichier n'est lu qu'au démarrage.
+**"Lynceus instance unreachable"**
+Is the server running? Does the address in the extension settings match? After editing `.env` you must **restart the server**: that file is only read at startup.
 
-**Certains sites refusent l'analyse**
-Les sites protégés contre les robots (Cloudflare et autres) bloquent le serveur, mais pas votre navigateur. C'est justement pourquoi l'extension extrait le contenu localement : passez par le clic droit plutôt que par la ligne de commande.
+**Some sites refuse to be analysed**
+Sites protected against robots (Cloudflare and the like) block the server, but not your browser. That is exactly why the extension extracts the content locally: use the right-click menu rather than the command line.
 
-**Je veux arrêter**
-Retirez l'extension depuis `chrome://extensions`, arrêtez le serveur (Ctrl+C) et supprimez le dossier. Rien ne subsiste ailleurs.
+**I want to stop**
+Remove the extension from `chrome://extensions`, stop the server (Ctrl+C) and delete the folder. Nothing survives anywhere else.
 
 ---
 
-## Aller plus loin
+## Going further
 
-- [Charte éthique](docs/ETHIQUE.md) : ce que Lynceus s'interdit, et pourquoi
-- [Méthodologie](docs/METHODOLOGIE.md) : comment la note est calculée
-- [Taxonomie](docs/TAXONOMIE.md) : les 31 techniques détectées
-- [Architecture](docs/ARCHITECTURE.md) : pour les développeurs
-- [Contribuer](CONTRIBUTING.md) : code, taxonomie, traductions, hébergement
+- [Ethical charter](docs/en/ETHIQUE.md): what Lynceus forbids itself, and why
+- [Methodology](docs/en/METHODOLOGIE.md): how the grade is computed
+- [Taxonomy](docs/en/TAXONOMIE.md): the 31 techniques detected
+- [Architecture](docs/en/ARCHITECTURE.md): for developers
+- [Contributing](CONTRIBUTING.md): code, taxonomy, translations, hosting

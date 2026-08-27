@@ -736,17 +736,27 @@ def _forge_connue(depot: str) -> bool:
 
 @app.command("traductions")
 def traductions(
-    langue: str = typer.Option("en", "--langue", help="code de la langue à inspecter"),
+    langue: str = typer.Option(
+        "", "--langue",
+        help="code de la langue à inspecter. Vide : toutes celles que le projet sert.",
+    ),
 ):
-    """Où en est la traduction des documents que le portail publie.
+    """Où en est la traduction des documents suivis du dépôt.
 
     Une traduction est une copie : elle dérive dès que l'original bouge, et rien ne le
-    signale puisque les deux pages s'affichent aussi bien. Cette commande est le seul
+    signale puisque les deux fichiers se lisent aussi bien. Cette commande est le seul
     endroit où lire l'état réel, plutôt que d'ouvrir les pages une par une.
-    """
-    from .portail import contenu
 
-    inventaire = contenu.etat_traductions(langue)
+    Sans `--langue`, toutes les langues servies sont inspectées, ce qui couvre les deux
+    conventions du dépôt : les textes qui engagent le projet, traduits depuis le français,
+    et la façade de la forge, traduite depuis l'anglais.
+    """
+    from .portail import contenu, i18n
+
+    langues = [langue] if langue else list(i18n.LANGUES)
+    inventaire = [
+        entree for code in langues for entree in contenu.etat_traductions(code)
+    ]
     couleurs = {"à jour": "green", "manquante": "yellow",
                 "en retard": "red", "sans empreinte": "red"}
     table = Table(show_header=True, header_style="bold")
@@ -761,8 +771,8 @@ def traductions(
     defauts = [e for e in inventaire if e["etat"] in ("en retard", "sans empreinte")]
     manquantes = [e for e in inventaire if e["etat"] == "manquante"]
     if manquantes:
-        console.print(f"[yellow]{len(manquantes)} document(s) encore à traduire : le portail "
-                      f"sert l'original en l'annonçant.[/yellow]")
+        console.print(f"[yellow]{len(manquantes)} document(s) encore à traduire : le lecteur "
+                      f"reçoit l'original, et le portail l'annonce.[/yellow]")
     if defauts:
         console.print(f"[red]{len(defauts)} traduction(s) en retard sur leur original. "
                       f"Relire, puis mettre à jour la ligne « traduit-de ».[/red]")

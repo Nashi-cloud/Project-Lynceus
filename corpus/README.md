@@ -1,85 +1,87 @@
-# Corpus de calibration
+# Calibration corpus
 
-Pages de référence servant à évaluer chaque évolution des prompts et de la méthodologie (aucune régression silencieuse — cf. docs/METHODOLOGIE.md §7).
+**English** · [Français](README.fr.md)
+
+Reference pages used to evaluate every change to the prompts and to the methodology (no silent regression, see [docs/en/METHODOLOGIE.md](../docs/en/METHODOLOGIE.md) §7).
 
 ## Format (`corpus.yaml`)
 
-Chaque entrée porte **soit** `fichier` (spécimen figé du dépôt), **soit** `url` (page réelle) :
+Each entry carries **either** `fichier` (a frozen specimen from the repository) **or** `url` (a real page):
 
 ```yaml
 - fichier: specimens/04-fictif-satire.md
   titre: Le conseil municipal vote à l'unanimité contre l'unanimité
-  categorie_attendue: satire            # ou categories_acceptables: [a, b]
-  grade_attendu: [A, B, C]              # fourchette acceptable
-  techniques_attendues: []              # ids qui DOIVENT être détectés
-  techniques_interdites: [verite_cachee]  # détections qui seraient des faux positifs graves
-  confiance_min: 0.5                    # plancher optionnel
+  categorie_attendue: satire            # or categories_acceptables: [a, b]
+  grade_attendu: [A, B, C]              # acceptable range
+  techniques_attendues: []              # ids that MUST be detected
+  techniques_interdites: [verite_cachee]  # detections that would be serious false positives
+  confiance_min: 0.5                    # optional floor
   notes: Crash-test satire — ne doit JAMAIS sortir en pseudo_science
 ```
 
-Le socle est **local par choix** : un corpus d'URL casse dès qu'une page est modifiée et échoue sur les sites protégés contre le téléchargement automatique. Les entrées `url` restent possibles pour ancrer la calibration dans le monde réel, en complément.
+The base is **local by choice**: a corpus of URLs breaks as soon as a page is edited, and fails on sites protected against automatic downloading. `url` entries remain possible, to anchor the calibration in the real world alongside the rest.
 
-`categories_acceptables` sert aux contenus légitimement hybrides (un article pseudo-médical qui vend un produit est aussi une publicité déguisée) : exiger une étiquette unique testerait un arbitrage arbitraire plutôt que la qualité de l'analyse.
+`categories_acceptables` exists for legitimately hybrid content (a pseudo-medical article selling a product is also disguised advertising): demanding a single label would test an arbitrary judgement call rather than the quality of the analysis.
 
-## Lancer une calibration
+## Running a calibration
 
 ```bash
-lynceus calibrer corpus/corpus.yaml                      # rapport en console
-lynceus calibrer corpus/corpus.yaml --json rapport.json  # + rapport détaillé
-lynceus calibrer corpus/corpus.yaml --filtre satire      # un sous-ensemble
-lynceus calibrer corpus/corpus.yaml --parallele 12       # plus vite sur votre propre instance
+lynceus calibrer corpus/corpus.yaml                      # report on the console
+lynceus calibrer corpus/corpus.yaml --json rapport.json  # plus a detailed report
+lynceus calibrer corpus/corpus.yaml --filtre satire      # a subset
+lynceus calibrer corpus/corpus.yaml --parallele 12       # faster on your own instance
 ```
 
-Les cas sont analysés **de front** (4 à la fois par défaut), ce qui divise l'attente d'autant : mesuré sur 12 cas à 3 s l'analyse, 37 s en séquentiel contre 9,6 s à 4 en parallèle, et 4,2 s à 12. Le défaut reste modeste par courtoisie envers une instance partagée — monter à 12 est justifié sur votre propre instance. Un dépassement de la limite de débit n'échoue pas : la demande patiente et reprend.
+Cases are analysed **concurrently** (4 at a time by default), which divides the wait accordingly: measured on 12 cases at 3 s per analysis, 37 s sequentially against 9.6 s at 4 in parallel, and 4.2 s at 12. The default stays modest out of courtesy towards a shared instance; going up to 12 is justified on your own. Hitting the rate limit is not a failure: the request waits and resumes.
 
-Les écarts sont classés : catégorie erronée, technique attendue manquante ou faux positif sur une technique interdite sont des **échecs graves** (code de sortie 1) ; un grade à un cran de la fourchette est un **écart mineur**.
+Deviations are graded: a wrong category, a missing expected technique or a false positive on a forbidden technique are **serious failures** (exit code 1); a grade one notch outside the range is a **minor deviation**.
 
-## Cas sentinelles obligatoires
+## Mandatory sentinel cases
 
-1. **Satire** → jamais classée trompeuse.
-2. **Éditorial de qualité** → jamais pénalisé pour sa position.
-3. **Pseudo-médecine marchande** → conflit d'intérêt détecté.
-4. **Article factuel de référence** → grade A/B, peu ou pas de techniques.
-5. **Contenu confessionnel non manipulateur** → la foi n'est pas notée.
+1. **Satire** → never classified as misleading.
+2. **A good editorial** → never penalised for its position.
+3. **Commercial pseudo-medicine** → conflict of interest detected.
+4. **A factual reference article** → grade A or B, few techniques or none.
+5. **Non-manipulative faith-based content** → faith is not graded.
 
-Deux pièges complètent le socle : le **faux équilibre** (ton neutre, procédé trompeur — doit être détecté) et la **vulgarisation scientifique dense** (vocabulaire technique légitime — ne doit PAS déclencher `jargon_pseudo_scientifique`).
+Two traps complete the base: **false balance** (neutral tone, misleading device, must be detected) and **dense science writing** (legitimate technical vocabulary, must NOT trigger `jargon_pseudo_scientifique`).
 
-## Enrichir le corpus
+## Growing the corpus
 
-### Spécimens fictifs
+### Fictional specimens
 
-Socle stable, écrits pour porter un procédé précis, versionnés dans le dépôt. Voir [specimens/README.md](specimens/README.md).
+The stable base, written to carry one precise device, versioned in the repository. See [specimens/README.md](specimens/README.md).
 
-### Pages réelles capturées
+### Captures of real pages
 
-Elles ancrent la mesure dans le monde réel — un spécimen écrit pour illustrer une technique la contient forcément ; une vraie page, non.
+They anchor the measurement in the real world: a specimen written to illustrate a technique necessarily contains it, whereas a real page does not.
 
-**Les captures ne sont pas versionnées.** Reproduire des articles entiers dans un dépôt public poserait un problème de droit d'auteur, y compris pour un usage de calibration. Le dépôt ne contient que le **manifeste** : URL, date de capture, empreinte du contenu et attentes. Chacun recrée les captures localement ; l'empreinte `content_hash` garantit que tout le monde mesure exactement le même texte.
+**Captures are not versioned.** Reproducing whole articles in a public repository would raise a copyright problem, calibration use included. The repository contains only the **manifest**: URL, capture date, content digest and expectations. Everyone recreates the captures locally; the `content_hash` digest guarantees that everybody measures exactly the same text.
 
-Conséquences pratiques :
+Practical consequences:
 
-- une capture **absente** → le cas est ignoré, jamais compté comme un échec (un dépôt fraîchement cloné ne doit pas paraître rouge) ;
-- une capture **divergente** → signalée explicitement : la page a changé, il faut recapturer et réexaminer les attentes, pas les ajuster à l'aveugle.
+- a **missing** capture means the case is skipped, never counted as a failure (a freshly cloned repository must not look red);
+- a **diverging** capture is reported explicitly: the page has changed, so it must be recaptured and the expectations re-examined, not adjusted blindly.
 
-**Ajouter une page :**
+**Adding a page:**
 
 ```bash
-# 1. Récupérer le texte de la page (extension, copier-coller, ou trafilatura)
-# 2. L'enregistrer comme capture — la commande affiche l'entrée à coller
-lynceus capturer article.md --url https://exemple.fr/article --titre "…"
+# 1. Get the text of the page (extension, copy and paste, or trafilatura)
+# 2. Save it as a capture; the command prints the entry to paste
+lynceus capturer article.md --url https://example.org/article --titre "…"
 
-# 3. L'ANALYSER avant de fixer quoi que ce soit
+# 3. ANALYSE it before fixing anything
 lynceus analyser corpus/captures/article.md
 
-# 4. Examiner le résultat, puis compléter l'entrée dans corpus.yaml
+# 4. Examine the result, then fill in the entry in corpus.yaml
 ```
 
-L'ordre compte : fixer une attente avant d'avoir vu le résultat revient à inventer une vérité de référence. Fixer l'attente après examen, c'est constater ce qui est défendable — et ne l'inscrire que si ça l'est.
+The order matters: fixing an expectation before having seen the result amounts to inventing a ground truth. Fixing the expectation after examination means recording what is defensible, and only recording it if it is.
 
-**Choisir les techniques attendues.** Les modèles varient dans leurs détections : n'exiger que les marqueurs **stables**, ceux que plusieurs modèles relèvent. Le cas SOTT du corpus n'exige qu'une seule technique (`verite_cachee`), la seule commune aux deux modèles testés — le reste variait.
+**Choosing the expected techniques.** Models vary in what they detect: only require the **stable** markers, the ones several models pick up. The SOTT case in the corpus requires a single technique (`verite_cachee`), the only one common to both models tested; the rest varied.
 
-## Résultats
+## Results
 
-Voir [RESULTATS.md](RESULTATS.md) — dernière passe : 12/12 avec `z-ai/glm-5.2` et le prompt v0.1.1.
+See [en/RESULTATS.md](en/RESULTATS.md). Latest run: three passes with `z-ai/glm-5.2` and prompt v0.1.2 at temperature 0, giving 13/13, 10/13 and 11/12 conforming.
 
-> Un corpus qu'on ajuste jusqu'à ce que tout passe ne mesure plus rien. Chaque assouplissement d'attente doit être justifié par un examen du cas — et jamais porter sur les techniques attendues ou interdites, qui sont le cœur du test.
+> A corpus adjusted until everything passes measures nothing any more. Every relaxed expectation must be justified by an examination of the case, and must never bear on the expected or forbidden techniques, which are the heart of the test.

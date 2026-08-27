@@ -1,26 +1,28 @@
-# Lynceus API — le « kit » serveur
+# Lynceus API, the server "kit"
 
-Serveur annuaire + moteur d'analyse. Python 3.11+, FastAPI, SQLite (zéro config) ou PostgreSQL. Contrat d'API et modèle de données : [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
+**English** · [Français](README.fr.md)
 
-## Démarrage rapide
+Directory server plus analysis engine. Python 3.11+, FastAPI, SQLite (zero configuration) or PostgreSQL. API contract and data model: [docs/en/ARCHITECTURE.md](../docs/en/ARCHITECTURE.md).
+
+## Quick start
 
 ```bash
 cd api
 python3 -m venv .venv && .venv/bin/pip install -e ".[dev]"
-cp .env.example .env          # y mettre votre clé (OpenRouter, ou Ollama local…)
+cp .env.example .env          # put your key in it (OpenRouter, or a local Ollama…)
 .venv/bin/uvicorn lynceus.main:creer_application --factory --reload
 ```
 
-Puis, dans un autre terminal :
+Then, in another terminal:
 
 ```bash
-.venv/bin/lynceus analyser https://exemple.fr/un-article    # analyse via l'API
-.venv/bin/lynceus lookup   https://exemple.fr/un-article    # consultation annuaire
-.venv/bin/lynceus meta                                      # transparence de l'instance
-.venv/bin/lynceus calibrer ../corpus/corpus.yaml            # passe de calibration
+.venv/bin/lynceus analyser https://example.org/an-article   # analyse through the API
+.venv/bin/lynceus lookup   https://example.org/an-article   # directory lookup
+.venv/bin/lynceus meta                                      # what the instance discloses
+.venv/bin/lynceus calibrer ../corpus/corpus.yaml            # a calibration pass
 ```
 
-## Avec Docker (API + PostgreSQL)
+## With Docker (API plus PostgreSQL)
 
 ```bash
 cd api
@@ -29,92 +31,92 @@ LYNCEUS_LLM_API_KEY=sk-or-... docker compose up --build
 
 ## Configuration
 
-Variables `LYNCEUS_*` (`.env` accepté) — liste complète dans [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md). L'essentiel :
+`LYNCEUS_*` variables (a `.env` file is accepted). The full list is in [docs/en/ARCHITECTURE.md](../docs/en/ARCHITECTURE.md). The essentials:
 
-| Variable | Défaut | Rôle |
+| Variable | Default | Role |
 |---|---|---|
-| `LYNCEUS_LLM_BASE_URL` | `https://openrouter.ai/api/v1` | Tout endpoint compatible OpenAI. Ollama : `http://localhost:11434/v1` |
-| `LYNCEUS_LLM_API_KEY` | — | Clé du fournisseur |
-| `LYNCEUS_LLM_MODEL` | `anthropic/claude-sonnet-5` | Slug du modèle chez le fournisseur |
-| `LYNCEUS_LLM_FOURNISSEUR` | *(déduit)* | Nom publié du fournisseur. Vide = nom d'hôte, ou « modèle auto-hébergé » sur une adresse privée |
-| `LYNCEUS_DATABASE_URL` | `sqlite:///./lynceus.sqlite3` | PostgreSQL recommandé en production |
+| `LYNCEUS_LLM_BASE_URL` | `https://openrouter.ai/api/v1` | Any OpenAI-compatible endpoint. Ollama: `http://localhost:11434/v1` |
+| `LYNCEUS_LLM_API_KEY` | — | The provider's key |
+| `LYNCEUS_LLM_MODEL` | `anthropic/claude-sonnet-5` | The model slug at that provider |
+| `LYNCEUS_LLM_FOURNISSEUR` | *(inferred)* | The provider name as published. Empty means the hostname, or "self-hosted model" on a private address |
+| `LYNCEUS_DATABASE_URL` | `sqlite:///./lynceus.sqlite3` | PostgreSQL recommended in production |
 
-## Structure
+## Layout
 
 ```
 lynceus/
-├── main.py                 # app FastAPI (factory) : /v1/lookup, /v1/analyses, /v1/domaines, /v1/meta
-├── config.py               # variables LYNCEUS_* + localisation des données du dépôt
-├── normalisation.py        # URL → url_hash · Markdown → content_hash (les 2 clés de l'annuaire)
-├── modeles.py              # SQLAlchemy : analyses, pages, domaines
-├── annuaire.py             # résolution cache/dédup, profils de domaines
-├── extraction.py           # fallback fetch serveur (trafilatura) pour le flux « URL seule »
+├── main.py                 # FastAPI app (factory): /v1/lookup, /v1/analyses, /v1/domaines, /v1/meta
+├── config.py               # LYNCEUS_* variables and where the repository data lives
+├── normalisation.py        # URL → url_hash · Markdown → content_hash (the directory's two keys)
+├── modeles.py              # SQLAlchemy: analyses, pages, domains
+├── annuaire.py             # cache and dedup resolution, domain profiles
+├── extraction.py           # server-side fetch fallback (trafilatura) for the "URL only" flow
 ├── moteur/
-│   ├── prompt.py           # prompts versionnés + taxonomie + schémas (tout vient des fichiers publics)
-│   ├── llm.py              # adapter compatible OpenAI (OpenRouter, Ollama, vLLM…)
-│   ├── validation.py       # JSON Schema + ids du référentiel + extraits VERBATIM (anti-hallucination)
-│   └── notation.py         # score pondéré → grade — calculé par le serveur, pas par le LLM
+│   ├── prompt.py           # versioned prompts, taxonomy and schemas (all read from the public files)
+│   ├── llm.py              # OpenAI-compatible adapter (OpenRouter, Ollama, vLLM…)
+│   ├── validation.py       # JSON Schema, reference ids, VERBATIM passages (anti-hallucination)
+│   └── notation.py         # weighted score → grade, computed by the server, not by the LLM
 └── cli.py                  # lynceus analyser / lookup / calibrer / meta
 ```
 
-Garanties du pipeline (testées) :
+Guarantees of the pipeline (all tested):
 
-- **Anti-hallucination** : tout extrait cité doit être une sous-chaîne réelle du contenu (aux espaces près), sinon la détection est écartée et listée dans `detections_rejetees`.
-- **Note serveur** : le LLM fournit les dimensions, le serveur calcule score et grade (pondérations publiées).
-- **Dédup à double clé** : même URL → cache ; même contenu sous une autre URL → même analyse, sans nouvel appel LLM.
-- **Retry encadré** : sortie non conforme → l'erreur est renvoyée une fois au modèle, sinon 502 explicite.
+- **Anti-hallucination**: every quoted passage must be a real substring of the content (up to whitespace), otherwise the detection is dropped and listed in `detections_rejetees`.
+- **Server-side grade**: the LLM supplies the dimensions, the server computes score and grade (weightings published).
+- **Two-key deduplication**: same URL means cache; same content under another URL means the same analysis, with no new LLM call.
+- **Bounded retry**: a non-conforming output sends the error back to the model once, otherwise an explicit 502.
 
-## Protéger l'instance par clés d'accès
+## Protecting the instance with access keys
 
-Par défaut, une instance est **ouverte** : aucune clé n'est exigée. C'est le bon réglage pour un usage personnel. Pour une instance exposée à d'autres, les clés limitent qui peut déclencher des analyses — elles coûtent de l'argent, contrairement aux consultations d'annuaire, qui restent toujours libres.
+By default an instance is **open**: no key is required. That is the right setting for personal use. For an instance exposed to other people, keys limit who can trigger analyses, which cost money, unlike directory lookups, which always stay free.
 
-**Des clés auto-validantes.** Une clé porte elle-même sa date d'expiration, son quota journalier et une signature Ed25519. L'API vérifie la signature avec la clé publique de l'émetteur : **aucun annuaire de clés, aucune base de comptes**.
+**Self-validating keys.** A key carries its own expiry date, its daily quota and an Ed25519 signature. The API verifies the signature with the issuer's public key: **no key directory, no account database**.
 
 ```bash
-# 1. Une fois : générer la paire
+# 1. Once: generate the pair
 lynceus cles-paire
 
-# 2. Sur l'instance : renseigner la PUBLIQUE dans .env, puis redémarrer
+# 2. On the instance: put the PUBLIC one in .env, then restart
 LYNCEUS_CLE_PUBLIQUE=…
 
-# 3. Chez l'émetteur (jamais sur l'instance) : émettre des clés
+# 3. At the issuer (never on the instance): issue keys
 LYNCEUS_CLE_PRIVEE=… lynceus cle-emettre --jours 365 --quota 50 --nombre 10
 ```
 
-La clé se colle dans les réglages de l'extension. Elle **n'est pas un compte** : ni nom, ni adresse, ni identifiant de son porteur — seulement une date limite et un quota.
+The key is pasted into the extension settings. It **is not an account**: no name, no address, no identifier of its holder, only an expiry date and a quota.
 
-| Ce que ça résout | Ce que ça ne résout pas |
+| What it solves | What it does not solve |
 |---|---|
-| Authentifier sans annuaire ni inscription | Une clé partagée reste valide — le quota limite les dégâts |
-| Expiration automatique, sans maintenance | La révocation exige une liste, mais elle ne contient que les clés abusives (`LYNCEUS_CLES_REVOQUEES`) |
-| Séparer émetteur et valideur : compromettre l'instance ne permet pas de forger des clés | |
+| Authenticating with no directory and no sign-up | A shared key stays valid; the quota limits the damage |
+| Automatic expiry, no maintenance | Revocation needs a list, but it only ever contains abusive keys (`LYNCEUS_CLES_REVOQUEES`) |
+| Separating issuer from validator: compromising the instance does not let anyone forge keys | |
 
-> **La clé privée ne doit jamais quitter l'émetteur.** La placer dans l'extension reviendrait à la publier : n'importe qui pourrait alors émettre des clés à volonté.
+> **The private key must never leave the issuer.** Putting it in the extension would amount to publishing it: anyone could then issue keys at will.
 
-Le quota n'est décompté que pour une **analyse réelle** : resservir une page déjà présente dans l'annuaire ne coûte rien et n'entame pas le quota — pénaliser la mutualisation irait contre l'intérêt du réseau.
+The quota is only charged for a **real analysis**: serving a page already present in the directory costs nothing and does not eat into the quota. Penalising sharing would work against the interest of the network.
 
-## Modérer les contestations
+## Moderating disputes
 
-Les contestations (charte §6) sont enregistrées et **visibles publiquement en nombre** sur chaque analyse, mais leur contenu est réservé à l'opérateur de l'instance — un signalement peut contenir un contact.
+Disputes (charter §6) are recorded and their **number is publicly visible** on each analysis, but their content is reserved to the operator of the instance, since a report may contain a contact.
 
-Activer la modération : définir `LYNCEUS_ADMIN_TOKEN` côté serveur **et** dans l'environnement du CLI.
+To enable moderation, set `LYNCEUS_ADMIN_TOKEN` on the server **and** in the CLI's environment.
 
 ```bash
-export LYNCEUS_ADMIN_TOKEN=…                          # le même que côté serveur
-.venv/bin/lynceus signalements                        # les contestations reçues
-.venv/bin/lynceus signalements --statut nouveau       # celles en attente
+export LYNCEUS_ADMIN_TOKEN=…                          # the same one as on the server
+.venv/bin/lynceus signalements                        # the disputes received
+.venv/bin/lynceus signalements --statut nouveau       # the pending ones
 .venv/bin/lynceus traiter 3 --statut examine --decision "Catégorie corrigée, analyse relancée."
-.venv/bin/lynceus verifier-page 4 --url https://…     # motif « page modifiée » : vérification automatique
+.venv/bin/lynceus verifier-page 4 --url https://…     # ground "page changed": automatic check
 ```
 
-`verifier-page` est le seul traitement automatisable : il re-télécharge la page, compare son contenu à celui analysé, relance l'analyse si elle a changé, et classe le signalement en conséquence. Les autres motifs relèvent du jugement humain.
+`verifier-page` is the only ground that can be automated: it downloads the page again, compares its content with the analysed one, re-runs the analysis if it changed, and files the report accordingly. The other grounds call for human judgement.
 
-Statuts : `nouveau` → `examine` (fondé, action prise) · `rejete` (infondé) · `sans_objet` (page modifiée, analyse remplacée). **La justification est obligatoire** et conservée : écarter une contestation sans motif reviendrait à l'opacité que Lynceus dénonce.
+Statuses: `nouveau` → `examine` (well founded, action taken) · `rejete` (unfounded) · `sans_objet` (page changed, analysis replaced). **A justification is mandatory** and is kept: dismissing a dispute with no reason would be exactly the opacity Lynceus denounces.
 
-> Sans opérateur pour les traiter, les contestations restent stockées et consultables — c'est ce que le message rendu à l'utilisateur annonce, ni plus ni moins.
+> With no operator to handle them, disputes stay stored and readable. That is what the message shown to the user says, no more and no less.
 
 ## Tests
 
 ```bash
-.venv/bin/python -m pytest    # 28 tests, LLM simulé, aucun réseau requis
+.venv/bin/python -m pytest    # 244 tests, the LLM is simulated, no network needed
 ```

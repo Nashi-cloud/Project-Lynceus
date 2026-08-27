@@ -896,3 +896,66 @@ def test_la_charte_publie_le_transfert_vers_le_modele():
     charte = (trouver_racine() / "docs" / "ETHIQUE.md").read_text(encoding="utf-8")
     assert "fournisseur de modèle" in charte
     assert "hors de l'Union européenne" in charte
+
+
+def test_toute_traduction_suivie_est_a_jour():
+    """Le garde-fou des documents, pendant de celui des phrases d'interface.
+
+    Une traduction ne prévient pas quand elle décroche : les deux fichiers s'affichent
+    aussi bien, et seul le lecteur qui compare s'en aperçoit. L'empreinte de l'original
+    inscrite dans la traduction transforme cette dérive en échec de construction."""
+    from lynceus.portail import contenu, i18n
+
+    retards = [
+        entree
+        for langue in i18n.LANGUES
+        for entree in contenu.etat_traductions(langue)
+        if entree["etat"] in ("en retard", "sans empreinte")
+    ]
+    assert not retards, "traduction(s) décrochée(s) : " + ", ".join(
+        f"{e['traduction']} ({e['etat']})" for e in retards
+    )
+
+
+def test_les_deux_conventions_de_traduction_cohabitent():
+    """Le dépôt en porte deux, et c'est délibéré.
+
+    Là où un fichier est une porte, l'anglais est à la porte : une forge affiche le README
+    du dossier qu'on ouvre, et un visiteur qui ne peut pas lire la première page ne lira
+    pas la deuxième. Là où un fichier fait loi, le français reste l'original, parce qu'un
+    texte contraignant a besoin d'une seule version qui fasse foi."""
+    from lynceus.portail import contenu
+
+    facade = dict(contenu.paires_traduites("fr"))
+    assert facade["README.md"] == "README.fr.md"
+    assert facade["corpus/specimens/README.md"] == "corpus/specimens/README.fr.md"
+    assert "docs/ETHIQUE.md" not in facade, "la charte n'a pas l'anglais pour original"
+
+    normatif = dict(contenu.paires_traduites("en"))
+    assert normatif["docs/ETHIQUE.md"] == "docs/en/ETHIQUE.md"
+    assert normatif["docs/CONFORMITE.md"] == "docs/en/CONFORMITE.md"
+    assert "README.md" not in normatif, "le README n'a pas le français pour original"
+
+
+def test_un_exemple_de_marqueur_dans_le_corps_ne_passe_pas_pour_l_empreinte(tmp_path, monkeypatch):
+    """CONTRIBUTING montre la forme du marqueur pour l'expliquer.
+
+    Cherché dans tout le fichier, cet exemple se ferait prendre pour l'empreinte du
+    document, qui serait alors déclaré en retard sans l'être. Seul l'en-tête compte."""
+    from lynceus.portail import contenu
+
+    (tmp_path / "GUIDE.md").write_text("# Guide\noriginal", encoding="utf-8")
+    (tmp_path / "GUIDE.fr.md").write_text(
+        "# Guide\n\n<!-- traduit-de: GUIDE.md sha256:"
+        + contenu._empreinte(tmp_path / "GUIDE.md")
+        + " -->\n\nOn écrit par exemple :\n\n"
+        "    <!-- traduit-de: docs/ETHIQUE.md sha256:0000000000000000 -->\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(contenu, "trouver_racine", lambda: tmp_path)
+    monkeypatch.setattr(contenu, "FACADE", ["GUIDE.md"])
+    monkeypatch.setattr(contenu, "DOCUMENTS_PUBLIES", [])
+    monkeypatch.setattr(contenu, "DOCUMENTS_NON_PUBLIES", [])
+    monkeypatch.setattr(contenu, "versions_disponibles_du_prompt", list)
+
+    assert [e["etat"] for e in contenu.etat_traductions("fr")] == ["à jour"]

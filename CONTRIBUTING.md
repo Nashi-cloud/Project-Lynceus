@@ -1,122 +1,133 @@
-# Contribuer à Lynceus
+# Contributing to Lynceus
 
-Merci de vouloir aider ! Toute contribution compte : code, taxonomie, corpus de calibration, traductions, hébergement d'instances.
+**English** · [Français](CONTRIBUTING.fr.md)
 
-## Modèle de branches
+Thank you for wanting to help. Every contribution counts: code, taxonomy, calibration corpus, translations, hosting instances.
+
+## Two things to know first
+
+**The code is in French.** Identifiers, comments and commit messages are written in French, and that is not going to change: rewriting a codebase that already holds together would cost far more than it would bring. The documentation, on the other hand, is in English. Issues and pull requests are welcome in either language, and nobody will be turned away for writing in one rather than the other.
+
+**The documents that bind the project have French as their original.** The charter, the methodology, the taxonomy, the analysis prompts and the calibration results are written in French and the French text prevails in case of divergence. The English versions are real translations, not summaries, and a build fails as soon as one of them falls behind its original. Reading the English is enough to know what the project promises.
+
+## Branch model
 
 ```
-feat/*  fix/*  docs/*        (branches spécifiques, depuis dev)
+feat/*  fix/*  docs/*        (topic branches, off dev)
       │
-      ▼  PR + revue
-     dev                      (intégration continue du développement)
+      ▼  PR and review
+     dev                      (continuous integration of development)
       │
-      ▼  lot jugé stable
-     next                     (pré-production : stabilisation, tests d'instance)
+      ▼  batch judged stable
+     next                     (pre-production: stabilisation, instance testing)
       │
-      ▼  PR validée sur GitHub, puis tag (vX.Y.Z)
-     main                     (stable : c'est ce que les instances déploient)
+      ▼  PR approved on GitHub, then tag (vX.Y.Z)
+     main                     (stable: this is what instances deploy)
 ```
 
-- **`main`** : stable uniquement. Ne reçoit que des merges depuis `next`, par une pull request que le mainteneur valide sur GitHub, et chaque release y est taguée.
-- **`next`** : pré-production. Reçoit `dev` quand un ensemble cohérent est prêt ; on y stabilise.
-- **`dev`** : branche d'intégration. Toutes les branches spécifiques en partent et y reviennent.
-- **Branches spécifiques** : `feat/<sujet>`, `fix/<sujet>`, `docs/<sujet>` : courtes, focalisées, mergées dans `dev` via PR.
+- **`main`**: stable only. It receives merges from `next` and nothing else, through a pull request the maintainer approves on GitHub, and every release is tagged there.
+- **`next`**: pre-production. Receives `dev` when a coherent batch is ready; stabilisation happens there.
+- **`dev`**: the integration branch. Every topic branch starts from it and comes back to it.
+- **Topic branches**: `feat/<subject>`, `fix/<subject>`, `docs/<subject>`. Short, focused, merged into `dev` through a PR.
 
-### La promotion, dans l'ordre
+### Promotion, in order
 
-1. **Développer** sur une branche spécifique partie de `dev`.
-2. **Fusionner dans `dev`** une fois `./verifier.sh` passé, avec `--no-ff`. La chaîne rejoue les tests et publie `:dev`.
-3. **Fusionner `dev` dans `next`** quand le lot tient debout. La chaîne publie `:next` et déploie sur staging : c'est là qu'on éprouve la mise à jour sur une vraie instance, migrations comprises.
-4. **Ouvrir une PR `next` → `main`** sur GitHub, que le mainteneur valide lui-même. Le merge déclenche la publication de `:latest` et `:v<VERSION>`, et le déploiement en production.
-5. **Poser le tag annoté** `vX.Y.Z` sur le commit de fusion, en accord avec le fichier `VERSION`.
+1. **Develop** on a topic branch started from `dev`.
+2. **Merge into `dev`** once `./verifier.sh` passes, using `--no-ff`. The pipeline replays the tests and publishes `:dev`.
+3. **Merge `dev` into `next`** when the batch stands up. The pipeline publishes `:next` and deploys to staging: that is where the update is put through its paces on a real instance, migrations included.
+4. **Open a `next` → `main` pull request** on GitHub, which the maintainer approves personally. The merge triggers publication of `:latest` and `:v<VERSION>`, and deployment to production.
+5. **Add the annotated tag** `vX.Y.Z` on the merge commit, matching the `VERSION` file.
 
-Une étape ne se saute pas : rien n'arrive dans `main` qui ne soit passé par staging.
+No step is skipped: nothing reaches `main` that has not been through staging.
 
-## Routine de vérification
+## Verification routine
 
-**Avant tout merge dans `dev`** :
+**Before any merge into `dev`**:
 
 ```bash
-./verifier.sh              # tests API + extension, typage, build, cohérence des versions
-./verifier.sh --calibrer   # + passe de calibration (serveur requis, consomme des tokens)
+./verifier.sh              # API and extension tests, typing, build, version consistency
+./verifier.sh --calibrer   # plus a calibration pass (needs a server, spends tokens)
 ```
 
-Le script échoue si un test tombe, si le typage strict n'est pas respecté, ou si les versions de l'extension divergent entre `manifest.json`, `package.json` et `CHANGELOG.md`.
+The script fails if a test breaks, if strict typing is not respected, or if the extension versions diverge between `manifest.json`, `package.json` and `CHANGELOG.md`.
 
-Détail des étapes, si besoin de les lancer séparément :
+The individual steps, if you need to run them separately:
 
-| Étape | Commande | Quand |
+| Step | Command | When |
 |---|---|---|
-| Tests API | `cd api && .venv/bin/python -m pytest` | toute modification de `api/` |
-| Typage extension | `cd extension && npm run verifier` | toute modification de `extension/` |
-| Tests extension | `cd extension && npm test` | toute modification de `extension/` |
-| Build extension | `cd extension && npm run build` | avant de recharger dans Chrome |
-| Calibration | `lynceus calibrer corpus/corpus.yaml` | **obligatoire** si `prompts/`, `docs/METHODOLOGIE.md`, `docs/TAXONOMIE.md` ou le modèle changent |
+| API tests | `cd api && .venv/bin/python -m pytest` | any change under `api/` |
+| Extension typing | `cd extension && npm run verifier` | any change under `extension/` |
+| Extension tests | `cd extension && npm test` | any change under `extension/` |
+| Extension build | `cd extension && npm run build` | before reloading in Chrome |
+| Calibration | `lynceus calibrer corpus/corpus.yaml` | **mandatory** if `prompts/`, `docs/METHODOLOGIE.md`, `docs/TAXONOMIE.md` or the model change |
 
-`verifier.sh` refuse aussi un décalage entre la version la plus haute de `prompts/analyse/`, les estampilles de `docs/METHODOLOGIE.md` et `docs/TAXONOMIE.md`, et la version sur laquelle porte `corpus/RESULTATS.md`. Ces quatre-là partagent un seul compteur, `prompt_version`, celui que chaque analyse annonce.
+`verifier.sh` also refuses a mismatch between the highest version under `prompts/analyse/`, the stamps in `docs/METHODOLOGIE.md` and `docs/TAXONOMIE.md`, and the version `corpus/RESULTATS.md` reports on. Those four share a single counter, `prompt_version`, the one every analysis announces.
 
-## Ce que déclenche une poussée
+## What a push triggers
 
-Le dépôt est bâti pour une forge dotée d'un runner auto-hébergé (voir [api/DEPLOIEMENT.md](api/DEPLOIEMENT.md)). Les tests y rejouent ce que `verifier.sh` fait en local, dans des conteneurs jetables.
+The repository is built for a forge with a self-hosted runner (see [api/DEPLOIEMENT.md](api/DEPLOIEMENT.md)). The tests replay there what `verifier.sh` does locally, in throwaway containers.
 
-| Branche | Tests | Image publiée | Déploiement |
+| Branch | Tests | Image published | Deployment |
 |---|---|---|---|
-| `feat/*`, `fix/*`, `docs/*` | oui | aucune | aucun |
-| `dev` | oui | `:dev` | aucun |
-| `next` | oui | `:next` | staging |
-| `main` | oui | `:latest` et `:v<VERSION>` | production |
+| `feat/*`, `fix/*`, `docs/*` | yes | none | none |
+| `dev` | yes | `:dev` | none |
+| `next` | yes | `:next` | staging |
+| `main` | yes | `:latest` and `:v<VERSION>` | production |
 
-La chaîne ne remplace pas `./verifier.sh` avant de fusionner : elle constate, elle ne relit pas. Et elle ne s'exécute pas pour une proposition venue d'un fork, un runner auto-hébergé exécutant le code qu'on lui confie.
+The pipeline is not a substitute for running `./verifier.sh` before merging: it observes, it does not proofread. And it does not run for a proposal coming from a fork, since a self-hosted runner executes whatever code it is handed.
 
-**Version de l'API** : le fichier `VERSION` à la racine fait foi, et doit s'accorder avec `api/pyproject.toml` et `api/lynceus/__init__.py`. C'est lui que la chaîne lit pour étiqueter l'image publiée depuis `main`, donc pour rendre un retour arrière possible. `verifier.sh` refuse un décalage.
+**API version**: the `VERSION` file at the root is authoritative, and must agree with `api/pyproject.toml` and `api/lynceus/__init__.py`. That is what the pipeline reads to tag the image published from `main`, and therefore what makes a rollback possible. `verifier.sh` refuses a mismatch.
 
 ## Conventions
 
-- **Commits** : style Conventional Commits, en français : `feat: …`, `fix: …`, `docs: …`, `chore: …`, `test: …`.
-- **Une branche par sujet**, mergée dans `dev` avec `--no-ff` (l'historique garde la trace du regroupement).
-- **Fusions de promotion** : `dev` → `next` et `next` → `main` en `--no-ff` également. Ces deux branches ne divergent jamais, donc un fast-forward passerait, mais on y perdrait le commit `merge: next → main (vX.Y.Z)` qui rend le graphe lisible et donne un point de retour arrière évident. Le fast-forward reste acceptable pour rattraper `next` sur `dev` quand il n'y a rien à marquer.
-- **Tests obligatoires** pour toute correction de bug : le test doit échouer avant le correctif. Pour une fonctionnalité, tester au moins la logique métier isolable des API du navigateur.
-- **Versions de l'extension** : toute modification de `extension/` incrémente la version dans `manifest.json` **et** `package.json`, avec une entrée dans `extension/CHANGELOG.md` (patch pour un correctif, mineure pour une fonctionnalité). Sans ça, impossible de savoir quel build est chargé dans Chrome.
-- **Prompts et méthodologie** : toute modification de `prompts/`, `docs/METHODOLOGIE.md` ou `docs/TAXONOMIE.md` incrémente `prompt_version` (semver) et doit passer la calibration sur `corpus/`. Reporter le résultat dans [corpus/RESULTATS.md](corpus/RESULTATS.md).
-- **Corpus** : ne jamais assouplir une attente pour faire passer un test sans avoir examiné le cas, et jamais sur `techniques_attendues` / `techniques_interdites`, qui sont le cœur de la mesure.
-- **Ids de taxonomie** : stables et définitifs, jamais renommés (l'annuaire les référence).
-- **Charte** : toute PR doit être compatible avec [docs/ETHIQUE.md](docs/ETHIQUE.md) : c'est le critère de revue numéro un.
-- **Traductions** : le portail est bilingue. Une phrase d'interface vit dans les catalogues (`api/lynceus/portail/traductions/*.po` pour le site, `extension/src/_locales/*/messages.json` pour l'extension) et les tests refusent une phrase employée sans traduction. Un document du dépôt publié par le portail se traduit dans un sous-dossier de langue : `docs/ETHIQUE.md` devient `docs/en/ETHIQUE.md`. Le fichier traduit porte en deuxième ligne l'empreinte de la version qu'il traduit :
+- **Commits**: Conventional Commits style, in French: `feat: …`, `fix: …`, `docs: …`, `chore: …`, `test: …`.
+- **One branch per subject**, merged into `dev` with `--no-ff` (the history keeps a trace of the grouping).
+- **Promotion merges**: `dev` → `next` and `next` → `main` use `--no-ff` as well. Those two branches never diverge, so a fast-forward would work, but it would lose the `merge: next → main (vX.Y.Z)` commit that makes the graph readable and gives an obvious point to roll back to. A fast-forward is still fine to catch `next` up with `dev` when there is nothing to mark.
+- **Tests are mandatory** for any bug fix: the test must fail before the fix. For a feature, test at least the business logic that can be isolated from the browser APIs.
+- **Extension versions**: any change under `extension/` increments the version in `manifest.json` **and** `package.json`, with an entry in `extension/CHANGELOG.md` (patch for a fix, minor for a feature). Without that, there is no way to tell which build is loaded in Chrome.
+- **Prompts and methodology**: any change to `prompts/`, `docs/METHODOLOGIE.md` or `docs/TAXONOMIE.md` increments `prompt_version` (semver) and must pass calibration against `corpus/`. Report the result in [corpus/RESULTATS.md](corpus/en/RESULTATS.md).
+- **Corpus**: never relax an expectation to make a test pass without having examined the case, and never on `techniques_attendues` / `techniques_interdites`, which are the heart of the measurement.
+- **Taxonomy ids**: stable and final, never renamed (the directory references them).
+- **Charter**: every PR must be compatible with [docs/en/ETHIQUE.md](docs/en/ETHIQUE.md). That is review criterion number one.
+- **Translations**: the portal is bilingual. An interface string lives in the catalogues (`api/lynceus/portail/traductions/*.po` for the site, `extension/src/_locales/*/messages.json` for the extension) and the tests refuse a string used without a translation. A repository document published by the portal is translated into a language subfolder: `docs/ETHIQUE.md` becomes `docs/en/ETHIQUE.md`. The translated file carries, on its second line, the digest of the version it translates:
 
   ```
   <!-- traduit-de: docs/ETHIQUE.md sha256:8aa471a51c89 -->
   ```
 
-  `lynceus traductions` dit où en est chaque document, et `verifier.sh` échoue si une traduction est en retard sur son original. **Modifier un document traduit suppose donc de revoir sa traduction et de mettre à jour cette ligne** : sans ça, le portail publierait deux textes qui ne disent plus la même chose, sans que rien ne le signale.
-- **IA générative** : une contribution substantiellement produite par un assistant le déclare, avec les lignes `Assisted-by:` et `Prompt:` en fin de message de commit, contiguës à `Signed-off-by:`. Voir [docs/IA-GENERATIVE.md](docs/IA-GENERATIVE.md). Une contribution que son auteur ne sait pas expliquer en revue est refusée, assistant ou pas.
+  `lynceus traductions` reports where each document stands, and `verifier.sh` fails if a translation has fallen behind its original. **Changing a translated document therefore means revisiting its translation and updating that line.** Without it, the portal would publish two texts that no longer say the same thing, with nothing to signal it.
 
-## Droits sur les contributions
+  Two conventions coexist, and the rule is simple: **where a file is a door, English sits at the door; where a file is the law, French stays the original.** `README.md`, `CONTRIBUTING.md`, `INSTALLATION.md` and the `README.md` of each subfolder are in English at their canonical path, with the French next to them as `*.fr.md`. Everything under `docs/`, `prompts/` and `corpus/RESULTATS.md` keeps French at the canonical path, with the translation under `en/`.
+- **Generative AI**: a contribution substantially produced by an assistant says so, with `Assisted-by:` and `Prompt:` lines at the end of the commit message, adjacent to `Signed-off-by:`. See [docs/en/IA-GENERATIVE.md](docs/en/IA-GENERATIVE.md). A contribution its author cannot explain in review is refused, assistant or no assistant.
 
-Le projet applique le **Developer Certificate of Origin** ([DCO.txt](DCO.txt)), le même
-mécanisme que le noyau Linux et Git. Rien à signer, rien à renvoyer : vous ajoutez une
-ligne à chaque commit.
+## Rights over contributions
+
+The project applies the **Developer Certificate of Origin** ([DCO.txt](DCO.txt)), the same
+mechanism the Linux kernel and Git use. Nothing to sign, nothing to send back: you add one
+line to each commit.
 
 ```bash
-git commit -s -m "feat: ..."      # -s ajoute la ligne Signed-off-by
+git commit -s -m "feat: ..."      # -s adds the Signed-off-by line
 ```
 
 ```
-Signed-off-by: Prénom Nom <adresse@exemple.fr>
+Signed-off-by: First Last <address@example.org>
 ```
 
-Par cette ligne, vous certifiez avoir le droit d'apporter ce code sous licence AGPL-3.0.
-Vous **conservez vos droits d'auteur** sur votre contribution : le projet ne vous demande
-aucune cession.
+With that line you certify that you have the right to contribute this code under the
+AGPL-3.0 licence. You **keep your copyright** over your contribution: the project asks for
+no assignment.
 
-Conséquence assumée : le projet ne pourra jamais être relicencié sans l'accord de chaque
-contributeur, et ne pourra donc pas vendre d'exceptions à l'AGPL. C'est le prix d'une
-contribution sans paperasse, et le choix a été fait en connaissance de cause. Ajoutez-vous
-à [AUTHORS.md](AUTHORS.md) lors de votre première contribution.
+The consequence is accepted knowingly: the project can never be relicensed without the
+agreement of every contributor, and can therefore never sell exceptions to the AGPL. That is
+the price of paperwork-free contribution, and the choice was made with open eyes. Add
+yourself to [AUTHORS.md](AUTHORS.md) with your first contribution.
 
-## Développement local
+## Local development
 
-Voir [api/README.md](api/README.md) (serveur + CLI) et [extension/README.md](extension/README.md).
+See [api/README.md](api/README.md) (server and CLI) and [extension/README.md](extension/README.md).
 
 ## Licence
 
-Le projet est sous **AGPL-3.0** : en contribuant, vous acceptez que votre contribution soit publiée sous cette licence.
+The project is under **AGPL-3.0**: by contributing, you accept that your contribution is
+published under that licence.
