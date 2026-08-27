@@ -787,8 +787,14 @@ def env(
     # détournement met à l'abri de ce genre de fuite, celle-ci comme les prochaines.
     with contextlib.redirect_stdout(sys.stderr):
         image = demande.texte("Adresse de l'image (registre compris)")
+        base_llm = demande.texte("Adresse du fournisseur de modèle (API compatible OpenAI)",
+                                 defaut="https://openrouter.ai/api/v1")
         cle_llm = demande.texte("Clé du fournisseur de modèle", secret=True)
         modele = demande.texte("Modèle d'analyse", defaut="z-ai/glm-5.2")
+        # Ce nom est publié : /v1/meta, chaque analyse de l'annuaire, la page de
+        # confidentialité du portail. Vide, il est déduit de l'adresse, ce qui donne le nom
+        # d'hôte, faux dès qu'il y a un intermédiaire.
+        libelle_llm = demande.texte("Nom public de ce fournisseur (vide = déduit de l'adresse)")
         adresse_instance = demande.adresse("Adresse publique de l'instance")
         adresse_portail = demande.adresse("Adresse publique du portail")
 
@@ -843,11 +849,15 @@ def env(
     )
 
     bloc_llm = [
-        Variable("LYNCEUS_LLM_BASE_URL", "https://openrouter.ai/api/v1"),
+        Variable("LYNCEUS_LLM_BASE_URL", base_llm),
         Variable("LYNCEUS_LLM_API_KEY", cle_llm,
                  note_si_vide="Sans elle, l'instance refuse de démarrer en le disant, ce qui\n"
                               "vaut mieux qu'une clé d'exemple qui échouerait à la première analyse."),
         Variable("LYNCEUS_LLM_MODEL", modele),
+        Variable("LYNCEUS_LLM_FOURNISSEUR", libelle_llm,
+                 note="Nom du fournisseur tel qu'il sera publié : /v1/meta, chaque analyse,\n"
+                      "et les pages légales du portail. Vide = déduit de l'adresse, ce qui\n"
+                      "donne « modèle auto-hébergé » sur une adresse privée."),
     ]
     note_entete = (
         "Adresse réelle du visiteur, transmise par le tunnel. À n'activer que si\n"

@@ -100,7 +100,9 @@ document.getElementById("tester")?.addEventListener("click", async () => {
     const cleRequise = meta.capacites?.cle_requise === true;
     zoneInfos.textContent =
       `✓ ${meta.nom} v${meta.version}\n` +
-      `Modèle : ${meta.modele} (via ${meta.fournisseur})\n` +
+      // « via » supposait un fournisseur extérieur. Une instance peut annoncer un
+      // modèle auto-hébergé, et « via modèle auto-hébergé » ne veut rien dire.
+      `Modèle : ${meta.modele} · ${meta.fournisseur}\n` +
       `Prompt d'analyse : v${meta.prompt_version} · ${meta.taxonomie?.nb_techniques ?? "?"} techniques au référentiel\n` +
       (cleRequise
         ? "Cette instance demande une clé d'accès pour les analyses.\n"
