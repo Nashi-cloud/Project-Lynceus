@@ -20,6 +20,10 @@ WORKDIR /app
 # Données du dépôt nécessaires au moteur (prompts, taxonomie, schéma) et au portail
 COPY prompts/ prompts/
 COPY docs/ docs/
+# Le portail publie corpus/RESULTATS.md sur /calibration : sans lui, la page tombe en
+# 500. Les captures de pages réelles restent dehors, écartées par .dockerignore :
+# elles ne sont pas versionnées non plus, pour la même raison de droit d'auteur.
+COPY corpus/ corpus/
 COPY schema/ schema/
 COPY api/ api/
 

@@ -36,6 +36,7 @@ from ..normalisation import extraire_domaine, hacher_url, normaliser_url
 from . import contenu, i18n
 from .i18n import N_
 from .. import noms
+from ..config import trouver_racine
 from .config import ParametresPortail, parametres_portail
 
 RACINE = Path(__file__).parent
@@ -165,6 +166,19 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
     # Même garde-fou que côté instance : un réglage posé sous ses deux noms avec deux
     # valeurs verrait l'une des deux ignorée sans que rien ne le signale.
     noms.avertir_des_conflits()
+
+    # Un document publié mais absent du paquet donne une erreur 500 sur un lien du pied de
+    # page, et rien ne dit pourquoi. C'est arrivé : corpus/ manquait de l'image, et
+    # /calibration tombait à chaque visite. Le dire au démarrage vaut mieux que de
+    # l'apprendre d'un visiteur.
+    absents = [source for source, _ in contenu.DOCUMENTS_PUBLIES
+               if not (trouver_racine() / source).is_file()]
+    if absents:
+        print(
+            "⚠  Documents publiés mais introuvables : " + ", ".join(absents) + ". "
+            "Les pages correspondantes échoueront. Paquet incomplet ?",
+            file=sys.stderr,
+        )
 
     if instance_publique and not p.depot:
         print(
