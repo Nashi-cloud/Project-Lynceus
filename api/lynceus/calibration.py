@@ -82,8 +82,8 @@ def enregistrer(journal: Path, passe: dict) -> None:
         sortie.write(json.dumps(passe, ensure_ascii=False, sort_keys=True) + "\n")
 
 
-def passes(journal: Path, version_prompt: str = "") -> list[dict]:
-    """Les passes enregistrées, éventuellement filtrées sur une version de prompt.
+def passes(journal: Path, version_prompt: str = "", modele: str = "") -> list[dict]:
+    """Les passes enregistrées, éventuellement filtrées sur une version de prompt et un modèle.
 
     Filtrer est le comportement utile : une passe menée sous une version antérieure ne
     mesure pas ce que l'instance applique aujourd'hui, et l'afficher tromperait."""
@@ -92,7 +92,22 @@ def passes(journal: Path, version_prompt: str = "") -> list[dict]:
     lues = [json.loads(ligne) for ligne in journal.read_text(encoding="utf-8").splitlines() if ligne.strip()]
     if version_prompt:
         lues = [p for p in lues if p.get("prompt_version") == version_prompt]
+    if modele:
+        lues = [p for p in lues if p.get("modele") == modele]
     return lues
+
+
+def passes_courantes(journal: Path, version_prompt: str) -> list[dict]:
+    """Les passes qui décrivent ce que l'instance rend aujourd'hui.
+
+    Le modèle compte autant que la version de prompt. Deux modèles ne donnent pas les mêmes
+    notes sur le même texte, et un tableau qui mélangerait leurs passes afficherait des
+    intervalles de score qui ne mesureraient plus la variabilité d'un modèle mais l'écart
+    entre deux. Ne sont donc retenues que les passes du modèle de la plus récente."""
+    toutes = passes(journal, version_prompt)
+    if not toutes:
+        return []
+    return [p for p in toutes if p.get("modele") == toutes[-1].get("modele")]
 
 
 def _texte(ecart: dict, mots: dict) -> str:

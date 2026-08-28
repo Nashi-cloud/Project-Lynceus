@@ -601,3 +601,11 @@ def test_calibrer_ecrire_refuse_un_corpus_filtre(corpus, monkeypatch):
     resultat = runner.invoke(app, ["calibrer", str(corpus), "--ecrire", "--filtre", "Cas"])
     assert resultat.exit_code == 2
     assert "refusé" in resultat.stdout
+
+
+def test_le_filtre_cherche_aussi_dans_le_chemin(corpus, monkeypatch):
+    """« --filtre satire » doit trouver specimens/04-fictif-satire.md, dont le titre ne
+    contient pas le mot. L'aide annonçait « titre/chemin » et ne lisait que le titre."""
+    _simuler_api(monkeypatch, carte(categorie="satire", grade="A"))
+    assert "1/1 conformes" in runner.invoke(app, ["calibrer", str(corpus), "--filtre", "cas.md"]).stdout
+    assert "0/0 conformes" in runner.invoke(app, ["calibrer", str(corpus), "--filtre", "absent"]).stdout
