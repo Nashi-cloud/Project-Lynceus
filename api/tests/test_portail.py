@@ -959,3 +959,35 @@ def test_un_exemple_de_marqueur_dans_le_corps_ne_passe_pas_pour_l_empreinte(tmp_
     monkeypatch.setattr(contenu, "versions_disponibles_du_prompt", list)
 
     assert [e["etat"] for e in contenu.etat_traductions("fr")] == ["à jour"]
+
+
+def test_tout_document_publie_est_embarque_dans_l_image():
+    """Le portail publiait /calibration depuis un fichier absent du paquet.
+
+    En local tout marchait, le dépôt étant là ; dans le conteneur, la page tombait en 500 à
+    chaque visite, sur un lien du pied de page. Le Dockerfile ne copie que quelques
+    dossiers, et `corpus/` n'en faisait pas partie. Ce test lie l'un à l'autre : publier un
+    document impose de l'embarquer."""
+    from lynceus.config import trouver_racine
+    from lynceus.portail import contenu
+
+    racine = trouver_racine()
+    dockerfile = (racine / "api" / "Dockerfile").read_text(encoding="utf-8")
+    copies = {
+        ligne.split()[1].rstrip("/")
+        for ligne in dockerfile.splitlines()
+        if ligne.startswith("COPY ") and not ligne.startswith("COPY --from")
+    }
+
+    sources = [source for source, _ in contenu.DOCUMENTS_PUBLIES] + contenu.DOCUMENTS_NON_PUBLIES
+    versions = contenu.versions_disponibles_du_prompt()
+    if versions:
+        sources.append(f"prompts/analyse/v{versions[-1]}.md")
+
+    for source in sources:
+        assert (racine / source).is_file(), f"{source} est publié mais absent du dépôt"
+        dossier = source.split("/")[0]
+        assert dossier in copies, (
+            f"{source} est publié par le portail mais {dossier}/ n'est pas copié dans "
+            f"l'image : la page tombera en 500 en production"
+        )
