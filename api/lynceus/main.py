@@ -21,6 +21,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from . import VERSION_SCHEMA, __version__, annuaire, cles, extraction
+from . import noms
 from .config import Parametres, parametres
 from .migrations import appliquer as appliquer_migrations
 from .modeles import Analyse, Base
@@ -74,6 +75,11 @@ class DemandeAnalyse(BaseModel):
 
 def creer_application(p: Parametres | None = None) -> FastAPI:
     p = p or parametres()
+
+    # Un réglage posé sous ses deux noms avec deux valeurs : l'une s'applique, l'autre est
+    # ignorée. Le dire au démarrage vaut mieux qu'une soirée à chercher pourquoi le
+    # fichier .env « ne prend pas ».
+    noms.avertir_des_conflits()
 
     if not p.llm_api_key and not any(h in p.llm_base_url for h in ("localhost", "127.0.0.1")):
         print(
@@ -544,6 +550,9 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             "prompt_version": prompt.resoudre_version(p.prompt_version),
             "modele": p.llm_model,
             "fournisseur": fournisseur,
+            # Publiée parce qu'elle change la reproductibilité de la note, et que le
+            # rapport de calibration doit pouvoir dire sous quel réglage il a été mesuré.
+            "temperature": p.llm_temperature,
             # Le texte analysé quitte-t-il l'instance ? C'est ce que le portail annonce sur
             # sa page de confidentialité, et la réponse change tout pour le lecteur.
             "fournisseur_distant": distant,

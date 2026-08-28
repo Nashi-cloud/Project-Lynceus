@@ -67,13 +67,59 @@ _AIDES = {
 }
 
 
+def marquer_le_cache(messages: list[dict]) -> list[dict]:
+    """Annonce le prompt système comme réutilisable d'un appel à l'autre.
+
+    Il fait environ 3 500 tokens et ne change jamais, quand la page analysée en pèse
+    quelques centaines : c'est lui qui domine la facture d'entrée. Le marquer le fait
+    facturer au tarif de relecture, nettement moindre, dès le deuxième appel.
+
+    La forme est celle qu'attendent les fournisseurs qui demandent des points de césure
+    explicites : le contenu devient une liste de blocs, et le dernier porte la marque. Ceux
+    qui mettent en cache d'eux-mêmes la reçoivent sans s'en servir, ce qui est sans effet.
+    Un message déjà découpé en blocs est laissé tel quel plutôt que réemballé."""
+    marques = []
+    for message in messages:
+        contenu = message.get("content")
+        if message.get("role") == "system" and isinstance(contenu, str):
+            message = {**message, "content": [
+                {"type": "text", "text": contenu, "cache_control": {"type": "ephemeral"}}
+            ]}
+        marques.append(message)
+    return marques
+
+
+# Le vocabulaire du fournisseur, repris tel quel, comme le fait déjà `llm_response_format`
+# avec « json_object » et « json_schema ». Traduire « low » en « faible » obligerait
+# l'exploitant à une conversion que la documentation de son fournisseur ne lui donne pas.
+_RAISONNEMENT = {
+    "off": {"enabled": False},
+    "low": {"effort": "low"},
+    "medium": {"effort": "medium"},
+    "high": {"effort": "high"},
+}
+
+
+def reglage_raisonnement(demande: str) -> dict | None:
+    """Le paramètre à envoyer, ou None pour laisser le fournisseur décider.
+
+    Un réglage inconnu ne fait pas échouer l'analyse : il est ignoré, et l'instance se
+    comporte comme si rien n'avait été demandé. Une faute de frappe dans un fichier .env ne
+    doit pas éteindre le service."""
+    return _RAISONNEMENT.get(demande.strip().lower())
+
+
 def appeler(messages: list[dict], p: Parametres, schema_json: dict | None = None) -> str:
     """Retourne le texte de la réponse du modèle. Lève ErreurLLM en cas d'échec."""
     charge: dict = {
         "model": p.llm_model,
-        "messages": messages,
+        "messages": marquer_le_cache(messages) if p.llm_cache_prompt else messages,
         "temperature": p.llm_temperature,
     }
+    raisonnement = reglage_raisonnement(p.llm_raisonnement)
+    if raisonnement is not None:
+        charge["reasoning"] = raisonnement
+
     if p.llm_response_format == "json_object":
         charge["response_format"] = {"type": "json_object"}
     elif p.llm_response_format == "json_schema" and schema_json is not None:

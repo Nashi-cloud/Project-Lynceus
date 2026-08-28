@@ -59,7 +59,7 @@ The individual steps, if you need to run them separately:
 | Extension typing | `cd extension && npm run verifier` | any change under `extension/` |
 | Extension tests | `cd extension && npm test` | any change under `extension/` |
 | Extension build | `cd extension && npm run build` | before reloading in Chrome |
-| Calibration | `lynceus calibrer corpus/corpus.yaml` | **mandatory** if `prompts/`, `docs/METHODOLOGIE.md`, `docs/TAXONOMIE.md` or the model change |
+| Calibration | `lynceus calibrer corpus/corpus.yaml --ecrire` | **mandatory** if `prompts/`, `docs/METHODOLOGIE.md`, `docs/TAXONOMIE.md` or the model change |
 
 `verifier.sh` also refuses a mismatch between the highest version under `prompts/analyse/`, the stamps in `docs/METHODOLOGIE.md` and `docs/TAXONOMIE.md`, and the version `corpus/RESULTATS.md` reports on. Those four share a single counter, `prompt_version`, the one every analysis announces.
 
@@ -85,7 +85,7 @@ The pipeline is not a substitute for running `./verifier.sh` before merging: it 
 - **Promotion merges**: `dev` → `next` and `next` → `main` use `--no-ff` as well. Those two branches never diverge, so a fast-forward would work, but it would lose the `merge: next → main (vX.Y.Z)` commit that makes the graph readable and gives an obvious point to roll back to. A fast-forward is still fine to catch `next` up with `dev` when there is nothing to mark.
 - **Tests are mandatory** for any bug fix: the test must fail before the fix. For a feature, test at least the business logic that can be isolated from the browser APIs.
 - **Extension versions**: any change under `extension/` increments the version in `manifest.json` **and** `package.json`, with an entry in `extension/CHANGELOG.md` (patch for a fix, minor for a feature). Without that, there is no way to tell which build is loaded in Chrome.
-- **Prompts and methodology**: any change to `prompts/`, `docs/METHODOLOGIE.md` or `docs/TAXONOMIE.md` increments `prompt_version` (semver) and must pass calibration against `corpus/`. Report the result in [corpus/RESULTATS.md](corpus/en/RESULTATS.md).
+- **Prompts and methodology**: any change to `prompts/`, `docs/METHODOLOGIE.md` or `docs/TAXONOMIE.md` increments `prompt_version` (semver) and must pass calibration against `corpus/`. The result is not copied over by hand: `lynceus calibrer corpus/corpus.yaml --ecrire` records the run in `corpus/passes.jsonl` and regenerates the table in [corpus/en/RESULTATS.md](corpus/en/RESULTATS.md) in both languages. `verifier.sh` regenerates that table to compare it, and refuses a prompt version for which no run has been recorded: a published figure comes from a measurement, or the build fails.
 - **Corpus**: never relax an expectation to make a test pass without having examined the case, and never on `techniques_attendues` / `techniques_interdites`, which are the heart of the measurement.
 - **Taxonomy ids**: stable and final, never renamed (the directory references them).
 - **Charter**: every PR must be compatible with [docs/en/ETHIQUE.md](docs/en/ETHIQUE.md). That is review criterion number one.
