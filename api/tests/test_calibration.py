@@ -220,3 +220,18 @@ def test_une_passe_resservie_depuis_le_cache_le_dit():
 
     neuve = calibration.bloc([passe(depuis_cache=0, mesures=1)])
     assert "\\*" not in neuve and "astérisque" not in neuve
+
+
+def test_le_tableau_ne_melange_pas_deux_modeles(tmp_path):
+    """Deux modèles ne donnent pas les mêmes notes sur le même texte.
+
+    Un tableau qui mélangerait leurs passes afficherait des intervalles de score mesurant
+    l'écart entre deux modèles, pas la variabilité de celui que l'instance emploie."""
+    journal = tmp_path / "passes.jsonl"
+    calibration.enregistrer(journal, passe(modele="ancien/modele"))
+    calibration.enregistrer(journal, passe(modele="nouveau/modele"))
+    calibration.enregistrer(journal, passe(modele="nouveau/modele", date="2026-08-28"))
+
+    courantes = calibration.passes_courantes(journal, "0.1.2")
+    assert [p["modele"] for p in courantes] == ["nouveau/modele"] * 2
+    assert "ancien/modele" not in calibration.bloc(courantes)

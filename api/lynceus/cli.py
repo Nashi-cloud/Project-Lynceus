@@ -167,7 +167,13 @@ def calibrer(
         console.print("[red]Le corpus doit être une liste YAML.[/red]")
         raise typer.Exit(2)
     if filtre:
-        entrees = [e for e in entrees if filtre.lower() in str(e.get("titre", "") or e.get("fichier", "") or e.get("url", "")).lower()]
+        # Titre ET chemin, pas l'un ou l'autre : « --filtre satire » doit trouver le
+        # spécimen dont le nom de fichier porte ce mot, même si son titre ne le dit pas.
+        def _porte(entree: dict) -> bool:
+            champs = (entree.get("titre"), entree.get("fichier"), entree.get("capture"), entree.get("url"))
+            return any(filtre.lower() in str(c).lower() for c in champs if c)
+
+        entrees = [e for e in entrees if _porte(e)]
 
     racine = fichier.parent
     table = Table(show_header=True, header_style="bold")
@@ -344,7 +350,7 @@ def _publier_la_passe(corpus: Path, entrees: list, resultats: list, conformes: i
     for chemin, langue in _rapports_publies(corpus.parent):
         if not chemin.is_file():
             continue
-        liste = calibration.passes(journal, meta["prompt_version"])
+        liste = calibration.passes_courantes(journal, meta["prompt_version"])
         if calibration.remplacer_bloc(chemin, calibration.bloc(liste, langue)):
             console.print(f"[dim]Tableau réengendré dans {chemin}[/dim]")
     _restamper_traductions(corpus.parent)
@@ -949,7 +955,7 @@ def calibration_publiee(
 
     journal = corpus.parent / "passes.jsonl"
     version = moteur_prompt.versions_disponibles()[-1]
-    liste = calibration.passes(journal, version)
+    liste = calibration.passes_courantes(journal, version)
     if not liste:
         console.print(
             f"[red]Aucune passe enregistrée pour le prompt v{version}.[/red]\n"
