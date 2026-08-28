@@ -8,10 +8,10 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .noms import deux_noms
+from .noms import ReglagesTolerants, deux_noms
 
 
-class Parametres(BaseSettings):
+class Parametres(ReglagesTolerants):
     # env_file en tuple : trouvé qu'on lance depuis api/ (« .env ») ou depuis la racine (« api/.env »)
     # populate_by_name : un alias de validation remplace le nom du champ. Sans cette
     # option, construire l'objet en Python cesserait d'accepter le nom du champ.
