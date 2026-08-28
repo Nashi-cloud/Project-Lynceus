@@ -68,3 +68,64 @@ def test_aucun_alias_anglais_ne_porte_deux_fois_le_meme_nom():
     anglais = list(noms.ALIAS.values())
     assert len(anglais) == len(set(anglais))
     assert len(noms.ALIAS) > 30, "le scan n'a presque rien trouvé : les alias ont disparu"
+
+
+# ---------- une variable vide vaut « non renseignée » ----------
+
+def test_un_booleen_vide_ne_fait_pas_tomber_l_instance(monkeypatch):
+    """Le bug qui a mis la recette à genoux.
+
+    `lynceus env` engendre « LYNCEUS_LLM_CACHE_PROMPT= » sans valeur, à dessein. Cette
+    ligne faisait échouer la validation, l'API refusait de démarrer, le portail attendait
+    une API saine qui ne venait jamais, et le proxy renvoyait 502 sans nommer la cause."""
+    monkeypatch.setenv("LYNCEUS_LLM_CACHE_PROMPT", "")
+    assert Parametres(_env_file=None).llm_cache_prompt is False
+
+
+@pytest.mark.parametrize("nom", ["LYNCEUS_ANALYSES_SIMULTANEES", "LYNCEUS_CONCURRENT_ANALYSES"])
+def test_un_entier_vide_vaut_son_defaut_sous_les_deux_noms(monkeypatch, nom):
+    """Chercher le champ par son seul nom laisserait passer tous les réglages aliassés,
+    c'est-à-dire précisément ceux que ce projet a ajoutés."""
+    monkeypatch.setenv(nom, "")
+    assert Parametres(_env_file=None).analyses_simultanees == 12
+
+
+def test_un_entier_vide_du_portail_vaut_aussi_son_defaut(monkeypatch):
+    monkeypatch.setenv("LYNCEUS_PORTAIL_QUOTA_JOUR", "")
+    assert ParametresPortail(_env_file=None).quota_jour > 0
+
+
+def test_une_chaine_vide_reste_une_valeur(monkeypatch):
+    """Le vide veut dire quelque chose pour une chaîne : LYNCEUS_LLM_FOURNISSEUR vide
+    demande de déduire le nom du fournisseur de l'adresse. Ce n'est pas « rien dire »."""
+    monkeypatch.setenv("LYNCEUS_LLM_FOURNISSEUR", "")
+    assert Parametres(_env_file=None).llm_fournisseur == ""
+
+
+def test_une_valeur_renseignee_reste_prioritaire(monkeypatch):
+    monkeypatch.setenv("LYNCEUS_LLM_CACHE_PROMPT", "true")
+    monkeypatch.setenv("LYNCEUS_ANALYSES_SIMULTANEES", "3")
+    p = Parametres(_env_file=None)
+    assert p.llm_cache_prompt is True and p.analyses_simultanees == 3
+
+
+def test_le_fichier_engendre_par_env_demarre_une_instance(tmp_path, monkeypatch):
+    """Le garde-fou de bout en bout : ce que `lynceus env` écrit doit démarrer.
+
+    C'est exactement ce qui manquait. Le générateur produisait un fichier que l'instance
+    refusait de lire, et rien dans la chaîne ne le disait."""
+    from typer.testing import CliRunner
+
+    from lynceus.cli import app
+
+    sortie = CliRunner().invoke(app, ["env", "recette"]).stdout
+    variables = dict(
+        ligne.split("=", 1) for ligne in sortie.splitlines()
+        if "=" in ligne and not ligne.startswith("#")
+    )
+    for nom, valeur in variables.items():
+        if nom.startswith("LYNCEUS_"):
+            monkeypatch.setenv(nom, valeur)
+    monkeypatch.setenv("LYNCEUS_DATABASE_URL", f"sqlite:///{tmp_path}/essai.sqlite3")
+    Parametres(_env_file=None)
+    ParametresPortail(_env_file=None)

@@ -20,7 +20,8 @@ from __future__ import annotations
 import os
 import sys
 
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, model_validator
+from pydantic_settings import BaseSettings
 
 # Français d'abord : c'est le nom canonique, et il l'emporte si les deux sont posés.
 ALIAS: dict[str, str] = {}
@@ -48,3 +49,50 @@ def avertir_des_conflits(environnement: dict[str, str] | None = None) -> list[st
     for message in conflits:
         print(f"[lynceus] {message}", file=sys.stderr)
     return conflits
+
+
+class ReglagesTolerants(BaseSettings):
+    """Réglages pour lesquels une variable vide vaut « non renseignée ».
+
+    Un fichier .env s'écrit à la main, et il est normal d'y laisser une ligne vide en
+    attendant de la remplir. `lynceus env` en engendre lui-même : `LYNCEUS_LLM_CACHE_PROMPT=`
+    sort vide, parce qu'un défaut posé par le générateur serait un choix fait à la place de
+    l'exploitant.
+
+    Sans cette tolérance, une telle ligne fait échouer la validation d'un champ non textuel
+    et l'instance refuse de démarrer, pour un réglage que personne n'a demandé. Le cas s'est
+    produit en recette : l'API tombait au démarrage, le portail attendait une API saine qui
+    ne venait jamais, et le proxy renvoyait 502 sans que rien ne nomme la cause.
+
+    La tolérance ne vaut que pour les champs non textuels. Pour une chaîne, le vide est une
+    valeur qui veut dire quelque chose : `LYNCEUS_LLM_FOURNISSEUR=` demande de déduire le
+    nom du fournisseur de l'adresse, ce qui n'est pas la même chose que de ne rien dire."""
+
+    @classmethod
+    def _champ_designe(cls, cle: str):
+        """Le champ visé par une clé, qu'elle soit son nom ou l'un de ses deux alias.
+
+        À ce stade, une valeur venue de l'environnement porte encore le nom de la variable
+        et non celui du champ : chercher seulement par nom de champ laisserait passer tous
+        les réglages aliassés, c'est-à-dire précisément ceux que ce projet a ajoutés."""
+        champ = cls.model_fields.get(cle)
+        if champ is not None:
+            return champ
+        for candidat in cls.model_fields.values():
+            alias = getattr(candidat, "validation_alias", None)
+            if alias is not None and cle in getattr(alias, "choices", ()):
+                return candidat
+        return None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _une_valeur_vide_vaut_absente(cls, valeurs):
+        if not isinstance(valeurs, dict):
+            return valeurs
+        gardees = {}
+        for cle, valeur in valeurs.items():
+            champ = cls._champ_designe(cle) if isinstance(valeur, str) and not valeur.strip() else None
+            if champ is not None and champ.annotation is not str:
+                continue
+            gardees[cle] = valeur
+        return gardees
