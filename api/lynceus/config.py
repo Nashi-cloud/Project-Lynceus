@@ -55,9 +55,9 @@ class Parametres(BaseSettings):
     # texte que personne ne lira. Les modèles qui raisonnent sont désormais la règle, et
     # c'est devenu le premier poste de dépense, loin devant le prompt système.
     #
-    # Vide = on ne demande rien, le fournisseur applique son défaut. « non » désactive le
-    # raisonnement. « faible », « moyen » et « eleve » en règlent l'ampleur quand le
-    # fournisseur le permet. Un endpoint qui ignore le paramètre n'en souffre pas.
+    # Vide = on ne demande rien, le fournisseur applique son défaut. Sinon `off`, `low`,
+    # `medium` ou `high` : le vocabulaire du fournisseur, repris tel quel comme le fait
+    # déjà `llm_response_format`. Un endpoint qui ignore le paramètre n'en souffre pas.
     #
     # À ne changer qu'avec une passe de calibration à l'appui : moins de raisonnement peut
     # coûter en justesse, et ce projet ne troque pas de la qualité d'analyse contre des
