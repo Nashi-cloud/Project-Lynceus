@@ -37,6 +37,32 @@ class Parametres(BaseSettings):
     llm_timeout_s: float = 180.0
     # none : le prompt exige du JSON (universel) · json_object / json_schema : si le fournisseur les supporte
     llm_response_format: str = "none"
+    # Le prompt système fait environ 3 500 tokens (taxonomie condensée et schéma) et part
+    # identique à chaque analyse, alors qu'une page en pèse quelques centaines : c'est donc
+    # lui qui domine la facture d'entrée. Marqué comme réutilisable, il est facturé au tarif
+    # de relecture du cache, environ cinq fois moins cher, à partir du deuxième appel.
+    #
+    # FAUX PAR DÉFAUT, et c'est délibéré. Le marqueur oblige à envoyer le contenu du message
+    # système sous forme de liste de blocs plutôt que de chaîne. Les fournisseurs qui
+    # l'attendent le lisent, ceux qui mettent en cache d'eux-mêmes l'ignorent, mais un
+    # endpoint auto-hébergé minimal peut refuser cette forme. L'auto-hébergement est un
+    # droit de premier ordre ici : il ne doit pas casser parce qu'une instance publique
+    # veut économiser. À activer sur une instance qui parle à un fournisseur distant.
+    llm_cache_prompt: bool = False
+    # Ce que le modèle « pense » avant de répondre est facturé comme de la sortie, au tarif
+    # de sortie, puis jeté. Mesuré sur une analyse réelle avec glm-5.2 : 2 331 tokens
+    # facturés pour une carte qui en fait moins de 1 500, soit 26 % de la note pour un
+    # texte que personne ne lira. Les modèles qui raisonnent sont désormais la règle, et
+    # c'est devenu le premier poste de dépense, loin devant le prompt système.
+    #
+    # Vide = on ne demande rien, le fournisseur applique son défaut. « non » désactive le
+    # raisonnement. « faible », « moyen » et « eleve » en règlent l'ampleur quand le
+    # fournisseur le permet. Un endpoint qui ignore le paramètre n'en souffre pas.
+    #
+    # À ne changer qu'avec une passe de calibration à l'appui : moins de raisonnement peut
+    # coûter en justesse, et ce projet ne troque pas de la qualité d'analyse contre des
+    # centimes sans l'avoir mesuré.
+    llm_raisonnement: str = ""
 
     # Garde-fous
     # Analyses menées de front. Chacune mobilise un thread pendant tout l'appel au modèle
