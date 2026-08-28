@@ -35,6 +35,7 @@ from ..cles import emettre
 from ..normalisation import extraire_domaine, hacher_url, normaliser_url
 from . import contenu, i18n
 from .i18n import N_
+from .. import noms
 from .config import ParametresPortail, parametres_portail
 
 RACINE = Path(__file__).parent
@@ -160,6 +161,10 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
     instance_publique = p.instance.rstrip("/")
     compteur = _CompteurCles()
     legal = identite_legale(p)
+
+    # Même garde-fou que côté instance : un réglage posé sous ses deux noms avec deux
+    # valeurs verrait l'une des deux ignorée sans que rien ne le signale.
+    noms.avertir_des_conflits()
 
     if instance_publique and not p.depot:
         print(

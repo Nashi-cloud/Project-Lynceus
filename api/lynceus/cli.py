@@ -1116,6 +1116,11 @@ def env(
     )
 
     bloc_llm = [
+        "# Chaque variable répond aussi à un nom anglais : LYNCEUS_LLM_FOURNISSEUR accepte",
+        "# LYNCEUS_LLM_PROVIDER, LYNCEUS_CLE_PUBLIQUE accepte LYNCEUS_PUBLIC_KEY, et ainsi",
+        "# de suite. La table complète est dans api/DEPLOIEMENT.md. Le nom français reste",
+        "# le nom canonique : c'est lui qui est engendré ici, et lui qui l'emporte si les",
+        "# deux sont posés.",
         Variable("LYNCEUS_LLM_BASE_URL", base_llm),
         Variable("LYNCEUS_LLM_API_KEY", cle_llm,
                  note_si_vide="Sans elle, l'instance refuse de démarrer en le disant, ce qui\n"

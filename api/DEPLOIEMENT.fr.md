@@ -1,6 +1,6 @@
 # Déployer une instance Lynceus
 
-<!-- traduit-de: api/DEPLOIEMENT.md sha256:bb159e26ae0907d9 -->
+<!-- traduit-de: api/DEPLOIEMENT.md sha256:fbc2e72d2d0c64e4 -->
 
 [English](DEPLOIEMENT.md) · **Français**
 
@@ -63,6 +63,61 @@ La clé publique se déduit de la privée : il n'y a donc qu'un secret à conser
 Gardez la **clé privée** hors de la machine qui héberge l'instance : c'est elle qui permet d'émettre des clés, et l'instance n'en a pas besoin. Si le serveur est compromis, personne ne pourra émettre de clés en votre nom.
 
 > La sortie contient des secrets en clair. Elle n'a rien à faire dans un ticket, un dépôt, ni une conversation.
+
+## Les variables ont deux noms
+
+Le code de ce projet est en français et le restera. Une variable d'environnement, elle,
+n'est pas du code : c'est la porte de l'exploitant, celle qu'il ouvre avec ce guide à côté.
+Chacune répond donc à deux noms, l'un français, l'autre anglais.
+
+Rien à changer sur une instance existante : le nom français reste le nom canonique, c'est
+lui qu'engendre `lynceus env`, et c'est lui qui l'emporte si les deux sont posés. Poser les
+deux avec des valeurs différentes déclenche un avertissement au démarrage, parce qu'un
+réglage ignoré en silence est le genre de panne qui coûte une soirée.
+
+Les deux dernières lignes sont lues par Compose et non par l'application : la substitution
+y est imbriquée, l'effet est le même.
+
+| Nom canonique | Alias anglais |
+|---|---|
+| `LYNCEUS_ANALYSES_SIMULTANEES` | `LYNCEUS_CONCURRENT_ANALYSES` |
+| `LYNCEUS_BDD_MAX_OVERFLOW` | `LYNCEUS_DB_MAX_OVERFLOW` |
+| `LYNCEUS_BDD_POOL_RECYCLE_S` | `LYNCEUS_DB_POOL_RECYCLE_S` |
+| `LYNCEUS_BDD_POOL_SIZE` | `LYNCEUS_DB_POOL_SIZE` |
+| `LYNCEUS_CLES_REVOQUEES` | `LYNCEUS_REVOKED_KEYS` |
+| `LYNCEUS_CLE_PUBLIQUE` | `LYNCEUS_PUBLIC_KEY` |
+| `LYNCEUS_CONTENU_MAX_CARS` | `LYNCEUS_CONTENT_MAX_CHARS` |
+| `LYNCEUS_CONTENU_MIN_CARS` | `LYNCEUS_CONTENT_MIN_CHARS` |
+| `LYNCEUS_ENTETE_IP_REELLE` | `LYNCEUS_REAL_IP_HEADER` |
+| `LYNCEUS_LLM_FOURNISSEUR` | `LYNCEUS_LLM_PROVIDER` |
+| `LYNCEUS_LLM_RAISONNEMENT` | `LYNCEUS_LLM_REASONING` |
+| `LYNCEUS_PORTAIL_ADRESSE` | `LYNCEUS_PORTAL_ADDRESS` |
+| `LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR` | `LYNCEUS_PORTAL_KEYS_PER_IP_DAY` |
+| `LYNCEUS_PORTAIL_CLE_PRIVEE` | `LYNCEUS_PORTAL_PRIVATE_KEY` |
+| `LYNCEUS_PORTAIL_CONTACT` | `LYNCEUS_PORTAL_CONTACT` |
+| `LYNCEUS_PORTAIL_CORS_ORIGINS` | `LYNCEUS_PORTAL_CORS_ORIGINS` |
+| `LYNCEUS_PORTAIL_DELAI_INSTANCE_S` | `LYNCEUS_PORTAL_INSTANCE_TIMEOUT_S` |
+| `LYNCEUS_PORTAIL_DEPOT` | `LYNCEUS_PORTAL_REPOSITORY` |
+| `LYNCEUS_PORTAIL_DEPOT_FICHIERS` | `LYNCEUS_PORTAL_REPOSITORY_FILES` |
+| `LYNCEUS_PORTAIL_DROIT_APPLICABLE` | `LYNCEUS_PORTAL_GOVERNING_LAW` |
+| `LYNCEUS_PORTAIL_EDITEUR_ADRESSE` | `LYNCEUS_PORTAL_PUBLISHER_ADDRESS` |
+| `LYNCEUS_PORTAIL_EDITEUR_CONTACT` | `LYNCEUS_PORTAL_PUBLISHER_CONTACT` |
+| `LYNCEUS_PORTAIL_EDITEUR_DIRECTEUR` | `LYNCEUS_PORTAL_PUBLISHER_DIRECTOR` |
+| `LYNCEUS_PORTAIL_EDITEUR_IDENTIFIANT` | `LYNCEUS_PORTAL_PUBLISHER_ID` |
+| `LYNCEUS_PORTAIL_EDITEUR_NOM` | `LYNCEUS_PORTAL_PUBLISHER_NAME` |
+| `LYNCEUS_PORTAIL_EDITEUR_STATUT` | `LYNCEUS_PORTAL_PUBLISHER_STATUS` |
+| `LYNCEUS_PORTAIL_ENTETE_IP_REELLE` | `LYNCEUS_PORTAL_REAL_IP_HEADER` |
+| `LYNCEUS_PORTAIL_HEBERGEUR_ADRESSE` | `LYNCEUS_PORTAL_HOST_ADDRESS` |
+| `LYNCEUS_PORTAIL_HEBERGEUR_NOM` | `LYNCEUS_PORTAL_HOST_NAME` |
+| `LYNCEUS_PORTAIL_HEBERGEUR_SITE` | `LYNCEUS_PORTAL_HOST_SITE` |
+| `LYNCEUS_PORTAIL_INSTANCE` | `LYNCEUS_PORTAL_INSTANCE` |
+| `LYNCEUS_PORTAIL_INSTANCE_INTERNE` | `LYNCEUS_PORTAL_INTERNAL_INSTANCE` |
+| `LYNCEUS_PORTAIL_NOM` | `LYNCEUS_PORTAL_NAME` |
+| `LYNCEUS_PORTAIL_PAQUETS` | `LYNCEUS_PORTAL_PACKAGES` |
+| `LYNCEUS_PORTAIL_QUOTA_JOUR` | `LYNCEUS_PORTAL_DAILY_QUOTA` |
+| `LYNCEUS_PORTAIL_VALIDITE_JOURS` | `LYNCEUS_PORTAL_VALIDITY_DAYS` |
+| `LYNCEUS_SUFFIXE` | `LYNCEUS_SUFFIX` |
+| `LYNCEUS_PAQUETS` | `LYNCEUS_PACKAGES` |
 
 ## 2. Publier l'image
 
