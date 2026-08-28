@@ -1,6 +1,6 @@
 # Contribuer à Lynceus
 
-<!-- traduit-de: CONTRIBUTING.md sha256:92313fdcbd69100a -->
+<!-- traduit-de: CONTRIBUTING.md sha256:13c9124142b4644d -->
 
 [English](CONTRIBUTING.md) · **Français**
 
@@ -55,7 +55,7 @@ Détail des étapes, si besoin de les lancer séparément :
 | Typage extension | `cd extension && npm run verifier` | toute modification de `extension/` |
 | Tests extension | `cd extension && npm test` | toute modification de `extension/` |
 | Build extension | `cd extension && npm run build` | avant de recharger dans Chrome |
-| Calibration | `lynceus calibrer corpus/corpus.yaml` | **obligatoire** si `prompts/`, `docs/METHODOLOGIE.md`, `docs/TAXONOMIE.md` ou le modèle changent |
+| Calibration | `lynceus calibrer corpus/corpus.yaml --ecrire` | **obligatoire** si `prompts/`, `docs/METHODOLOGIE.md`, `docs/TAXONOMIE.md` ou le modèle changent |
 
 `verifier.sh` refuse aussi un décalage entre la version la plus haute de `prompts/analyse/`, les estampilles de `docs/METHODOLOGIE.md` et `docs/TAXONOMIE.md`, et la version sur laquelle porte `corpus/RESULTATS.md`. Ces quatre-là partagent un seul compteur, `prompt_version`, celui que chaque analyse annonce.
 
@@ -81,7 +81,7 @@ La chaîne ne remplace pas `./verifier.sh` avant de fusionner : elle constate, e
 - **Fusions de promotion** : `dev` → `next` et `next` → `main` en `--no-ff` également. Ces deux branches ne divergent jamais, donc un fast-forward passerait, mais on y perdrait le commit `merge: next → main (vX.Y.Z)` qui rend le graphe lisible et donne un point de retour arrière évident. Le fast-forward reste acceptable pour rattraper `next` sur `dev` quand il n'y a rien à marquer.
 - **Tests obligatoires** pour toute correction de bug : le test doit échouer avant le correctif. Pour une fonctionnalité, tester au moins la logique métier isolable des API du navigateur.
 - **Versions de l'extension** : toute modification de `extension/` incrémente la version dans `manifest.json` **et** `package.json`, avec une entrée dans `extension/CHANGELOG.md` (patch pour un correctif, mineure pour une fonctionnalité). Sans ça, impossible de savoir quel build est chargé dans Chrome.
-- **Prompts et méthodologie** : toute modification de `prompts/`, `docs/METHODOLOGIE.md` ou `docs/TAXONOMIE.md` incrémente `prompt_version` (semver) et doit passer la calibration sur `corpus/`. Reporter le résultat dans [corpus/RESULTATS.md](corpus/RESULTATS.md).
+- **Prompts et méthodologie** : toute modification de `prompts/`, `docs/METHODOLOGIE.md` ou `docs/TAXONOMIE.md` incrémente `prompt_version` (semver) et doit passer la calibration sur `corpus/`. Le résultat ne se recopie pas à la main : `lynceus calibrer corpus/corpus.yaml --ecrire` enregistre la passe dans `corpus/passes.jsonl` et réengendre le tableau de [corpus/RESULTATS.md](corpus/RESULTATS.md) dans les deux langues. `verifier.sh` réengendre ce tableau pour le comparer, et refuse une version de prompt pour laquelle aucune passe n'a été enregistrée : un chiffre publié vient d'une mesure, ou la construction échoue.
 - **Corpus** : ne jamais assouplir une attente pour faire passer un test sans avoir examiné le cas, et jamais sur `techniques_attendues` / `techniques_interdites`, qui sont le cœur de la mesure.
 - **Ids de taxonomie** : stables et définitifs, jamais renommés (l'annuaire les référence).
 - **Charte** : toute PR doit être compatible avec [docs/ETHIQUE.md](docs/ETHIQUE.md) : c'est le critère de revue numéro un.

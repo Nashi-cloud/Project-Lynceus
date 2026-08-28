@@ -22,7 +22,7 @@ services:
   portail:
     image: ${LYNCEUS_IMAGE:?adresse de l'image requise, voir .env.portail.example}
     pull_policy: always
-    container_name: lynceus-portail${LYNCEUS_SUFFIXE:-}
+    container_name: lynceus-portail${LYNCEUS_SUFFIXE:-${LYNCEUS_SUFFIX:-}}
     command: ["uvicorn", "lynceus.portail:creer_portail", "--factory",
               "--host", "0.0.0.0", "--port", "8080"]
     environment:
@@ -91,7 +91,7 @@ services:
       # répertoire de travail interne à Portainer, que Docker crée vide au premier
       # démarrage. Le portail servirait le paquet de l'image sans que rien ne signale
       # que le dossier attendu n'a jamais été monté.
-      - ${LYNCEUS_PAQUETS:-/opt/lynceus/paquets}:/paquets:ro
+      - ${LYNCEUS_PAQUETS:-${LYNCEUS_PACKAGES:-/opt/lynceus/paquets}}:/paquets:ro
     ports:
       - "${LYNCEUS_PORTAIL_BIND:-127.0.0.1}:8080:8080"
     healthcheck:
@@ -106,7 +106,7 @@ services:
 
   tunnel:
     image: cloudflare/cloudflared:latest
-    container_name: lynceus-portail-tunnel${LYNCEUS_SUFFIXE:-}
+    container_name: lynceus-portail-tunnel${LYNCEUS_SUFFIXE:-${LYNCEUS_SUFFIX:-}}
     profiles: [tunnel]
     command: tunnel --no-autoupdate run
     environment:

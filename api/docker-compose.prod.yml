@@ -21,7 +21,7 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: lynceus-db${LYNCEUS_SUFFIXE:-}
+    container_name: lynceus-db${LYNCEUS_SUFFIXE:-${LYNCEUS_SUFFIX:-}}
     environment:
       POSTGRES_DB: lynceus
       POSTGRES_USER: lynceus
@@ -40,7 +40,7 @@ services:
   api:
     image: ${LYNCEUS_IMAGE:?adresse de l'image requise, voir .env.prod.example}
     pull_policy: always
-    container_name: lynceus-api${LYNCEUS_SUFFIXE:-}
+    container_name: lynceus-api${LYNCEUS_SUFFIXE:-${LYNCEUS_SUFFIX:-}}
     depends_on:
       db:
         condition: service_healthy
@@ -97,7 +97,7 @@ services:
   # Cloudflare Zero Trust, qui fournit en retour le jeton à placer dans .env.
   tunnel:
     image: cloudflare/cloudflared:latest
-    container_name: lynceus-tunnel${LYNCEUS_SUFFIXE:-}
+    container_name: lynceus-tunnel${LYNCEUS_SUFFIXE:-${LYNCEUS_SUFFIX:-}}
     profiles: [tunnel]
     command: tunnel --no-autoupdate run
     environment:
