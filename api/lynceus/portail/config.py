@@ -12,10 +12,10 @@ from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from ..noms import deux_noms
+from ..noms import ReglagesTolerants, deux_noms
 
 
-class ParametresPortail(BaseSettings):
+class ParametresPortail(ReglagesTolerants):
     # populate_by_name : un alias de validation remplace le nom du champ. Sans cette
     # option, construire l'objet en Python cesserait d'accepter le nom du champ, ce dont
     # vivent les tests et la CLI.
