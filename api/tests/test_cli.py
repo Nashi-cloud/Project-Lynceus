@@ -609,3 +609,16 @@ def test_le_filtre_cherche_aussi_dans_le_chemin(corpus, monkeypatch):
     _simuler_api(monkeypatch, carte(categorie="satire", grade="A"))
     assert "1/1 conformes" in runner.invoke(app, ["calibrer", str(corpus), "--filtre", "cas.md"]).stdout
     assert "0/0 conformes" in runner.invoke(app, ["calibrer", str(corpus), "--filtre", "absent"]).stdout
+
+
+def test_env_expose_les_reglages_de_facture_sans_les_choisir():
+    """Un réglage qu'on ne voit pas dans son .env n'existe pas pour l'exploitant.
+
+    Ils sortent vides : ils changent ce que l'instance demande au fournisseur, et un
+    défaut posé par le générateur serait un choix fait à la place de celui qui paie."""
+    for cible in ("production", "recette"):
+        sortie = runner.invoke(app, ["env", cible]).stdout
+        variables = _variables(sortie)
+        assert variables["LYNCEUS_LLM_RAISONNEMENT"] == ""
+        assert variables["LYNCEUS_LLM_CACHE_PROMPT"] == ""
+        assert "low / medium / high" in sortie, "le mode d'emploi accompagne le réglage"
