@@ -131,6 +131,8 @@ L'étape 5 inclut la **vérification anti-hallucination des extraits** : tout `e
 | `LYNCEUS_LLM_MODEL` | `anthropic/claude-sonnet-5` | Modèle d'analyse, au format attendu par le fournisseur |
 | `LYNCEUS_LLM_FOURNISSEUR` | *(déduit de l'adresse)* | Nom publié du fournisseur : `/v1/meta`, chaque analyse, pages légales du portail |
 | `LYNCEUS_LLM_TEMPERATURE` | `0` | Zéro par défaut : la note doit être reproductible. Mesuré, voir [corpus/RESULTATS.md](../corpus/RESULTATS.md) |
+| `LYNCEUS_LLM_CACHE_PROMPT` | `false` | Marque le prompt système comme réutilisable. Inutile chez un fournisseur qui met en cache seul, nécessaire chez ceux qui exigent un point de césure explicite |
+| `LYNCEUS_LLM_RAISONNEMENT` | *(défaut du fournisseur)* | `non`, `faible`, `moyen`, `eleve`. Le raisonnement est facturé en sortie puis jeté : c'est le premier poste de dépense |
 | `LYNCEUS_CONTENU_MAX_CARS` | `60000` | Garde-fou taille (≈ tokens × 4) |
 | `LYNCEUS_RATE_LIMIT` | `10/minute` | Par IP, sur `/v1/analyses` |
 

@@ -1,6 +1,6 @@
 # Technical architecture
 
-<!-- traduit-de: docs/ARCHITECTURE.md sha256:a360bbcbf4fd64c4 -->
+<!-- traduit-de: docs/ARCHITECTURE.md sha256:32f8a9f9a75bcb12 -->
 
 > Translation for information. The French version, `docs/ARCHITECTURE.md`, is the one the project follows: should the two ever diverge, it is the one that counts.
 
@@ -135,6 +135,8 @@ Step 5 includes the **anti-hallucination check on quoted passages**: every `extr
 | `LYNCEUS_LLM_MODEL` | `anthropic/claude-sonnet-5` | The analysis model, in the format the provider expects |
 | `LYNCEUS_LLM_FOURNISSEUR` | *(inferred from the address)* | The provider name as published: `/v1/meta`, every analysis, the portal's legal pages |
 | `LYNCEUS_LLM_TEMPERATURE` | `0` | Zero by default: the grade has to be reproducible. Measured, see [corpus/RESULTATS.md](../../corpus/en/RESULTATS.md) |
+| `LYNCEUS_LLM_CACHE_PROMPT` | `false` | Marks the system prompt as reusable. Pointless with a provider that caches on its own, needed with those requiring an explicit breakpoint |
+| `LYNCEUS_LLM_RAISONNEMENT` | *(provider default)* | `non`, `faible`, `moyen`, `eleve`. Reasoning is billed as output and then discarded: it is the biggest cost item |
 | `LYNCEUS_CONTENU_MAX_CARS` | `60000` | Size guardrail (roughly tokens × 4) |
 | `LYNCEUS_RATE_LIMIT` | `10/minute` | Per IP, on `/v1/analyses` |
 
