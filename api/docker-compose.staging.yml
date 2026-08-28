@@ -137,7 +137,7 @@ services:
     volumes:
       # Chemin absolu : voir le commentaire de docker-compose.portail.yml. Le dossier peut
       # ne pas exister, Docker le crée, et l'image embarque déjà un paquet.
-      - ${LYNCEUS_PAQUETS:-/opt/lynceus/paquets-staging}:/paquets:ro
+      - ${LYNCEUS_PAQUETS:-${LYNCEUS_PACKAGES:-/opt/lynceus/paquets-staging}}:/paquets:ro
     ports:
       - "${LYNCEUS_BIND:-127.0.0.1}:${LYNCEUS_PORT_PORTAIL:-8080}:8080"
     healthcheck:
