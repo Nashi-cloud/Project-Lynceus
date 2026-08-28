@@ -89,12 +89,14 @@ def marquer_le_cache(messages: list[dict]) -> list[dict]:
     return marques
 
 
-# Ce que le fournisseur attend, pour chaque réglage exprimé dans la langue du projet.
+# Le vocabulaire du fournisseur, repris tel quel, comme le fait déjà `llm_response_format`
+# avec « json_object » et « json_schema ». Traduire « low » en « faible » obligerait
+# l'exploitant à une conversion que la documentation de son fournisseur ne lui donne pas.
 _RAISONNEMENT = {
-    "non": {"enabled": False},
-    "faible": {"effort": "low"},
-    "moyen": {"effort": "medium"},
-    "eleve": {"effort": "high"},
+    "off": {"enabled": False},
+    "low": {"effort": "low"},
+    "medium": {"effort": "medium"},
+    "high": {"effort": "high"},
 }
 
 

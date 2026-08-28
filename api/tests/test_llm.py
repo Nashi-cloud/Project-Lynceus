@@ -150,13 +150,13 @@ def test_sans_reglage_rien_n_est_demande_au_fournisseur(monkeypatch):
 
 def test_le_raisonnement_se_desactive(monkeypatch):
     charge = _charge_envoyee(monkeypatch, [{"role": "user", "content": "x"}],
-                             _p(llm_raisonnement="non"))
+                             _p(llm_raisonnement="off"))
     assert charge["reasoning"] == {"enabled": False}
 
 
 def test_l_ampleur_du_raisonnement_se_regle(monkeypatch):
     charge = _charge_envoyee(monkeypatch, [{"role": "user", "content": "x"}],
-                             _p(llm_raisonnement="Faible"))
+                             _p(llm_raisonnement="Low"))
     assert charge["reasoning"] == {"effort": "low"}
 
 
