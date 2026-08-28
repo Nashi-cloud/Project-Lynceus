@@ -1125,6 +1125,24 @@ def env(
                  note="Nom du fournisseur tel qu'il sera publié : /v1/meta, chaque analyse,\n"
                       "et les pages légales du portail. Vide = déduit de l'adresse, ce qui\n"
                       "donne « modèle auto-hébergé » sur une adresse privée."),
+        # Les deux réglages de facture sortent vides : ils changent ce que l'instance
+        # demande au fournisseur, et un défaut posé par le générateur serait un choix fait
+        # à la place de l'exploitant. Ils figurent quand même, avec leur mode d'emploi,
+        # parce qu'un réglage qu'on ne voit pas dans son .env n'existe pas.
+        Variable("LYNCEUS_LLM_RAISONNEMENT",
+                 note="Ce que le modèle « pense » avant de répondre est facturé en sortie\n"
+                      "puis jeté : mesuré à 2 331 tokens pour une carte qui en fait moins de\n"
+                      "1 500, soit le premier poste de dépense. Vide = défaut du fournisseur.\n"
+                      "off = désactivé · low / medium / high = ampleur réglée.\n"
+                      "À ne changer qu'avec une passe de calibration à l'appui : sur une\n"
+                      "passe unique, couper divise le coût par 2,8 et la latence par 2, mais\n"
+                      "coûte un cas conforme."),
+        Variable("LYNCEUS_LLM_CACHE_PROMPT",
+                 note="Marque le prompt système comme réutilisable. Inutile chez un\n"
+                      "fournisseur qui met en cache de lui-même, ce que fait OpenRouter ;\n"
+                      "nécessaire chez ceux qui exigent un point de césure explicite.\n"
+                      "À laisser vide devant un endpoint auto-hébergé minimal, qui peut\n"
+                      "refuser un contenu découpé en blocs."),
     ]
     note_entete = (
         "Adresse réelle du visiteur, transmise par le tunnel. À n'activer que si\n"
