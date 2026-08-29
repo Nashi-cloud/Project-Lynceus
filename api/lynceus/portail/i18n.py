@@ -40,7 +40,10 @@ LANGUES = {"fr": "Français", "en": "English"}
 # table rend le code écrit sur disque littéralement celui du projet, et non celui du
 # visiteur : la garde ne repose plus sur une comparaison faite plus haut, et l'analyse
 # statique cesse à juste titre de suivre la valeur.
-CODES_SERVIS = {code: code for code in LANGUES}
+# Écrite en toutes lettres plutôt qu'engendrée depuis LANGUES : une liste blanche se lit
+# mieux ainsi, et une valeur lue dans une table littérale est une constante du programme,
+# pour le lecteur comme pour l'analyse statique. Un test interdit aux deux de diverger.
+CODES_SERVIS = {"fr": "fr", "en": "en"}
 
 
 def code_servi(demande: str) -> str | None:

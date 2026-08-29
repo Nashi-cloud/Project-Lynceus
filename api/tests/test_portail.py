@@ -1030,3 +1030,13 @@ def test_le_code_de_langue_ecrit_dans_un_chemin_vient_du_projet():
     assert i18n.code_servi(demande) is i18n.CODES_SERVIS["en"], "la table doit rendre SA chaîne"
     for inconnue in ("../../etc", "fr/../..", "de", ""):
         assert i18n.code_servi(inconnue) is None
+
+
+def test_la_liste_blanche_des_langues_ne_derive_pas():
+    """CODES_SERVIS est écrite en toutes lettres pour que l'analyse statique y voie des
+    constantes. Le prix de ce choix est la duplication, et ce test en est la garantie :
+    ajouter une langue sans l'inscrire ici la rendrait invisible aux chemins de fichiers."""
+    from lynceus.portail import i18n
+
+    assert set(i18n.CODES_SERVIS) == set(i18n.LANGUES)
+    assert all(code == valeur for code, valeur in i18n.CODES_SERVIS.items())
