@@ -17,8 +17,13 @@ on:
     branches: [main, next, dev, "feat/**", "fix/**", "docs/**", "perf/**"]
   pull_request:
 
+# Le type d'événement fait partie du groupe, et ce n'est pas un détail. Sans lui, la
+# poussée sur `next` et la proposition issue de `next` tombaient dans le même groupe : la
+# seconde annulait la première, et l'exécution annulée s'affichait en rouge sur la PR. Une
+# vérification rouge sans échec réel est pire qu'inutile sur un dépôt public, elle apprend
+# à ne plus regarder la couleur.
 concurrency:
-  group: tests-${{ github.event.pull_request.head.ref || github.ref_name }}
+  group: tests-${{ github.event_name }}-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 permissions:
