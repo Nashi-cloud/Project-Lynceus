@@ -1005,3 +1005,27 @@ msgstr "Use it"
 
 msgid "Cadre légal"
 msgstr "Legal"
+
+msgid "L'image est publiée : une instance d'essai tient vraiment en une commande, sur SQLite, sans rien à cloner ni à construire."
+msgstr "The image is published: a trial instance really does fit in one command, on SQLite, with nothing to clone and nothing to build."
+
+msgid "votre-clé"
+msgstr "your-key"
+
+msgid "Il ne reste qu'à indiquer <code>http://localhost:8000</code> dans les réglages de l'extension. Le volume garde l'annuaire d'une relance à l'autre : sans lui, les analyses déjà payées disparaîtraient avec le conteneur."
+msgstr "All that is left is to point the extension settings at <code>http://localhost:8000</code>. The volume keeps the directory across restarts: without it, analyses you have already paid for would vanish with the container."
+
+msgid "Vous préférez partir des sources, pour lire ou pour modifier ? C'est la même chose en trois lignes :"
+msgstr "Would you rather start from the sources, to read them or to change them? The same thing, in three lines:"
+
+msgid "Si vous modifiez le code et que votre instance est joignable par d'autres, la licence vous demande de publier vos sources et d'annoncer votre dépôt : c'est la contrepartie de la liberté qu'elle vous donne."
+msgstr "If you modify the code and your instance is reachable by others, the licence asks you to publish your sources and to announce your repository: that is the counterpart of the freedom it grants you."
+
+msgid "Les trois lignes du fournisseur sont les seules à changer si vous en préférez un autre : n'importe quel service exposant une API compatible OpenAI convient, et le modèle montré ici est simplement celui sur lequel les résultats de calibration publiés ont été mesurés."
+msgstr "The three provider lines are the only ones to change if you prefer another one: any service exposing an OpenAI-compatible API will do, and the model shown here is simply the one the published calibration figures were measured on."
+
+msgid "Avec un modèle local, rien ne sort de votre machine"
+msgstr "With a local model, nothing leaves your machine"
+
+msgid "Ollama tourne alors sur votre ordinateur, l'analyse ne coûte rien, et le texte des pages que vous lisez ne quitte pas la machine. C'est la seule configuration qui tienne entièrement la promesse de vie privée de ce projet, et c'est pour ça qu'elle figure ici plutôt qu'en note de bas de page. Contrepartie honnête : un modèle qui tourne chez vous est plus lent, et souvent moins fin qu'un gros modèle distant."
+msgstr "Ollama then runs on your own computer, the analysis costs nothing, and the text of the pages you read never leaves the machine. It is the only configuration that fully keeps this project's privacy promise, which is why it appears here rather than in a footnote. An honest trade-off: a model running at home is slower, and often less subtle than a large remote one."
