@@ -28,11 +28,15 @@ permissions:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    env:
-      IMAGE: ghcr.io/${{ github.repository_owner }}/lynceus-api
-
     steps:
       - uses: actions/checkout@v4
+
+      # Le nom du compte porte une majuscule, et un nom d'image doit être en minuscules :
+      # buildx refuse « ghcr.io/Nashi-cloud/… » avant même de construire. La conversion se
+      # fait ici plutôt qu'en dur, pour qu'un fork publie sous son propre compte.
+      - name: Adresse de l'image
+        id: image
+        run: echo "nom=ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/lynceus-api" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-buildx-action@v3
 
@@ -50,6 +54,7 @@ jobs:
       - name: Étiquettes selon la branche
         id: etiquettes
         run: |
+          IMAGE="${{ steps.image.outputs.nom }}"
           case "${GITHUB_REF_NAME}" in
             dev)  echo "tags=${IMAGE}:dev"  >> "$GITHUB_OUTPUT" ;;
             next) echo "tags=${IMAGE}:next" >> "$GITHUB_OUTPUT" ;;
