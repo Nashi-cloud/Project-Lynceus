@@ -1,6 +1,6 @@
 # Contribuer à Lynceus
 
-<!-- traduit-de: CONTRIBUTING.md sha256:37886c11d2089241 -->
+<!-- traduit-de: CONTRIBUTING.md sha256:2875c9d29d0df61e -->
 
 [English](CONTRIBUTING.md) · **Français**
 
@@ -61,16 +61,22 @@ Détail des étapes, si besoin de les lancer séparément :
 
 ## Ce que déclenche une poussée
 
-Le dépôt est bâti pour une forge dotée d'un runner auto-hébergé (voir [api/DEPLOIEMENT.md](api/DEPLOIEMENT.fr.md)). Les tests y rejouent ce que `verifier.sh` fait en local, dans des conteneurs jetables.
+Les tests tournent sur des machines fournies par GitHub, gratuites et sans plafond sur un dépôt public. Ils rejouent ce que `verifier.sh` fait en local.
 
-| Branche | Tests | Image publiée | Déploiement |
-|---|---|---|---|
-| `feat/*`, `fix/*`, `docs/*` | oui | aucune | aucun |
-| `dev` | oui | `:dev` | aucun |
-| `next` | oui | `:next` | staging |
-| `main` | oui | `:latest` et `:v<VERSION>` | production |
+| Branche | Tests | Image |
+|---|---|---|
+| `feat/*`, `fix/*`, `docs/*` | oui | rien |
+| `dev` | oui | construite, non publiée |
+| `next` | oui | publiée en `:next` |
+| `main` | oui | publiée en `:latest` et `:v<VERSION>` |
 
-La chaîne ne remplace pas `./verifier.sh` avant de fusionner : elle constate, elle ne relit pas. Et elle ne s'exécute pas pour une proposition venue d'un fork, un runner auto-hébergé exécutant le code qu'on lui confie.
+Sur `dev`, l'image est construite sans être envoyée au registre. Rien ne tire cette étiquette, la recette prenant `:next` et la production `:latest` : la publier remplirait le registre d'images que personne n'ouvre. La construction, elle, reste utile, `verifier.sh` ne construisant pas l'image en local. Sans elle, un Dockerfile cassé se découvrirait au moment de promouvoir.
+
+**Une proposition venue d'un fork est vérifiée comme les autres.** Ça n'a pas toujours été le cas : les tests tournaient sur un runner auto-hébergé, qui exécute le code qu'on lui donne, et les forks en étaient exclus. La proposition d'un inconnu ne déclenchait alors rien, son auteur n'avait aucun retour et le mainteneur relisait à l'aveugle. Une machine jetable règle le problème.
+
+La chaîne ne remplace pas `./verifier.sh` avant de fusionner : elle constate, elle ne relit pas.
+
+**Le déploiement ne figure plus dans la chaîne.** Il se faisait par webhook, depuis le runner auto-hébergé, seul capable de joindre le réseau privé de l'exploitant. Une URL de webhook étant un jeton de déploiement déguisé, le sens est inversé : les instances vont chercher l'image sur GHCR, et plus rien n'entre chez elles. Voir [api/DEPLOIEMENT.fr.md](api/DEPLOIEMENT.fr.md).
 
 **Version de l'API** : le fichier `VERSION` à la racine fait foi, et doit s'accorder avec `api/pyproject.toml` et `api/lynceus/__init__.py`. C'est lui que la chaîne lit pour étiqueter l'image publiée depuis `main`, donc pour rendre un retour arrière possible. `verifier.sh` refuse un décalage.
 

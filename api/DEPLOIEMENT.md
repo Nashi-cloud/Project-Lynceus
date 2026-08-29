@@ -34,7 +34,7 @@ In a terminal it asks for what it cannot guess: registry address, model provider
 Without a local installation, the same command lives in the image:
 
 ```bash
-docker run --rm <registry>/lynceus-api:latest lynceus env production
+docker run --rm ghcr.io/nashi-cloud/lynceus-api:latest lynceus env production
 ```
 
 What is generated is generated **once**: PostgreSQL password, admin token, and above all **a single key pair for both blocks**. The easiest mistake to make is calling `cles-paire` twice and deploying a portal that signs with a key the instance does not recognise; sign-up then answers correctly, and it is the instance that refuses the key, later, at the user's end.
@@ -123,7 +123,7 @@ The image is built once and deployed as is, with no compilation on the host:
 
 ```bash
 # From the root of the repository
-REGISTRE=your-registry.example/lynceus-api      # your image registry
+REGISTRE=ghcr.io/nashi-cloud/lynceus-api      # your image registry
 
 docker build -f api/Dockerfile -t $REGISTRE:v$(cat VERSION) .
 docker tag  $REGISTRE:v$(cat VERSION) $REGISTRE:latest
@@ -137,36 +137,53 @@ The version tag makes it possible to roll back: `LYNCEUS_IMAGE=…:v0.2.0` then 
 
 ### Automating it: the CI pipeline
 
-The repository contains two GitHub Actions compatible workflows, designed for a **self-hosted runner** labelled `self-hosted, forge`:
+Two workflows, both on GitHub-hosted machines, free and unmetered on a public repository:
 
 | File | Trigger | Effect |
 |---|---|---|
-| `.github/workflows/tests.yml` | push to `main`, `next`, `dev`, `feat/**`, `fix/**`, `docs/**` | replays `pytest` and the extension suite in throwaway containers |
-| `.github/workflows/build.yml` | push to `main`, `next`, `dev` | builds the image, publishes it, and triggers the redeployment |
+| `.github/workflows/tests.yml` | every push and every proposal | replays `pytest`, the extension suite and the secret scan |
+| `.github/workflows/build.yml` | push to `main`, `next`, `dev` | builds the image and publishes it to GHCR |
 
-How branches map to image tags:
+How branches map to tags:
 
-| Branch | Tag | Redeployment |
-|---|---|---|
-| `dev` | `:dev` | none (build only) |
-| `next` | `:next` | staging, by webhook |
-| `main` | `:latest` and `:v<VERSION>` | production, by webhook |
+| Branch | Tag |
+|---|---|
+| `dev` | none: the image is built to check the Dockerfile, then discarded |
+| `next` | `ghcr.io/<account>/lynceus-api:next` |
+| `main` | `:latest` and `:v<VERSION>` |
 
-To configure in the repository, on the forge side:
+Nothing to configure: publishing to GHCR uses the workflow's own token
+(`permissions: packages: write`), with no registry account and no secret to rotate. On the
+first push the package may be created private: flip it to public once in the package
+settings and it stays that way.
 
-- variable `REGISTRE_FORGE`: the registry address **as seen from the runner**, `127.0.0.1:5000` by default. The deployment hosts reach that registry by its network name instead, set in each stack's `LYNCEUS_IMAGE`;
-- secrets `WEBHOOK_STAGING_INSTANCE`, `WEBHOOK_STAGING_PORTAIL`, `WEBHOOK_PROD_INSTANCE`, `WEBHOOK_PROD_PORTAIL`: the redeployment URLs, one per stack. Two stacks pull the same image, the instance and the portal, hence two calls; the instance first, since it carries the schema migrations. A step with no secret passes with a warning rather than failing, so that a cloned repository can build its images without configuring anything.
+Proposals from forks are checked like any other. That was not always so: the pipeline ran
+on a self-hosted runner, which executes whatever code it is handed, and forks were excluded
+from it. A stranger's proposal then triggered nothing. A disposable machine settles the
+matter, and that is the real gain of the move.
 
-Those URLs are not in the workflow files, and must not go in them: **a Portainer webhook URL is a deployment token in disguise**, enough for anyone who knows it to redeploy a stack. Since the repository is meant to become public, they stay secrets.
+### Deploying: the instance pulls, nothing is pushed to it
 
-Two details that are expensive to discover in production:
+Deployment used to happen through a Portainer webhook, called from the self-hosted runner,
+the only one able to reach the operator's private network. **A Portainer webhook URL is a
+deployment token in disguise**: whoever knows it can retrigger the stack. Letting it out of
+that network, into a third party's machine, would have been a step backwards.
 
-- the webhook call uses `curl --fail`. Without that flag, `curl` exits 0 on an HTTP 404 and the step goes green while the call hit nothing. A stack deleted and recreated changes webhook id: that is exactly the case you want to see fail;
-- test jobs do **not** run for a proposal coming from a fork. A self-hosted runner executes whatever code it is given: on a public repository, opening it to forks would amount to handing over the machine. Contributions are reviewed, and their author runs `./verifier.sh` at home.
+So the direction is reversed. The instance fetches the published image, and **nothing
+reaches into it**: no open port, no webhook, no secret left with a third party.
+
+In Portainer, on the stack, turn on **Repository/Image polling** with whatever interval
+suits you. The service already carries `pull_policy: always`, so an image republished under
+the same tag is picked up on update. For an on-demand deployment, the "Update the stack"
+button with "Re-pull image" does the same immediately.
+
+Following a moving tag (`:next`, `:latest`) is fine for staging. In production, pinning
+`:v<VERSION>` and changing the variable at each upgrade makes rolling back trivial, at the
+price of a deliberate gesture.
 
 ### A staging instance, deployed from Portainer
 
-`docker-compose.staging.yml` is meant for that: **a single stack**, database, instance and portal together, one set of variables, one redeployment webhook.
+`docker-compose.staging.yml` is meant for that: **a single stack**, database, instance and portal together, one set of variables, one image to watch.
 
 It is a knowing compromise, and it only holds for staging. In production the instance and the portal are two stacks on two machines: the portal holds the private key that signs access, the instance is the exposed surface, and separating them means a compromised instance still does not let anyone forge keys. In staging the aim is the opposite, checking the whole loop at once, so the portal reaches the instance over the stack's internal network and the staging private key lives next to it.
 
@@ -175,7 +192,7 @@ It is a knowing compromise, and it only holds for staging. In production the ins
 Variables to fill in from the Portainer editor:
 
 ```ini
-LYNCEUS_IMAGE=<registry>/lynceus-api:next
+LYNCEUS_IMAGE=ghcr.io/nashi-cloud/lynceus-api:next
 POSTGRES_PASSWORD=<specific to staging>
 LYNCEUS_LLM_API_KEY=<your key>
 LYNCEUS_CLE_PUBLIQUE=<staging pair>
@@ -194,7 +211,7 @@ Three traps, all of them met in practice:
 
 - **relative paths mean nothing in Portainer.** A `./paquets` resolves against the directory Compose is launched from, which is not this repository when Portainer is deploying. The mount therefore uses an absolute path, `LYNCEUS_PAQUETS`, whose default is fine. Docker creates the folder if it is missing;
 - **the container suffix is not cosmetic.** Without `LYNCEUS_SUFFIXE`, two environments on the same machine fight over the name `lynceus-api` and the second refuses to start. The staging file suffixes `-staging` by default;
-- **the webhook is a deployment token.** Whoever knows its URL can retrigger the stack. It goes in the repository secrets, never in a versioned file.
+- **if you keep a webhook**, remember it is a deployment token: whoever knows its URL can retrigger the stack. It has no business in a versioned file. Portainer's polling sidesteps the question entirely, since it needs no secret.
 
 ### Or two separate stacks, as in production
 
