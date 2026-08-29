@@ -19,10 +19,18 @@
   </ul>
 
   <h2>{{ _("Le minimum vital") }}</h2>
-  <p>{{ _("Avec Docker, une instance d'essai tient en une commande, sur SQLite, sans base à installer :") }}</p>
+  <p>{{ _("L'image est publiée : une instance d'essai tient vraiment en une commande, sur SQLite, sans rien à cloner ni à construire.") }}</p>
+  <pre><code>docker run -d -p 8000:8000 \
+  -e LYNCEUS_LLM_API_KEY=<var>{{ _("votre-clé") }}</var> \
+  -e LYNCEUS_DATABASE_URL=sqlite:////donnees/lynceus.sqlite3 \
+  -v lynceus:/donnees \
+  ghcr.io/nashi-cloud/lynceus-api:latest</code></pre>
+  <p>{{ _("Il ne reste qu'à indiquer <code>http://localhost:8000</code> dans les réglages de l'extension. Le volume garde l'annuaire d'une relance à l'autre : sans lui, les analyses déjà payées disparaîtraient avec le conteneur.") }}</p>
+  <p>{{ _("Vous préférez partir des sources, pour lire ou pour modifier ? C'est la même chose en trois lignes :") }}</p>
   <pre><code>git clone {% if depot %}{{ depot }}.git{% else %}&lt;{{ _("dépôt") }}&gt;{% endif %} lynceus &amp;&amp; cd lynceus/api
 cp .env.example .env        # {{ _("y placer la clé du fournisseur de modèle") }}
 docker compose up -d</code></pre>
+  <p>{{ _("Si vous modifiez le code et que votre instance est joignable par d'autres, la licence vous demande de publier vos sources et d'annoncer votre dépôt : c'est la contrepartie de la liberté qu'elle vous donne.") }}</p>
   <p>{% if depot %}{{ _("Pour une instance destinée à d'autres personnes, <a href=\"%(depot)s\">le dépôt</a> fournit un <code>docker-compose.prod.yml</code> (PostgreSQL, migrations automatiques, exposition par Cloudflare Tunnel) et un guide de déploiement détaillé, y compris la façon d'estimer la dépense avant d'ouvrir les portes.", depot=depot) }}{% else %}{{ _("Pour une instance destinée à d'autres personnes, le dépôt fournit un <code>docker-compose.prod.yml</code> (PostgreSQL, migrations automatiques, exposition par Cloudflare Tunnel) et un guide de déploiement détaillé, y compris la façon d'estimer la dépense avant d'ouvrir les portes.") }}{% endif %}</p>
 
   <div class="encart attention">

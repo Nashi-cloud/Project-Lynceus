@@ -1005,3 +1005,18 @@ msgstr "Use it"
 
 msgid "Cadre légal"
 msgstr "Legal"
+
+msgid "L'image est publiée : une instance d'essai tient vraiment en une commande, sur SQLite, sans rien à cloner ni à construire."
+msgstr "The image is published: a trial instance really does fit in one command, on SQLite, with nothing to clone and nothing to build."
+
+msgid "votre-clé"
+msgstr "your-key"
+
+msgid "Il ne reste qu'à indiquer <code>http://localhost:8000</code> dans les réglages de l'extension. Le volume garde l'annuaire d'une relance à l'autre : sans lui, les analyses déjà payées disparaîtraient avec le conteneur."
+msgstr "All that is left is to point the extension settings at <code>http://localhost:8000</code>. The volume keeps the directory across restarts: without it, analyses you have already paid for would vanish with the container."
+
+msgid "Vous préférez partir des sources, pour lire ou pour modifier ? C'est la même chose en trois lignes :"
+msgstr "Would you rather start from the sources, to read them or to change them? The same thing, in three lines:"
+
+msgid "Si vous modifiez le code et que votre instance est joignable par d'autres, la licence vous demande de publier vos sources et d'annoncer votre dépôt : c'est la contrepartie de la liberté qu'elle vous donne."
+msgstr "If you modify the code and your instance is reachable by others, the licence asks you to publish your sources and to announce your repository: that is the counterpart of the freedom it grants you."
