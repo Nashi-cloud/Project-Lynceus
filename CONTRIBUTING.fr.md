@@ -1,6 +1,6 @@
 # Contribuer à Lynceus
 
-<!-- traduit-de: CONTRIBUTING.md sha256:13c9124142b4644d -->
+<!-- traduit-de: CONTRIBUTING.md sha256:37886c11d2089241 -->
 
 [English](CONTRIBUTING.md) · **Français**
 
@@ -93,6 +93,15 @@ La chaîne ne remplace pas `./verifier.sh` avant de fusionner : elle constate, e
   ```
 
   `lynceus traductions` dit où en est chaque document, et `verifier.sh` échoue si une traduction est en retard sur son original. **Modifier un document traduit suppose donc de revoir sa traduction et de mettre à jour cette ligne** : sans ça, le portail publierait deux textes qui ne disent plus la même chose, sans que rien ne le signale.
+- **Secrets** : `verifier.sh` inspecte le dépôt avant chaque fusion, et un crochet `pre-commit` inspecte ce qui est indexé. À activer une fois par clone :
+
+  ```bash
+  git config core.hooksPath .githooks
+  ```
+
+  La détection de GitHub ne suffit pas ici, et il faut le dire : elle reconnaît les jetons de fournisseurs connus à leur préfixe, jamais les trois secrets propres à ce projet, qui n'ont aucune forme remarquable. La clé privée Ed25519 qui signe les accès est une simple chaîne en base64 ; une URL de webhook Portainer est un jeton de déploiement déguisé ; un nom de machine du tailnet n'a rien à faire dans un dépôt public. Les motifs personnalisés de GitHub demandent Advanced Security, absent d'un dépôt public gratuit. `outils/chercher-secrets.py` est donc la seule couche qui les couvre.
+
+  Un secret poussé est un secret compromis, même retiré au commit suivant : l'historique le garde. Le révoquer passe avant le nettoyage.
 - **IA générative** : une contribution substantiellement produite par un assistant le déclare, avec les lignes `Assisted-by:` et `Prompt:` en fin de message de commit, contiguës à `Signed-off-by:`. Voir [docs/IA-GENERATIVE.md](docs/IA-GENERATIVE.md). Une contribution que son auteur ne sait pas expliquer en revue est refusée, assistant ou pas.
 
 ## Droits sur les contributions
