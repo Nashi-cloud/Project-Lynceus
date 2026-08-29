@@ -7,11 +7,11 @@ Two ways to use Lynceus, depending on what you are after.
 | | **Extension only** | **Full kit** |
 |---|---|---|
 | What you install | the Chrome extension | the extension **and** your own server |
-| What you need | the address of a Lynceus instance | a machine (or a PC) and 20 minutes |
+| What you need | the address of a Lynceus instance (`lynx.nashi.cloud`, or your own) | a machine (or a PC) and 20 minutes |
 | Your data | goes through the instance you chose | never leaves your own machines |
 | Cost | none | whatever the AI model you choose costs (or nothing, with a local model) |
 
-> **There is no public reference instance yet.** Until there is, the full kit is the normal route, and it is the one that respects your privacy most anyway.
+> **A public reference instance is up: [lynx.nashi.cloud](https://lynx.nashi.cloud).** It issues an access key in one click, with no account and no email address. The full kit remains the option that respects your privacy most, since nothing then leaves your own machines.
 
 ---
 
