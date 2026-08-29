@@ -393,7 +393,7 @@ def test_env_laisse_vide_ce_que_lui_seul_ne_peut_pas_savoir():
     """Un exemple plausible démarrerait et échouerait plus tard, à la première analyse.
     Vide, Compose refuse de démarrer et dit laquelle manque."""
     variables = _variables(runner.invoke(app, ["env", "production"]).stdout)
-    for nom in ("LYNCEUS_IMAGE", "LYNCEUS_LLM_API_KEY", "LYNCEUS_PORTAIL_INSTANCE",
+    for nom in ("LYNCEUS_LLM_API_KEY", "LYNCEUS_PORTAIL_INSTANCE",
                 "LYNCEUS_PORTAIL_EDITEUR_NOM", "CLOUDFLARE_TUNNEL_TOKEN"):
         assert variables[nom] == "", f"{nom} devrait être vide"
 
@@ -534,7 +534,28 @@ def test_env_sans_questions_reste_un_modele_a_trous():
     """En script ou en CI, la commande ne doit rien attendre de personne."""
     resultat = runner.invoke(app, ["env", "production", "--sans-questions"])
     assert resultat.exit_code == 0
-    assert _variables(resultat.stdout)["LYNCEUS_IMAGE"] == ""
+    assert _variables(resultat.stdout)["LYNCEUS_LLM_API_KEY"] == ""
+
+
+def test_env_propose_l_image_publiee_plutot_que_de_la_demander():
+    """Tant que l'image était privée, l'exploitant seul pouvait connaître son adresse.
+    Elle est publique désormais : la lui demander reviendrait à lui faire chercher ce
+    que le projet peut lui donner."""
+    from lynceus import __version__
+
+    production = _variables(runner.invoke(app, ["env", "production"]).stdout)
+    assert production["LYNCEUS_IMAGE"] == f"ghcr.io/nashi-cloud/lynceus-api:v{__version__}"
+
+    recette = _variables(runner.invoke(app, ["env", "recette"]).stdout)
+    assert recette["LYNCEUS_IMAGE"] == "ghcr.io/nashi-cloud/lynceus-api:next"
+
+
+def test_env_rappelle_l_obligation_de_publier_une_image_modifiee():
+    """L'AGPL impose de proposer le code correspondant à qui utilise le service à
+    distance. Une image reconstruite depuis un code gardé pour soi n'est pas conforme,
+    et c'est au moment de renseigner l'adresse qu'il faut le dire."""
+    sortie = runner.invoke(app, ["env", "production"]).stdout
+    assert "publiez la vôtre" in sortie and "AGPL" in sortie
 
 
 def test_env_active_le_profil_du_tunnel_quand_un_jeton_est_donne():

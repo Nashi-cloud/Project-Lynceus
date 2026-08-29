@@ -25,6 +25,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from . import __version__
 from .normalisation import hacher_contenu
 
 app = typer.Typer(help="Lynceus, la vigie de l'information.", no_args_is_help=True)
@@ -1052,7 +1053,14 @@ def env(
     # sur la sortie standard : une espace par question, en tête du fichier engendré. Le
     # détournement met à l'abri de ce genre de fuite, celle-ci comme les prochaines.
     with contextlib.redirect_stdout(sys.stderr):
-        image = demande.texte("Adresse de l'image (registre compris)")
+        # L'image est publiée et publique : le défaut fait tourner Lynceus tel qu'il est
+        # livré, sans rien construire. La recette suit `:next`, où atterrit ce qui est en
+        # cours de stabilisation ; la production épingle la version de ce paquet, si bien
+        # qu'un retour arrière tient dans un changement de variable. Qui modifie le code
+        # publie la sienne : l'AGPL l'y oblige dès que le service est joignable à distance.
+        image_par_defaut = ("ghcr.io/nashi-cloud/lynceus-api:next" if recette
+                            else f"ghcr.io/nashi-cloud/lynceus-api:v{__version__}")
+        image = demande.texte("Adresse de l'image (registre compris)", defaut=image_par_defaut)
         base_llm = demande.texte("Adresse du fournisseur de modèle (API compatible OpenAI)",
                                  defaut="https://openrouter.ai/api/v1")
         cle_llm = demande.texte("Clé du fournisseur de modèle", secret=True)
@@ -1160,7 +1168,10 @@ def env(
             "Recette : stack unique",
             "docker-compose.staging.yml, ou variables de la stack Portainer",
             [
-                Variable("LYNCEUS_IMAGE", image),
+                Variable("LYNCEUS_IMAGE", image,
+                         note="Image publique du projet. Si vous modifiez le code, publiez la vôtre et\n"
+                              "mettez son adresse ici : l'AGPL-3.0 impose de proposer le code\n"
+                              "correspondant aux personnes qui utilisent le service à distance."),
                 Variable("LYNCEUS_SUFFIXE", "-staging"),
                 "",
                 Variable("POSTGRES_PASSWORD", motdepasse),
@@ -1206,7 +1217,10 @@ def env(
         "1. Instance (la machine exposée)",
         "api/.env, à côté de docker-compose.prod.yml",
         [
-            Variable("LYNCEUS_IMAGE", image),
+            Variable("LYNCEUS_IMAGE", image,
+                         note="Image publique du projet. Si vous modifiez le code, publiez la vôtre et\n"
+                              "mettez son adresse ici : l'AGPL-3.0 impose de proposer le code\n"
+                              "correspondant aux personnes qui utilisent le service à distance."),
             Variable("LYNCEUS_SUFFIXE"),
             "",
             Variable("POSTGRES_PASSWORD", motdepasse),
@@ -1231,7 +1245,10 @@ def env(
         "2. Portail (idéalement une AUTRE machine)",
         "api/.env, à côté de docker-compose.portail.yml",
         [
-            Variable("LYNCEUS_IMAGE", image),
+            Variable("LYNCEUS_IMAGE", image,
+                         note="Image publique du projet. Si vous modifiez le code, publiez la vôtre et\n"
+                              "mettez son adresse ici : l'AGPL-3.0 impose de proposer le code\n"
+                              "correspondant aux personnes qui utilisent le service à distance."),
             Variable("LYNCEUS_SUFFIXE"),
             "",
             Variable("LYNCEUS_PORTAIL_CLE_PRIVEE", privee,
