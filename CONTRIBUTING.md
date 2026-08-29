@@ -65,16 +65,20 @@ The individual steps, if you need to run them separately:
 
 ## What a push triggers
 
-The repository is built for a forge with a self-hosted runner (see [api/DEPLOIEMENT.md](api/DEPLOIEMENT.md)). The tests replay there what `verifier.sh` does locally, in throwaway containers.
+The tests run on GitHub-hosted machines, free and unmetered on a public repository. They replay what `verifier.sh` does locally.
 
-| Branch | Tests | Image published | Deployment |
-|---|---|---|---|
-| `feat/*`, `fix/*`, `docs/*` | yes | none | none |
-| `dev` | yes | `:dev` | none |
-| `next` | yes | `:next` | staging |
-| `main` | yes | `:latest` and `:v<VERSION>` | production |
+| Branch | Tests | Image published to GHCR |
+|---|---|---|
+| `feat/*`, `fix/*`, `docs/*` | yes | none |
+| `dev` | yes | `:dev` |
+| `next` | yes | `:next` |
+| `main` | yes | `:latest` and `:v<VERSION>` |
 
-The pipeline is not a substitute for running `./verifier.sh` before merging: it observes, it does not proofread. And it does not run for a proposal coming from a fork, since a self-hosted runner executes whatever code it is handed.
+**A proposal from a fork is checked like any other.** That was not always so: the tests used to run on a self-hosted runner, which executes whatever code it is handed, and forks were excluded from it. A stranger's proposal then triggered nothing, its author got no feedback and the maintainer reviewed blind. A disposable machine settles the matter.
+
+The pipeline is not a substitute for running `./verifier.sh` before merging: it observes, it does not proofread.
+
+**Deployment is no longer part of the pipeline.** It used to happen by webhook, from the self-hosted runner, the only one able to reach the operator's private network. Since a webhook URL is a deployment token in disguise, the direction is now reversed: instances fetch the image from GHCR themselves, and nothing reaches into them. See [api/DEPLOIEMENT.md](api/DEPLOIEMENT.md).
 
 **API version**: the `VERSION` file at the root is authoritative, and must agree with `api/pyproject.toml` and `api/lynceus/__init__.py`. That is what the pipeline reads to tag the image published from `main`, and therefore what makes a rollback possible. `verifier.sh` refuses a mismatch.
 

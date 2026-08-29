@@ -1,102 +1,78 @@
-# Construction et publication de l'image, puis redéploiement.
+# Construction et publication de l'image, sur une machine fournie par GitHub.
 #
 # Une seule image sert l'instance ET le portail : ce sont deux commandes d'entrée du même
-# paquet (voir api/Dockerfile). Deux stacks distinctes la tirent, d'où deux webhooks.
+# paquet (voir api/Dockerfile).
 #
-# Étiquettes, comme sur les autres services de la forge :
-#   dev  -> :dev    (construction seule, aucun déploiement)
-#   next -> :next   + redéploiement du staging
-#   main -> :latest + :vX.Y.Z (lu dans VERSION) + redéploiement de la production
+# Étiquettes :
+#   dev  -> :dev
+#   next -> :next
+#   main -> :latest + :vX.Y.Z (lu dans VERSION)
 #
-# Les URL de webhook ne sont PAS dans ce fichier. Le dépôt a vocation à devenir public, et
-# une URL de webhook Portainer est un jeton de déploiement déguisé : qui la connaît peut
-# redéclencher la stack. Elles vivent donc dans les secrets du dépôt, et une étape sans
-# secret se contente d'un avertissement au lieu d'échouer, pour qu'un fork puisse
-# construire ses propres images.
+# Le déploiement ne figure plus ici, et c'est délibéré. Il se faisait par webhook Portainer
+# depuis un runner auto-hébergé, seul capable de joindre le réseau privé de l'exploitant.
+# Une URL de webhook est un jeton de déploiement déguisé, et la faire sortir de ce réseau
+# aurait été un recul. Le sens est donc inversé : Portainer va chercher l'image publiée sur
+# GHCR, plus rien n'entre. Voir api/DEPLOIEMENT.md.
 name: Forge Build - Lynceus
 
 on:
   push:
     branches: [main, next, dev]
 
-# Lecture du dépôt seule : le jeton ne sert qu'au checkout. Sans permission du tout, il
-# ne peut pas cloner un dépôt privé ; avec davantage, il pourrait écrire.
+# packages: write est ce qui autorise la publication sur GHCR avec le jeton du workflow.
+# Aucun compte de registre à créer, aucun secret à faire tourner.
 permissions:
   contents: read
+  packages: write
 
 jobs:
   build-and-push:
-    runs-on: [self-hosted, forge]
+    runs-on: ubuntu-latest
     env:
-      # Le registre est local au runner ; les hôtes de déploiement, eux, le joignent par
-      # son nom sur le tailnet, renseigné dans le .env de chaque stack (LYNCEUS_IMAGE).
-      REGISTRE: ${{ vars.REGISTRE_FORGE || '127.0.0.1:5000' }}
-      IMAGE: lynceus-api
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      IMAGE: ghcr.io/${{ github.repository_owner }}/lynceus-api
 
     steps:
       - uses: actions/checkout@v4
 
-      # Le contexte est la racine du dépôt : l'image embarque prompts/, docs/ et schema/,
-      # et son premier étage construit le paquet de l'extension depuis extension/.
-      - name: Construire et publier - dev
-        if: github.ref == 'refs/heads/dev'
-        run: |
-          docker build -f api/Dockerfile -t "$REGISTRE/$IMAGE:dev" .
-          docker push "$REGISTRE/$IMAGE:dev"
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Construire et publier - next (staging)
-        if: github.ref == 'refs/heads/next'
-        run: |
-          docker build -f api/Dockerfile -t "$REGISTRE/$IMAGE:next" .
-          docker push "$REGISTRE/$IMAGE:next"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # `--fail` est indispensable : sans lui, curl sort en 0 sur un 404 et l'étape passe
-      # au vert alors que l'appel a tapé dans le vide. Une stack supprimée puis recréée
-      # change d'identifiant de webhook, et c'est précisément le cas qu'il faut voir rouge.
-      - name: Redéployer le staging
-        if: github.ref == 'refs/heads/next'
-        env:
-          WEBHOOK_INSTANCE: ${{ secrets.WEBHOOK_STAGING_INSTANCE }}
-          WEBHOOK_PORTAIL: ${{ secrets.WEBHOOK_STAGING_PORTAIL }}
+      # L'étiquette dépend de la branche, et main en porte deux : « latest » pour ce que les
+      # instances suivent, et la version pour pouvoir revenir en arrière. Elle vient du
+      # fichier VERSION, dont verifier.sh garantit l'accord avec pyproject.toml et
+      # __init__.py : un décalage produirait une instance annonçant sur /v1/meta une version
+      # que personne ne saurait redéployer.
+      - name: Étiquettes selon la branche
+        id: etiquettes
         run: |
-          if [ -z "$WEBHOOK_INSTANCE" ] && [ -z "$WEBHOOK_PORTAIL" ]; then
-            echo "::warning::Aucun webhook de staging configuré, redéploiement ignoré."
-            exit 0
-          fi
-          for url in "$WEBHOOK_INSTANCE" "$WEBHOOK_PORTAIL"; do
-            [ -n "$url" ] || continue
-            curl -sS --fail --max-time 30 -X POST "$url"
-          done
+          case "${GITHUB_REF_NAME}" in
+            dev)  echo "tags=${IMAGE}:dev"  >> "$GITHUB_OUTPUT" ;;
+            next) echo "tags=${IMAGE}:next" >> "$GITHUB_OUTPUT" ;;
+            main) VERSION=$(tr -d '[:space:]' < VERSION)
+                  echo "tags=${IMAGE}:latest,${IMAGE}:v${VERSION}" >> "$GITHUB_OUTPUT" ;;
+          esac
 
-      - name: Construire et publier - main (production)
-        if: github.ref == 'refs/heads/main'
-        run: |
-          VERSION=$(tr -d '[:space:]' < VERSION)
-          docker build -f api/Dockerfile \
-            -t "$REGISTRE/$IMAGE:latest" \
-            -t "$REGISTRE/$IMAGE:v${VERSION}" .
-          docker push "$REGISTRE/$IMAGE:latest"
-          docker push "$REGISTRE/$IMAGE:v${VERSION}"
+      # Le contexte est la racine du dépôt, pas api/ : l'image embarque prompts/, docs/,
+      # schema/ et corpus/, et son premier étage construit le paquet de l'extension.
+      #
+      # Le cache remplace celui du registre local qu'offrait le runner auto-hébergé. Sans
+      # lui, chaque construction repartirait d'un npm ci et d'un pip install complets.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: api/Dockerfile
+          push: true
+          tags: ${{ steps.etiquettes.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      # L'étiquette de version est ce qui rend le retour arrière possible
-      # (LYNCEUS_IMAGE=…:vX.Y.Z puis `docker compose up -d`). Elle vient de VERSION, dont
-      # verifier.sh garantit qu'il s'accorde avec pyproject.toml et __init__.py : sans quoi
-      # l'instance annoncerait sur /v1/meta une version que personne ne saurait redéployer.
-      # Deux stacks tirent la même image, l'instance et le portail : deux webhooks, comme
-      # en recette. Les appeler dans cet ordre n'est pas indifférent, c'est l'instance qui
-      # porte les migrations de schéma ; le portail, lui, ne fait que la lire.
-      - name: Redéployer la production
-        if: github.ref == 'refs/heads/main'
-        env:
-          WEBHOOK_INSTANCE: ${{ secrets.WEBHOOK_PROD_INSTANCE }}
-          WEBHOOK_PORTAIL: ${{ secrets.WEBHOOK_PROD_PORTAIL }}
+      - name: Récapitulatif
         run: |
-          if [ -z "$WEBHOOK_INSTANCE" ] && [ -z "$WEBHOOK_PORTAIL" ]; then
-            echo "::warning::Aucun webhook de production configuré, redéploiement ignoré."
-            exit 0
-          fi
-          for url in "$WEBHOOK_INSTANCE" "$WEBHOOK_PORTAIL"; do
-            [ -n "$url" ] || continue
-            curl -sS --fail --max-time 30 -X POST "$url"
-          done
+          echo "Image publiée : ${{ steps.etiquettes.outputs.tags }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Les instances la tirent d'elles-mêmes ; rien n'est poussé vers elles." >> "$GITHUB_STEP_SUMMARY"

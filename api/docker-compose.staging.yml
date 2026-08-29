@@ -44,7 +44,7 @@ services:
     networks: [lynceus-net]
 
   api:
-    image: ${LYNCEUS_IMAGE:?adresse de l'image requise, par exemple <registre>/lynceus-api:next}
+    image: ${LYNCEUS_IMAGE:?adresse de l'image requise, par exemple ghcr.io/nashi-cloud/lynceus-api:next}
     pull_policy: always
     container_name: lynceus-api${LYNCEUS_SUFFIXE:--staging}
     depends_on:
