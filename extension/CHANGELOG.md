@@ -2,6 +2,10 @@
 
 Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension : utile pour vérifier qu'un rebuild a bien été rechargé.
 
+## 0.11.2 (2026-08-29)
+
+- **fix** : deux dépendances mises à jour, signalées par Dependabot dès l'ouverture publique du dépôt. `@mozilla/readability` passe en 0.6.0 : la version précédente était vulnérable à un déni de service par expression régulière, et c'est la seule dépendance à laquelle on donne à manger du contenu hostile, puisqu'elle lit la page analysée. Une page fabriquée pouvait donc faire tourner l'extraction en boucle. `esbuild` passe en 0.25.0, dont la faille ne concernait que son serveur de développement, que ce projet n'utilise pas : mise à jour par hygiène plutôt que par nécessité.
+
 ## 0.11.1 (2026-08-27)
 
 - **fix** : les derniers messages restés en français sur un navigateur anglais sont traduits. Ils échappaient au catalogue parce qu'ils naissent d'une panne et non d'un gabarit : instance ou portail injoignable, délai d'analyse dépassé, clé d'accès manquante, contenu principal introuvable dans la page, extraction impossible, et le rappel du nombre de contestations déjà reçues. Une interface anglaise qui bascule en français au moment précis où quelque chose ne va pas est le pire endroit pour un trou de traduction.
