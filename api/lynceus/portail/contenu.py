@@ -143,6 +143,7 @@ FACADE = [
     "CONTRIBUTING.md",
     "INSTALLATION.md",
     "AUTHORS.md",
+    "SECURITY.md",
     "api/README.md",
     "api/DEPLOIEMENT.md",
     "extension/README.md",
