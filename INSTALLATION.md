@@ -107,6 +107,16 @@ LYNCEUS_LLM_API_KEY=your-key docker compose up --build
 
 The server and its PostgreSQL database start together. The extension is installed as above.
 
+The image is also **published**, if you would rather not build anything:
+
+```bash
+LYNCEUS_IMAGE=ghcr.io/nashi-cloud/lynceus-api:latest \
+LYNCEUS_LLM_API_KEY=your-key docker compose up --pull always --no-build
+```
+
+The first start is then immediate rather than a few minutes. Building remains the way to go
+if you intend to modify the code, which the licence encourages you to do.
+
 ---
 
 ## Common questions

@@ -1,6 +1,6 @@
 # Déployer une instance Lynceus
 
-<!-- traduit-de: api/DEPLOIEMENT.md sha256:839d8021b980d0c4 -->
+<!-- traduit-de: api/DEPLOIEMENT.md sha256:0879584035fb766c -->
 
 [English](DEPLOIEMENT.md) · **Français**
 
@@ -119,13 +119,29 @@ y est imbriquée, l'effet est le même.
 | `LYNCEUS_SUFFIXE` | `LYNCEUS_SUFFIX` |
 | `LYNCEUS_PAQUETS` | `LYNCEUS_PACKAGES` |
 
-## 2. Publier l'image
+## 2. L'image : la prendre, ou la construire
 
-L'image est construite une fois et déployée telle quelle, sans compilation sur l'hôte :
+L'image est publiée et publique. Rien à construire pour faire tourner Lynceus tel qu'il
+est livré :
+
+```ini
+LYNCEUS_IMAGE=ghcr.io/nashi-cloud/lynceus-api:latest      # la dernière version publiée
+LYNCEUS_IMAGE=ghcr.io/nashi-cloud/lynceus-api:v0.11.2     # une version épinglée
+```
+
+Suivre `:latest` convient à une recette. En production, épingler la version rend le retour
+arrière trivial, au prix d'un geste conscient à chaque montée : vous changez la variable et
+vous redéployez.
+
+### Si vous modifiez le code
+
+Alors construisez et publiez la vôtre, et ce n'est pas facultatif : l'AGPL-3.0 impose
+(article 13) de proposer le code correspondant aux personnes qui utilisent votre service à
+distance. Une image publiée depuis un code que vous gardez pour vous n'est pas conforme.
 
 ```bash
-# Depuis la racine du dépôt
-REGISTRE=ghcr.io/nashi-cloud/lynceus-api      # votre registre d'images
+# Depuis la racine du dépôt, avec VOTRE registre
+REGISTRE=ghcr.io/votre-compte/lynceus-api
 
 docker build -f api/Dockerfile -t $REGISTRE:v$(cat VERSION) .
 docker tag  $REGISTRE:v$(cat VERSION) $REGISTRE:latest
@@ -133,9 +149,17 @@ docker push $REGISTRE:v$(cat VERSION)
 docker push $REGISTRE:latest
 ```
 
-Le contexte de construction est la **racine du dépôt**, pas `api/` : l'image embarque `prompts/`, `docs/` et `schema/`, et son premier étage construit le paquet de l'extension depuis `extension/`. Une seule image sert l'instance et le portail, qui n'en sont que deux commandes d'entrée.
+Pensez alors à `LYNCEUS_PORTAIL_DEPOT` : le portail doit annoncer **votre** dépôt, pas
+celui d'origine, puisque c'est votre version qui tourne.
 
-L'étiquette de version permet de revenir en arrière : `LYNCEUS_IMAGE=…:v0.2.0` puis `docker compose up -d`. Elle vient du fichier `VERSION`, dont `verifier.sh` vérifie qu'il s'accorde avec `pyproject.toml` et `__init__.py`. Un décalage produirait une instance qui annonce sur `/v1/meta` une version que personne ne saurait redéployer.
+Le contexte de construction est la **racine du dépôt**, pas `api/` : l'image embarque
+`prompts/`, `docs/`, `schema/` et `corpus/`, et son premier étage construit le paquet de
+l'extension depuis `extension/`. Une seule image sert l'instance et le portail, qui n'en
+sont que deux commandes d'entrée.
+
+L'étiquette de version vient du fichier `VERSION`, dont `verifier.sh` vérifie l'accord avec
+`pyproject.toml` et `__init__.py`. Un décalage produirait une instance annonçant sur
+`/v1/meta` une version que personne ne saurait redéployer.
 
 ### Automatiser : la chaîne d'intégration
 
