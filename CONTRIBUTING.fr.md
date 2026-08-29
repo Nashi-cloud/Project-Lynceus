@@ -1,6 +1,6 @@
 # Contribuer à Lynceus
 
-<!-- traduit-de: CONTRIBUTING.md sha256:6360358fa1690fa0 -->
+<!-- traduit-de: CONTRIBUTING.md sha256:2875c9d29d0df61e -->
 
 [English](CONTRIBUTING.md) · **Français**
 
@@ -63,12 +63,14 @@ Détail des étapes, si besoin de les lancer séparément :
 
 Les tests tournent sur des machines fournies par GitHub, gratuites et sans plafond sur un dépôt public. Ils rejouent ce que `verifier.sh` fait en local.
 
-| Branche | Tests | Image publiée sur GHCR |
+| Branche | Tests | Image |
 |---|---|---|
-| `feat/*`, `fix/*`, `docs/*` | oui | aucune |
-| `dev` | oui | `:dev` |
-| `next` | oui | `:next` |
-| `main` | oui | `:latest` et `:v<VERSION>` |
+| `feat/*`, `fix/*`, `docs/*` | oui | rien |
+| `dev` | oui | construite, non publiée |
+| `next` | oui | publiée en `:next` |
+| `main` | oui | publiée en `:latest` et `:v<VERSION>` |
+
+Sur `dev`, l'image est construite sans être envoyée au registre. Rien ne tire cette étiquette, la recette prenant `:next` et la production `:latest` : la publier remplirait le registre d'images que personne n'ouvre. La construction, elle, reste utile, `verifier.sh` ne construisant pas l'image en local. Sans elle, un Dockerfile cassé se découvrirait au moment de promouvoir.
 
 **Une proposition venue d'un fork est vérifiée comme les autres.** Ça n'a pas toujours été le cas : les tests tournaient sur un runner auto-hébergé, qui exécute le code qu'on lui donne, et les forks en étaient exclus. La proposition d'un inconnu ne déclenchait alors rien, son auteur n'avait aucun retour et le mainteneur relisait à l'aveugle. Une machine jetable règle le problème.
 

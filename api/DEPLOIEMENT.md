@@ -148,7 +148,7 @@ How branches map to tags:
 
 | Branch | Tag |
 |---|---|
-| `dev` | `ghcr.io/<account>/lynceus-api:dev` |
+| `dev` | none: the image is built to check the Dockerfile, then discarded |
 | `next` | `ghcr.io/<account>/lynceus-api:next` |
 | `main` | `:latest` and `:v<VERSION>` |
 

@@ -67,12 +67,14 @@ The individual steps, if you need to run them separately:
 
 The tests run on GitHub-hosted machines, free and unmetered on a public repository. They replay what `verifier.sh` does locally.
 
-| Branch | Tests | Image published to GHCR |
+| Branch | Tests | Image |
 |---|---|---|
 | `feat/*`, `fix/*`, `docs/*` | yes | none |
-| `dev` | yes | `:dev` |
-| `next` | yes | `:next` |
-| `main` | yes | `:latest` and `:v<VERSION>` |
+| `dev` | yes | built, not published |
+| `next` | yes | published as `:next` |
+| `main` | yes | published as `:latest` and `:v<VERSION>` |
+
+On `dev` the image is built without being sent to the registry. Nothing pulls that tag, since staging takes `:next` and production `:latest`: publishing it would fill the registry with images nobody opens. The build itself stays useful, as `verifier.sh` does not build the image locally. Without it, a broken Dockerfile would surface at promotion time.
 
 **A proposal from a fork is checked like any other.** That was not always so: the tests used to run on a self-hosted runner, which executes whatever code it is handed, and forks were excluded from it. A stranger's proposal then triggered nothing, its author got no feedback and the maintainer reviewed blind. A disposable machine settles the matter.
 

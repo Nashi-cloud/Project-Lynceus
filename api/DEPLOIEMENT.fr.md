@@ -1,6 +1,6 @@
 # Déployer une instance Lynceus
 
-<!-- traduit-de: api/DEPLOIEMENT.md sha256:f47be03553f22e53 -->
+<!-- traduit-de: api/DEPLOIEMENT.md sha256:839d8021b980d0c4 -->
 
 [English](DEPLOIEMENT.md) · **Français**
 
@@ -151,7 +151,7 @@ Correspondance entre branche et étiquette :
 
 | Branche | Étiquette |
 |---|---|
-| `dev` | `ghcr.io/<compte>/lynceus-api:dev` |
+| `dev` | aucune : l'image est construite pour vérifier le Dockerfile, puis jetée |
 | `next` | `ghcr.io/<compte>/lynceus-api:next` |
 | `main` | `:latest` et `:v<VERSION>` |
 

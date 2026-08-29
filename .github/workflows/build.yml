@@ -4,9 +4,15 @@
 # paquet (voir api/Dockerfile).
 #
 # Étiquettes :
-#   dev  -> :dev
+#   dev  -> rien de publié, mais l'image est construite quand même
 #   next -> :next
 #   main -> :latest + :vX.Y.Z (lu dans VERSION)
+#
+# Rien ne tire `:dev` : la recette prend `:next`, la production `:latest`. Publier cette
+# étiquette revenait à remplir le registre d'images que personne n'ouvre, et c'est la plus
+# souvent reconstruite des trois. La construction, elle, est conservée : `verifier.sh` ne
+# construit pas l'image en local, donc `dev` est le seul endroit où le Dockerfile est
+# éprouvé. Sans elle, une construction cassée se découvrirait au moment de promouvoir.
 #
 # Le déploiement ne figure plus ici, et c'est délibéré. Il se faisait par webhook Portainer
 # depuis un runner auto-hébergé, seul capable de joindre le réseau privé de l'exploitant.
@@ -56,10 +62,13 @@ jobs:
         run: |
           IMAGE="${{ steps.image.outputs.nom }}"
           case "${GITHUB_REF_NAME}" in
-            dev)  echo "tags=${IMAGE}:dev"  >> "$GITHUB_OUTPUT" ;;
-            next) echo "tags=${IMAGE}:next" >> "$GITHUB_OUTPUT" ;;
+            dev)  echo "tags=${IMAGE}:essai" >> "$GITHUB_OUTPUT"
+                  echo "publier=false"      >> "$GITHUB_OUTPUT" ;;
+            next) echo "tags=${IMAGE}:next"  >> "$GITHUB_OUTPUT"
+                  echo "publier=true"       >> "$GITHUB_OUTPUT" ;;
             main) VERSION=$(tr -d '[:space:]' < VERSION)
-                  echo "tags=${IMAGE}:latest,${IMAGE}:v${VERSION}" >> "$GITHUB_OUTPUT" ;;
+                  echo "tags=${IMAGE}:latest,${IMAGE}:v${VERSION}" >> "$GITHUB_OUTPUT"
+                  echo "publier=true"       >> "$GITHUB_OUTPUT" ;;
           esac
 
       # Le contexte est la racine du dépôt, pas api/ : l'image embarque prompts/, docs/,
@@ -67,17 +76,24 @@ jobs:
       #
       # Le cache remplace celui du registre local qu'offrait le runner auto-hébergé. Sans
       # lui, chaque construction repartirait d'un npm ci et d'un pip install complets.
+      # Sur dev, push vaut false : l'image est bel et bien construite, toutes les étapes du
+      # Dockerfile comprises, mais rien n'est envoyé au registre. L'étiquette est alors un
+      # nom de travail qui ne quitte jamais la machine.
       - uses: docker/build-push-action@v6
         with:
           context: .
           file: api/Dockerfile
-          push: true
+          push: ${{ steps.etiquettes.outputs.publier == 'true' }}
           tags: ${{ steps.etiquettes.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Récapitulatif
         run: |
-          echo "Image publiée : ${{ steps.etiquettes.outputs.tags }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Les instances la tirent d'elles-mêmes ; rien n'est poussé vers elles." >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.etiquettes.outputs.publier }}" = "true" ]; then
+            echo "Image publiée : ${{ steps.etiquettes.outputs.tags }}" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Les instances la tirent d'elles-mêmes ; rien n'est poussé vers elles." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Construction vérifiée, rien de publié : personne ne tire l'étiquette de dev." >> "$GITHUB_STEP_SUMMARY"
+          fi
