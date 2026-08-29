@@ -18,6 +18,7 @@ from markdown_it import MarkdownIt
 
 from ..config import trouver_racine
 from ..moteur import notation, prompt
+from . import i18n
 from .i18n import LANGUE_SOURCE, N_
 
 _MOTIF_FAMILLE = re.compile(r"^##\s+Famille\s+([A-Z])\s+—\s+(.+?)\s*$", re.MULTILINE)
@@ -80,13 +81,31 @@ def _reecrire_liens(jetons: list, depot_fichiers: str, dossier: str, prefixe: st
             neutraliser += 1
 
 
+def fichier_du_depot(chemin: str) -> Path:
+    """Résout un chemin relatif à la racine du dépôt, et refuse d'en sortir.
+
+    Aujourd'hui aucun de ces chemins ne vient d'une requête : les noms de documents sont
+    des littéraux, et la langue ne peut valoir que l'un des codes servis. L'analyse
+    statique le signale pourtant, et elle a raison de le faire : « ce n'est pas atteignable
+    aujourd'hui » est le raisonnement qui vieillit le plus mal. Le jour où quelqu'un ajoute
+    une route qui prend un nom de document dans l'URL, la traversée devient réelle et
+    personne ne se souvient de cette conversation.
+
+    La garde coûte deux lignes et rend ce cas impossible par construction."""
+    racine = trouver_racine().resolve()
+    cible = (racine / chemin).resolve()
+    if not cible.is_relative_to(racine):
+        raise ValueError(f"chemin hors du dépôt : {chemin}")
+    return cible
+
+
 @lru_cache
 def markdown_publie(chemin: str, depot_fichiers: str = "", prefixe: str = "") -> dict:
     """Rend un fichier markdown du dépôt en HTML. `chemin` part de la racine du dépôt.
 
     Le portail ne recopie aucun de ces textes : il sert le fichier que le moteur applique.
     Un document qui ne serait pas publié ici resterait une promesse invérifiable."""
-    texte = (trouver_racine() / chemin).read_text(encoding="utf-8")
+    texte = fichier_du_depot(chemin).read_text(encoding="utf-8")
     premiere = next((l for l in texte.splitlines() if l.startswith("# ")), "# Document")
     corps = texte.split("\n", 1)[1] if texte.startswith("# ") else texte
     md = _rendu()
@@ -101,9 +120,9 @@ def publier(source: str, depot_fichiers: str = "", prefixe: str = "", langue: st
     Une traduction vit dans <dossier>/<langue>/<fichier>. À défaut, l'original est servi tel
     quel : mieux vaut le texte qui engage le projet, dans sa langue, qu'une page vide. Le
     drapeau `traduit` permet à la page de le dire au lecteur au lieu de le laisser deviner."""
-    if langue:
+    if langue in i18n.LANGUES:
         traduction = chemin_traduction(source, langue)
-        if (trouver_racine() / traduction).exists():
+        if fichier_du_depot(traduction).exists():
             return {**markdown_publie(traduction, depot_fichiers, prefixe), "traduit": True}
     return {**markdown_publie(source, depot_fichiers, prefixe), "traduit": not langue}
 

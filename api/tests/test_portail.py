@@ -991,3 +991,29 @@ def test_tout_document_publie_est_embarque_dans_l_image():
             f"{source} est publié par le portail mais {dossier}/ n'est pas copié dans "
             f"l'image : la page tombera en 500 en production"
         )
+
+
+def test_un_chemin_qui_sort_du_depot_est_refuse():
+    """Signalé par l'analyse statique, et corrigé plutôt qu'écarté.
+
+    Aucun de ces chemins ne vient d'une requête aujourd'hui : les noms de documents sont
+    des littéraux et la langue ne peut valoir que l'un des codes servis. Mais « ce n'est
+    pas atteignable aujourd'hui » est le raisonnement qui vieillit le plus mal : le jour où
+    une route prend un nom de document dans l'URL, la traversée devient réelle."""
+    from lynceus.portail import contenu
+
+    for chemin in ("../../etc/passwd", "docs/../../../etc/hosts", "/etc/passwd"):
+        with pytest.raises(ValueError, match="hors du dépôt"):
+            contenu.fichier_du_depot(chemin)
+
+    assert contenu.fichier_du_depot("docs/ETHIQUE.md").is_file()
+
+
+def test_une_langue_inconnue_ne_construit_aucun_chemin():
+    """La langue entre dans un chemin de fichier. Elle ne doit valoir que ce que le
+    projet sert, quoi qu'il arrive en amont."""
+    from lynceus.portail import contenu
+
+    rendu = contenu.publier("docs/ETHIQUE.md", langue="../../etc")
+    assert rendu["titre"]
+    assert rendu["traduit"] is False, "l'original est servi, aucune traduction cherchée"
