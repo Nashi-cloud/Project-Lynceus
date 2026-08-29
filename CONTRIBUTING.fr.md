@@ -1,6 +1,6 @@
 # Contribuer à Lynceus
 
-<!-- traduit-de: CONTRIBUTING.md sha256:13c9124142b4644d -->
+<!-- traduit-de: CONTRIBUTING.md sha256:2875c9d29d0df61e -->
 
 [English](CONTRIBUTING.md) · **Français**
 
@@ -61,16 +61,22 @@ Détail des étapes, si besoin de les lancer séparément :
 
 ## Ce que déclenche une poussée
 
-Le dépôt est bâti pour une forge dotée d'un runner auto-hébergé (voir [api/DEPLOIEMENT.md](api/DEPLOIEMENT.fr.md)). Les tests y rejouent ce que `verifier.sh` fait en local, dans des conteneurs jetables.
+Les tests tournent sur des machines fournies par GitHub, gratuites et sans plafond sur un dépôt public. Ils rejouent ce que `verifier.sh` fait en local.
 
-| Branche | Tests | Image publiée | Déploiement |
-|---|---|---|---|
-| `feat/*`, `fix/*`, `docs/*` | oui | aucune | aucun |
-| `dev` | oui | `:dev` | aucun |
-| `next` | oui | `:next` | staging |
-| `main` | oui | `:latest` et `:v<VERSION>` | production |
+| Branche | Tests | Image |
+|---|---|---|
+| `feat/*`, `fix/*`, `docs/*` | oui | rien |
+| `dev` | oui | construite, non publiée |
+| `next` | oui | publiée en `:next` |
+| `main` | oui | publiée en `:latest` et `:v<VERSION>` |
 
-La chaîne ne remplace pas `./verifier.sh` avant de fusionner : elle constate, elle ne relit pas. Et elle ne s'exécute pas pour une proposition venue d'un fork, un runner auto-hébergé exécutant le code qu'on lui confie.
+Sur `dev`, l'image est construite sans être envoyée au registre. Rien ne tire cette étiquette, la recette prenant `:next` et la production `:latest` : la publier remplirait le registre d'images que personne n'ouvre. La construction, elle, reste utile, `verifier.sh` ne construisant pas l'image en local. Sans elle, un Dockerfile cassé se découvrirait au moment de promouvoir.
+
+**Une proposition venue d'un fork est vérifiée comme les autres.** Ça n'a pas toujours été le cas : les tests tournaient sur un runner auto-hébergé, qui exécute le code qu'on lui donne, et les forks en étaient exclus. La proposition d'un inconnu ne déclenchait alors rien, son auteur n'avait aucun retour et le mainteneur relisait à l'aveugle. Une machine jetable règle le problème.
+
+La chaîne ne remplace pas `./verifier.sh` avant de fusionner : elle constate, elle ne relit pas.
+
+**Le déploiement ne figure plus dans la chaîne.** Il se faisait par webhook, depuis le runner auto-hébergé, seul capable de joindre le réseau privé de l'exploitant. Une URL de webhook étant un jeton de déploiement déguisé, le sens est inversé : les instances vont chercher l'image sur GHCR, et plus rien n'entre chez elles. Voir [api/DEPLOIEMENT.fr.md](api/DEPLOIEMENT.fr.md).
 
 **Version de l'API** : le fichier `VERSION` à la racine fait foi, et doit s'accorder avec `api/pyproject.toml` et `api/lynceus/__init__.py`. C'est lui que la chaîne lit pour étiqueter l'image publiée depuis `main`, donc pour rendre un retour arrière possible. `verifier.sh` refuse un décalage.
 
@@ -93,6 +99,15 @@ La chaîne ne remplace pas `./verifier.sh` avant de fusionner : elle constate, e
   ```
 
   `lynceus traductions` dit où en est chaque document, et `verifier.sh` échoue si une traduction est en retard sur son original. **Modifier un document traduit suppose donc de revoir sa traduction et de mettre à jour cette ligne** : sans ça, le portail publierait deux textes qui ne disent plus la même chose, sans que rien ne le signale.
+- **Secrets** : `verifier.sh` inspecte le dépôt avant chaque fusion, et un crochet `pre-commit` inspecte ce qui est indexé. À activer une fois par clone :
+
+  ```bash
+  git config core.hooksPath .githooks
+  ```
+
+  La détection de GitHub ne suffit pas ici, et il faut le dire : elle reconnaît les jetons de fournisseurs connus à leur préfixe, jamais les trois secrets propres à ce projet, qui n'ont aucune forme remarquable. La clé privée Ed25519 qui signe les accès est une simple chaîne en base64 ; une URL de webhook Portainer est un jeton de déploiement déguisé ; un nom de machine du tailnet n'a rien à faire dans un dépôt public. Les motifs personnalisés de GitHub demandent Advanced Security, absent d'un dépôt public gratuit. `outils/chercher-secrets.py` est donc la seule couche qui les couvre.
+
+  Un secret poussé est un secret compromis, même retiré au commit suivant : l'historique le garde. Le révoquer passe avant le nettoyage.
 - **IA générative** : une contribution substantiellement produite par un assistant le déclare, avec les lignes `Assisted-by:` et `Prompt:` en fin de message de commit, contiguës à `Signed-off-by:`. Voir [docs/IA-GENERATIVE.md](docs/IA-GENERATIVE.md). Une contribution que son auteur ne sait pas expliquer en revue est refusée, assistant ou pas.
 
 ## Droits sur les contributions

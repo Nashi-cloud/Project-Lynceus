@@ -1,6 +1,6 @@
 # Déployer une instance Lynceus
 
-<!-- traduit-de: api/DEPLOIEMENT.md sha256:fbc2e72d2d0c64e4 -->
+<!-- traduit-de: api/DEPLOIEMENT.md sha256:839d8021b980d0c4 -->
 
 [English](DEPLOIEMENT.md) · **Français**
 
@@ -36,7 +36,7 @@ Dans un terminal, elle demande ce qu'elle ne peut pas deviner : adresse du regis
 Sans installation locale, la même commande vit dans l'image :
 
 ```bash
-docker run --rm <registre>/lynceus-api:latest lynceus env production
+docker run --rm ghcr.io/nashi-cloud/lynceus-api:latest lynceus env production
 ```
 
 Ce qui est engendré l'est **une seule fois** : mot de passe PostgreSQL, jeton d'administration, et surtout **une seule paire de clés pour les deux blocs**. C'est l'erreur la plus facile à commettre que d'appeler `cles-paire` deux fois et de déployer un portail qui signe avec une clé que l'instance ne reconnaît pas ; l'inscription répond alors correctement, et c'est l'instance qui refuse la clé, plus tard, chez l'utilisateur.
@@ -125,7 +125,7 @@ L'image est construite une fois et déployée telle quelle, sans compilation sur
 
 ```bash
 # Depuis la racine du dépôt
-REGISTRE=votre-registre.exemple/lynceus-api      # votre registre d'images
+REGISTRE=ghcr.io/nashi-cloud/lynceus-api      # votre registre d'images
 
 docker build -f api/Dockerfile -t $REGISTRE:v$(cat VERSION) .
 docker tag  $REGISTRE:v$(cat VERSION) $REGISTRE:latest
@@ -139,36 +139,54 @@ L'étiquette de version permet de revenir en arrière : `LYNCEUS_IMAGE=…:v0.2.
 
 ### Automatiser : la chaîne d'intégration
 
-Le dépôt contient deux workflows compatibles GitHub Actions, prévus pour un **runner auto-hébergé** étiqueté `self-hosted, forge` :
+Deux workflows, tous deux sur des machines fournies par GitHub, gratuites et sans plafond
+sur un dépôt public :
 
 | Fichier | Déclenchement | Effet |
 |---|---|---|
-| `.github/workflows/tests.yml` | poussée sur `main`, `next`, `dev`, `feat/**`, `fix/**`, `docs/**` | rejoue `pytest` et la suite de l'extension dans des conteneurs jetables |
-| `.github/workflows/build.yml` | poussée sur `main`, `next`, `dev` | construit l'image, la publie, et déclenche le redéploiement |
+| `.github/workflows/tests.yml` | toute poussée et toute proposition | rejoue `pytest`, la suite de l'extension et la recherche de secrets |
+| `.github/workflows/build.yml` | poussée sur `main`, `next`, `dev` | construit l'image et la publie sur GHCR |
 
-Correspondance entre branche et étiquette d'image :
+Correspondance entre branche et étiquette :
 
-| Branche | Étiquette | Redéploiement |
-|---|---|---|
-| `dev` | `:dev` | aucun (construction seule) |
-| `next` | `:next` | staging, par webhook |
-| `main` | `:latest` et `:v<VERSION>` | production, par webhook |
+| Branche | Étiquette |
+|---|---|
+| `dev` | aucune : l'image est construite pour vérifier le Dockerfile, puis jetée |
+| `next` | `ghcr.io/<compte>/lynceus-api:next` |
+| `main` | `:latest` et `:v<VERSION>` |
 
-À configurer dans le dépôt, côté forge :
+Rien à configurer : la publication sur GHCR se fait avec le jeton du workflow
+(`permissions: packages: write`), sans compte de registre ni secret à faire tourner. Au
+premier envoi, le paquet peut naître privé : le basculer une fois en public dans les
+réglages du paquet, et il le reste.
 
-- variable `REGISTRE_FORGE` : adresse du registre **vue depuis le runner**, `127.0.0.1:5000` par défaut. Les hôtes de déploiement, eux, joignent ce registre par son nom réseau, renseigné dans le `LYNCEUS_IMAGE` de chaque stack ;
-- secrets `WEBHOOK_STAGING_INSTANCE`, `WEBHOOK_STAGING_PORTAIL`, `WEBHOOK_PROD_INSTANCE`, `WEBHOOK_PROD_PORTAIL` : les URL de redéploiement, une par stack. Deux stacks tirent la même image, l'instance et le portail, donc deux appels ; l'instance d'abord, c'est elle qui porte les migrations de schéma. Une étape sans secret passe avec un avertissement plutôt que d'échouer, pour qu'un dépôt cloné puisse construire ses images sans rien configurer.
+Les propositions venues d'un fork sont vérifiées comme les autres. Ça n'a pas toujours été
+le cas : la chaîne tournait sur un runner auto-hébergé, qui exécute le code qu'on lui
+donne, et les forks en étaient exclus. La proposition d'un inconnu ne déclenchait alors
+rien. Une machine jetable règle le problème, et c'est le vrai gain de la bascule.
 
-Ces URL ne sont pas dans les fichiers de workflow, et ne doivent pas y entrer : **une URL de webhook Portainer est un jeton de déploiement déguisé**, qui suffit à faire redéployer une stack à quiconque la connaît. Le dépôt étant destiné à devenir public, elles restent des secrets.
+### Déployer : l'instance tire, on ne lui pousse rien
 
-Deux détails qui coûtent cher quand on les découvre en production :
+Le déploiement se faisait par webhook Portainer, appelé depuis le runner auto-hébergé,
+seul capable de joindre le réseau privé de l'exploitant. **Une URL de webhook Portainer est
+un jeton de déploiement déguisé** : qui la connaît peut redéclencher la stack. La faire
+sortir de ce réseau pour la confier à une machine tierce aurait été un recul.
 
-- l'appel de webhook utilise `curl --fail`. Sans ce drapeau, `curl` sort en 0 sur un HTTP 404 et l'étape passe au vert alors que l'appel a tapé dans le vide. Une stack supprimée puis recréée change d'identifiant de webhook : c'est exactement le cas qu'il faut voir échouer ;
-- les travaux de test ne s'exécutent **pas** pour une proposition venue d'un fork. Un runner auto-hébergé exécute le code qu'on lui donne : sur un dépôt public, l'ouvrir aux forks reviendrait à offrir la machine. Les contributions se relisent, et leur auteur lance `./verifier.sh` chez lui.
+Le sens est donc inversé. L'instance va chercher l'image publiée, et **rien n'entre chez
+elle** : aucun port ouvert, aucun webhook, aucun secret déposé chez un tiers.
+
+Dans Portainer, sur la stack, activez **Repository/Image polling** avec l'intervalle qui
+vous convient. Le service porte déjà `pull_policy: always`, donc une image republiée sous la
+même étiquette est reprise à la mise à jour. Pour un déploiement à la demande, le bouton
+« Update the stack » avec « Re-pull image » fait la même chose immédiatement.
+
+Le suivi d'une étiquette mouvante (`:next`, `:latest`) suffit pour une recette. En
+production, épingler `:v<VERSION>` et changer la variable à chaque montée donne un retour
+arrière trivial, au prix d'un geste conscient.
 
 ### Une instance de recette, déployée depuis Portainer
 
-`docker-compose.staging.yml` est prévu pour ça : **une seule stack**, base, instance et portail ensemble, un seul jeu de variables, un seul webhook de redéploiement.
+`docker-compose.staging.yml` est prévu pour ça : **une seule stack**, base, instance et portail ensemble, un seul jeu de variables, un seul tirage d'image à surveiller.
 
 C'est un compromis assumé, et il ne vaut que pour la recette. En production, l'instance et le portail sont deux stacks sur deux machines : le portail détient la clé privée qui signe les accès, l'instance est la surface exposée, et les séparer fait qu'une instance compromise ne permet toujours pas de forger des clés. En recette on cherche l'inverse, vérifier la boucle complète d'un coup, donc le portail joint l'instance par le réseau interne de la stack et la clé privée de recette vit à côté d'elle.
 
@@ -177,7 +195,7 @@ C'est un compromis assumé, et il ne vaut que pour la recette. En production, l'
 Variables à renseigner dans l'éditeur de Portainer :
 
 ```ini
-LYNCEUS_IMAGE=<registre>/lynceus-api:next
+LYNCEUS_IMAGE=ghcr.io/nashi-cloud/lynceus-api:next
 POSTGRES_PASSWORD=<propre à la recette>
 LYNCEUS_LLM_API_KEY=<votre clé>
 LYNCEUS_CLE_PUBLIQUE=<paire de recette>
@@ -196,7 +214,7 @@ Trois pièges, tous rencontrés :
 
 - **les chemins relatifs ne veulent rien dire dans Portainer.** Un `./paquets` se résout par rapport au répertoire d'où Compose est lancé, qui n'est pas ce dépôt quand c'est Portainer qui déploie. Le montage utilise donc un chemin absolu, `LYNCEUS_PAQUETS`, dont le défaut convient. Docker crée le dossier s'il manque ;
 - **le suffixe de conteneur n'est pas cosmétique.** Sans `LYNCEUS_SUFFIXE`, deux environnements sur la même machine se disputent le nom `lynceus-api` et le second refuse de démarrer. Le fichier de recette suffixe `-staging` par défaut ;
-- **le webhook est un jeton de déploiement.** Qui connaît son URL peut redéclencher la stack. Elle se dépose dans les secrets du dépôt, jamais dans un fichier versionné.
+- **si vous gardez un webhook**, souvenez-vous que c'est un jeton de déploiement : qui connaît son URL peut redéclencher la stack. Elle n'a rien à faire dans un fichier versionné. Le tirage par Portainer évite la question, puisqu'il ne demande aucun secret.
 
 ### Ou deux stacks séparées, comme en production
 

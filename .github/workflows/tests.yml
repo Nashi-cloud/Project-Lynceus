@@ -1,11 +1,15 @@
-# Vérification à chaque poussée : ce que `./verifier.sh` fait en local, mais sur le
-# runner de la forge et sans rien installer sur la machine.
+# Vérification à chaque poussée et à chaque proposition : ce que `./verifier.sh` fait en
+# local, sur des machines fournies par GitHub.
 #
-# Tout tourne dans des conteneurs jetables, avec le dépôt monté en LECTURE SEULE puis
-# recopié à l'intérieur. C'est délibéré : un `npm ci` lancé en root dans un dossier monté
-# en écriture laisse un node_modules que le checkout suivant ne peut plus effacer, et le
-# runner se bloque sur un EACCES. En ne montant qu'en lecture, le cas ne peut pas se
-# produire.
+# Ces travaux tournaient jusqu'à l'ouverture publique du dépôt sur un runner auto-hébergé,
+# et les propositions venues d'un fork en étaient exclues : un runner auto-hébergé exécute
+# le code qu'on lui donne, et l'ouvrir aux forks revenait à offrir la machine. La
+# conséquence était fâcheuse pour un projet qui espère des contributions : la proposition
+# d'un inconnu ne déclenchait aucune vérification, l'auteur n'avait aucun retour et le
+# mainteneur relisait à l'aveugle.
+#
+# Une machine fournie par GitHub est jetable, et gratuite sans plafond sur un dépôt public.
+# Les forks y tournent donc sans réserve, ce qui est le vrai gain de cette bascule.
 name: Tests
 
 on:
@@ -13,63 +17,69 @@ on:
     branches: [main, next, dev, "feat/**", "fix/**", "docs/**", "perf/**"]
   pull_request:
 
-# Le runner est unique : deux exécutions de la même branche se marcheraient dessus.
+# Le type d'événement fait partie du groupe, et ce n'est pas un détail. Sans lui, la
+# poussée sur `next` et la proposition issue de `next` tombaient dans le même groupe : la
+# seconde annulait la première, et l'exécution annulée s'affichait en rouge sur la PR. Une
+# vérification rouge sans échec réel est pire qu'inutile sur un dépôt public, elle apprend
+# à ne plus regarder la couleur.
 concurrency:
-  group: tests-${{ github.event.pull_request.head.ref || github.ref_name }}
+  group: tests-${{ github.event_name }}-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
-# Lecture du dépôt seule : c'est tout ce dont actions/checkout a besoin, et le dépôt
-# étant privé, un jeton sans aucune permission ne peut même pas le cloner.
 permissions:
   contents: read
 
 jobs:
   api:
     name: API (pytest)
-    runs-on: [self-hosted, forge]
-    # Le dépôt a vocation à devenir public, et un runner auto-hébergé exécute le code
-    # qu'on lui donne. Les propositions venues d'un fork ne tournent donc pas ici : elles
-    # se relisent, et leur auteur lance `./verifier.sh` chez lui.
-    if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: pytest
+        working-directory: api
         run: |
-          docker run --rm \
-            -v "${{ github.workspace }}:/depot:ro" \
-            python:3.12-slim \
-            sh -c "cp -a /depot /travail && cd /travail/api \
-                   && pip install --quiet --no-cache-dir -e '.[dev]' \
-                   && python -m pytest -q"
+          pip install --quiet --no-cache-dir -e '.[dev]'
+          python -m pytest -q
 
   extension:
     name: Extension (typage, tests, parité de hachage)
-    runs-on: [self-hosted, forge]
-    if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # Le dépôt entier est recopié, pas seulement extension/ : test/identite.test.mjs
-      # compare la palette, le logotype et les polices embarquées à ceux du portail, qui
-      # vivent sous api/.
-      # Python est installé dans le conteneur Node parce que `npm test` inclut le test de
-      # parité : il rejoue les douze URL de référence à travers l'implémentation Python de
-      # l'API et compare les empreintes. C'est le test qui garantit qu'un lookup lancé par
-      # l'extension tombe bien sur l'entrée écrite par le serveur. Le faire tourner sans
-      # Python reviendrait à ne pas le faire tourner.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      # Le dépôt entier est nécessaire, pas seulement extension/ : identite.test.mjs compare
+      # la palette, le logotype et les polices embarquées à ceux du portail, qui vivent sous
+      # api/. Et `npm test` inclut le test de parité, qui rejoue les douze URL de référence à
+      # travers l'implémentation Python et compare les empreintes : c'est lui qui garantit
+      # qu'un lookup lancé par l'extension tombe sur l'entrée écrite par le serveur. Python
+      # est présent d'office sur les machines d'Ubuntu, il n'y a rien à installer.
       - name: npm ci, tsc, node --test
+        working-directory: extension
         run: |
-          docker run --rm \
-            -v "${{ github.workspace }}:/depot:ro" \
-            node:22-slim \
-            sh -c "apt-get update -qq \
-                   && apt-get install -y -qq --no-install-recommends python3 > /dev/null \
-                   && cp -a /depot /travail && cd /travail/extension \
-                   && npm ci --no-audit --no-fund \
-                   && npm run verifier \
-                   && npm test"
+          npm ci --no-audit --no-fund
+          npm run verifier
+          npm test
+
+  secrets:
+    name: Secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # La détection de GitHub ne reconnaît pas les secrets propres à ce projet : la clé
+      # privée qui signe les accès, les URL de webhook, les noms de machines du tailnet.
+      # Cette étape est la même que celle de `verifier.sh`, rejouée ici pour que la
+      # proposition d'un contributeur soit couverte aussi.
+      - name: chercher-secrets
+        run: outils/chercher-secrets.py

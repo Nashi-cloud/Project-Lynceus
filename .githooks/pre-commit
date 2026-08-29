@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Dernier filet avant qu'un secret n'entre dans l'historique. Un secret poussé est un secret
+# compromis, même retiré au commit suivant : le révoquer devient alors le seul remède.
+#
+# Ce crochet n'inspecte que ce qui est indexé, donc il coûte quelques millisecondes.
+#
+# Pour l'activer, une fois par clone :   git config core.hooksPath .githooks
+# Pour passer outre en connaissance de cause :   git commit --no-verify
+set -euo pipefail
+exec "$(dirname "$0")/../outils/chercher-secrets.py" --indexe

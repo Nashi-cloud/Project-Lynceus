@@ -65,16 +65,22 @@ The individual steps, if you need to run them separately:
 
 ## What a push triggers
 
-The repository is built for a forge with a self-hosted runner (see [api/DEPLOIEMENT.md](api/DEPLOIEMENT.md)). The tests replay there what `verifier.sh` does locally, in throwaway containers.
+The tests run on GitHub-hosted machines, free and unmetered on a public repository. They replay what `verifier.sh` does locally.
 
-| Branch | Tests | Image published | Deployment |
-|---|---|---|---|
-| `feat/*`, `fix/*`, `docs/*` | yes | none | none |
-| `dev` | yes | `:dev` | none |
-| `next` | yes | `:next` | staging |
-| `main` | yes | `:latest` and `:v<VERSION>` | production |
+| Branch | Tests | Image |
+|---|---|---|
+| `feat/*`, `fix/*`, `docs/*` | yes | none |
+| `dev` | yes | built, not published |
+| `next` | yes | published as `:next` |
+| `main` | yes | published as `:latest` and `:v<VERSION>` |
 
-The pipeline is not a substitute for running `./verifier.sh` before merging: it observes, it does not proofread. And it does not run for a proposal coming from a fork, since a self-hosted runner executes whatever code it is handed.
+On `dev` the image is built without being sent to the registry. Nothing pulls that tag, since staging takes `:next` and production `:latest`: publishing it would fill the registry with images nobody opens. The build itself stays useful, as `verifier.sh` does not build the image locally. Without it, a broken Dockerfile would surface at promotion time.
+
+**A proposal from a fork is checked like any other.** That was not always so: the tests used to run on a self-hosted runner, which executes whatever code it is handed, and forks were excluded from it. A stranger's proposal then triggered nothing, its author got no feedback and the maintainer reviewed blind. A disposable machine settles the matter.
+
+The pipeline is not a substitute for running `./verifier.sh` before merging: it observes, it does not proofread.
+
+**Deployment is no longer part of the pipeline.** It used to happen by webhook, from the self-hosted runner, the only one able to reach the operator's private network. Since a webhook URL is a deployment token in disguise, the direction is now reversed: instances fetch the image from GHCR themselves, and nothing reaches into them. See [api/DEPLOIEMENT.md](api/DEPLOIEMENT.md).
 
 **API version**: the `VERSION` file at the root is authoritative, and must agree with `api/pyproject.toml` and `api/lynceus/__init__.py`. That is what the pipeline reads to tag the image published from `main`, and therefore what makes a rollback possible. `verifier.sh` refuses a mismatch.
 
@@ -98,6 +104,15 @@ The pipeline is not a substitute for running `./verifier.sh` before merging: it 
   `lynceus traductions` reports where each document stands, and `verifier.sh` fails if a translation has fallen behind its original. **Changing a translated document therefore means revisiting its translation and updating that line.** Without it, the portal would publish two texts that no longer say the same thing, with nothing to signal it.
 
   Two conventions coexist, and the rule is simple: **where a file is a door, English sits at the door; where a file is the law, French stays the original.** `README.md`, `CONTRIBUTING.md`, `INSTALLATION.md` and the `README.md` of each subfolder are in English at their canonical path, with the French next to them as `*.fr.md`. Everything under `docs/`, `prompts/` and `corpus/RESULTATS.md` keeps French at the canonical path, with the translation under `en/`.
+- **Secrets**: `verifier.sh` scans the repository before every merge, and a `pre-commit` hook scans what is staged. Enable it once per clone:
+
+  ```bash
+  git config core.hooksPath .githooks
+  ```
+
+  GitHub's own secret scanning is not enough here, and that has to be said: it recognises known providers' tokens by their prefix, never the three secrets specific to this project, which have no distinctive shape. The Ed25519 private key that signs access is a plain base64 string; a Portainer webhook URL is a deployment token in disguise; a tailnet machine name has no business in a public repository. GitHub's custom patterns require Advanced Security, which a free public repository does not have. `outils/chercher-secrets.py` is therefore the only layer that covers them.
+
+  A pushed secret is a compromised secret, even removed in the next commit: the history keeps it. Revoking comes before cleaning up.
 - **Generative AI**: a contribution substantially produced by an assistant says so, with `Assisted-by:` and `Prompt:` lines at the end of the commit message, adjacent to `Signed-off-by:`. See [docs/en/IA-GENERATIVE.md](docs/en/IA-GENERATIVE.md). A contribution its author cannot explain in review is refused, assistant or no assistant.
 
 ## Rights over contributions
