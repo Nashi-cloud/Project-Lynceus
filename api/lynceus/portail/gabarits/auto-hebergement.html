@@ -21,11 +21,25 @@
   <h2>{{ _("Le minimum vital") }}</h2>
   <p>{{ _("L'image est publiée : une instance d'essai tient vraiment en une commande, sur SQLite, sans rien à cloner ni à construire.") }}</p>
   <pre><code>docker run -d -p 8000:8000 \
+  -e LYNCEUS_LLM_BASE_URL=https://openrouter.ai/api/v1 \
+  -e LYNCEUS_LLM_MODEL=z-ai/glm-5.2 \
   -e LYNCEUS_LLM_API_KEY=<var>{{ _("votre-clé") }}</var> \
   -e LYNCEUS_DATABASE_URL=sqlite:////donnees/lynceus.sqlite3 \
   -v lynceus:/donnees \
   ghcr.io/nashi-cloud/lynceus-api:latest</code></pre>
   <p>{{ _("Il ne reste qu'à indiquer <code>http://localhost:8000</code> dans les réglages de l'extension. Le volume garde l'annuaire d'une relance à l'autre : sans lui, les analyses déjà payées disparaîtraient avec le conteneur.") }}</p>
+  <p>{{ _("Les trois lignes du fournisseur sont les seules à changer si vous en préférez un autre : n'importe quel service exposant une API compatible OpenAI convient, et le modèle montré ici est simplement celui sur lequel les résultats de calibration publiés ont été mesurés.") }}</p>
+
+  <h3>{{ _("Avec un modèle local, rien ne sort de votre machine") }}</h3>
+  <pre><code>docker run -d -p 8000:8000 \
+  --add-host=host.docker.internal:host-gateway \
+  -e LYNCEUS_LLM_BASE_URL=http://host.docker.internal:11434/v1 \
+  -e LYNCEUS_LLM_MODEL=llama3.1 \
+  -e LYNCEUS_LLM_API_KEY=ollama \
+  -e LYNCEUS_DATABASE_URL=sqlite:////donnees/lynceus.sqlite3 \
+  -v lynceus:/donnees \
+  ghcr.io/nashi-cloud/lynceus-api:latest</code></pre>
+  <p>{{ _("Ollama tourne alors sur votre ordinateur, l'analyse ne coûte rien, et le texte des pages que vous lisez ne quitte pas la machine. C'est la seule configuration qui tienne entièrement la promesse de vie privée de ce projet, et c'est pour ça qu'elle figure ici plutôt qu'en note de bas de page. Contrepartie honnête : un modèle qui tourne chez vous est plus lent, et souvent moins fin qu'un gros modèle distant.") }}</p>
   <p>{{ _("Vous préférez partir des sources, pour lire ou pour modifier ? C'est la même chose en trois lignes :") }}</p>
   <pre><code>git clone {% if depot %}{{ depot }}.git{% else %}&lt;{{ _("dépôt") }}&gt;{% endif %} lynceus &amp;&amp; cd lynceus/api
 cp .env.example .env        # {{ _("y placer la clé du fournisseur de modèle") }}
