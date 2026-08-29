@@ -1,6 +1,6 @@
 # Installer Lynceus
 
-<!-- traduit-de: INSTALLATION.md sha256:c9be45ad2f51619a -->
+<!-- traduit-de: INSTALLATION.md sha256:7b538860179faf2d -->
 
 [English](INSTALLATION.md) · **Français**
 
@@ -108,6 +108,16 @@ LYNCEUS_LLM_API_KEY=votre-clé docker compose up --build
 ```
 
 Le serveur et sa base PostgreSQL démarrent ensemble. L'extension s'installe comme ci-dessus.
+
+L'image est aussi **publiée**, si vous préférez ne rien construire :
+
+```bash
+LYNCEUS_IMAGE=ghcr.io/nashi-cloud/lynceus-api:latest \
+LYNCEUS_LLM_API_KEY=votre-clé docker compose up --pull always --no-build
+```
+
+Le premier démarrage est alors immédiat plutôt que de quelques minutes. Construire reste la
+voie à suivre si vous comptez modifier le code, ce que la licence vous encourage à faire.
 
 ---
 

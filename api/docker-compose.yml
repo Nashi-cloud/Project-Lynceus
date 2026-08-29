@@ -16,6 +16,9 @@ services:
       retries: 15
 
   api:
+    # Nom de l'image construite, ou image à tirer si on ne veut rien construire :
+    #   LYNCEUS_IMAGE=ghcr.io/nashi-cloud/lynceus-api:latest docker compose up --pull always --no-build
+    image: ${LYNCEUS_IMAGE:-lynceus-api:local}
     build:
       context: ..
       dockerfile: api/Dockerfile

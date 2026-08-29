@@ -117,13 +117,29 @@ there is nested, and the effect is the same.
 | `LYNCEUS_SUFFIXE` | `LYNCEUS_SUFFIX` |
 | `LYNCEUS_PAQUETS` | `LYNCEUS_PACKAGES` |
 
-## 2. Publishing the image
+## 2. The image: take it, or build it
 
-The image is built once and deployed as is, with no compilation on the host:
+The image is published and public. There is nothing to build in order to run Lynceus as it
+ships:
+
+```ini
+LYNCEUS_IMAGE=ghcr.io/nashi-cloud/lynceus-api:latest      # the latest published version
+LYNCEUS_IMAGE=ghcr.io/nashi-cloud/lynceus-api:v0.11.2     # a pinned version
+```
+
+Following `:latest` suits a staging deployment. In production, pinning the version makes
+rolling back trivial, at the price of a deliberate gesture on each upgrade: you change the
+variable and redeploy.
+
+### If you modify the code
+
+Then build and publish your own, and that is not optional: the AGPL-3.0 requires (article
+13) that the corresponding source be offered to people using your service remotely. An
+image published from code you keep to yourself is not compliant.
 
 ```bash
-# From the root of the repository
-REGISTRE=ghcr.io/nashi-cloud/lynceus-api      # your image registry
+# From the root of the repository, with YOUR registry
+REGISTRE=ghcr.io/your-account/lynceus-api
 
 docker build -f api/Dockerfile -t $REGISTRE:v$(cat VERSION) .
 docker tag  $REGISTRE:v$(cat VERSION) $REGISTRE:latest
@@ -131,9 +147,17 @@ docker push $REGISTRE:v$(cat VERSION)
 docker push $REGISTRE:latest
 ```
 
-The build context is the **root of the repository**, not `api/`: the image embeds `prompts/`, `docs/` and `schema/`, and its first stage builds the extension package from `extension/`. A single image serves both the instance and the portal, which are only two entry commands into it.
+Remember `LYNCEUS_PORTAIL_DEPOT` then: the portal must announce **your** repository, not the
+original one, since yours is the version running.
 
-The version tag makes it possible to roll back: `LYNCEUS_IMAGE=…:v0.2.0` then `docker compose up -d`. It comes from the `VERSION` file, which `verifier.sh` checks against `pyproject.toml` and `__init__.py`. A mismatch would produce an instance announcing on `/v1/meta` a version nobody could redeploy.
+The build context is the **root of the repository**, not `api/`: the image embeds
+`prompts/`, `docs/`, `schema/` and `corpus/`, and its first stage builds the extension
+package from `extension/`. A single image serves both the instance and the portal, which are
+only two entry commands into it.
+
+The version tag comes from the `VERSION` file, which `verifier.sh` checks against
+`pyproject.toml` and `__init__.py`. A mismatch would produce an instance announcing on
+`/v1/meta` a version nobody could redeploy.
 
 ### Automating it: the CI pipeline
 
