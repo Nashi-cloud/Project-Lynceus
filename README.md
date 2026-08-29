@@ -107,7 +107,7 @@ The documents below are the ones that bind the project. The French text is the o
 - [x] **Publication**: installation guide, extension packaging, Alembic migrations
 - [x] **Phase 3b, public portal**: the website (story, methodology, reference, browsable directory), extension distribution, one-click sign-up without an account
 - [x] **Bilingual**: portal and extension in French and English, analysis written in the language of the page analysed
-- [ ] **Phase 3c**: reference instance and portal, publicly hosted
+- [x] **Phase 3c**: reference instance and portal, publicly hosted ([lynx.nashi.cloud](https://lynx.nashi.cloud))
 - [ ] **Phase 4, network**: federation of directories between instances, further languages, Firefox port
 
 ## How this project is built

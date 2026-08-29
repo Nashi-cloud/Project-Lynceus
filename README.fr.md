@@ -1,6 +1,6 @@
 # Projet Lynceus 🔭
 
-<!-- traduit-de: README.md sha256:71a44bd5108704b8 -->
+<!-- traduit-de: README.md sha256:df797c1435ca222f -->
 
 [English](README.md) · **Français**
 
@@ -106,7 +106,7 @@ Résumé de la [charte éthique](docs/ETHIQUE.md) :
 - [x] **Publication** : guide d'installation, empaquetage de l'extension, migrations Alembic
 - [x] **Phase 3b, portail public** : site (récit, méthodologie, référentiel, annuaire consultable), distribution de l'extension, inscription en un clic sans compte
 - [x] **Bilingue** : portail et extension en français et en anglais, analyse rédigée dans la langue de la page analysée
-- [ ] **Phase 3c** : instance et portail de référence hébergés publiquement
+- [x] **Phase 3c** : instance et portail de référence hébergés publiquement ([lynx.nashi.cloud](https://lynx.nashi.cloud))
 - [ ] **Phase 4, réseau** : fédération d'annuaires entre instances, autres langues, portage Firefox
 
 ## Comment ce projet est fabriqué
