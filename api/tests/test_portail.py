@@ -1017,3 +1017,16 @@ def test_une_langue_inconnue_ne_construit_aucun_chemin():
     rendu = contenu.publier("docs/ETHIQUE.md", langue="../../etc")
     assert rendu["titre"]
     assert rendu["traduit"] is False, "l'original est servi, aucune traduction cherchée"
+
+
+def test_le_code_de_langue_ecrit_dans_un_chemin_vient_du_projet():
+    """Comparer la valeur reçue à la liste des langues écarte la traversée, mais c'est
+    encore la chaîne du visiteur qui entre dans le chemin. Passer par la table rend le
+    code écrit sur disque littéralement celui du projet."""
+    from lynceus.portail import i18n
+
+    demande = "".join(["e", "n"])          # la même valeur, construite ailleurs
+    assert i18n.code_servi(demande) == "en"
+    assert i18n.code_servi(demande) is i18n.CODES_SERVIS["en"], "la table doit rendre SA chaîne"
+    for inconnue in ("../../etc", "fr/../..", "de", ""):
+        assert i18n.code_servi(inconnue) is None

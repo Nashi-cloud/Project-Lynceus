@@ -120,8 +120,9 @@ def publier(source: str, depot_fichiers: str = "", prefixe: str = "", langue: st
     Une traduction vit dans <dossier>/<langue>/<fichier>. À défaut, l'original est servi tel
     quel : mieux vaut le texte qui engage le projet, dans sa langue, qu'une page vide. Le
     drapeau `traduit` permet à la page de le dire au lecteur au lieu de le laisser deviner."""
-    if langue in i18n.LANGUES:
-        traduction = chemin_traduction(source, langue)
+    code = i18n.code_servi(langue)
+    if code:
+        traduction = chemin_traduction(source, code)
         if fichier_du_depot(traduction).exists():
             return {**markdown_publie(traduction, depot_fichiers, prefixe), "traduit": True}
     return {**markdown_publie(source, depot_fichiers, prefixe), "traduit": not langue}
