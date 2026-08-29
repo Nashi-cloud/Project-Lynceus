@@ -1,6 +1,6 @@
 # Installer Lynceus
 
-<!-- traduit-de: INSTALLATION.md sha256:b4d1d52bcd47269d -->
+<!-- traduit-de: INSTALLATION.md sha256:c9be45ad2f51619a -->
 
 [English](INSTALLATION.md) · **Français**
 
@@ -9,11 +9,11 @@ Deux façons d'utiliser Lynceus, selon ce que vous cherchez.
 | | **Extension seule** | **Kit complet** |
 |---|---|---|
 | Ce que vous installez | l'extension Chrome | l'extension **et** votre propre serveur |
-| Il vous faut | l'adresse d'une instance Lynceus | une machine (ou un PC) et 20 minutes |
+| Il vous faut | l'adresse d'une instance Lynceus (`lynx.nashi.cloud`, ou la vôtre) | une machine (ou un PC) et 20 minutes |
 | Vos données | passent par l'instance choisie | ne quittent jamais vos machines |
 | Coût | aucun | celui du modèle d'IA que vous choisissez (ou zéro avec un modèle local) |
 
-> **Il n'existe pas encore d'instance publique de référence.** En attendant, le kit complet est la voie normale, et de toute façon la plus respectueuse de votre vie privée.
+> **Une instance publique de référence existe : [lynx.nashi.cloud](https://lynx.nashi.cloud).** Elle délivre une clé d'accès en un clic, sans compte ni adresse électronique. Le kit complet reste la voie la plus respectueuse de votre vie privée, puisque rien ne quitte alors vos machines.
 
 ---
 
