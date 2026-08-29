@@ -33,6 +33,23 @@ TRADUCTIONS = RACINE / "traductions"
 LANGUE_SOURCE = "fr"
 LANGUES = {"fr": "Français", "en": "English"}
 
+# La même chose vue comme une table de correspondance, et ce n'est pas un doublon.
+# Un code de langue vient de l'URL et finit dans un chemin de fichier, `docs/<langue>/…`.
+# Comparer la valeur reçue à la liste des langues suffit à écarter une traversée, mais
+# c'est toujours la chaîne de la requête qui entre ensuite dans le chemin. Passer par cette
+# table rend le code écrit sur disque littéralement celui du projet, et non celui du
+# visiteur : la garde ne repose plus sur une comparaison faite plus haut, et l'analyse
+# statique cesse à juste titre de suivre la valeur.
+# Écrite en toutes lettres plutôt qu'engendrée depuis LANGUES : une liste blanche se lit
+# mieux ainsi, et une valeur lue dans une table littérale est une constante du programme,
+# pour le lecteur comme pour l'analyse statique. Un test interdit aux deux de diverger.
+CODES_SERVIS = {"fr": "fr", "en": "en"}
+
+
+def code_servi(demande: str) -> str | None:
+    """Le code de langue du projet correspondant à la demande, ou None."""
+    return CODES_SERVIS.get(demande)
+
 
 @lru_cache
 def catalogue(langue: str) -> dict[str, str]:

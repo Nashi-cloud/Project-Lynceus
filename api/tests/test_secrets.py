@@ -20,9 +20,25 @@ def inspecter(tmp_path, contenu: str) -> subprocess.CompletedProcess:
                           capture_output=True, text=True)
 
 
+# Les appâts sont assemblés au lieu d'être écrits d'un tenant, et ce n'est pas de la
+# coquetterie. Un dépôt public est passé au crible par des détecteurs qui ne savent pas
+# qu'une clé est fabriquée : la première version de ce fichier a déclenché une alerte
+# « Tailscale API Key » sur GitHub, à traiter à la main pour rien. Découpé, le littéral
+# n'existe nulle part dans les sources, mais il est bien reconstitué avant d'être écrit
+# dans le fichier que le détecteur inspecte : l'épreuve reste entière.
+FAUX = {
+    "tailscale": "tskey-" + "auth-" + "kM3xQp7ZrT1a9vNb2LcYwHs4dEgFj6Uk",
+    "openrouter": "sk-" + "or-v1-" + "3f8a2c91d47e05b6a8c3f10e29d7b4a6c85f1e0d93b2",
+    "anthropic": "sk-" + "ant-api03-" + "Zx7Kq2mR9tLp4vN8wYbC1eGh5JdF0sAu",
+    "github": "ghp_" + "9mK2xQ7pR4tV8nL3wYbC5eGh1JdF0sAu6Zx",
+}
+
+
 @pytest.mark.parametrize("ligne, attendu", [
-    ("TS_AUTHKEY=tskey-auth-kM3xQp7ZrT1a-9vNb2LcYwHs4dEgFj6Uk", "Tailscale"),
-    ("LYNCEUS_LLM_API_KEY=sk-or-v1-3f8a2c91d47e05b6a8c3f10e29d7b4a6c85f1e0d93b2", "OpenRouter"),
+    (f"TS_AUTHKEY={FAUX['tailscale']}", "Tailscale"),
+    (f"LYNCEUS_LLM_API_KEY={FAUX['openrouter']}", "OpenRouter"),
+    (f"CLE={FAUX['anthropic']}", "Anthropic"),
+    (f"JETON={FAUX['github']}", "GitHub"),
     ("LYNCEUS_PORTAIL_CLE_PRIVEE=MC4CAQAwBQYDK2VwBCIEIKx9Qw2mF7bT3nR8vHc1LpYs", "privée"),
     ("W=https://h.example/api/stacks/webhooks/5104de32-d68f-4e8b-b314-46d3c0b15dbb", "Portainer"),
     ("A=https://une-machine.tailabcd.ts.net/", "tailnet"),
