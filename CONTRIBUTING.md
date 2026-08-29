@@ -98,6 +98,15 @@ The pipeline is not a substitute for running `./verifier.sh` before merging: it 
   `lynceus traductions` reports where each document stands, and `verifier.sh` fails if a translation has fallen behind its original. **Changing a translated document therefore means revisiting its translation and updating that line.** Without it, the portal would publish two texts that no longer say the same thing, with nothing to signal it.
 
   Two conventions coexist, and the rule is simple: **where a file is a door, English sits at the door; where a file is the law, French stays the original.** `README.md`, `CONTRIBUTING.md`, `INSTALLATION.md` and the `README.md` of each subfolder are in English at their canonical path, with the French next to them as `*.fr.md`. Everything under `docs/`, `prompts/` and `corpus/RESULTATS.md` keeps French at the canonical path, with the translation under `en/`.
+- **Secrets**: `verifier.sh` scans the repository before every merge, and a `pre-commit` hook scans what is staged. Enable it once per clone:
+
+  ```bash
+  git config core.hooksPath .githooks
+  ```
+
+  GitHub's own secret scanning is not enough here, and that has to be said: it recognises known providers' tokens by their prefix, never the three secrets specific to this project, which have no distinctive shape. The Ed25519 private key that signs access is a plain base64 string; a Portainer webhook URL is a deployment token in disguise; a tailnet machine name has no business in a public repository. GitHub's custom patterns require Advanced Security, which a free public repository does not have. `outils/chercher-secrets.py` is therefore the only layer that covers them.
+
+  A pushed secret is a compromised secret, even removed in the next commit: the history keeps it. Revoking comes before cleaning up.
 - **Generative AI**: a contribution substantially produced by an assistant says so, with `Assisted-by:` and `Prompt:` lines at the end of the commit message, adjacent to `Signed-off-by:`. See [docs/en/IA-GENERATIVE.md](docs/en/IA-GENERATIVE.md). A contribution its author cannot explain in review is refused, assistant or no assistant.
 
 ## Rights over contributions

@@ -121,6 +121,20 @@ if [ -n "$v_prompt" ]; then
   fi
 fi
 
+# ---------- Secrets ----------
+# La détection de GitHub reconnaît les jetons de fournisseurs connus, à leur préfixe. Elle
+# ne reconnaîtra jamais les trois secrets propres à ce projet, qui n'ont aucune forme
+# remarquable : la clé privée qui signe les accès, les URL de webhook Portainer, et les noms
+# de machines du tailnet. Les motifs personnalisés demandent Advanced Security, absent d'un
+# dépôt public gratuit. Cette étape est donc la seule qui les couvre.
+etape "Secrets — rien qui ne doive rester hors du dépôt"
+if sortie=$(outils/chercher-secrets.py 2>&1); then
+  verdict 0 "$(printf '%s' "$sortie" | tail -1)"
+else
+  printf '%s\n' "$sortie" | sed 's/^/  /'
+  echecs=$((echecs + 1))
+fi
+
 # ---------- Provenance des chiffres publiés ----------
 # L'étape précédente vérifie que les estampilles s'accordent. Elle ne dit rien de la
 # provenance des chiffres : rien n'empêcherait d'avancer une version sans avoir relancé la
