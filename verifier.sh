@@ -83,6 +83,17 @@ if [ -f VERSION ]; then
   fi
 fi
 
+# Un second fichier VERSION n'est lu par personne : ni par le contrôle ci-dessus, ni par la
+# CI qui étiquette l'image depuis celui de la racine. Il affiche donc un numéro qui n'engage
+# rien et que rien ne fait vieillir, ce qui est pire que pas de numéro du tout. `api/VERSION`
+# est resté ainsi trois versions mineures en arrière sans qu'aucun contrôle s'en aperçoive.
+doublons=$(git ls-files '*VERSION' | grep -v '^VERSION$' || true)
+if [ -n "$doublons" ]; then
+  verdict 1 "fichier VERSION en double, seul celui de la racine fait foi : $(echo $doublons)"
+else
+  verdict 0 "un seul fichier VERSION, à la racine"
+fi
+
 # ---------- Traductions des documents de référence ----------
 # Une traduction est une copie : elle dérive dès que l'original bouge, et rien ne le
 # signale puisque les deux pages s'affichent aussi bien. L'inventaire est tenu par
