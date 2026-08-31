@@ -4,48 +4,52 @@
 
 Dernière passe : **2026-08-31** · modèle `z-ai/glm-5.2` (via openrouter.ai) · prompt **v0.1.3** · température **0**
 
-**Une passe** enregistrée sur cette version du prompt : **11/13** conformes. Une passe unique ne dit rien de solide, puisque le modèle ne rend pas deux fois la même analyse du même texte.
+**3 passes** enregistrées sur cette version du prompt : **11/13, 9/13, 12/13** conformes. Une passe unique ne dirait rien de solide, puisque le modèle ne rend pas deux fois la même analyse du même texte.
 
 | Cas | Catégorie | Grade | Score | Écarts relevés |
 |---|---|---|---|---|
-| Le conseil municipal vote à l'unanimité contre l'unanimité | satire | A | 85 | — |
-| Pourquoi je pense que notre commune se trompe sur le stationnement payant | opinion | A | 82 | — |
-| La racine oubliée que les laboratoires préfèrent vous cacher | publicite_sponsorise | E | 7 | — |
-| Le pont de la Vieille-Écluse fermé pour travaux du 3 au 28 mars | information | A | 82 | — |
-| Méditation de l'Avent : l'attente comme chemin | contenu_confessionnel | A | 89 | — |
-| Coupure électrique de novembre : trois questions qui dérangent | theorie_du_complot | E | 8 | — |
-| What They Won't Tell You About the New Water Treatment Plant | theorie_du_complot | E | 14 | — |
-| Cinq habitudes du soir pour mieux dormir | publicite_sponsorise | C | 50 | — |
-| Fluoration de l'eau : le débat reste ouvert | information | D | 38 | — |
-| Pourquoi le ciel est bleu, et pourquoi cette explication est incomplète | analyse_expertise | B | 70 | — |
-| Ce que trois ans d'errance médicale m'ont appris | temoignage | A | 81 | grade A hors de la fourchette B, C, D |
-| Biais de confirmation — Wikipédia | information | A | 93 | — |
-| Résumé SOTT des changements terrestres - Juin 2026 | opinion | D | 39 | catégorie `opinion` au lieu de theorie_du_complot, pseudo_science |
+| Le conseil municipal vote à l'unanimité contre l'unanimité | satire | A | 85 à 100 | — |
+| Pourquoi je pense que notre commune se trompe sur le stationnement payant | opinion | A | 82 à 84 | — |
+| La racine oubliée que les laboratoires préfèrent vous cacher | publicite_sponsorise | E | 7 à 16 | — |
+| Le pont de la Vieille-Écluse fermé pour travaux du 3 au 28 mars | information | A B A | 79 à 82 | — |
+| Méditation de l'Avent : l'attente comme chemin | contenu_confessionnel | A | 84 à 91 | — |
+| Coupure électrique de novembre : trois questions qui dérangent | theorie_du_complot | E | 5 à 13 | — |
+| What They Won't Tell You About the New Water Treatment Plant | theorie_du_complot | E | 10 à 14 | technique manquante : `autorite_anonyme` (1 passe(s) sur 3) |
+| Cinq habitudes du soir pour mieux dormir | publicite_sponsorise | C B C | 50 à 66 | grade B hors de la fourchette C, D (1 passe(s) sur 3) |
+| Fluoration de l'eau : le débat reste ouvert | information / opinion | D | 38 à 40 | — |
+| Pourquoi le ciel est bleu, et pourquoi cette explication est incomplète | analyse_expertise | B | 70 à 74 | — |
+| Ce que trois ans d'errance médicale m'ont appris | temoignage | A C A | 64 à 82 | grade A hors de la fourchette B, C, D (2 passe(s) sur 3) |
+| Biais de confirmation — Wikipédia | information / analyse_expertise | A | 88 à 94 | catégorie `analyse_expertise` au lieu de information (1 passe(s) sur 3) |
+| Résumé SOTT des changements terrestres - Juin 2026 | opinion / theorie_du_complot | D | 31 à 39 | catégorie `opinion` au lieu de theorie_du_complot, pseudo_science (2 passe(s) sur 3) |
 
 <!-- calibration:fin -->
 
 ## Lecture
 
-Une seule passe est enregistrée sur cette version du prompt. Rien n'y a été resservi depuis l'annuaire : la mise en cache est indexée sur le couple contenu et version de prompt, si bien qu'un changement de prompt force une analyse neuve des treize cas. Elle dit donc ce qu'un tirage a rendu, pas ce que trois tirages rendraient. Les passes menées avant que le journal existe figurent dans l'historique, en fin de page, avec leurs chiffres tels qu'ils avaient été relevés.
+Trois passes indépendantes sont enregistrées sur cette version du prompt. Rien n'y a été resservi depuis l'annuaire : la mise en cache est indexée sur le couple contenu et version de prompt, et les analyses de la version en cours ont été retirées de la base entre chaque passe, si bien que les treize cas ont été réanalysés trois fois. Les passes menées avant que le journal existe figurent dans l'historique, en fin de page, avec leurs chiffres tels qu'ils avaient été relevés.
 
-Les cinq sentinelles de [docs/METHODOLOGIE.md](../docs/METHODOLOGIE.md) §7 tiennent : la satire reste classée `satire`, l'opinion argumentée n'est pas pénalisée pour sa position, la pseudo-médecine marchande sort en E, l'information factuelle en A, et le contenu confessionnel reste dans sa catégorie sans qu'aucune des techniques interdites soit relevée. Le spécimen anglais est analysé en anglais, ce que le corpus vérifie explicitement par `langue_attendue`.
+Les cinq sentinelles de [docs/METHODOLOGIE.md](../docs/METHODOLOGIE.md) §7 tiennent aux trois passes : la satire reste classée `satire`, l'opinion argumentée n'est pas pénalisée pour sa position, la pseudo-médecine marchande sort en E, l'information factuelle en A, et le contenu confessionnel reste dans sa catégorie sans qu'aucune des techniques interdites soit relevée. Le spécimen anglais est analysé en anglais, ce que le corpus vérifie explicitement par `langue_attendue`.
 
-Deux écarts sur treize cas :
+### Ce que le prompt v0.1.3 a changé
 
-- **Page réelle d'agrégation complotiste** classée `opinion` au lieu de `theorie_du_complot` ou `pseudo_science`. Échec grave : la catégorie est une attente exacte. Le grade reste D et le score 39, donc le jugement rendu au lecteur n'est pas inversé, mais la nature du contenu est mal nommée, et c'est précisément ce que l'outil prétend savoir faire.
-- **Témoignage** noté A alors que la fourchette attendue est B à D. Un cran au-dessus. Écart mineur.
+Le v0.1.3 donne aux dix catégories la définition que `docs/METHODOLOGIE.md` publiait déjà. Jusque-là elles n'étaient qu'une liste d'identifiants nus, et la calibration sanctionnait une frontière que le prompt ne traçait nulle part.
 
-### Ce qu'a déplacé le passage de v0.1.2 à v0.1.3
+**La correction visée tient.** La vulgarisation scientifique sort en `analyse_expertise` aux trois passes, entre 70 et 74, sans un seul écart. C'est un effet causal de la définition ajoutée, et non un tirage favorable : c'était l'échec grave publié en v0.1.2, il a disparu.
 
-Le prompt v0.1.3 donne aux dix catégories la définition que `docs/METHODOLOGIE.md` publiait déjà. Jusque-là elles n'étaient qu'une liste d'identifiants nus, et la calibration sanctionnait une frontière que le prompt ne traçait nulle part. Le total ne bouge pas, 11 sur 13 avant comme après, mais la composition change entièrement, et il faut le lire cas par cas plutôt que sur le total.
+**Le contenu confessionnel a durablement changé de note**, de C 57 en v0.1.2 à A aux trois passes, entre 84 et 91. La mention « la nature dominante du contenu, pas sa qualité » a vraisemblablement cessé de faire pénaliser un texte pour n'être pas du journalisme. Le cas reste conforme, sa fourchette allant de A à C, mais le déplacement est réel et reproductible.
 
-**Les deux écarts publiés en v0.1.2 ont disparu.** La vulgarisation scientifique sort désormais en `analyse_expertise`, ce que la définition ajoutée dit explicitement. La publicité déguisée revient à C, dans sa fourchette. Le premier est un effet causal, la définition tranche la frontière ; le second peut n'être qu'un tirage plus favorable.
+### Ce que trois passes ne permettent pas de conclure
 
-**Deux écarts nouveaux apparaissent**, décrits ci-dessus.
+Les totaux sont **11, 9 et 12 sur 13**. Trois chiffres qui, sur treize cas, ne se distinguent pas du hasard : l'écart de score entre passes atteint 7,8 points en moyenne et 18 au maximum, et **3 cas sur 13 changent carrément de catégorie d'une passe à l'autre**. À cette dispersion, une différence de deux ou trois conformités n'est pas un signal. C'est une limite du corpus, pas du prompt, et c'est la raison pour laquelle l'agrandissement du corpus annoté passe avant toute autre optimisation : sans lui, on ne peut pas distinguer une amélioration d'un tirage.
 
-**Deux cas conformes ont beaucoup bougé sans sortir de leur fourchette.** Le contenu confessionnel passe de C 57 à A 89, le témoignage de C 60 à A 81. Ces deux déplacements dépassent la dispersion mesurée à température 0, qui plafonnait à 11 points entre passes, donc ils viennent du prompt et non du tirage. L'explication plausible est que la mention « la nature dominante du contenu, **pas sa qualité** » a cessé de faire pénaliser un texte pour n'être pas du journalisme. Si elle est juste, c'est le comportement voulu, et ce sont alors les fourchettes attendues de ces deux cas qui portent l'ancien biais. Cela ne se tranche pas sur une passe, et surtout pas en assouplissant une attente pour faire passer un test.
+Deux écarts reviennent en majorité des passes, et sont donc autre chose que du bruit :
 
-**Deux questions restent donc ouvertes**, à trancher par des tirages indépendants sur base vierge et non par un ajustement du corpus : la bascule de la page complotiste en `opinion` est-elle un effet des définitions ou l'instabilité de catégorie déjà documentée plus bas, et la remontée des scores sur le témoignage et le contenu confessionnel est-elle la correction d'un biais ou une complaisance nouvelle.
+- **La page complotiste réelle sort en `opinion` deux fois sur trois** au lieu de `theorie_du_complot` ou `pseudo_science`. Le grade reste D dans tous les cas, donc le jugement rendu au lecteur n'est pas inversé, mais la nature du contenu est mal nommée. On ne peut pas imputer cette bascule aux définitions avec certitude : la v0.1.2 n'a jamais été mesurée sur trois passes pour ce cas, sa seule passe enregistrée ayant été resservie depuis l'annuaire.
+- **Le témoignage sort en A deux fois sur trois**, un cran au-dessus de sa fourchette, avec le plus grand écart de score du corpus, 18 points. Ce cas est sur une frontière, pas dans une catégorie.
+
+Un écart nouveau, minoritaire mais éclairant : **l'article encyclopédique sur le biais de confirmation bascule en `analyse_expertise` une passe sur trois**, alors qu'on attend `information`. C'est l'image inverse du défaut corrigé. Donner une définition à `analyse_expertise` attire désormais vers elle un contenu explicatif de fond, ce qui est cohérent avec la définition publiée et pose la question de sa frontière avec `information` pour un article d'encyclopédie.
+
+Aucune de ces attentes n'a été ajustée. Elles sont publiées telles quelles, avec le nombre de passes concernées.
 
 ## La température, mesurée
 
@@ -80,7 +84,7 @@ Les lignes antérieures au journal ont été relevées à la main, avant que `ly
 
 | Date | Prompt | Température | Résultat |
 |---|---|---|---|
-| 2026-08-31 | v0.1.3 | 0 | 11/13, analyses neuves, les deux écarts de v0.1.2 corrigés et deux autres apparus |
+| 2026-08-31 | v0.1.3 | 0 | 11/13, 9/13, 12/13 sur trois passes neuves ; la vulgarisation corrigée aux trois |
 | 2026-08-27 | v0.1.2 | 0 | 11/13, première passe enregistrée au journal (resservie depuis l'annuaire) |
 | 2026-08-27 | v0.1.2 | 0 | 13/13, 10/13, 11/12 sur trois passes |
 | 2026-08-27 | v0.1.2 | 0,2 | 11/13 sur une passe, puis 9, 11, 9 sur trois passes de contrôle |
