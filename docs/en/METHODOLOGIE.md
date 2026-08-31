@@ -1,10 +1,10 @@
 # Analysis methodology
 
-<!-- traduit-de: docs/METHODOLOGIE.md sha256:4be9346600b6464b -->
+<!-- traduit-de: docs/METHODOLOGIE.md sha256:8bb05e2e990f46fd -->
 
 > Translation for information. The French version, `docs/METHODOLOGIE.md`, is the one the project applies: should the two ever diverge, it is the one that counts.
 
-Version: **0.1.2**. Any change to this document or to the prompts increments `prompt_version` (semver) and triggers a run against the [calibration corpus](../../corpus/).
+Version: **0.1.3**. Any change to this document or to the prompts increments `prompt_version` (semver) and triggers a run against the [calibration corpus](../../corpus/).
 
 ## Overview
 
