@@ -1,6 +1,6 @@
 # Méthodologie d'analyse
 
-Version : **0.1.3**. Toute modification de ce document ou des prompts incrémente `prompt_version` (semver) et déclenche une passe sur le [corpus de calibration](../corpus/).
+Version : **0.1.4**. Toute modification de ce document ou des prompts incrémente `prompt_version` (semver) et déclenche une passe sur le [corpus de calibration](../corpus/).
 
 ## Vue d'ensemble
 
@@ -59,11 +59,14 @@ La catégorie conditionne la lecture de la note (voir « Cas particuliers »).
 - Uniquement des techniques **du référentiel** [TAXONOMIE.md](TAXONOMIE.md) (ids validés par le serveur).
 - Chaque détection exige un **extrait verbatim** de la page. Pas de citation exacte → pas de détection.
 - Chaque détection porte une gravité (`faible` / `moyenne` / `haute`) et une explication pédagogique du mécanisme.
+- **Le contrôle verbatim ne s'arrête pas aux détections.** Toute citation entre guillemets, où qu'elle apparaisse dans les textes rendus, est vérifiée contre la page et signalée si elle ne s'y trouve pas. Le texte reste affiché : ce n'est pas une détection écartée, c'est une mesure du comportement du modèle, et le taux est observable.
+- **Ce que cette barrière ne couvre pas, et il faut le dire.** Une affirmation sans guillemets échappe au contrôle. Un texte libre peut encore prêter au contenu une propriété qu'il ne revendique pas, sans le citer. Le prompt l'interdit, mais rien ne le rend impossible et **rien ne le mesure** : une attente de corpus a été essayée, listant des termes que l'analyse ne devait pas employer, et elle a été retirée parce qu'elle ne distingue pas « le produit est-il certifié ? », question légitime sur n'importe quelle page, de « comment cette certification est-elle obtenue ? », qui présuppose. Une garantie déterministe sur du texte libre n'existe pas, et prétendre le contraire serait plus grave que de l'écrire ici. Ce qui rattrape ce cas est la relecture humaine et la contestation.
 
 ## 4. Points positifs et questions
 
 - **Points positifs** : toujours en chercher (dates exactes, source correcte, auteur identifié…). En trouver zéro doit rester exceptionnel et justifié.
 - **Questions à se poser** : 2 à 4 questions socratiques, applicables par le lecteur lui-même (« Qui finance ce site ? », « Pourquoi aucune source n'est-elle liée ? »).
+- **Une question ne présuppose pas.** « Le site précise-t-il si les données sont anonymisées ? » se pose sur n'importe quelle page ; « comment s'opère l'anonymisation ? » suppose acquis que la page l'annonce. Présupposer, c'est affirmer sous forme interrogative, et le faire au nom de l'outil sur une page tierce est le pire mode de défaillance possible pour un outil d'éducation aux médias.
 
 ## 5. Note globale (calcul serveur)
 
@@ -102,3 +105,4 @@ L'**indice de confiance** (0–1, fourni par le LLM) est affiché séparément :
 2. L'analyse porte sur **une page**, pas sur la totalité d'un site → le profil de domaine n'est qu'un agrégat, présenté comme tel.
 3. Les biais du modèle sous-jacent existent → prompts publics, corpus de calibration, choix du modèle par instance.
 4. La factualité fine (fact-checking de chaque chiffre) n'est pas l'objet : Lynceus détecte des *méthodes*, les fact-checkers vérifient des *faits*. Les deux sont complémentaires.
+5. La garantie « rien n'est inventé » est **complète sur les citations, partielle sur le reste**. Une citation est vérifiable mot pour mot, donc elle l'est. Une affirmation sans guillemets ne l'est pas, et aucun contrôle déterministe ne peut la vérifier sans juger le sens. Le prompt la contraint, la contestation la rattrape après coup, et le corpus n'y peut rien : distinguer une question qui présuppose d'une question qui interroge demande de juger le sens, ce qu'un contrôle déterministe ne fait pas.
