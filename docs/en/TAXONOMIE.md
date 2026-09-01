@@ -1,12 +1,12 @@
 # Catalogue of techniques — the Lynceus reference list
 
-<!-- traduit-de: docs/TAXONOMIE.md sha256:9c1d1f9b14d3d010 -->
+<!-- traduit-de: docs/TAXONOMIE.md sha256:5b5ef26fb6782486 -->
 
 > Translation for information. The French version, `docs/TAXONOMIE.md`, is the list the
 > engine applies, and the only one injected into the prompt: should the two ever diverge,
 > it is the one that counts. The `ids` never change, in any language.
 
-Version: **0.1.3** — 31 techniques. This catalogue is the **closed list** of detectable techniques: every detection in an analysis card must carry an `id` from this list (validated by the server) and a verbatim excerpt from the page.
+Version: **0.1.4** — 31 techniques. This catalogue is the **closed list** of detectable techniques: every detection in an analysis card must carry an `id` from this list (validated by the server) and a verbatim excerpt from the page.
 
 Each entry: definition, detection cues, psychological mechanism. Aligned with the **FLICC** taxonomy (John Cook), the *Debunking Handbook 2020*, and the work on inoculation (van der Linden). The severity given is *indicative*: context prevails.
 

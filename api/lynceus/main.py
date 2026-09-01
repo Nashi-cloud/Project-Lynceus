@@ -476,7 +476,7 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             # 3. Analyse LLM complète
             limiter()
             debut = time.monotonic()
-            sortie, rejets = appeler_moteur(url_brute, titre, demande.langue, contenu, version)
+            sortie, rejets, citations = appeler_moteur(url_brute, titre, demande.langue, contenu, version)
             duree_ms = int((time.monotonic() - debut) * 1000)
             carte = assembler_carte(sortie, url=url_brute, titre=titre, langue=demande.langue,
                                     version=version, duree_ms=duree_ms, tronque=demande.tronque)
@@ -504,6 +504,11 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             reponse: dict = {"en_cache": False, "carte": carte}
             if rejets:
                 reponse["detections_rejetees"] = rejets  # transparence : ce que le serveur a écarté
+            if citations:
+                # Champ distinct des détections : ce ne sont pas des techniques écartées mais des
+                # citations inventées dans un texte qui reste affiché. Les confondre masquerait
+                # l'une des deux mesures.
+                reponse["citations_non_verbatim"] = citations
             return reponse
 
     @app.get("/v1/analyses/{analyse_id}")
