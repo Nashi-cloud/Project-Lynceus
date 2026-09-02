@@ -1,10 +1,10 @@
 # Analysis methodology
 
-<!-- traduit-de: docs/METHODOLOGIE.md sha256:8bb05e2e990f46fd -->
+<!-- traduit-de: docs/METHODOLOGIE.md sha256:0da243ac5aba8ceb -->
 
 > Translation for information. The French version, `docs/METHODOLOGIE.md`, is the one the project applies: should the two ever diverge, it is the one that counts.
 
-Version: **0.1.3**. Any change to this document or to the prompts increments `prompt_version` (semver) and triggers a run against the [calibration corpus](../../corpus/).
+Version: **0.1.6**. Any change to this document or to the prompts increments `prompt_version` (semver) and triggers a run against the [calibration corpus](../../corpus/).
 
 ## Overview
 
@@ -42,6 +42,7 @@ The category governs how the grade should be read (see “Special cases”).
 - Are the important claims sourced? Are primary sources identifiable and checkable?
 - Real links to the sources, or bare assertions (“studies show”)?
 - Do the cited sources actually say what they are made to say (where the text allows checking)?
+- **The dimension scores the support given to what the text asserts, not the presence of links as such.** A page that makes no claim needing outside support, a description of services, a price list, an index, a home page, is not penalised for citing nothing. A page that makes factual claims must support them whatever its category, commercial pages included. That clarification was missing, and its absence cost 30 % of the grade to pages that structurally had nothing to cite.
 
 ### `factualite`: factual rigour (weight: 30 %)
 - Extraordinary claims, extraordinary evidence?
@@ -63,11 +64,14 @@ The category governs how the grade should be read (see “Special cases”).
 - Only techniques **from the catalogue** [TAXONOMIE.md](TAXONOMIE.md) (ids validated by the server).
 - Every detection requires a **verbatim excerpt** from the page. No exact quotation, no detection.
 - Every detection carries a severity (`faible` / `moyenne` / `haute`) and a plain explanation of the mechanism.
+- **The verbatim check no longer stops at detections.** Every quotation in quotation marks, wherever it appears in the returned text, is checked against the page and reported if it is not found there. The text stays on screen: this is not a discarded detection, it is a measurement of the model's behaviour, and the rate is observable.
+- **What that barrier does not cover, and it must be said.** A claim without quotation marks escapes the check. Free text can still attribute to the content a property it does not claim, without quoting it. The prompt forbids it, but nothing makes it impossible and **nothing measures it**: a corpus expectation was tried, listing terms the analysis was not to use, and it was withdrawn because it cannot tell “is the product certified?”, a legitimate question about any page, from “how was that certification obtained?”, which presupposes. There is no deterministic guarantee over free text, and pretending otherwise would be worse than writing this down. What catches this case is human reading and the contestation route.
 
 ## 4. Strong points and questions
 
 - **Strong points**: always look for them (exact dates, a correct source, a named author and so on). Finding none must stay exceptional and justified.
 - **Questions to ask yourself**: 2 to 4 socratic questions the reader can apply themselves (“Who funds this site?”, “Why is no source linked?”).
+- **A question does not presuppose.** “Does the site state whether the data is anonymised?” can be asked of any page; “how is the anonymisation carried out?” takes for granted that the page announces it. To presuppose is to assert in interrogative form, and doing so in the tool's own voice about someone else's page is the worst failure mode available to a media literacy tool.
 
 ## 5. Overall grade (computed by the server)
 
@@ -87,7 +91,7 @@ The **confidence index** (0 to 1, supplied by the model) is shown separately: it
 
 ## 6. Special cases
 
-- **Satire**: the grade assesses *how openly the satire is signalled* (an openly parodic site grades well). The card carries the warning “satirical content, not to be read literally”. It is never treated as disinformation.
+- **Satire**: the grade assesses *how openly the satire is signalled* (an openly parodic site grades well). The card carries the warning “satirical content, not to be read literally”. It is never treated as disinformation. **`sources` and `factualite` are read against the fairness of the device, not against the letter of the text**: a parody invents its facts by construction and cites no sources, and neither is a failing. That clarification was missing, and its absence was expensive: measured over seven draws of the same specimen, the literal reading surfaced twice, with `sources` and `factualite` at exactly 0 and the grade dropping from A to D on unchanged text.
 - **Opinion / editorial**: assessed on the honesty of its argument (sources for the facts invoked, absence of unfair techniques), **never on the position it defends**.
 - **Religious content**: faith is not graded. Only factual claims (health, science, history) and any manipulation techniques (fear, urgency, isolation) are.
 - **Short or truncated content** (paywall, excerpt): lowered confidence index plus an explicit warning.
@@ -106,3 +110,4 @@ The **confidence index** (0 to 1, supplied by the model) is shown separately: it
 2. The analysis covers **one page**, not a whole site → a domain profile is only an aggregate, and is presented as such.
 3. The underlying model has biases → public prompts, calibration corpus, model chosen per instance.
 4. Fine-grained factuality (fact-checking every figure) is not the point: Lynceus detects *methods*, fact-checkers verify *facts*. The two complement each other.
+5. The “nothing is invented” guarantee is **complete on quotations, partial on everything else**. A quotation can be checked word for word, so it is. A claim without quotation marks cannot be, and no deterministic check can verify it without judging meaning. The prompt constrains it, the contestation route catches it afterwards, and the corpus can do nothing about it: telling a question that presupposes from a question that asks requires judging meaning, which a deterministic check does not do.

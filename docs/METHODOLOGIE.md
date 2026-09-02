@@ -1,6 +1,6 @@
 # Méthodologie d'analyse
 
-Version : **0.1.3**. Toute modification de ce document ou des prompts incrémente `prompt_version` (semver) et déclenche une passe sur le [corpus de calibration](../corpus/).
+Version : **0.1.6**. Toute modification de ce document ou des prompts incrémente `prompt_version` (semver) et déclenche une passe sur le [corpus de calibration](../corpus/).
 
 ## Vue d'ensemble
 
@@ -38,6 +38,7 @@ La catégorie conditionne la lecture de la note (voir « Cas particuliers »).
 - Les affirmations importantes sont-elles sourcées ? Sources primaires identifiables et vérifiables ?
 - Liens réels vers les sources, ou simples affirmations (« des études montrent ») ?
 - Les sources citées disent-elles vraiment ce qu'on leur fait dire (si vérifiable dans le texte) ?
+- **La dimension note l'étayage de ce que le texte affirme, pas la présence de liens en soi.** Une page qui n'avance aucune affirmation demandant un appui extérieur, description de services, tarifs, sommaire, page d'accueil, n'est pas pénalisée de ne rien citer. Une page qui avance des affirmations de fait doit les étayer quelle que soit sa catégorie, page commerciale comprise. Cette précision manquait, et son absence faisait perdre 30 % de la note à des pages qui n'avaient structurellement rien à citer.
 
 ### `factualite` : rigueur factuelle (pondération : 30 %)
 - Affirmations extraordinaires → preuves extraordinaires ?
@@ -59,11 +60,14 @@ La catégorie conditionne la lecture de la note (voir « Cas particuliers »).
 - Uniquement des techniques **du référentiel** [TAXONOMIE.md](TAXONOMIE.md) (ids validés par le serveur).
 - Chaque détection exige un **extrait verbatim** de la page. Pas de citation exacte → pas de détection.
 - Chaque détection porte une gravité (`faible` / `moyenne` / `haute`) et une explication pédagogique du mécanisme.
+- **Le contrôle verbatim ne s'arrête pas aux détections.** Toute citation entre guillemets, où qu'elle apparaisse dans les textes rendus, est vérifiée contre la page et signalée si elle ne s'y trouve pas. Le texte reste affiché : ce n'est pas une détection écartée, c'est une mesure du comportement du modèle, et le taux est observable.
+- **Ce que cette barrière ne couvre pas, et il faut le dire.** Une affirmation sans guillemets échappe au contrôle. Un texte libre peut encore prêter au contenu une propriété qu'il ne revendique pas, sans le citer. Le prompt l'interdit, mais rien ne le rend impossible et **rien ne le mesure** : une attente de corpus a été essayée, listant des termes que l'analyse ne devait pas employer, et elle a été retirée parce qu'elle ne distingue pas « le produit est-il certifié ? », question légitime sur n'importe quelle page, de « comment cette certification est-elle obtenue ? », qui présuppose. Une garantie déterministe sur du texte libre n'existe pas, et prétendre le contraire serait plus grave que de l'écrire ici. Ce qui rattrape ce cas est la relecture humaine et la contestation.
 
 ## 4. Points positifs et questions
 
 - **Points positifs** : toujours en chercher (dates exactes, source correcte, auteur identifié…). En trouver zéro doit rester exceptionnel et justifié.
 - **Questions à se poser** : 2 à 4 questions socratiques, applicables par le lecteur lui-même (« Qui finance ce site ? », « Pourquoi aucune source n'est-elle liée ? »).
+- **Une question ne présuppose pas.** « Le site précise-t-il si les données sont anonymisées ? » se pose sur n'importe quelle page ; « comment s'opère l'anonymisation ? » suppose acquis que la page l'annonce. Présupposer, c'est affirmer sous forme interrogative, et le faire au nom de l'outil sur une page tierce est le pire mode de défaillance possible pour un outil d'éducation aux médias.
 
 ## 5. Note globale (calcul serveur)
 
@@ -83,7 +87,7 @@ L'**indice de confiance** (0–1, fourni par le LLM) est affiché séparément :
 
 ## 6. Cas particuliers
 
-- **Satire** : la note évalue la *transparence de la satire* (un site parodique assumé note bien). La carte porte l'avertissement « contenu satirique, second degré ». Jamais traitée comme désinformation.
+- **Satire** : la note évalue la *transparence de la satire* (un site parodique assumé note bien). La carte porte l'avertissement « contenu satirique, second degré ». Jamais traitée comme désinformation. **`sources` et `factualite` se lisent sur la loyauté du procédé, pas sur la lettre du texte** : une parodie invente ses faits par construction et ne cite pas de sources, ce ne sont pas des défauts. Cette précision manquait, et son absence coûtait cher : mesurée sur sept tirages du même spécimen, la lecture littérale surgissait deux fois, avec `sources` et `factualite` à exactement 0 et une note tombée de A à D sur un texte inchangé.
 - **Opinion / éditorial** : évalué sur l'honnêteté argumentative (sources des faits invoqués, absence de techniques déloyales), **jamais sur la position défendue**.
 - **Contenu confessionnel** : la foi n'est pas notée. Seules le sont les affirmations factuelles (santé, science, histoire) et les techniques de manipulation éventuelles (peur, urgence, isolement).
 - **Contenu court ou tronqué** (paywall, extrait) : indice de confiance abaissé + avertissement explicite.
@@ -102,3 +106,4 @@ L'**indice de confiance** (0–1, fourni par le LLM) est affiché séparément :
 2. L'analyse porte sur **une page**, pas sur la totalité d'un site → le profil de domaine n'est qu'un agrégat, présenté comme tel.
 3. Les biais du modèle sous-jacent existent → prompts publics, corpus de calibration, choix du modèle par instance.
 4. La factualité fine (fact-checking de chaque chiffre) n'est pas l'objet : Lynceus détecte des *méthodes*, les fact-checkers vérifient des *faits*. Les deux sont complémentaires.
+5. La garantie « rien n'est inventé » est **complète sur les citations, partielle sur le reste**. Une citation est vérifiable mot pour mot, donc elle l'est. Une affirmation sans guillemets ne l'est pas, et aucun contrôle déterministe ne peut la vérifier sans juger le sens. Le prompt la contraint, la contestation la rattrape après coup, et le corpus n'y peut rien : distinguer une question qui présuppose d'une question qui interroge demande de juger le sens, ce qu'un contrôle déterministe ne fait pas.

@@ -42,6 +42,9 @@ export interface ReponseAnalyse {
   en_cache: boolean;
   carte: CarteAnalyse;
   detections_rejetees?: { id: string; raison: string }[];
+  /** Citations entre guillemets, dans les champs libres, absentes de la page. Le texte reste
+   * affiché : ce n'est pas une détection écartée mais une mesure du comportement du modèle. */
+  citations_non_verbatim?: { champ: string; citation: string; raison: string }[];
 }
 
 /** Capacités annoncées par l'instance (/v1/meta) — permet de ne pas coder en dur ce que
