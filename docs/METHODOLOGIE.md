@@ -1,6 +1,6 @@
 # Méthodologie d'analyse
 
-Version : **0.1.5**. Toute modification de ce document ou des prompts incrémente `prompt_version` (semver) et déclenche une passe sur le [corpus de calibration](../corpus/).
+Version : **0.1.6**. Toute modification de ce document ou des prompts incrémente `prompt_version` (semver) et déclenche une passe sur le [corpus de calibration](../corpus/).
 
 ## Vue d'ensemble
 
@@ -38,6 +38,7 @@ La catégorie conditionne la lecture de la note (voir « Cas particuliers »).
 - Les affirmations importantes sont-elles sourcées ? Sources primaires identifiables et vérifiables ?
 - Liens réels vers les sources, ou simples affirmations (« des études montrent ») ?
 - Les sources citées disent-elles vraiment ce qu'on leur fait dire (si vérifiable dans le texte) ?
+- **La dimension note l'étayage de ce que le texte affirme, pas la présence de liens en soi.** Une page qui n'avance aucune affirmation demandant un appui extérieur, description de services, tarifs, sommaire, page d'accueil, n'est pas pénalisée de ne rien citer. Une page qui avance des affirmations de fait doit les étayer quelle que soit sa catégorie, page commerciale comprise. Cette précision manquait, et son absence faisait perdre 30 % de la note à des pages qui n'avaient structurellement rien à citer.
 
 ### `factualite` : rigueur factuelle (pondération : 30 %)
 - Affirmations extraordinaires → preuves extraordinaires ?

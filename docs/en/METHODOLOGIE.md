@@ -1,10 +1,10 @@
 # Analysis methodology
 
-<!-- traduit-de: docs/METHODOLOGIE.md sha256:506036e0d8d9dbc7 -->
+<!-- traduit-de: docs/METHODOLOGIE.md sha256:0da243ac5aba8ceb -->
 
 > Translation for information. The French version, `docs/METHODOLOGIE.md`, is the one the project applies: should the two ever diverge, it is the one that counts.
 
-Version: **0.1.5**. Any change to this document or to the prompts increments `prompt_version` (semver) and triggers a run against the [calibration corpus](../../corpus/).
+Version: **0.1.6**. Any change to this document or to the prompts increments `prompt_version` (semver) and triggers a run against the [calibration corpus](../../corpus/).
 
 ## Overview
 
@@ -42,6 +42,7 @@ The category governs how the grade should be read (see “Special cases”).
 - Are the important claims sourced? Are primary sources identifiable and checkable?
 - Real links to the sources, or bare assertions (“studies show”)?
 - Do the cited sources actually say what they are made to say (where the text allows checking)?
+- **The dimension scores the support given to what the text asserts, not the presence of links as such.** A page that makes no claim needing outside support, a description of services, a price list, an index, a home page, is not penalised for citing nothing. A page that makes factual claims must support them whatever its category, commercial pages included. That clarification was missing, and its absence cost 30 % of the grade to pages that structurally had nothing to cite.
 
 ### `factualite`: factual rigour (weight: 30 %)
 - Extraordinary claims, extraordinary evidence?
