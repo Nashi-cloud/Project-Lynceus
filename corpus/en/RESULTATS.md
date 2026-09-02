@@ -1,64 +1,58 @@
 # Calibration results
 
-<!-- traduit-de: corpus/RESULTATS.md sha256:4610462410cdce59 -->
+<!-- traduit-de: corpus/RESULTATS.md sha256:0c81d92333ac8ea7 -->
 
 > Translation for information. The French version, `corpus/RESULTATS.md`, is the record of reference: should the two ever diverge, it is the one that counts.
 
 <!-- calibration:début (engendré par « lynceus calibrer --ecrire », ne pas modifier à la main) -->
 
-Latest run: **2026-09-01** · model `z-ai/glm-5.2` (through openrouter.ai) · prompt **v0.1.4** · temperature **0**
+Latest run: **2026-09-02** · model `z-ai/glm-5.2` (through openrouter.ai) · prompt **v0.1.5** · temperature **0**
 
-**3 runs** recorded on this prompt version: **11/13, 10/13, 10/13** conforming. A single run would say nothing solid, since the model does not return the same analysis of the same text twice.
+**3 runs** recorded on this prompt version: **9/13, 10/13, 12/13** conforming. A single run would say nothing solid, since the model does not return the same analysis of the same text twice.
 
 | Case | Category | Grade | Score | Discrepancies |
 |---|---|---|---|---|
-| The council votes unanimously against unanimity | satire | B D A | 38 to 85 | grade D outside the expected range A, B, C (1 of 3 runs) |
-| Why I think our town has it wrong about paid parking | opinion | A | 80 to 83 | — |
-| The forgotten root the laboratories would rather you did not know about | publicite_sponsorise | E | 9 to 16 | case not measured: HTTP 500 : Internal Server Error (1 of 3 runs) |
-| The Vieille-Écluse bridge closed for works from 3 to 28 March | information | A B A | 79 to 84 | — |
-| Advent meditation: waiting as a path | contenu_confessionnel | B A A | 78 to 84 | — |
-| The November power cut: three awkward questions | theorie_du_complot | E | 8 to 9 | technique missing: `hyper_intentionnalisme` (1 of 3 runs) |
-| What They Won't Tell You About the New Water Treatment Plant | theorie_du_complot | E | 10 to 14 | — |
-| Five evening habits for better sleep | publicite_sponsorise | C D C | 48 to 64 | technique missing: `conflit_interet_commercial` (2 of 3 runs) |
-| Water fluoridation: the debate is still open | opinion | D | 42 to 46 | — |
-| Why the sky is blue, and why that explanation is incomplete | analyse_expertise | B | 68 to 76 | — |
-| What three years of medical wandering taught me | temoignage | B | 66 to 74 | — |
-| Confirmation bias — Wikipedia | analyse_expertise / information | A | 90 | category `analyse_expertise` instead of information (2 of 3 runs) |
-| SOTT Earth Changes Summary - June 2026 | theorie_du_complot / opinion | D D E | 29 to 40 | category `opinion` instead of theorie_du_complot, pseudo_science (1 of 3 runs) |
+| The council votes unanimously against unanimity | satire | A | 84 to 89 | — |
+| Why I think our town has it wrong about paid parking | opinion | A | 80 to 88 | — |
+| The forgotten root the laboratories would rather you did not know about | publicite_sponsorise | E | 10 to 16 | — |
+| The Vieille-Écluse bridge closed for works from 3 to 28 March | information | B A B | 75 to 80 | — |
+| Advent meditation: waiting as a path | contenu_confessionnel | A | 88 to 94 | — |
+| The November power cut: three awkward questions | theorie_du_complot | E | 10 to 12 | — |
+| What They Won't Tell You About the New Water Treatment Plant | theorie_du_complot | E | 16 to 21 | — |
+| Five evening habits for better sleep | publicite_sponsorise | C | 52 to 64 | technique missing: `conflit_interet_commercial` (1 of 3 runs) |
+| Water fluoridation: the debate is still open | opinion | D | 41 to 47 | technique missing: `faux_equilibre` (1 of 3 runs) |
+| Why the sky is blue, and why that explanation is incomplete | analyse_expertise | B | 65 to 71 | — |
+| What three years of medical wandering taught me | temoignage | A | 82 to 84 | grade A outside the expected range B, C, D |
+| Confirmation bias — Wikipedia | analyse_expertise / information | A | 82 to 90 | category `analyse_expertise` instead of information (2 of 3 runs) |
+| SOTT Earth Changes Summary - June 2026 | pseudo_science / opinion / theorie_du_complot | D | 33 to 37 | category `opinion` instead of theorie_du_complot, pseudo_science (1 of 3 runs) ; technique missing: `verite_cachee` (1 of 3 runs) |
 
 <!-- calibration:fin -->
 
 ## How to read it
 
-Three independent runs are recorded on this prompt version, on fresh analyses: caching is keyed on the pair of content and prompt version, and the analyses for the current version were removed from the database between runs.
+Three independent runs, on fresh analyses: caching is keyed on the pair of content and prompt version, and the analyses for the current version were removed from the database between runs.
 
-The five sentinels of [METHODOLOGIE.md](../../docs/en/METHODOLOGIE.md) §7 hold as far as the **category** goes: satire stays classified as `satire`, argued opinion is not penalised for its position, commercial pseudo-medicine comes out at E, factual news at A, and religious content stays in its category. The English specimen is analysed in English.
+The five sentinels of [METHODOLOGIE.md](../../docs/en/METHODOLOGIE.md) §7 hold across all three runs, on category **and** grade range.
 
-### What prompt v0.1.4 fixed
+### What prompt v0.1.5 fixes, and how it was established
 
-v0.1.4 forbids a question to presuppose, and extends the attribution rule to every text returned. Two discrepancies established under v0.1.3 disappear.
+v0.1.4 had destabilised the satirical specimen: from a stable A, it had dropped to a D in one run out of three. The diagnosis was made on that single case rather than on the whole corpus, which costs one analysis instead of thirteen. Eight draws of the same text, four under v0.1.3 and four under v0.1.4, showed a clear failure mode: on one draw, `sources` and `factualite` fell to **exactly 0** while `ton` and `transparence` stayed at 90 and 95. The model was switching from "this is a parody" to "this text has no sources and its claims are false".
 
-**The personal account returns to its range.** It came out at A in two runs out of three, one notch too high; it now comes out at B in all three, between 66 and 74, without a single discrepancy. It is the clearest of the changes, and it points the expected way: a question that no longer presupposes stops lending the text credit.
+The cause was not a regression introduced by v0.1.4 but a **gap in the specification** that v0.1.4 made more visible. The satire rule said how to score `transparence` only, and left the model to decide the other two on its own. It decided differently from one draw to the next.
 
-**The real conspiracy page returns to its category** in two runs out of three, against `opinion` in two out of three under v0.1.3.
+v0.1.5 states the missing rule: a parody invents its facts by construction and cites no sources, neither is a failing, and those two dimensions are scored on the fairness of the device. The result: **eleven draws without a single collapse**, eight in the targeted measurement and three in full runs, against two collapses in seven before. The specimen comes out at A in all three runs, between 84 and 89.
 
-### What it degraded, which must be said too
+The methodological point, because it will serve again: when a corpus expectation fails **unstably**, look first at what the specification leaves implicit. A model left to decide for itself does not decide the same way twice. This is the second time in three versions that the defect was there, and not in the model nor in the expectation.
 
-**The satirical specimen became unstable.** It held at A between 85 and 100 under v0.1.3; it now swings between 38 and 85 and comes out at D in one run out of three. The category holds, so the §7 sentinel is not at stake, but a parody piece graded D is an error a reader spots at once. That is the first thing to watch on the next version.
+### What moved the other way
 
-**Disguised advertising no longer triggers `conflit_interet_commercial`** in two runs out of three, although it is the expected technique and the defining trait of the case. **The encyclopaedic article tips into `analyse_expertise`** in two runs out of three instead of one.
+**The personal account is back at A in all three runs**, one notch above its range, where v0.1.4 had brought it down to B. The two movements are probably connected: saying that a dimension is not read literally for satire seems to generalise to content that structurally has no sources to cite, which a personal account also is. That case has now moved three versions running, and it is **its expectation that needs examining**, not bending.
 
-### What three runs still do not establish
+Two discrepancies stay in a minority and are already known: the encyclopaedic article tips into `analyse_expertise` in two runs out of three, the conspiracy page into `opinion` in one out of three.
 
-The totals are 11, 10 and 10 out of 13, against 11, 9 and 12 under v0.1.3. Indistinguishable. The conclusion drawn last time stands unchanged: over thirteen cases and at that spread, a difference of two conformities is not a signal. What can be read is the cases one by one, and whether the three runs agree on each.
+### The totals, still silent
 
-One run returned an HTTP 500 error on one case, marked "not measured" rather than counted as conforming, which is the right behaviour. The error was not reproduced. The most likely explanation is a SQLite lock under four simultaneous analyses, the development database being SQLite where production runs on PostgreSQL; it is not verified.
-
-### One barrier added, and one measurement that failed
-
-The server now checks **every quotation in quotation marks**, wherever it appears, and no longer only inside a detection. The free-text fields were escaping every check. The calibration report does not yet count those rejections, so their rate remains to be measured on real pages.
-
-A corpus expectation was tried, to measure what the barrier does not cover: a list of terms the analysis was not to use because the specimen does not use them. It was **withdrawn after one run**, where it flagged "Is the product assessed or certified by the competent health authorities?" on the pseudo-medicine page. That is a good Socratic question, generic, asserting nothing. A lexical check cannot tell a question that asks from a question that presupposes, and keeping a wrong expectation would have been worse than having none. The attribution rule therefore stays constrained by the prompt and unmeasured, which [METHODOLOGIE.md](../../docs/en/METHODOLOGIE.md) §3 now states explicitly.
+9, 10 and 12 out of 13, against 11, 10, 10 under v0.1.4 and 11, 9, 12 under v0.1.3. Three versions, nine runs, no readable difference in the totals. What can be read is still the case-by-case picture and whether the runs agree. Over thirteen cases the corpus says whether a behaviour is stable, never whether a version is better.
 
 ## The temperature, measured
 
@@ -93,6 +87,7 @@ The lines predating the journal were noted by hand, before `lynceus calibrer --e
 
 | Date | Prompt | Temperature | Result |
 |---|---|---|---|
+| 2026-09-02 | v0.1.5 | 0 | 9/13, 10/13, 12/13; satirical specimen stabilised, personal account back at A |
 | 2026-09-01 | v0.1.4 | 0 | 11/13, 10/13, 10/13 over three runs; personal account fixed, satirical specimen destabilised |
 | 2026-08-31 | v0.1.3 | 0 | 11/13, 9/13, 12/13 over three fresh runs; science writing fixed in all three |
 | 2026-08-27 | v0.1.2 | 0 | 11/13, first run recorded in the journal (served from the cache) |

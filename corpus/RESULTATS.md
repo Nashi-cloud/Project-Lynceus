@@ -2,59 +2,53 @@
 
 <!-- calibration:début (engendré par « lynceus calibrer --ecrire », ne pas modifier à la main) -->
 
-Dernière passe : **2026-09-01** · modèle `z-ai/glm-5.2` (via openrouter.ai) · prompt **v0.1.4** · température **0**
+Dernière passe : **2026-09-02** · modèle `z-ai/glm-5.2` (via openrouter.ai) · prompt **v0.1.5** · température **0**
 
-**3 passes** enregistrées sur cette version du prompt : **11/13, 10/13, 10/13** conformes. Une passe unique ne dirait rien de solide, puisque le modèle ne rend pas deux fois la même analyse du même texte.
+**3 passes** enregistrées sur cette version du prompt : **9/13, 10/13, 12/13** conformes. Une passe unique ne dirait rien de solide, puisque le modèle ne rend pas deux fois la même analyse du même texte.
 
 | Cas | Catégorie | Grade | Score | Écarts relevés |
 |---|---|---|---|---|
-| Le conseil municipal vote à l'unanimité contre l'unanimité | satire | B D A | 38 à 85 | grade D hors de la fourchette A, B, C (1 passe(s) sur 3) |
-| Pourquoi je pense que notre commune se trompe sur le stationnement payant | opinion | A | 80 à 83 | — |
-| La racine oubliée que les laboratoires préfèrent vous cacher | publicite_sponsorise | E | 9 à 16 | cas non mesuré : HTTP 500 : Internal Server Error (1 passe(s) sur 3) |
-| Le pont de la Vieille-Écluse fermé pour travaux du 3 au 28 mars | information | A B A | 79 à 84 | — |
-| Méditation de l'Avent : l'attente comme chemin | contenu_confessionnel | B A A | 78 à 84 | — |
-| Coupure électrique de novembre : trois questions qui dérangent | theorie_du_complot | E | 8 à 9 | technique manquante : `hyper_intentionnalisme` (1 passe(s) sur 3) |
-| What They Won't Tell You About the New Water Treatment Plant | theorie_du_complot | E | 10 à 14 | — |
-| Cinq habitudes du soir pour mieux dormir | publicite_sponsorise | C D C | 48 à 64 | technique manquante : `conflit_interet_commercial` (2 passe(s) sur 3) |
-| Fluoration de l'eau : le débat reste ouvert | opinion | D | 42 à 46 | — |
-| Pourquoi le ciel est bleu, et pourquoi cette explication est incomplète | analyse_expertise | B | 68 à 76 | — |
-| Ce que trois ans d'errance médicale m'ont appris | temoignage | B | 66 à 74 | — |
-| Biais de confirmation — Wikipédia | analyse_expertise / information | A | 90 | catégorie `analyse_expertise` au lieu de information (2 passe(s) sur 3) |
-| Résumé SOTT des changements terrestres - Juin 2026 | theorie_du_complot / opinion | D D E | 29 à 40 | catégorie `opinion` au lieu de theorie_du_complot, pseudo_science (1 passe(s) sur 3) |
+| Le conseil municipal vote à l'unanimité contre l'unanimité | satire | A | 84 à 89 | — |
+| Pourquoi je pense que notre commune se trompe sur le stationnement payant | opinion | A | 80 à 88 | — |
+| La racine oubliée que les laboratoires préfèrent vous cacher | publicite_sponsorise | E | 10 à 16 | — |
+| Le pont de la Vieille-Écluse fermé pour travaux du 3 au 28 mars | information | B A B | 75 à 80 | — |
+| Méditation de l'Avent : l'attente comme chemin | contenu_confessionnel | A | 88 à 94 | — |
+| Coupure électrique de novembre : trois questions qui dérangent | theorie_du_complot | E | 10 à 12 | — |
+| What They Won't Tell You About the New Water Treatment Plant | theorie_du_complot | E | 16 à 21 | — |
+| Cinq habitudes du soir pour mieux dormir | publicite_sponsorise | C | 52 à 64 | technique manquante : `conflit_interet_commercial` (1 passe(s) sur 3) |
+| Fluoration de l'eau : le débat reste ouvert | opinion | D | 41 à 47 | technique manquante : `faux_equilibre` (1 passe(s) sur 3) |
+| Pourquoi le ciel est bleu, et pourquoi cette explication est incomplète | analyse_expertise | B | 65 à 71 | — |
+| Ce que trois ans d'errance médicale m'ont appris | temoignage | A | 82 à 84 | grade A hors de la fourchette B, C, D |
+| Biais de confirmation — Wikipédia | analyse_expertise / information | A | 82 à 90 | catégorie `analyse_expertise` au lieu de information (2 passe(s) sur 3) |
+| Résumé SOTT des changements terrestres - Juin 2026 | pseudo_science / opinion / theorie_du_complot | D | 33 à 37 | catégorie `opinion` au lieu de theorie_du_complot, pseudo_science (1 passe(s) sur 3) ; technique manquante : `verite_cachee` (1 passe(s) sur 3) |
 
 <!-- calibration:fin -->
 
 ## Lecture
 
-Trois passes indépendantes sont enregistrées sur cette version du prompt, sur des analyses neuves : la mise en cache est indexée sur le couple contenu et version de prompt, et les analyses de la version en cours ont été retirées de la base entre chaque passe.
+Trois passes indépendantes, sur analyses neuves : la mise en cache est indexée sur le couple contenu et version de prompt, et les analyses de la version en cours ont été retirées de la base entre chaque passe.
 
-Les cinq sentinelles de [docs/METHODOLOGIE.md](../docs/METHODOLOGIE.md) §7 tiennent quant à la **catégorie** : la satire reste classée `satire`, l'opinion argumentée n'est pas pénalisée pour sa position, la pseudo-médecine marchande sort en E, l'information factuelle en A, et le contenu confessionnel reste dans sa catégorie. Le spécimen anglais est analysé en anglais.
+Les cinq sentinelles de [docs/METHODOLOGIE.md](../docs/METHODOLOGIE.md) §7 tiennent aux trois passes, catégorie **et** fourchette de grade.
 
-### Ce que le prompt v0.1.4 a corrigé
+### Ce que le prompt v0.1.5 corrige, et comment ça a été établi
 
-Le v0.1.4 interdit à une question de présupposer, et étend la règle d'attribution à tous les textes rendus. Deux écarts installés en v0.1.3 disparaissent.
+Le v0.1.4 avait déstabilisé le spécimen satirique : de A stable, il était passé à un D une passe sur trois. Le diagnostic a été fait sur ce seul cas plutôt que sur le corpus entier, ce qui coûte une analyse au lieu de treize. Huit tirages du même texte, quatre sous v0.1.3 et quatre sous v0.1.4, ont montré un mode de défaillance net : sur un tirage, `sources` et `factualite` tombaient à **exactement 0** pendant que `ton` et `transparence` restaient à 90 et 95. Le modèle basculait de « c'est une parodie » à « ce texte n'a pas de sources et ses affirmations sont fausses ».
 
-**Le témoignage rentre dans sa fourchette.** Il sortait en A deux passes sur trois, un cran trop haut ; il sort désormais en B aux trois passes, entre 66 et 74, sans aucun écart. C'est le plus net des changements, et il va dans le sens attendu : une question qui ne présuppose plus cesse d'ajouter du crédit au texte.
+La cause n'était pas une régression du v0.1.4 mais une **lacune de spécification** que le v0.1.4 a rendue plus visible. La règle sur la satire ne disait comment noter que `transparence`, et laissait le modèle décider seul pour les deux autres. Il décidait différemment d'un tirage à l'autre.
 
-**La page complotiste réelle revient dans sa catégorie** deux passes sur trois, contre `opinion` deux passes sur trois en v0.1.3.
+Le v0.1.5 énonce la règle manquante : une parodie invente ses faits par construction et ne cite pas de sources, ce ne sont pas des défauts, et ces deux dimensions se notent sur la loyauté du procédé. Résultat : **onze tirages sans un seul effondrement**, huit en mesure ciblée et trois en passe complète, contre deux effondrements sur sept avant. Le spécimen sort en A aux trois passes, entre 84 et 89.
 
-### Ce qu'il a dégradé, et qu'il faut dire aussi
+Le point de méthode, parce qu'il resservira : quand une attente du corpus n'est pas tenue de façon **instable**, chercher d'abord ce que la spécification laisse implicite. Un modèle qui doit trancher lui-même ne tranche pas deux fois pareil. C'est la deuxième fois en trois versions que le défaut est là, et non dans le modèle ni dans l'attente.
 
-**Le spécimen satirique s'est déstabilisé.** Il tenait en A entre 85 et 100 sous v0.1.3 ; il oscille maintenant entre 38 et 85 et sort en D une passe sur trois. La catégorie tient, donc la sentinelle du §7 n'est pas en cause, mais un texte parodique noté D est une erreur qu'un lecteur voit immédiatement. C'est le point à surveiller en priorité sur la prochaine version.
+### Ce qui a bougé en sens inverse
 
-**La publicité déguisée ne fait plus détecter `conflit_interet_commercial`** deux passes sur trois, alors que c'est la technique attendue et le trait définitoire du cas. **L'article encyclopédique bascule en `analyse_expertise`** deux passes sur trois au lieu d'une.
+**Le témoignage repart en A aux trois passes**, un cran au-dessus de sa fourchette, alors que le v0.1.4 l'avait ramené en B. Les deux mouvements sont probablement liés : dire qu'une dimension ne se lit pas au premier degré pour la satire semble se généraliser aux contenus qui n'ont structurellement pas de sources à citer, ce qu'un récit personnel est aussi. Ce cas a maintenant bougé trois versions de suite, et c'est **son attente qu'il faut examiner**, pas la faire plier.
 
-### Ce que trois passes n'établissent toujours pas
+Deux écarts restent minoritaires et connus : l'article encyclopédique bascule en `analyse_expertise` deux passes sur trois, la page complotiste en `opinion` une passe sur trois.
 
-Les totaux sont 11, 10 et 10 sur 13, contre 11, 9 et 12 en v0.1.3. Indiscernables. La conclusion tirée la dernière fois vaut telle quelle : à treize cas et à cette dispersion, une différence de deux conformités n'est pas un signal. Ce qui se lit, ce sont les cas pris un par un, et l'accord ou non des trois passes sur chacun.
+### Les totaux, toujours muets
 
-Une passe a rendu une erreur HTTP 500 sur un cas, marqué « non mesuré » plutôt que compté conforme, ce qui est le bon comportement. L'erreur n'a pas été reproduite. L'hypothèse la plus probable est un verrou SQLite sous quatre analyses simultanées, la base de développement étant en SQLite alors que la production tourne sur PostgreSQL ; elle n'est pas vérifiée.
-
-### Une barrière ajoutée, et une mesure qui a échoué
-
-Le serveur vérifie désormais **toute citation entre guillemets**, où qu'elle apparaisse, et plus seulement dans une détection. Les champs libres échappaient à tout contrôle. Le rapport de calibration ne compte pas encore ces rejets, donc leur taux reste à mesurer sur des pages réelles.
-
-Une attente de corpus a été essayée pour mesurer ce que la barrière ne couvre pas, une liste de termes que l'analyse ne devait pas employer parce que le spécimen ne les emploie pas. Elle a été **retirée après une passe**, où elle a signalé « Le produit est-il évalué ou certifié par des autorités de santé compétentes ? » sur la page de pseudo-médecine. C'est une bonne question socratique, générique, qui n'affirme rien. Un contrôle lexical ne distingue pas une question qui interroge d'une question qui présuppose, et garder une attente fausse aurait été pire que de n'en avoir aucune. La règle d'attribution reste donc contrainte par le prompt et non mesurée, ce que [docs/METHODOLOGIE.md](../docs/METHODOLOGIE.md) §3 dit désormais explicitement.
+9, 10 et 12 sur 13, contre 11, 10, 10 en v0.1.4 et 11, 9, 12 en v0.1.3. Trois versions, neuf passes, aucune différence lisible sur le total. Ce qui se lit reste le cas par cas et l'accord des passes entre elles. À treize cas, le corpus dit si un comportement est stable, jamais si une version est meilleure.
 
 ## La température, mesurée
 
@@ -89,6 +83,7 @@ Les lignes antérieures au journal ont été relevées à la main, avant que `ly
 
 | Date | Prompt | Température | Résultat |
 |---|---|---|---|
+| 2026-09-02 | v0.1.5 | 0 | 9/13, 10/13, 12/13 ; spécimen satirique stabilisé, témoignage reparti en A |
 | 2026-09-01 | v0.1.4 | 0 | 11/13, 10/13, 10/13 sur trois passes ; témoignage corrigé, spécimen satirique déstabilisé |
 | 2026-08-31 | v0.1.3 | 0 | 11/13, 9/13, 12/13 sur trois passes neuves ; la vulgarisation corrigée aux trois |
 | 2026-08-27 | v0.1.2 | 0 | 11/13, première passe enregistrée au journal (resservie depuis l'annuaire) |
