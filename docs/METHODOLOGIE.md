@@ -1,6 +1,6 @@
 # Méthodologie d'analyse
 
-Version : **0.1.4**. Toute modification de ce document ou des prompts incrémente `prompt_version` (semver) et déclenche une passe sur le [corpus de calibration](../corpus/).
+Version : **0.1.5**. Toute modification de ce document ou des prompts incrémente `prompt_version` (semver) et déclenche une passe sur le [corpus de calibration](../corpus/).
 
 ## Vue d'ensemble
 
@@ -86,7 +86,7 @@ L'**indice de confiance** (0–1, fourni par le LLM) est affiché séparément :
 
 ## 6. Cas particuliers
 
-- **Satire** : la note évalue la *transparence de la satire* (un site parodique assumé note bien). La carte porte l'avertissement « contenu satirique, second degré ». Jamais traitée comme désinformation.
+- **Satire** : la note évalue la *transparence de la satire* (un site parodique assumé note bien). La carte porte l'avertissement « contenu satirique, second degré ». Jamais traitée comme désinformation. **`sources` et `factualite` se lisent sur la loyauté du procédé, pas sur la lettre du texte** : une parodie invente ses faits par construction et ne cite pas de sources, ce ne sont pas des défauts. Cette précision manquait, et son absence coûtait cher : mesurée sur sept tirages du même spécimen, la lecture littérale surgissait deux fois, avec `sources` et `factualite` à exactement 0 et une note tombée de A à D sur un texte inchangé.
 - **Opinion / éditorial** : évalué sur l'honnêteté argumentative (sources des faits invoqués, absence de techniques déloyales), **jamais sur la position défendue**.
 - **Contenu confessionnel** : la foi n'est pas notée. Seules le sont les affirmations factuelles (santé, science, histoire) et les techniques de manipulation éventuelles (peur, urgence, isolement).
 - **Contenu court ou tronqué** (paywall, extrait) : indice de confiance abaissé + avertissement explicite.

@@ -1,10 +1,10 @@
 # Analysis methodology
 
-<!-- traduit-de: docs/METHODOLOGIE.md sha256:a40deeaa46e93663 -->
+<!-- traduit-de: docs/METHODOLOGIE.md sha256:506036e0d8d9dbc7 -->
 
 > Translation for information. The French version, `docs/METHODOLOGIE.md`, is the one the project applies: should the two ever diverge, it is the one that counts.
 
-Version: **0.1.4**. Any change to this document or to the prompts increments `prompt_version` (semver) and triggers a run against the [calibration corpus](../../corpus/).
+Version: **0.1.5**. Any change to this document or to the prompts increments `prompt_version` (semver) and triggers a run against the [calibration corpus](../../corpus/).
 
 ## Overview
 
@@ -90,7 +90,7 @@ The **confidence index** (0 to 1, supplied by the model) is shown separately: it
 
 ## 6. Special cases
 
-- **Satire**: the grade assesses *how openly the satire is signalled* (an openly parodic site grades well). The card carries the warning “satirical content, not to be read literally”. It is never treated as disinformation.
+- **Satire**: the grade assesses *how openly the satire is signalled* (an openly parodic site grades well). The card carries the warning “satirical content, not to be read literally”. It is never treated as disinformation. **`sources` and `factualite` are read against the fairness of the device, not against the letter of the text**: a parody invents its facts by construction and cites no sources, and neither is a failing. That clarification was missing, and its absence was expensive: measured over seven draws of the same specimen, the literal reading surfaced twice, with `sources` and `factualite` at exactly 0 and the grade dropping from A to D on unchanged text.
 - **Opinion / editorial**: assessed on the honesty of its argument (sources for the facts invoked, absence of unfair techniques), **never on the position it defends**.
 - **Religious content**: faith is not graded. Only factual claims (health, science, history) and any manipulation techniques (fear, urgency, isolation) are.
 - **Short or truncated content** (paywall, excerpt): lowered confidence index plus an explicit warning.
