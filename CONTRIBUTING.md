@@ -12,18 +12,18 @@ Thank you for wanting to help. Every contribution counts: code, taxonomy, calibr
 
 ## Branch model
 
+```mermaid
+flowchart TD
+    topic["feat/* · fix/* · docs/*<br>topic branches, off dev"]
+    b_dev["dev<br>continuous integration of development"]
+    b_next["next<br>pre-production: stabilisation, instance testing"]
+    b_main["main<br>stable: this is what instances deploy"]
+
+    topic -- "PR and review" --> b_dev
+    b_dev -- "batch judged stable" --> b_next
+    b_next -- "PR approved on GitHub, then tag vX.Y.Z" --> b_main
 ```
-feat/*  fix/*  docs/*        (topic branches, off dev)
-      │
-      ▼  PR and review
-     dev                      (continuous integration of development)
-      │
-      ▼  batch judged stable
-     next                     (pre-production: stabilisation, instance testing)
-      │
-      ▼  PR approved on GitHub, then tag (vX.Y.Z)
-     main                     (stable: this is what instances deploy)
-```
+
 
 - **`main`**: stable only. It receives merges from `next` and nothing else, through a pull request the maintainer approves on GitHub, and every release is tagged there.
 - **`next`**: pre-production. Receives `dev` when a coherent batch is ready; stabilisation happens there.

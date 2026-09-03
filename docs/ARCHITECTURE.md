@@ -2,20 +2,29 @@
 
 ## Vue d'ensemble
 
+```mermaid
+flowchart LR
+    subgraph navigateur["Navigateur"]
+        ext["Extension Chrome (MV3, TypeScript)<br>badge passif · clic droit « Analyser »<br>extraction <b>locale</b> : Readability puis Turndown"]
+        panneau["Side panel<br>la carte d'analyse"]
+    end
+
+    cli["CLI (essais, scripts)"]
+
+    subgraph serveur["Serveur Lynceus, le « kit »"]
+        api["API annuaire<br>FastAPI (Python)"]
+        ann[("Annuaire<br>PostgreSQL")]
+        moteur["Moteur d'analyse<br>adaptateur compatible OpenAI<br>validation JSON Schema puis nouvel essai<br>calcul de la note, côté serveur"]
+    end
+
+    ext -- "GET /v1/lookup" --> api
+    ext -- "POST /v1/analyses" --> api
+    api -- "JSON" --> panneau
+    api --> ann
+    api -- "absent de l'annuaire" --> moteur
+    cli --> api
 ```
-┌─ Navigateur ────────────────────┐        ┌─ Serveur Lynceus (le « kit ») ───────┐
-│ Extension Chrome (MV3, TS)      │        │  API annuaire : FastAPI (Python)     │
-│  · badge passif ────────────────┼─GET──▶ │  /v1/lookup ───▶ Annuaire            │
-│  · clic droit « Analyser »      │        │                  (PostgreSQL)        │
-│  · extraction LOCALE            │        │  /v1/analyses                        │
-│    Readability.js → Turndown ───┼─POST─▶ │    │ absent de l'annuaire            │
-│  · side panel (carte) ◀─────────┼─JSON── │    ▼                                 │
-└─────────────────────────────────┘        │  Moteur d'analyse                    │
-              CLI (test/scripts) ─┼──────▶ │  · adapter compatible OpenAI         │
-                                           │  · validation JSON Schema + retry    │
-                                           │  · calcul de la note (serveur)       │
-                                           └──────────────────────────────────────┘
-```
+
 
 Trois livrables : **`api/`** (le kit serveur auto-hébergeable, Docker Compose), **`extension/`** (client Chrome), **CLI** (client de test et d'import en masse, inclus dans `api/`).
 

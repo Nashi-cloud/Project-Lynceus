@@ -20,25 +20,33 @@ What does work is **inoculation**: learning to recognise the *techniques* of man
 
 ## How it works
 
+```mermaid
+flowchart LR
+    subgraph browser["Browser"]
+        ext["Chrome extension (MV3)<br>passive badge · right click, Analyse<br><b>local</b> extraction: Readability to Markdown"]
+        panel["Side panel<br>the analysis card"]
+    end
+
+    subgraph instance["Lynceus instance, self-hostable"]
+        api["Directory API<br>FastAPI"]
+        dir[("Directory<br>PostgreSQL")]
+        engine["Analysis engine<br>configurable LLM, OpenAI-compatible<br>OpenRouter · Ollama · vLLM"]
+    end
+
+    subgraph portal["Portal, the public site"]
+        pages["Story · method · techniques<br>browse the directory · download"]
+        keys["/v1/inscription, issues a signed key<br><b>holds the private key</b><br>no database, stores nothing"]
+    end
+
+    ext -- "GET /lookup, a URL hash" --> api
+    ext -- "POST /v1/analyses, Markdown" --> api
+    api -- "JSON card" --> panel
+    api --> dir
+    api -- "if not already known" --> engine
+    ext -. "get a key" .-> keys
+    pages -. "directory, disputes" .-> api
 ```
-┌─ Browser ───────────────────────┐        ┌─ Lynceus instance (self-hostable) ───┐
-│ Chrome extension (MV3)          │        │  Directory API (FastAPI)             │
-│  · passive badge ───────────────┼─GET──▶ │  /lookup (URL hash) ──▶ Directory    │
-│  · right click, “Analyse”       │        │                         (PostgreSQL) │
-│  · LOCAL extraction             │        │  /v1/analyses                        │
-│    Readability.js → Markdown ───┼─POST─▶ │    │ if not already known            │
-│  · side panel (card) ◀──────────┼─JSON── │    ▼                                 │
-└───────────┬─────────────────────┘        │  Analysis engine (configurable LLM)  │
-            │                              │  OpenAI-compatible endpoint:         │
-            │ “Get a key”                  │  OpenRouter │ Ollama │ vLLM │ etc.   │
-            ▼                              └───────────────▲──────────────────────┘
-┌─ Portal (public site) ──────────┐                        │
-│  story · method · techniques    │──── directory, ────────┘
-│  directory · download           │     disputes
-│  /v1/inscription → signed key   │
-│  holds the PRIVATE key          │   no database: it stores nothing
-└─────────────────────────────────┘
-```
+
 
 1. **Passive badge**: on every page, the extension queries the directory (a hash of the URL, no content sent). If the page has already been analysed, the grade appears on the toolbar icon. Can be turned off.
 2. **Deliberate analysis**: right click, then "Analyse this page". The text is extracted *locally* (Readability), converted to Markdown and sent to the API. The side panel displays the analysis card.

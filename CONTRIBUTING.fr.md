@@ -1,6 +1,6 @@
 # Contribuer à Lynceus
 
-<!-- traduit-de: CONTRIBUTING.md sha256:2875c9d29d0df61e -->
+<!-- traduit-de: CONTRIBUTING.md sha256:64ea29adf52289e5 -->
 
 [English](CONTRIBUTING.md) · **Français**
 
@@ -8,18 +8,18 @@ Merci de vouloir aider ! Toute contribution compte : code, taxonomie, corpus de 
 
 ## Modèle de branches
 
+```mermaid
+flowchart TD
+    topic["feat/* · fix/* · docs/*<br>branches spécifiques, depuis dev"]
+    b_dev["dev<br>intégration continue du développement"]
+    b_next["next<br>pré-production : stabilisation, tests d'instance"]
+    b_main["main<br>stable : c'est ce que les instances déploient"]
+
+    topic -- "PR et revue" --> b_dev
+    b_dev -- "lot jugé stable" --> b_next
+    b_next -- "PR validée sur GitHub, puis tag vX.Y.Z" --> b_main
 ```
-feat/*  fix/*  docs/*        (branches spécifiques, depuis dev)
-      │
-      ▼  PR + revue
-     dev                      (intégration continue du développement)
-      │
-      ▼  lot jugé stable
-     next                     (pré-production : stabilisation, tests d'instance)
-      │
-      ▼  PR validée sur GitHub, puis tag (vX.Y.Z)
-     main                     (stable : c'est ce que les instances déploient)
-```
+
 
 - **`main`** : stable uniquement. Ne reçoit que des merges depuis `next`, par une pull request que le mainteneur valide sur GitHub, et chaque release y est taguée.
 - **`next`** : pré-production. Reçoit `dev` quand un ensemble cohérent est prêt ; on y stabilise.
