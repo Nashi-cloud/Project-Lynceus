@@ -1,6 +1,6 @@
 # Projet Lynceus 🔭
 
-<!-- traduit-de: README.md sha256:df797c1435ca222f -->
+<!-- traduit-de: README.md sha256:64eed777858fe514 -->
 
 [English](README.md) · **Français**
 
@@ -22,25 +22,33 @@ Ce qui fonctionne, c'est **l'inoculation** : apprendre à reconnaître les *tech
 
 ## Comment ça marche ?
 
+```mermaid
+flowchart LR
+    subgraph navigateur["Navigateur"]
+        ext["Extension Chrome (MV3)<br>badge passif · clic droit, Analyser<br>extraction <b>locale</b> : Readability puis Markdown"]
+        panneau["Side panel<br>la carte d'analyse"]
+    end
+
+    subgraph instance["Instance Lynceus, auto-hébergeable"]
+        api["API annuaire<br>FastAPI"]
+        ann[("Annuaire<br>PostgreSQL")]
+        moteur["Moteur d'analyse<br>modèle configurable, compatible OpenAI<br>OpenRouter · Ollama · vLLM"]
+    end
+
+    subgraph portail["Portail, le site public"]
+        pages["Récit · méthode · procédés<br>consultation de l'annuaire · téléchargement"]
+        cles["/v1/inscription, délivre une clé signée<br><b>détient la clé privée</b><br>aucune base, ne conserve rien"]
+    end
+
+    ext -- "GET /lookup, une empreinte d'URL" --> api
+    ext -- "POST /v1/analyses, du Markdown" --> api
+    api -- "carte JSON" --> panneau
+    api --> ann
+    api -- "si la page est inconnue" --> moteur
+    ext -. "obtenir une clé" .-> cles
+    pages -. "annuaire, contestations" .-> api
 ```
-┌─ Navigateur ────────────────────┐        ┌─ Instance Lynceus (auto-hébergeable) ┐
-│ Extension Chrome (MV3)          │        │  API annuaire (FastAPI)              │
-│  · badge passif ────────────────┼─GET──▶ │  /lookup (hash URL) ──▶ Annuaire     │
-│  · clic droit « Analyser »      │        │                         (PostgreSQL) │
-│  · extraction LOCALE            │        │  /v1/analyses                        │
-│    Readability.js → Markdown ───┼─POST─▶ │    │ si absent de l'annuaire         │
-│  · side panel (carte) ◀─────────┼─JSON── │    ▼                                 │
-└───────────┬─────────────────────┘        │  Moteur d'analyse (LLM configurable) │
-            │                              │  endpoint compatible OpenAI :        │
-            │ « Obtenir une clé »          │  OpenRouter │ Ollama │ vLLM │ etc.   │
-            ▼                              └───────────────▲──────────────────────┘
-┌─ Portail (site public) ─────────┐                        │
-│  récit · méthodologie · procédés│──── annuaire, ─────────┘
-│  annuaire · téléchargement      │     contestations
-│  /v1/inscription → clé signée   │
-│  détient la clé PRIVÉE          │   sans base de données : il ne conserve rien
-└─────────────────────────────────┘
-```
+
 
 1. **Badge passif** : à chaque page, l'extension interroge l'annuaire (hash de l'URL, aucun contenu envoyé). Page déjà analysée → la note s'affiche sur l'icône. Désactivable.
 2. **Analyse volontaire** : clic droit → « Analyser cette page ». Le texte est extrait *localement* (Readability), converti en Markdown et envoyé à l'API. Le panneau latéral affiche la carte d'analyse.
