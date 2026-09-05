@@ -146,6 +146,7 @@
   titre_en: What three years of medical wandering taught me
   categorie_attendue: temoignage
   grade_attendu: [B, C, D]
+  techniques_attendues: [preuve_anecdotique]
   techniques_interdites: [conflit_interet_commercial, solution_miracle, faux_expert]
   notes: |
     PIÈGE DE BIENVEILLANCE — Récit personnel sincère, sans rien à vendre, qui refuse
@@ -192,3 +193,20 @@
     Une seule technique exigée — `verite_cachee`, la plus stable : deux modèles différents
     (sonnet-5 puis glm-5.2) l'ont relevée, tandis que le reste de leurs détections variait.
     Mesuré le 2026-08-24 (glm-5.2, prompt 0.1.1) : theorie_du_complot, D (35), 6 techniques.
+
+- fichier: specimens/12-fictif-commerce-honnete.md
+  titre: Atelier du Guidon, réparation de vélos
+  titre_en: Atelier du Guidon, bicycle repairs
+  categories_acceptables: [publicite_sponsorise, autre]
+  grade_attendu: [A, B]
+  techniques_interdites: [conflit_interet_commercial, urgence_artificielle, solution_miracle, appel_a_la_peur]
+  notes: |
+    CONTRÔLE NÉGATIF des spécimens 01 et 08. Le §7 impose un sentinelle « site
+    pseudo-médical marchand » dont le conflit d'intérêt doit être détecté ; il n'existait
+    aucun cas symétrique, si bien que rien n'aurait échoué si l'outil s'était mis à
+    pénaliser le commerce en tant que tel. Page commerciale assumée, tarifs publiés,
+    exploitante nommée, limites de l'activité énoncées, et qui renvoie vers des ateliers
+    associatifs gratuits. Détecter `conflit_interet_commercial` ici serait un faux positif
+    grave : la technique suppose un discours alarmiste ou miraculeux, absent de ce texte.
+    Deux catégories sont acceptées, la méthodologie rangeant « boutique » sous `autre` et
+    « contenu commercial » sous `publicite_sponsorise`.

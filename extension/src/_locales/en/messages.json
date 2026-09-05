@@ -65,6 +65,9 @@
   "erreur_extraction_vide": {
     "message": "Extraction returned nothing."
   },
+  "erreur_analyse_perdue": {
+    "message": "The browser stopped the analysis before it finished. Chrome shuts the extension down as soon as it considers it idle, and work under way disappears with it. Start the analysis again."
+  },
   "erreur_page_inaccessible": {
     "message": "Lynceus cannot reach this page. If it is an internal browser page or the Web Store, it cannot be analysed. Otherwise: start again with a right-click → “Analyse this page with Lynceus” (access expires when you navigate away). You can also turn on the passive badge in the settings so that this button keeps working after navigation."
   },

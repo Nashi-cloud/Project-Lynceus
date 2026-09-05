@@ -1,25 +1,34 @@
 # Technical architecture
 
-<!-- traduit-de: docs/ARCHITECTURE.md sha256:99d63073efd2323e -->
+<!-- traduit-de: docs/ARCHITECTURE.md sha256:994b3d017eb45f48 -->
 
 > Translation for information. The French version, `docs/ARCHITECTURE.md`, is the one the project follows: should the two ever diverge, it is the one that counts.
 
 ## Overview
 
+```mermaid
+flowchart LR
+    subgraph browser["Browser"]
+        ext["Chrome extension (MV3, TypeScript)<br>passive badge · right click, Analyse<br><b>local</b> extraction: Readability then Turndown"]
+        panel["Side panel<br>the analysis card"]
+    end
+
+    cli["CLI (tests, scripts)"]
+
+    subgraph server["Lynceus server, the kit"]
+        api["Directory API<br>FastAPI (Python)"]
+        dir[("Directory<br>PostgreSQL")]
+        engine["Analysis engine<br>OpenAI-compatible adapter<br>JSON Schema validation then retry<br>grade computed by the server"]
+    end
+
+    ext -- "GET /v1/lookup" --> api
+    ext -- "POST /v1/analyses" --> api
+    api -- "JSON" --> panel
+    api --> dir
+    api -- "not in the directory" --> engine
+    cli --> api
 ```
-┌─ Browser ───────────────────────┐        ┌─ Lynceus server (the “kit”) ─────────┐
-│ Chrome extension (MV3, TS)      │        │  Directory API: FastAPI (Python)     │
-│  · passive badge ───────────────┼─GET──▶ │  /v1/lookup ───▶ Directory           │
-│  · right click, “Analyse”       │        │                  (PostgreSQL)        │
-│  · LOCAL extraction             │        │  /v1/analyses                        │
-│    Readability.js → Turndown ───┼─POST─▶ │    │ not in the directory            │
-│  · side panel (card) ◀──────────┼─JSON── │    ▼                                 │
-└─────────────────────────────────┘        │  Analysis engine                     │
-              CLI (test/scripts) ─┼──────▶ │  · OpenAI-compatible adapter         │
-                                           │  · JSON Schema validation and retry  │
-                                           │  · grade computed by the server      │
-                                           └──────────────────────────────────────┘
-```
+
 
 Three deliverables: **`api/`** (the self-hostable server kit, Docker Compose), **`extension/`** (Chrome client), **CLI** (a client for testing and bulk import, shipped inside `api/`).
 
