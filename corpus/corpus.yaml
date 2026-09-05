@@ -167,7 +167,7 @@
   titre_en: Confirmation bias — Wikipedia
   content_hash: c9efee992b48b58c714a92272e011caef73c140b9312532ee580d2c8356d6a49
   capture_le: 2026-08-24
-  categorie_attendue: information
+  categories_acceptables: [analyse_expertise, information]
   grade_attendu: [A, B]
   techniques_interdites: [absence_de_sources, jargon_pseudo_scientifique, autorite_anonyme]
   notes: |
@@ -175,6 +175,21 @@
     Doit être bien noté sans qu'aucune technique ne soit relevée. Contenu sous licence
     libre (CC BY-SA), donc reproductible sans réserve — contrairement aux autres captures.
     Mesuré le 2026-08-24 (glm-5.2, prompt 0.1.1) : information, A (83), 0 technique.
+
+    L'attente exigeait `information` seul, et le cas échouait deux passes sur trois en
+    v0.1.6 puis les trois en v0.1.7. Deux catégories sont désormais acceptées, pour une
+    raison de méthode et non pour faire passer le test. Le prompt définit `information`
+    comme du « contenu journalistique factuel (qui, quoi, où, quand) » et
+    `analyse_expertise` comme une « analyse approfondie, vulgarisation scientifique » : une
+    notice d'encyclopédie n'est ni l'un ni l'autre exactement, et **aucune des deux
+    définitions ne parle d'encyclopédie**. Le corpus exigeait donc une frontière que la
+    méthode ne trace nulle part, ce qui est le défaut corrigé quatre fois de suite du côté
+    du prompt.
+
+    Rien de ce qui mesure la qualité n'est relâché ici. Le prompt dit lui-même que la
+    catégorie est « la nature dominante du contenu, PAS sa qualité » : ce qui juge cette
+    page reste sa fourchette de grade [A, B] et ses trois techniques interdites, toutes
+    tenues à chaque passe.
 
 - capture: captures/sott-changements-terrestres.md
   url: https://fr.sott.net/article/44562-Resume-SOTT-des-changements-terrestres-Juin-2026-Conditions-meteorologiques-extremes-revolte-de-la-planete-et-boules-de-feu
