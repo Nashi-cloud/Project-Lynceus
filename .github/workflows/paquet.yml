@@ -1,0 +1,113 @@
+# Paquets d'extension attachés à une publication, sur une machine fournie par GitHub.
+#
+# Le paquet qu'on dépose sur un magasin doit avoir la même provenance que l'image : construit
+# par la forge, à partir d'un tag, et téléchargeable par tout le monde. Construit sur le poste
+# d'un mainteneur, il n'en a aucune, et c'est précisément ce qu'un magasin distribue à des
+# milliers de navigateurs.
+#
+# Deux paquets sont produits, et la différence entre les deux est tout le sujet :
+#   lynceus-extension-vX.Y.Z.zip           neutre, aucune adresse inscrite. C'est celui que
+#                                          l'image embarque, et le portail y glisse sa propre
+#                                          adresse au téléchargement (portail/__init__.py).
+#   lynceus-extension-vX.Y.Z-magasin.zip   une adresse compilée dedans, parce qu'un magasin
+#                                          sert un fichier unique et ne peut rien injecter.
+#
+# L'adresse vient de la variable de dépôt PORTAIL_MAGASIN. Sans elle, seul le paquet neutre
+# est produit : un fork ne doit pas publier une extension qui parle à l'instance d'un autre.
+name: Paquet d'extension - Lynceus
+
+on:
+  push:
+    tags: ["v*"]
+
+# contents: write est ce qui autorise la création de la publication et l'attachement des
+# paquets. Le reste du workflow ne touche à rien.
+permissions:
+  contents: write
+
+jobs:
+  paquets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Un tag qui ne dit pas la même chose que VERSION produirait une publication dont le
+      # numéro ne correspond à aucune image : la forge étiquette l'image d'après VERSION.
+      - name: Le tag et VERSION disent la même chose
+        run: |
+          attendu="v$(tr -d '[:space:]' < VERSION)"
+          if [ "${GITHUB_REF_NAME}" != "$attendu" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} ≠ VERSION (${attendu})"
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      - run: npm ci
+        working-directory: extension
+
+      # L'extension porte son propre numéro, celui du manifeste, distinct de VERSION : elle
+      # ne change pas à chaque livraison du dépôt, et un magasin refuse qu'on redépose un
+      # numéro déjà publié.
+      - name: Construire les paquets
+        id: paquets
+        working-directory: extension
+        env:
+          PORTAIL: ${{ vars.PORTAIL_MAGASIN }}
+        run: |
+          version=$(node -p "require('./manifest.json').version")
+          echo "extension=${version}" >> "$GITHUB_OUTPUT"
+
+          # Le paquet neutre garde son nom canonique : quiconque lance « npm run paquet »
+          # sur ces sources doit obtenir un fichier identique, nom et empreinte compris.
+          node build.mjs --paquet
+          if [ -n "$PORTAIL" ]; then
+            mv "lynceus-extension-v${version}.zip" neutre.zip
+            node build.mjs --paquet --portail="$PORTAIL"
+            mv "lynceus-extension-v${version}.zip" "lynceus-extension-v${version}-magasin.zip"
+            mv neutre.zip "lynceus-extension-v${version}.zip"
+            echo "magasin=oui" >> "$GITHUB_OUTPUT"
+          else
+            echo "magasin=non" >> "$GITHUB_OUTPUT"
+          fi
+          sha256sum lynceus-extension-v${version}*.zip > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Publier
+        working-directory: extension
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PORTAIL: ${{ vars.PORTAIL_MAGASIN }}
+          EXT: ${{ steps.paquets.outputs.extension }}
+        run: |
+          {
+            echo "Extension **${EXT}**, construite par la forge à partir de ce tag."
+            echo
+            echo "| Paquet | Ce qu'il contient |"
+            echo "|---|---|"
+            echo "| \`lynceus-extension-v${EXT}.zip\` | **Neutre**, aucune adresse de portail inscrite. C'est le paquet embarqué dans l'image, celui que chaque portail sert en y glissant sa propre adresse. Reproductible : \`npm run paquet\` sur ces sources donne un fichier identique. |"
+            if [ -n "$PORTAIL" ]; then
+              echo "| \`lynceus-extension-v${EXT}-magasin.zip\` | L'adresse \`${PORTAIL}\` **compilée dedans**, un magasin servant un fichier unique et ne pouvant rien injecter. C'est celui à déposer au Chrome Web Store, cf. \`extension/PUBLICATION.md\`. Reproductible avec \`node build.mjs --paquet --portail=${PORTAIL}\`. |"
+            fi
+            echo
+            echo "Empreintes SHA-256 dans \`SHA256SUMS.txt\`."
+            echo
+            echo "L'extension porte son propre numéro, distinct de celui du dépôt : elle ne change pas à chaque livraison."
+          } > notes.md
+
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file notes.md \
+            lynceus-extension-v${EXT}*.zip SHA256SUMS.txt
+
+      - name: Récapitulatif
+        run: |
+          echo "Publication ${GITHUB_REF_NAME} créée, extension ${{ steps.paquets.outputs.extension }}." >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.paquets.outputs.magasin }}" = "non" ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Paquet de magasin non produit : la variable de dépôt \`PORTAIL_MAGASIN\` n'est pas définie." >> "$GITHUB_STEP_SUMMARY"
+          fi
