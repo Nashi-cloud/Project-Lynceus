@@ -96,6 +96,8 @@ npm run paquet     # → lynceus-extension-v<version>.zip
 
 An archive ready to be shared or submitted to the Chrome Web Store. It is **reproducible**: two builds from the same sources produce an identical file (timestamps are fixed), which makes it possible to check that a distributed package really matches the published code.
 
+Submitting it to a store is documented separately, in [PUBLICATION.md](PUBLICATION.md): the listing fields, the permission justifications, the data disclosures, and the decisions behind them.
+
 ## Checks
 
 ```bash

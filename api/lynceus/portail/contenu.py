@@ -175,6 +175,7 @@ FACADE = [
     "api/README.md",
     "api/DEPLOIEMENT.md",
     "extension/README.md",
+    "extension/PUBLICATION.md",
     "corpus/README.md",
     "corpus/specimens/README.md",
 ]

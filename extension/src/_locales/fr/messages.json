@@ -3,7 +3,7 @@
     "message": "Lynceus, la vigie de l'information"
   },
   "description_extension": {
-    "message": "Analyse la fiabilité d'une page web et explique, sans juger, les techniques de persuasion qu'elle emploie. Libre (AGPL-3.0) et auto-hébergeable."
+    "message": "Explique, sans juger, les procédés de persuasion qu'emploie une page web, et note sa fiabilité. Libre (AGPL-3.0), auto-hébergeable."
   },
   "action_titre": {
     "message": "Analyser cette page avec Lynceus"
