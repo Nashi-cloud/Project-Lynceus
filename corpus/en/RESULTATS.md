@@ -1,65 +1,84 @@
 # Calibration results
 
-<!-- traduit-de: corpus/RESULTATS.md sha256:521d64f7f9085aa4 -->
+<!-- traduit-de: corpus/RESULTATS.md sha256:95a198a67c68af1f -->
 
 > Translation for information. The French version, `corpus/RESULTATS.md`, is the record of reference: should the two ever diverge, it is the one that counts.
 
 <!-- calibration:début (engendré par « lynceus calibrer --ecrire », ne pas modifier à la main) -->
 
-Latest run: **2026-09-02** · model `z-ai/glm-5.2` (through openrouter.ai) · prompt **v0.1.6** · temperature **0**
+Latest run: **2026-09-05** · model `z-ai/glm-5.2` (through openrouter.ai) · prompt **v0.1.7** · temperature **0**
 
-**3 runs** recorded on this prompt version: **13/14, 12/14, 11/14** conforming. A single run would say nothing solid, since the model does not return the same analysis of the same text twice.
+**3 runs** recorded on this prompt version: **10/15, 13/15, 13/15** conforming. A single run would say nothing solid, since the model does not return the same analysis of the same text twice.
 
 | Case | Category | Grade | Score | Discrepancies |
 |---|---|---|---|---|
-| The council votes unanimously against unanimity | satire | A | 87 to 92 | — |
-| Why I think our town has it wrong about paid parking | opinion | A | 80 to 86 | — |
-| The forgotten root the laboratories would rather you did not know about | publicite_sponsorise | E | 10 to 17 | — |
-| The Vieille-Écluse bridge closed for works from 3 to 28 March | information | A B A | 77 to 81 | — |
-| Advent meditation: waiting as a path | contenu_confessionnel | A | 86 to 94 | — |
-| The November power cut: three awkward questions | theorie_du_complot | E | 10 to 12 | — |
-| What They Won't Tell You About the New Water Treatment Plant | theorie_du_complot | E | 11 to 14 | — |
-| Five evening habits for better sleep | publicite_sponsorise / information | C | 58 to 62 | category `information` instead of publicite_sponsorise (1 of 3 runs) ; technique missing: `conflit_interet_commercial` (1 of 3 runs) |
-| Water fluoridation: the debate is still open | opinion | D | 40 to 46 | — |
-| Why the sky is blue, and why that explanation is incomplete | analyse_expertise | B A B | 74 to 84 | — |
-| What three years of medical wandering taught me | temoignage | A | 80 to 82 | grade A outside the expected range B, C, D ; technique missing: `preuve_anecdotique` |
-| Confirmation bias — Wikipedia | information / analyse_expertise | A | 86 to 88 | category `analyse_expertise` instead of information (2 of 3 runs) |
-| SOTT Earth Changes Summary - June 2026 | theorie_du_complot / pseudo_science | D | 30 to 36 | — |
-| Atelier du Guidon, bicycle repairs | autre | A | 93 to 100 | — |
+| The council votes unanimously against unanimity | satire | A | 84 to 92 | — |
+| Why I think our town has it wrong about paid parking | opinion | A | 82 to 84 | — |
+| The forgotten root the laboratories would rather you did not know about | publicite_sponsorise | E | 7 to 10 | — |
+| The Vieille-Écluse bridge closed for works from 3 to 28 March | information | A B A | 72 to 82 | — |
+| Advent meditation: waiting as a path | contenu_confessionnel | A | 94 to 99 | — |
+| The November power cut: three awkward questions | theorie_du_complot | E | 4 to 6 | technique missing: `hyper_intentionnalisme` (1 of 3 runs) |
+| What They Won't Tell You About the New Water Treatment Plant | opinion / theorie_du_complot | E | 2 to 18 | category `opinion` instead of theorie_du_complot (1 of 3 runs) ; technique missing: `autorite_anonyme` (1 of 3 runs) |
+| Five evening habits for better sleep | publicite_sponsorise | B C C | 64 to 65 | grade B outside the expected range C, D (1 of 3 runs) |
+| Water fluoridation: the debate is still open | information / opinion | D | 38 to 46 | — |
+| Why the sky is blue, and why that explanation is incomplete | analyse_expertise | B A B | 72 to 80 | — |
+| What three years of medical wandering taught me | temoignage | A B A | 78 to 87 | grade A outside the expected range B, C, D (2 of 3 runs) ; technique missing: `preuve_anecdotique` |
+| Confirmation bias — Wikipedia | analyse_expertise / information | A | 88 to 90 | — |
+| SOTT Earth Changes Summary - June 2026 | opinion | D | 32 to 38 | category `opinion` instead of theorie_du_complot, pseudo_science ; technique missing: `verite_cachee` (1 of 3 runs) |
+| Atelier du Guidon, bicycle repairs | autre | A | 94 to 100 | — |
+| La Gazette de Saint-Aubin, the homepage | autre | A A B | 73 to 100 | — |
 
 <!-- calibration:fin -->
 
 ## How to read it
 
-Three independent runs on fresh analyses, over a corpus grown to **fourteen cases**.
+Three independent runs on fresh analyses, on a corpus of **fifteen cases**, one of whose expectations has been corrected.
 
-The five sentinels of [METHODOLOGIE.md](../../docs/en/METHODOLOGIE.md) §7 hold across all three runs, on category and range.
+The five sentinels of [docs/METHODOLOGIE.md](../../docs/METHODOLOGIE.md) §7 hold across all three runs, category and range alike.
 
-### A negative control that was missing
+### An index page is not an article
 
-§7 required a sentinel "commercial pseudo-medical site" whose conflict of interest must be detected, with no symmetrical case at all. Both commercial specimens in the corpus were dishonest, so **nothing would have failed had the tool started penalising commerce as such**. Specimen 12 fills that gap: an openly commercial page, published prices, a named proprietor, stated limits to the trade, pointing readers to free community workshops.
+Reported by a user: on a home page, the analysis “goes off in all directions”. Specimen 13 puts that under measurement, the home page of a local newspaper, headlines and links, no continuous text.
 
-It comes out as `autre`, **A between 93 and 100 in all three runs, without a single discrepancy**. Commercial pseudo-medicine stays at E between 10 and 17. The tool therefore tells honest commerce from misleading commerce, which no measurement said until now.
+Under prompt v0.1.6, three runs gave `information`, `information`, `autre`: **the same index filed twice out of three as an article**. Taken for an article, it is graded against expectations that make no sense for it, which is exactly the disorder reported.
 
-### The `sources` dimension finally says what it scores
+The rule did exist, but stated in terms the model cannot map onto what it receives: “non-textual page (shop, home page, forum)”. The home page of a newspaper is perfectly textual. That is the fourth time running that the fault sits in the same place: **the corpus was enforcing a boundary the prompt drew nowhere**. Version 0.1.7 describes an index by its shape, a run of headlines announcing content that is absent, and forbids grading what has not been read.
 
-Reported from the nashi.cloud repository: a page describing its own services can structurally cite nobody, and was losing 30 % of its grade to an expectation that did not apply, the model's own justification sometimes acknowledging as much.
+Result: `autre` in all three runs, and again in all three runs of the following measurement, six out of six.
 
-The added rule does **not depend on the category** but on what the text asserts: no claim needing outside support, no penalty; factual claims, and they must be supported, commercial pages included. That is what lets specimen 12 come out at A without specimen 01 ceasing to come out at E.
+### The encyclopaedia, or a boundary the method does not draw
 
-A per-category reweighting had been considered. It is unnecessary: stating the rule in the prompt gives the same result without touching the arithmetic, and "same dimensions, same grade" stays true.
+The expectation on the Wikipedia article demanded `information`. The case failed two runs out of three under v0.1.6, then all three under v0.1.7.
 
-### The personal account: expectation tightened, not loosened
+The first instinct was to demand `analyse_expertise` instead, since that is what the model returned. That would repeat the same mistake: the prompt defines `information` as “factual journalistic content (who, what, where, when)” and `analyse_expertise` as “in-depth analysis, science writing”, and **neither definition mentions an encyclopaedia**. Both categories are therefore accepted.
 
-That case had come out at A, one notch above its range, for three versions. Examination showed the expectation did not say what it meant: the specimen's own header announces a `preuve_anecdotique` of low to medium severity, and the `[B, C, D]` range was only a **proxy** for that detection, which the corpus required nowhere. The model detects no technique at all and grades A.
+The measurement settled it better than the reasoning did: the three runs give `analyse_expertise`, `information`, `analyse_expertise`. Demanding either one would have produced one failure out of three, on a page that has no reason to fail.
 
-The range was not widened to make the test pass. The expected technique was added, which **tightens** the expectation and names the real defect: the tool does not see the generalisation from a single case to a piece of advice. The discrepancy is now precise instead of vague, and it is published.
+No quality requirement has been loosened. The prompt itself says the category is “the dominant nature of the content, **not its quality**”: what judges this page remains its `[A, B]` range and its three forbidden techniques, all held across the three runs.
+
+### The most instructive result of the day
+
+The SOTT summary, a frozen capture whose content fingerprint is checked on every run, came out as `pseudo_science` or `theorie_du_complot` in **all three** runs of the previous measurement, without a single discrepancy. It comes out as `opinion` in **all three** runs of this one.
+
+Same capture, same prompt, same model, same temperature, an hour apart. Nothing in the repository changed for that case between the two measurements. The only explanation consistent with the facts is variation on the provider's side, which nothing here allows us to observe.
+
+Three runs already could not tell an improvement from a draw. This page can now say something sharper: **six draws of the same text split three against three between two opposite verdicts.** That is the best justification there is for an annotated corpus at another scale, and for a model trained for the task rather than rented by the call.
+
+### Two guards, born of two mistakes on the same day
+
+The cache clearing between runs targeted a column that does not exist. It failed in silence, and two runs were served entirely from the directory: three identical totals, a hair away from being published as three measurements. The `depuis_cache` field was already there, with the right reasoning in a comment; the guard had never been built. `--ecrire` now refuses a run served entirely from the cache.
+
+Then the instance's rate limit left five cases without an analysis across three runs. They count as serious discrepancies, so an “11/15” read like a measurement where it was a queue. `--ecrire` now refuses a truncated run, naming the cases and advising a lower `--parallele`.
+
+To which is added a latent fault that correcting the expectation exposed: the aggregation did not filter on the corpus. Changing an expectation changes what “conformant” means, and nothing stopped runs measured against different expectations from being mixed. The case had never arisen by coincidence, every corpus change having so far come with a prompt version change.
+
+What the three have in common: the right reasoning existed, in a comment or in a README, and nothing enforced it.
 
 ### The rest
 
-The real conspiracy page is **conforming in all three runs** for the first time in four versions. The encyclopaedic article still tips into `analyse_expertise` in two runs out of three. Disguised advertising is classified `information` in one run out of three, which is new and worth watching.
+The personal account still fails its expected technique in all three runs, and its grade in two out of three. That is deliberate: the expectation was **tightened** in v0.1.6 rather than widened, to name a real fault, the tool not seeing the leap from a single case to a piece of advice. It stays published as a failure for as long as the fault lasts.
 
-Totals: 13, 12 and 11 out of 14. They do not compare with earlier versions, the corpus having gained a case and an expectation. What can be read is still the case-by-case picture.
+Totals: 10, 13 and 13 out of 15. The three-conformity gap between the first run and the other two is of the same order as the dispersion described above, and cannot be read.
 
 ## The temperature, measured
 
@@ -94,6 +113,8 @@ The lines predating the journal were noted by hand, before `lynceus calibrer --e
 
 | Date | Prompt | Temperature | Result |
 |---|---|---|---|
+| 2026-09-05 | v0.1.7 | 0 | 10/15, 13/15, 13/15; encyclopaedia expectation corrected, the SOTT summary flips to `opinion` in all three runs |
+| 2026-09-05 | v0.1.7 | 0 | 12/15, 11/15, 12/15; corpus at 15 cases, index page added and fixed in all three runs |
 | 2026-09-02 | v0.1.6 | 0 | 13/14, 12/14, 11/14; corpus at 14 cases, honest-commerce sentinel added |
 | 2026-09-02 | v0.1.5 | 0 | 9/13, 10/13, 12/13; satirical specimen stabilised, personal account back at A |
 | 2026-09-01 | v0.1.4 | 0 | 11/13, 10/13, 10/13 over three runs; personal account fixed, satirical specimen destabilised |

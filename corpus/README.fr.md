@@ -1,6 +1,6 @@
 # Corpus de calibration
 
-<!-- traduit-de: corpus/README.md sha256:bbcd43c370c4ec2d -->
+<!-- traduit-de: corpus/README.md sha256:673338a8a972cfb8 -->
 
 [English](README.md) · **Français**
 
@@ -94,6 +94,22 @@ La commande ajoute la passe au journal, puis réengendre le tableau entre ses de
 
 C'est ce qui rend le chiffre publié vérifiable. `verifier.sh` réengendre le tableau et échoue s'il diffère de celui qui est publié, ou si aucune passe n'existe pour la version de prompt en vigueur. Avant cela, seule l'estampille de version était contrôlée : rien n'empêchait de l'avancer sans avoir relancé une seule analyse, et le vert se serait allumé quand même.
 
-Le journal ne fait que croître, et l'historique git montre chaque ajout : reculer devient un acte visible. Une passe intégralement resservie depuis l'annuaire y est comptée comme telle, puisqu'elle rejoue une mesure au lieu d'en produire une nouvelle.
+Le journal ne fait que croître, et l'historique git montre chaque ajout : reculer devient un acte visible. Une passe intégralement resservie depuis l'annuaire y est comptée comme telle, puisqu'elle rejoue une mesure au lieu d'en produire une nouvelle, et `--ecrire` refuse de l'enregistrer : trois copies d'un même tirage ne font pas trois passes.
+
+**Répéter une passe sur une version de prompt inchangée.** Une analyse est mise en cache sur le couple (empreinte du contenu, version de prompt) : une seconde passe sur la même version se verrait donc resservir la première. Changer de version de prompt dégage le terrain tout seul, ce qui couvre le cas ordinaire. Pour répéter une même version, il faut vider les analyses de cette version sur l'instance mesurée. Sur une instance de développement adossée à SQLite :
+
+```bash
+python3 - <<'EOF'
+import sqlite3
+c = sqlite3.connect("lynceus.sqlite3")
+ids = [r[0] for r in c.execute("SELECT id FROM analyses WHERE prompt_version = '0.1.7'")]
+c.executemany("UPDATE pages SET analyse_courante_id = NULL WHERE analyse_courante_id = ?", [(i,) for i in ids])
+c.executemany("DELETE FROM analyses WHERE id = ?", [(i,) for i in ids])
+c.commit()
+print(len(ids), "analyses retirées")
+EOF
+```
+
+À ne jamais faire sur l'instance de production : ces analyses sont l'annuaire public, et des pages pointent dessus.
 
 > Un corpus qu'on ajuste jusqu'à ce que tout passe ne mesure plus rien. Chaque assouplissement d'attente doit être justifié par un examen du cas — et jamais porter sur les techniques attendues ou interdites, qui sont le cœur du test.

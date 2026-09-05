@@ -287,6 +287,34 @@ def calibrer(
             console.print("[red]--ecrire refusé avec --filtre : un tableau publié qui ne "
                           "porterait que sur une partie du corpus tromperait son lecteur.[/red]")
             raise typer.Exit(2)
+        # Un cas resté sans carte pour une raison de transport, typiquement le plafond de
+        # débit de l'instance, n'est pas un défaut de qualité : c'est une file d'attente. Il
+        # compte pourtant comme écart grave, si bien qu'un « 11/15 » lirait comme une mesure
+        # là où cinq cas n'ont pas été analysés du tout. Une passe amputée ne s'enregistre pas.
+        injoignables = [r["etiquette"] for r in resultats if "erreur" in r]
+        if injoignables:
+            console.print(f"[red]--ecrire refusé : {len(injoignables)} cas sans analyse "
+                          "(transport, pas qualité). Cette passe sous-estimerait la "
+                          "conformité pour une raison étrangère au contenu.[/red]")
+            console.print("[dim]" + ", ".join(injoignables[:4])
+                          + (" …" if len(injoignables) > 4 else "")
+                          + " — reprendre avec --parallele plus bas, ou attendre que la "
+                            "fenêtre de débit de l'instance se libère.[/dim]")
+            raise typer.Exit(2)
+        # Une passe intégralement resservie depuis l'annuaire ne mesure rien : elle relit une
+        # analyse déjà faite. L'enregistrer ferait compter trois copies d'un même tirage pour
+        # trois passes indépendantes, ce que toute la discipline des passes multiples existe
+        # précisément pour empêcher. Le journal ne prend que des mesures.
+        if mesures and sum(1 for r in resultats if r.get("en_cache")) >= mesures:
+            console.print(f"[red]--ecrire refusé : les {mesures} cas viennent tous de "
+                          "l'annuaire, aucune analyse n'a été produite. Cette passe ne "
+                          "mesure rien.[/red]")
+            console.print("[dim]Une analyse est mise en cache sur (empreinte du contenu, "
+                          "version de prompt). Rejouer une passe sur une version inchangée "
+                          "ressert donc la précédente. Pour répéter une même version, vider "
+                          "les analyses de cette version sur l'instance mesurée "
+                          "(cf. corpus/README.md).[/dim]")
+            raise typer.Exit(2)
         _publier_la_passe(fichier, entrees, resultats, conformes, mesures)
 
     if graves:
@@ -351,7 +379,7 @@ def _publier_la_passe(corpus: Path, entrees: list, resultats: list, conformes: i
     for chemin, langue in _rapports_publies(corpus.parent):
         if not chemin.is_file():
             continue
-        liste = calibration.passes_courantes(journal, meta["prompt_version"])
+        liste = calibration.passes_courantes(journal, meta["prompt_version"], calibration.empreinte(corpus))
         if calibration.remplacer_bloc(chemin, calibration.bloc(liste, langue)):
             console.print(f"[dim]Tableau réengendré dans {chemin}[/dim]")
     _restamper_traductions(corpus.parent)
@@ -956,11 +984,12 @@ def calibration_publiee(
 
     journal = corpus.parent / "passes.jsonl"
     version = moteur_prompt.versions_disponibles()[-1]
-    liste = calibration.passes_courantes(journal, version)
+    liste = calibration.passes_courantes(journal, version, calibration.empreinte(corpus))
     if not liste:
         console.print(
-            f"[red]Aucune passe enregistrée pour le prompt v{version}.[/red]\n"
-            f"Les chiffres publiés ne se rapporteraient à rien. Lancer :\n"
+            f"[red]Aucune passe enregistrée pour le prompt v{version} sur ce corpus.[/red]\n"
+            f"Les chiffres publiés ne se rapporteraient à rien. Une attente modifiée change ce\n"
+            f"que « conforme » veut dire : les passes antérieures ne comptent plus. Lancer :\n"
             f"  lynceus calibrer {corpus} --ecrire"
         )
         raise typer.Exit(1)
