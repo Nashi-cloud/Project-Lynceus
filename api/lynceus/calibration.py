@@ -97,14 +97,24 @@ def passes(journal: Path, version_prompt: str = "", modele: str = "") -> list[di
     return lues
 
 
-def passes_courantes(journal: Path, version_prompt: str) -> list[dict]:
-    """Les passes qui décrivent ce que l'instance rend aujourd'hui.
+def passes_courantes(journal: Path, version_prompt: str, empreinte_corpus: str = "") -> list[dict]:
+    """Les passes qui décrivent ce que l'instance rend aujourd'hui, sur le corpus d'aujourd'hui.
 
     Le modèle compte autant que la version de prompt. Deux modèles ne donnent pas les mêmes
     notes sur le même texte, et un tableau qui mélangerait leurs passes afficherait des
     intervalles de score qui ne mesureraient plus la variabilité d'un modèle mais l'écart
-    entre deux. Ne sont donc retenues que les passes du modèle de la plus récente."""
+    entre deux. Ne sont donc retenues que les passes du modèle de la plus récente.
+
+    Le corpus compte tout autant. Modifier une attente change ce que « conforme » veut dire,
+    et agréger des passes mesurées contre des attentes différentes donnerait un total qui ne
+    correspond à aucun corpus réel. Une passe antérieure à la modification cesse donc de
+    compter, ce qui force une nouvelle mesure au lieu de la maquiller. Jusqu'ici le filtre
+    n'existait pas : le cas ne s'était jamais présenté parce qu'un changement de corpus avait
+    toujours accompagné un changement de version de prompt, qui excluait les anciennes passes
+    par un autre chemin. Se reposer sur cette coïncidence n'était pas un garde-fou."""
     toutes = passes(journal, version_prompt)
+    if empreinte_corpus:
+        toutes = [p for p in toutes if p.get("corpus") == empreinte_corpus]
     if not toutes:
         return []
     return [p for p in toutes if p.get("modele") == toutes[-1].get("modele")]

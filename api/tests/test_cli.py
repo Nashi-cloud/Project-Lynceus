@@ -185,13 +185,13 @@ def corpus(tmp_path):
     return tmp_path / "corpus.yaml"
 
 
-def _simuler_api(monkeypatch, carte_rendue):
+def _simuler_api(monkeypatch, carte_rendue, en_cache=False):
     class Reponse:
         status_code = 200
         text = ""
 
         def json(self):
-            return {"carte": carte_rendue, "en_cache": False}
+            return {"carte": carte_rendue, "en_cache": en_cache}
 
     monkeypatch.setattr("httpx.post", lambda *a, **kw: Reponse())
     monkeypatch.setattr(
@@ -235,6 +235,52 @@ def test_calibrer_filtre(corpus, monkeypatch):
     _simuler_api(monkeypatch, carte(categorie="satire", grade="A"))
     resultat = runner.invoke(app, ["calibrer", str(corpus), "--filtre", "inexistant"])
     assert "0/0 conformes" in resultat.stdout
+
+
+def test_calibrer_ecrire_refuse_une_passe_amputee(corpus, monkeypatch):
+    """Un cas resté sans carte pour une raison de transport n'est pas un défaut de qualité.
+
+    Il compte pourtant comme écart grave. Enregistrer la passe publierait un total qui
+    sous-estime la conformité pour une raison étrangère au contenu. Vu le 2026-09-05 : le
+    plafond de débit de l'instance a laissé cinq cas sur quinze sans analyse, et la passe
+    annonçait 11/15 comme s'il s'agissait d'une mesure."""
+    class Refus:
+        status_code = 429
+        text = "Trop de demandes"
+
+        def json(self):
+            return {"detail": "Trop de demandes d'analyse"}
+
+    monkeypatch.setattr("httpx.post", lambda *a, **kw: Refus())
+    monkeypatch.setattr("time.sleep", lambda _: None)  # pas d'attente réelle dans un test
+    monkeypatch.setattr(
+        "httpx.get",
+        lambda *a, **kw: type("R", (), {"json": lambda self: {"modele": "test/modele", "prompt_version": "0.1.1"}})(),
+    )
+    resultat = runner.invoke(app, ["calibrer", str(corpus), "--ecrire"])
+    assert resultat.exit_code == 2
+    assert not (corpus.parent / "passes.jsonl").exists()
+
+
+def test_calibrer_ecrire_refuse_une_passe_entierement_resservie(corpus, monkeypatch):
+    """Une passe où tout vient de l'annuaire ne mesure rien : elle relit une analyse déjà
+    faite. L'enregistrer ferait compter trois copies d'un même tirage pour trois passes
+    indépendantes, ce que la discipline des passes multiples existe pour empêcher.
+
+    Le cas n'est pas théorique : le 2026-09-05, un vidage de cache silencieusement raté
+    entre deux passes a produit trois résultats rigoureusement identiques, pris un instant
+    pour trois mesures."""
+    _simuler_api(monkeypatch, carte(categorie="satire", grade="A"), en_cache=True)
+    resultat = runner.invoke(app, ["calibrer", str(corpus), "--ecrire"])
+    assert resultat.exit_code == 2
+    assert not (corpus.parent / "passes.jsonl").exists()
+
+
+def test_calibrer_ecrire_accepte_une_passe_mesuree(corpus, monkeypatch):
+    _simuler_api(monkeypatch, carte(categorie="satire", grade="A"), en_cache=False)
+    resultat = runner.invoke(app, ["calibrer", str(corpus), "--ecrire"])
+    assert resultat.exit_code == 0
+    assert (corpus.parent / "passes.jsonl").is_file()
 
 
 def test_calibrer_refuse_un_corpus_mal_forme(tmp_path, monkeypatch):

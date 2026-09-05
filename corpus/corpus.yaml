@@ -167,7 +167,7 @@
   titre_en: Confirmation bias — Wikipedia
   content_hash: c9efee992b48b58c714a92272e011caef73c140b9312532ee580d2c8356d6a49
   capture_le: 2026-08-24
-  categorie_attendue: information
+  categories_acceptables: [analyse_expertise, information]
   grade_attendu: [A, B]
   techniques_interdites: [absence_de_sources, jargon_pseudo_scientifique, autorite_anonyme]
   notes: |
@@ -175,6 +175,21 @@
     Doit être bien noté sans qu'aucune technique ne soit relevée. Contenu sous licence
     libre (CC BY-SA), donc reproductible sans réserve — contrairement aux autres captures.
     Mesuré le 2026-08-24 (glm-5.2, prompt 0.1.1) : information, A (83), 0 technique.
+
+    L'attente exigeait `information` seul, et le cas échouait deux passes sur trois en
+    v0.1.6 puis les trois en v0.1.7. Deux catégories sont désormais acceptées, pour une
+    raison de méthode et non pour faire passer le test. Le prompt définit `information`
+    comme du « contenu journalistique factuel (qui, quoi, où, quand) » et
+    `analyse_expertise` comme une « analyse approfondie, vulgarisation scientifique » : une
+    notice d'encyclopédie n'est ni l'un ni l'autre exactement, et **aucune des deux
+    définitions ne parle d'encyclopédie**. Le corpus exigeait donc une frontière que la
+    méthode ne trace nulle part, ce qui est le défaut corrigé quatre fois de suite du côté
+    du prompt.
+
+    Rien de ce qui mesure la qualité n'est relâché ici. Le prompt dit lui-même que la
+    catégorie est « la nature dominante du contenu, PAS sa qualité » : ce qui juge cette
+    page reste sa fourchette de grade [A, B] et ses trois techniques interdites, toutes
+    tenues à chaque passe.
 
 - capture: captures/sott-changements-terrestres.md
   url: https://fr.sott.net/article/44562-Resume-SOTT-des-changements-terrestres-Juin-2026-Conditions-meteorologiques-extremes-revolte-de-la-planete-et-boules-de-feu
@@ -210,3 +225,30 @@
     grave : la technique suppose un discours alarmiste ou miraculeux, absent de ce texte.
     Deux catégories sont acceptées, la méthodologie rangeant « boutique » sous `autre` et
     « contenu commercial » sous `publicite_sponsorise`.
+
+- fichier: specimens/13-fictif-sommaire-accueil.md
+  titre: La Gazette de Saint-Aubin, page d'accueil
+  titre_en: La Gazette de Saint-Aubin, the homepage
+  categorie_attendue: autre
+  grade_attendu: [A, B, C]
+  techniques_interdites: [eux_contre_nous, appel_a_la_peur, hyper_intentionnalisme]
+  notes: |
+    Un sommaire, pas un article. Cas rapporté par un utilisateur : sur une page d'accueil,
+    l'analyse « part dans tous les sens », faute d'un contenu unique à analyser. La page
+    n'avance aucune thèse, elle en annonce plusieurs, et chacune des pages annoncées
+    s'analyserait séparément.
+
+    Ce que la mesure a dit, avant toute correction (prompt v0.1.6, trois passes) : catégorie
+    `information`, `information`, puis `autre`. Le même sommaire classé deux fois sur trois
+    comme un article, ce qui explique le désordre rapporté — noté comme un article, il est
+    noté sur des attentes qui n'ont pas de sens pour lui. D'où le prompt v0.1.7.
+
+    `verite_cachee` avait d'abord été inscrit ici comme interdit, puis retiré : la mesure a
+    donné raison au modèle. Le titre « Ce que votre facture d'eau cache vraiment » est bien
+    sur la page, et c'est bien la formule de la révélation. Le sommaire choisit d'afficher
+    ce titre, donc la formule est de lui. Les trois techniques restantes n'ont aucun appui
+    textuel : les détecter, ce serait avoir imaginé le contenu des articles annoncés au
+    lieu de lire la page reçue.
+
+    Le grade est large à dessein. Il ne prétend pas dire ce que vaut un sommaire, il garde
+    seulement contre un verdict absurde sur la page d'accueil d'un journal local ordinaire.
