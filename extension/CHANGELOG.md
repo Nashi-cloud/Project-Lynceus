@@ -2,6 +2,10 @@
 
 Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension : utile pour vérifier qu'un rebuild a bien été rechargé.
 
+## 0.11.3 (2026-09-05)
+
+- **fix** : le panneau ne tourne plus indéfiniment sur une analyse déjà terminée. Deux causes se cumulaient, invisibles depuis le panneau tant qu'il se contentait d'écouter. La notification de fin part sans accusé de réception : arrivée pendant l'ouverture du panneau, elle affichait bien la carte, puis la réponse en retard à la demande d'état la remplaçait par le sablier, définitivement. Et le service worker MV3 n'est pas un processus qui dure : Chrome l'arrête dès qu'il le juge inactif, l'état d'analyse vit dans sa mémoire et l'appel réseau meurt avec lui, si bien que plus personne n'envoie de notification. Le panneau redemande maintenant l'état à chaque battement de son minuteur tant qu'il attend, ce qui rattrape une notification perdue et maintient le service worker éveillé le temps de son analyse. Un service worker qui répond « repos » alors que le panneau attend a forcément tout oublié : l'analyse est déclarée interrompue, avec un bouton pour la relancer, au lieu d'un sablier sans fin.
+
 ## 0.11.2 (2026-08-29)
 
 - **fix** : deux dépendances mises à jour, signalées par Dependabot dès l'ouverture publique du dépôt. `@mozilla/readability` passe en 0.6.0 : la version précédente était vulnérable à un déni de service par expression régulière, et c'est la seule dépendance à laquelle on donne à manger du contenu hostile, puisqu'elle lit la page analysée. Une page fabriquée pouvait donc faire tourner l'extraction en boucle. `esbuild` passe en 0.25.0, dont la faille ne concernait que son serveur de développement, que ce projet n'utilise pas : mise à jour par hygiène plutôt que par nécessité.

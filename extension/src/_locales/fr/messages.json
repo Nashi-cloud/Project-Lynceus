@@ -65,6 +65,9 @@
   "erreur_extraction_vide": {
     "message": "L'extraction n'a rien renvoyé."
   },
+  "erreur_analyse_perdue": {
+    "message": "Le navigateur a interrompu l'analyse avant qu'elle aboutisse. Chrome arrête l'extension dès qu'il la juge inactive, et le travail en cours disparaît avec elle. Relancez l'analyse."
+  },
   "erreur_page_inaccessible": {
     "message": "Lynceus n'a pas accès à cette page. Si c'est une page interne du navigateur ou le Web Store, elle n'est pas analysable. Sinon : relancez via le clic droit → « Analyser cette page avec Lynceus » (l'accès expire après un changement de page). Vous pouvez aussi activer le badge passif dans les réglages pour que ce bouton fonctionne aussi après une navigation."
   },
