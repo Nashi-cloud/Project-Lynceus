@@ -1,10 +1,10 @@
 # Publier l'extension sur un magasin
 
-<!-- traduit-de: extension/PUBLICATION.md sha256:602e3b194a56fb58 -->
+<!-- traduit-de: extension/PUBLICATION.md sha256:831553345312400b -->
 
-Tout ce qu'il faut à un humain pour soumettre cette extension au Chrome Web Store, et les
-décisions qui donnent sa forme à la soumission. Les étapes qui exigent un compte, un paiement
-ou une capture d'écran ne s'automatisent pas et sont signalées comme telles.
+Tout ce qu'il faut pour soumettre cette extension au Chrome Web Store, et les décisions qui
+donnent sa forme à la soumission. Les étapes qui exigent un compte, un paiement ou une capture
+d'écran se font à la main, et sont signalées comme telles.
 
 ## Les décisions, avant la paperasse
 
@@ -123,10 +123,10 @@ Les trois attestations se signent sans mentir : les données ne sont pas vendues
 servent à aucune fin étrangère à l'objet unique ci-dessus, et ne servent ni à évaluer une
 solvabilité ni à accorder un prêt.
 
-## Ce qui demande encore un humain
+## Ce qui se fait à la main
 
-1. Un compte développeur au Chrome Web Store, avec ses frais d'inscription uniques. Créer un
-   compte et saisir un moyen de paiement sort de ce qui s'automatise.
+1. Un compte développeur au Chrome Web Store, avec ses frais d'inscription uniques. Ni le
+   compte ni le moyen de paiement ne se délèguent.
 2. Des **captures d'écran**, au moins une, en 1280x800 ou 640x400. Les utiles sont la carte
    d'analyse sur une vraie page, le badge passif dans la barre d'outils, et la page des
    réglages. Une vignette promotionnelle 440x280 est facultative pour une fiche non
