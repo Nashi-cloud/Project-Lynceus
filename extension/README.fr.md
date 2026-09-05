@@ -1,6 +1,6 @@
 # Lynceus Extension, client Chrome (MV3)
 
-<!-- traduit-de: extension/README.md sha256:62dcfa5f06af760c -->
+<!-- traduit-de: extension/README.md sha256:31d370db229f7ef4 -->
 
 [English](README.md) · **Français**
 
@@ -97,6 +97,8 @@ npm run paquet     # → lynceus-extension-v<version>.zip
 ```
 
 Archive prête à être partagée ou soumise au Chrome Web Store. Elle est **reproductible** : deux constructions des mêmes sources produisent un fichier identique (horodatages fixés), ce qui permet de vérifier qu'un paquet distribué correspond bien au code publié.
+
+Le dépôt sur un magasin est documenté à part, dans [PUBLICATION.fr.md](PUBLICATION.fr.md) : les champs de la fiche, la justification des permissions, la déclaration d'usage des données, et les décisions qui les motivent.
 
 ## Vérifications
 

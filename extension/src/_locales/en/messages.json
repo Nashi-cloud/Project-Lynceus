@@ -3,7 +3,7 @@
     "message": "Lynceus, the lookout for information"
   },
   "description_extension": {
-    "message": "Analyses how trustworthy a web page is and explains, without judging, the persuasion techniques it uses. Free software (AGPL-3.0), and self-hostable."
+    "message": "Explains, without judging, the persuasion devices a web page uses, and grades its trustworthiness. Free (AGPL-3.0), self-hostable."
   },
   "action_titre": {
     "message": "Analyse this page with Lynceus"
