@@ -191,7 +191,10 @@ def test_un_tableau_retouche_a_la_main_est_detecte(corpus_publie):
 
     version = moteur_prompt.versions_disponibles()[-1]
     journal = corpus_publie / "passes.jsonl"
-    calibration.enregistrer(journal, passe(prompt_version=version))
+    # L'empreinte du corpus réel, pas celle du gabarit : le contrôle ne retient que les
+    # passes mesurées contre les attentes en vigueur.
+    calibration.enregistrer(journal, passe(
+        prompt_version=version, corpus=calibration.empreinte(corpus_publie / "corpus.yaml")))
     for chemin, langue in (("RESULTATS.md", "fr"), ("en/RESULTATS.md", "en")):
         fichier = corpus_publie / chemin
         calibration.remplacer_bloc(
@@ -220,6 +223,38 @@ def test_une_passe_resservie_depuis_le_cache_le_dit():
 
     neuve = calibration.bloc([passe(depuis_cache=0, mesures=1)])
     assert "\\*" not in neuve and "astérisque" not in neuve
+
+
+def test_le_tableau_ne_melange_pas_deux_corpus(tmp_path):
+    """Modifier une attente change ce que « conforme » veut dire.
+
+    Agréger des passes mesurées contre des attentes différentes donnerait un total qui ne
+    correspond à aucun corpus réel. Le filtre n'existait pas : le cas ne s'était jamais
+    présenté parce qu'un changement de corpus avait toujours accompagné un changement de
+    version de prompt, qui excluait les anciennes passes par un autre chemin."""
+    journal = tmp_path / "passes.jsonl"
+    calibration.enregistrer(journal, passe(corpus="a" * 16, conformes=1))
+    calibration.enregistrer(journal, passe(corpus="b" * 16, conformes=0))
+
+    courantes = calibration.passes_courantes(journal, "0.1.2", "b" * 16)
+    assert [p["corpus"] for p in courantes] == ["b" * 16]
+
+
+def test_sans_empreinte_de_corpus_toutes_les_passes_comptent(tmp_path):
+    """Le filtre est explicite : un appel qui ne le demande pas garde l'ancien comportement,
+    ce qui laisse lisibles les journaux antérieurs au champ."""
+    journal = tmp_path / "passes.jsonl"
+    calibration.enregistrer(journal, passe(corpus="a" * 16))
+    calibration.enregistrer(journal, passe(corpus="b" * 16))
+    assert len(calibration.passes_courantes(journal, "0.1.2")) == 2
+
+
+def test_un_corpus_modifie_ne_laisse_aucune_passe_courante(tmp_path):
+    """Le cas qui compte : après modification d'une attente, plus rien ne doit compter.
+    Le tableau ne peut alors plus être engendré, et la mesure redevient obligatoire."""
+    journal = tmp_path / "passes.jsonl"
+    calibration.enregistrer(journal, passe(corpus="a" * 16))
+    assert calibration.passes_courantes(journal, "0.1.2", "c" * 16) == []
 
 
 def test_le_tableau_ne_melange_pas_deux_modeles(tmp_path):

@@ -4,31 +4,31 @@
 
 Dernière passe : **2026-09-05** · modèle `z-ai/glm-5.2` (via openrouter.ai) · prompt **v0.1.7** · température **0**
 
-**3 passes** enregistrées sur cette version du prompt : **12/15, 11/15, 12/15** conformes. Une passe unique ne dirait rien de solide, puisque le modèle ne rend pas deux fois la même analyse du même texte.
+**3 passes** enregistrées sur cette version du prompt : **10/15, 13/15, 13/15** conformes. Une passe unique ne dirait rien de solide, puisque le modèle ne rend pas deux fois la même analyse du même texte.
 
 | Cas | Catégorie | Grade | Score | Écarts relevés |
 |---|---|---|---|---|
-| Le conseil municipal vote à l'unanimité contre l'unanimité | satire | A | 86 à 89 | — |
-| Pourquoi je pense que notre commune se trompe sur le stationnement payant | opinion | A | 83 à 85 | — |
-| La racine oubliée que les laboratoires préfèrent vous cacher | publicite_sponsorise | E | 10 à 14 | — |
-| Le pont de la Vieille-Écluse fermé pour travaux du 3 au 28 mars | information | A | 80 à 82 | — |
-| Méditation de l'Avent : l'attente comme chemin | contenu_confessionnel | A | 90 | — |
-| Coupure électrique de novembre : trois questions qui dérangent | theorie_du_complot | E | 1 à 10 | technique manquante : `hyper_intentionnalisme` (1 passe(s) sur 3) |
-| What They Won't Tell You About the New Water Treatment Plant | theorie_du_complot | E | 14 à 18 | — |
-| Cinq habitudes du soir pour mieux dormir | publicite_sponsorise | B C B | 62 à 67 | grade B hors de la fourchette C, D (2 passe(s) sur 3) ; technique manquante : `conflit_interet_commercial` (2 passe(s) sur 3) |
-| Fluoration de l'eau : le débat reste ouvert | information / opinion | D | 43 à 49 | — |
-| Pourquoi le ciel est bleu, et pourquoi cette explication est incomplète | analyse_expertise | B | 66 à 73 | — |
-| Ce que trois ans d'errance médicale m'ont appris | temoignage | A | 82 à 98 | grade A hors de la fourchette B, C, D ; technique manquante : `preuve_anecdotique` |
-| Biais de confirmation — Wikipédia | analyse_expertise | A | 88 à 92 | catégorie `analyse_expertise` au lieu de information |
-| Résumé SOTT des changements terrestres - Juin 2026 | pseudo_science / theorie_du_complot | E D D | 28 à 38 | — |
-| Atelier du Guidon, réparation de vélos | autre | A | 89 à 98 | — |
-| La Gazette de Saint-Aubin, page d'accueil | autre | A A B | 78 à 85 | — |
+| Le conseil municipal vote à l'unanimité contre l'unanimité | satire | A | 84 à 92 | — |
+| Pourquoi je pense que notre commune se trompe sur le stationnement payant | opinion | A | 82 à 84 | — |
+| La racine oubliée que les laboratoires préfèrent vous cacher | publicite_sponsorise | E | 7 à 10 | — |
+| Le pont de la Vieille-Écluse fermé pour travaux du 3 au 28 mars | information | A B A | 72 à 82 | — |
+| Méditation de l'Avent : l'attente comme chemin | contenu_confessionnel | A | 94 à 99 | — |
+| Coupure électrique de novembre : trois questions qui dérangent | theorie_du_complot | E | 4 à 6 | technique manquante : `hyper_intentionnalisme` (1 passe(s) sur 3) |
+| What They Won't Tell You About the New Water Treatment Plant | opinion / theorie_du_complot | E | 2 à 18 | catégorie `opinion` au lieu de theorie_du_complot (1 passe(s) sur 3) ; technique manquante : `autorite_anonyme` (1 passe(s) sur 3) |
+| Cinq habitudes du soir pour mieux dormir | publicite_sponsorise | B C C | 64 à 65 | grade B hors de la fourchette C, D (1 passe(s) sur 3) |
+| Fluoration de l'eau : le débat reste ouvert | information / opinion | D | 38 à 46 | — |
+| Pourquoi le ciel est bleu, et pourquoi cette explication est incomplète | analyse_expertise | B A B | 72 à 80 | — |
+| Ce que trois ans d'errance médicale m'ont appris | temoignage | A B A | 78 à 87 | grade A hors de la fourchette B, C, D (2 passe(s) sur 3) ; technique manquante : `preuve_anecdotique` |
+| Biais de confirmation — Wikipédia | analyse_expertise / information | A | 88 à 90 | — |
+| Résumé SOTT des changements terrestres - Juin 2026 | opinion | D | 32 à 38 | catégorie `opinion` au lieu de theorie_du_complot, pseudo_science ; technique manquante : `verite_cachee` (1 passe(s) sur 3) |
+| Atelier du Guidon, réparation de vélos | autre | A | 94 à 100 | — |
+| La Gazette de Saint-Aubin, page d'accueil | autre | A A B | 73 à 100 | — |
 
 <!-- calibration:fin -->
 
 ## Lecture
 
-Trois passes indépendantes sur analyses neuves, sur un corpus passé à **quinze cas**.
+Trois passes indépendantes sur analyses neuves, sur un corpus de **quinze cas** dont une attente a été corrigée.
 
 Les cinq sentinelles de [docs/METHODOLOGIE.md](../docs/METHODOLOGIE.md) §7 tiennent aux trois passes, catégorie et fourchette.
 
@@ -40,31 +40,41 @@ Sous le prompt v0.1.6, trois passes donnaient `information`, `information`, `aut
 
 La règle existait pourtant, mais énoncée dans des termes que le modèle ne peut pas rapprocher de ce qu'il reçoit : « page non textuelle (boutique, accueil, forum) ». Or la page d'accueil d'un journal est parfaitement textuelle. C'est la quatrième fois de suite que le défaut est là : **le corpus sanctionnait une frontière que le prompt ne traçait nulle part**. Le v0.1.7 décrit le sommaire par sa forme, une suite de titres annonçant des contenus absents, et interdit de noter ce qui n'a pas été lu.
 
-Résultat aux trois passes : `autre`, `autre`, `autre`, avec la confiance qui descend de 0,90 à 0,85, 0,70 et 0,82 comme la règle le demande.
+Résultat : `autre` aux trois passes, et encore aux trois passes de la mesure suivante, soit six sur six.
 
-### Une attente écrite avant la mesure, et fausse
+### L'encyclopédie, ou une frontière que la méthode ne trace pas
 
-`verite_cachee` avait d'abord été inscrit parmi les techniques interdites de ce cas, au motif que rien dans un sommaire ne relève d'un procédé de révélation. La mesure a donné raison au modèle : le titre « Ce que votre facture d'eau cache vraiment » est bien sur la page, placé là par l'auteur du spécimen lui-même, et c'est bien la formule de la révélation. Le sommaire choisit d'afficher ce titre, donc la formule est de lui. L'attente a été retirée, pas la détection.
+L'attente sur l'article de Wikipédia exigeait `information`. Le cas échouait deux passes sur trois en v0.1.6, puis les trois en v0.1.7.
 
-### Trois passes qui n'en étaient qu'une
+Le premier réflexe était d'exiger `analyse_expertise`, puisque c'est ce que le modèle rendait. Ce serait refaire la même erreur : le prompt définit `information` comme du « contenu journalistique factuel (qui, quoi, où, quand) » et `analyse_expertise` comme une « analyse approfondie, vulgarisation scientifique », et **aucune des deux définitions ne parle d'encyclopédie**. Les deux catégories sont donc acceptées.
 
-Le vidage du cache entre deux passes visait une colonne qui n'existe pas. Il a échoué en silence, et les deux passes suivantes ont été resservies intégralement depuis l'annuaire : trois totaux rigoureusement identiques, à un cheveu d'être publiés comme trois mesures indépendantes.
+La mesure a tranché mieux que le raisonnement : les trois passes donnent `analyse_expertise`, `information`, `analyse_expertise`. Exiger l'une des deux aurait produit un échec sur trois, sur une page dont rien ne justifie qu'elle échoue.
 
-Le journal portait déjà le champ `depuis_cache`, avec ce commentaire dans le code : « le compter permet de ne pas prendre trois copies d'une même analyse pour trois passes indépendantes ». Le raisonnement était écrit, le garde-fou n'avait jamais été construit. `lynceus calibrer --ecrire` refuse désormais d'enregistrer une passe dont tous les cas viennent du cache. Deux tests couvrent le refus, et la procédure de vidage est documentée dans [README.md](README.md).
+Aucune exigence de qualité n'a été relâchée. Le prompt dit lui-même que la catégorie est « la nature dominante du contenu, **pas sa qualité** » : ce qui juge cette page reste sa fourchette `[A, B]` et ses trois techniques interdites, tenues aux trois passes.
 
-Une passe du même genre dormait au journal depuis le 27 août, sur le prompt v0.1.2. Elle y reste : elle a bien eu lieu, elle ne mesure simplement rien, le tableau la marque déjà d'un astérisque, et effacer une ligne d'un journal détruirait une trace. C'est à l'agrégation de savoir ce qu'elle vaut, pas à l'archive de mentir.
+### Le résultat le plus instructif de la journée
 
-### Les deux écarts chroniques
+Le résumé SOTT, capture figée dont l'empreinte de contenu est vérifiée à chaque passe, sortait `pseudo_science` ou `theorie_du_complot` aux **trois** passes de la mesure précédente, sans un écart. Il sort `opinion` aux **trois** passes de celle-ci.
 
-L'article encyclopédique sort en `analyse_expertise` aux **trois** passes, contre deux sur trois en v0.1.6. L'attente dit `information`. La méthodologie range pourtant la vulgarisation sous `analyse_expertise`, et une notice d'encyclopédie n'est pas du contenu journalistique. Le modèle est constant et il a l'air d'avoir raison : **c'est l'attente qui est à revoir**, ce qui demandera trois nouvelles passes et n'a donc pas été fait dans le même mouvement.
+Même capture, même prompt, même modèle, même température, une heure d'intervalle. Rien dans le dépôt n'a changé entre les deux mesures pour ce cas. La seule explication compatible avec les faits est une variation du côté du fournisseur, que rien ici ne permet d'observer.
 
-Le témoignage échoue toujours ses deux attentes, technique et fourchette. C'est voulu : l'attente a été **durcie** en v0.1.6 plutôt qu'élargie, pour nommer un vrai défaut, l'outil ne voyant pas la généralisation d'un cas unique à un conseil. Elle est publiée en échec tant que le défaut dure.
+Trois passes ne suffisaient déjà pas à distinguer une amélioration d'un match nul. Cette page peut désormais dire mieux : **six tirages du même texte se répartissent trois contre trois entre deux verdicts opposés.** C'est la meilleure justification qui soit d'un corpus annoté à une autre échelle, et d'un modèle entraîné pour cette tâche plutôt que loué à l'appel.
+
+### Deux garde-fous, nés de deux erreurs du même jour
+
+Le vidage du cache entre deux passes visait une colonne inexistante. Il a échoué en silence, et deux passes ont été resservies intégralement depuis l'annuaire : trois totaux identiques, à un cheveu d'être publiés comme trois mesures. Le champ `depuis_cache` existait déjà, avec le bon raisonnement en commentaire ; le garde-fou n'avait jamais été construit. `--ecrire` refuse désormais une passe entièrement resservie.
+
+Puis le plafond de débit de l'instance a laissé cinq cas sans analyse sur trois passes. Ils comptent comme écarts graves, si bien qu'un « 11/15 » lisait comme une mesure là où c'était une file d'attente. `--ecrire` refuse désormais une passe amputée, en nommant les cas et en conseillant de baisser `--parallele`.
+
+S'y ajoute un défaut latent que la correction de l'attente a exposé : l'agrégation ne filtrait pas sur le corpus. Modifier une attente change ce que « conforme » veut dire, et rien n'empêchait de mélanger des passes mesurées contre des attentes différentes. Le cas ne s'était jamais présenté par coïncidence, chaque changement de corpus ayant jusqu'ici accompagné un changement de version de prompt.
+
+Le point commun des trois : le raisonnement juste existait, dans un commentaire ou dans un README, et rien ne l'appliquait.
 
 ### Le reste
 
-La publicité déguisée manque `conflit_interet_commercial` deux passes sur trois, contre une sur trois en v0.1.6. La page complotiste réelle perd `hyper_intentionnalisme` une fois sur trois, ce qu'elle ne faisait pas la version précédente.
+Le témoignage échoue toujours sa technique attendue aux trois passes, et son grade à deux sur trois. C'est voulu : l'attente a été **durcie** en v0.1.6 plutôt qu'élargie, pour nommer un vrai défaut, l'outil ne voyant pas la généralisation d'un cas unique à un conseil. Elle est publiée en échec tant que le défaut dure.
 
-Totaux : 12, 11 et 12 sur 15. Rapportés aux 13, 12 et 11 sur 14 de la v0.1.6, cela fait 9 écarts graves sur 45 mesures contre 7 sur 42, soit 20 % contre 17 %. **Cette différence ne se lit pas** : c'est précisément ce que cette page dit depuis quatre versions, le corpus à cette taille ne distingue pas une amélioration d'un match nul. Ce qui se lit, c'est le cas visé, qui passe de deux échecs sur trois à zéro.
+Totaux : 10, 13 et 13 sur 15. L'écart de trois conformités entre la première passe et les deux autres est du même ordre que la dispersion décrite plus haut, et ne se lit pas.
 
 ## La température, mesurée
 
@@ -99,6 +109,7 @@ Les lignes antérieures au journal ont été relevées à la main, avant que `ly
 
 | Date | Prompt | Température | Résultat |
 |---|---|---|---|
+| 2026-09-05 | v0.1.7 | 0 | 10/15, 13/15, 13/15 ; attente encyclopédique corrigée, le résumé SOTT bascule en `opinion` aux trois passes |
 | 2026-09-05 | v0.1.7 | 0 | 12/15, 11/15, 12/15 ; corpus à 15 cas, sommaire ajouté et corrigé aux trois passes |
 | 2026-09-02 | v0.1.6 | 0 | 13/14, 12/14, 11/14 ; corpus à 14 cas, sentinelle commerce honnête ajouté |
 | 2026-09-02 | v0.1.5 | 0 | 9/13, 10/13, 12/13 ; spécimen satirique stabilisé, témoignage reparti en A |

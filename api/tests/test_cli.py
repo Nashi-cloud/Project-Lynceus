@@ -237,6 +237,31 @@ def test_calibrer_filtre(corpus, monkeypatch):
     assert "0/0 conformes" in resultat.stdout
 
 
+def test_calibrer_ecrire_refuse_une_passe_amputee(corpus, monkeypatch):
+    """Un cas resté sans carte pour une raison de transport n'est pas un défaut de qualité.
+
+    Il compte pourtant comme écart grave. Enregistrer la passe publierait un total qui
+    sous-estime la conformité pour une raison étrangère au contenu. Vu le 2026-09-05 : le
+    plafond de débit de l'instance a laissé cinq cas sur quinze sans analyse, et la passe
+    annonçait 11/15 comme s'il s'agissait d'une mesure."""
+    class Refus:
+        status_code = 429
+        text = "Trop de demandes"
+
+        def json(self):
+            return {"detail": "Trop de demandes d'analyse"}
+
+    monkeypatch.setattr("httpx.post", lambda *a, **kw: Refus())
+    monkeypatch.setattr("time.sleep", lambda _: None)  # pas d'attente réelle dans un test
+    monkeypatch.setattr(
+        "httpx.get",
+        lambda *a, **kw: type("R", (), {"json": lambda self: {"modele": "test/modele", "prompt_version": "0.1.1"}})(),
+    )
+    resultat = runner.invoke(app, ["calibrer", str(corpus), "--ecrire"])
+    assert resultat.exit_code == 2
+    assert not (corpus.parent / "passes.jsonl").exists()
+
+
 def test_calibrer_ecrire_refuse_une_passe_entierement_resservie(corpus, monkeypatch):
     """Une passe où tout vient de l'annuaire ne mesure rien : elle relit une analyse déjà
     faite. L'enregistrer ferait compter trois copies d'un même tirage pour trois passes
