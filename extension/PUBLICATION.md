@@ -2,9 +2,9 @@
 
 **English** · [Français](PUBLICATION.fr.md)
 
-Everything a human needs to submit this extension to the Chrome Web Store, and the decisions
-that shape the submission. The steps that require an account, a payment or a screenshot cannot
-be automated and are marked as such.
+Everything needed to submit this extension to the Chrome Web Store, and the decisions that
+shape the submission. The steps that require an account, a payment or a screenshot are done by
+hand, and are marked as such.
 
 ## The decisions, before the paperwork
 
@@ -118,10 +118,10 @@ The three certifications can all be signed truthfully: the data is not sold to t
 not used for any purpose unrelated to the single purpose above, and not used to determine
 creditworthiness or for lending.
 
-## What still needs a human
+## What is done by hand
 
-1. A Chrome Web Store developer account, with its one-off registration fee. Creating accounts
-   and entering payment details is out of scope for automation.
+1. A Chrome Web Store developer account, with its one-off registration fee. Neither the account
+   nor the payment details can be delegated.
 2. **Screenshots**, at least one, 1280x800 or 640x400. The useful ones are the analysis card on
    a real page, the passive badge on the toolbar, and the settings page. A 440x280 promotional
    tile is optional for an unlisted listing.
