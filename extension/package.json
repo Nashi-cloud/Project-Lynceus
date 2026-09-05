@@ -1,6 +1,6 @@
 {
   "name": "lynceus-extension",
-  "version": "0.11.3",
+  "version": "0.11.4",
   "private": true,
   "description": "Lynceus, la vigie de l'information. Extension Chrome (MV3).",
   "license": "AGPL-3.0-or-later",
