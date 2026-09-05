@@ -92,6 +92,22 @@ The command appends the run to the journal, then regenerates the table between i
 
 That is what makes the published figure checkable. `verifier.sh` regenerates the table and fails if it differs from the published one, or if no run exists for the prompt version in force. Before that, only the version stamp was checked: nothing stopped anyone from moving it forward without having run a single analysis, and the build would still have gone green.
 
-The journal only ever grows, and the git history shows every addition: walking something back becomes a visible act. A run served entirely from the directory cache is counted as such, since it replays a measurement instead of producing a new one.
+The journal only ever grows, and the git history shows every addition: walking something back becomes a visible act. A run served entirely from the directory cache is counted as such, since it replays a measurement instead of producing a new one, and `--ecrire` refuses to journal it: three copies of one draw are not three runs.
+
+**Repeating a run on an unchanged prompt version.** An analysis is cached on the pair (content fingerprint, prompt version), so a second run on the same version would simply be served the first one. Bumping the prompt version clears the way on its own, which covers the usual case. To repeat one version, the analyses of that version have to be cleared on the instance under measurement. On a development instance backed by SQLite:
+
+```bash
+python3 - <<'EOF'
+import sqlite3
+c = sqlite3.connect("lynceus.sqlite3")
+ids = [r[0] for r in c.execute("SELECT id FROM analyses WHERE prompt_version = '0.1.7'")]
+c.executemany("UPDATE pages SET analyse_courante_id = NULL WHERE analyse_courante_id = ?", [(i,) for i in ids])
+c.executemany("DELETE FROM analyses WHERE id = ?", [(i,) for i in ids])
+c.commit()
+print(len(ids), "analyses cleared")
+EOF
+```
+
+Never do this on the production instance: those analyses are the public directory, and pages point at them.
 
 > A corpus adjusted until everything passes measures nothing any more. Every relaxed expectation must be justified by an examination of the case, and must never bear on the expected or forbidden techniques, which are the heart of the test.

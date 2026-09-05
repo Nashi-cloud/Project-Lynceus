@@ -287,6 +287,20 @@ def calibrer(
             console.print("[red]--ecrire refusé avec --filtre : un tableau publié qui ne "
                           "porterait que sur une partie du corpus tromperait son lecteur.[/red]")
             raise typer.Exit(2)
+        # Une passe intégralement resservie depuis l'annuaire ne mesure rien : elle relit une
+        # analyse déjà faite. L'enregistrer ferait compter trois copies d'un même tirage pour
+        # trois passes indépendantes, ce que toute la discipline des passes multiples existe
+        # précisément pour empêcher. Le journal ne prend que des mesures.
+        if mesures and sum(1 for r in resultats if r.get("en_cache")) >= mesures:
+            console.print(f"[red]--ecrire refusé : les {mesures} cas viennent tous de "
+                          "l'annuaire, aucune analyse n'a été produite. Cette passe ne "
+                          "mesure rien.[/red]")
+            console.print("[dim]Une analyse est mise en cache sur (empreinte du contenu, "
+                          "version de prompt). Rejouer une passe sur une version inchangée "
+                          "ressert donc la précédente. Pour répéter une même version, vider "
+                          "les analyses de cette version sur l'instance mesurée "
+                          "(cf. corpus/README.md).[/dim]")
+            raise typer.Exit(2)
         _publier_la_passe(fichier, entrees, resultats, conformes, mesures)
 
     if graves:
