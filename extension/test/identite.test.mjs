@@ -8,7 +8,7 @@
  * cesse d'être une échelle et devient une impression. */
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { describe, it } from "node:test";
 import { CHEMIN_LOGO, TAILLES, cheminIcone, encoderPng, rendre } from "../icones.mjs";
 
@@ -150,6 +150,32 @@ describe("polices embarquées", () => {
 
   it("gardent leur licence OFL auprès des fichiers", () => {
     assert.match(lire("polices/LICENSE"), /Open Font License/);
+  });
+});
+
+describe("fiche de magasin", () => {
+  // Le Chrome Web Store refuse un paquet dont la description du manifeste dépasse
+  // 132 caractères, et tronque un nom au-delà de 75. Rien ne le signale au chargement
+  // local : les deux descriptions ont vécu à 144 et 149 caractères sans que personne le
+  // voie, et l'auraient fait échouer au dépôt. Les catalogues sont la source, pas le
+  // manifeste, qui n'y renvoie que par « __MSG_ ».
+  const LIMITES = { nom_extension: 75, description_extension: 132 };
+
+  it("garde nom et description dans les limites du magasin, dans chaque langue", () => {
+    const manifeste = JSON.parse(lire("manifest.json"));
+    for (const [cle, champ] of [["nom_extension", "name"], ["description_extension", "description"]]) {
+      assert.equal(manifeste[champ], `__MSG_${cle}__`,
+                   `le manifeste doit tirer ${champ} du catalogue, sans quoi ce test ne mesure rien`);
+    }
+    for (const langue of readdirSync("src/_locales")) {
+      const messages = JSON.parse(lire(`src/_locales/${langue}/messages.json`));
+      for (const [cle, limite] of Object.entries(LIMITES)) {
+        const texte = messages[cle]?.message ?? "";
+        assert.ok(texte.length > 0, `${langue} : ${cle} vide`);
+        assert.ok(texte.length <= limite,
+                  `${langue} : ${cle} fait ${texte.length} caractères, maximum ${limite}`);
+      }
+    }
   });
 });
 

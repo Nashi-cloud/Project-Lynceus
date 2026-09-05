@@ -2,6 +2,10 @@
 
 Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension : utile pour vérifier qu'un rebuild a bien été rechargé.
 
+## 0.11.4 (2026-09-05)
+
+- **fix** : la description du manifeste tenait en 144 caractères en français et 149 en anglais, alors que le Chrome Web Store en refuse une au-delà de **132**. Rien ne le signale au chargement local, si bien que les deux vivaient là depuis la version 0.11.0 et auraient fait échouer le premier dépôt. Les deux sont reformulées sous la limite, sans rien perdre : la fiabilité notée, les procédés expliqués, la licence et l'auto-hébergement. `test/identite.test.mjs` vérifie désormais la longueur du nom et de la description dans chaque catalogue, le magasin tronquant un nom au-delà de 75 caractères.
+
 ## 0.11.3 (2026-09-05)
 
 - **fix** : le panneau ne tourne plus indéfiniment sur une analyse déjà terminée. Deux causes se cumulaient, invisibles depuis le panneau tant qu'il se contentait d'écouter. La notification de fin part sans accusé de réception : arrivée pendant l'ouverture du panneau, elle affichait bien la carte, puis la réponse en retard à la demande d'état la remplaçait par le sablier, définitivement. Et le service worker MV3 n'est pas un processus qui dure : Chrome l'arrête dès qu'il le juge inactif, l'état d'analyse vit dans sa mémoire et l'appel réseau meurt avec lui, si bien que plus personne n'envoie de notification. Le panneau redemande maintenant l'état à chaque battement de son minuteur tant qu'il attend, ce qui rattrape une notification perdue et maintient le service worker éveillé le temps de son analyse. Un service worker qui répond « repos » alors que le panneau attend a forcément tout oublié : l'analyse est déclarée interrompue, avec un bouton pour la relancer, au lieu d'un sablier sans fin.
