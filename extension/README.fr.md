@@ -1,6 +1,6 @@
 # Lynceus Extension, client Chrome (MV3)
 
-<!-- traduit-de: extension/README.md sha256:cb81a195b0cf3365 -->
+<!-- traduit-de: extension/README.md sha256:62dcfa5f06af760c -->
 
 [English](README.md) · **Français**
 
@@ -58,6 +58,9 @@ src/
 │   ├── inscription.ts    # obtention d'une clé auprès d'un portail
 │   ├── reglages.ts       # storage.sync, badge OFF par défaut
 │   ├── i18n.ts           # chrome.i18n, catalogues français et anglais
+│   ├── generations.ts    # analyses en vol : un résultat annulé n'atteint jamais le panneau
+│   ├── troncature.ts     # raccourcit une page trop longue pour l'instance, et le signale
+│   ├── veille.ts         # veille du panneau : distinguer « ça travaille » de « plus personne »
 │   ├── logo.svg          # logotype, source unique (pages + icônes)
 │   └── lynceus.css       # jetons et pièces d'interface, jumeaux de ceux du portail
 ├── _locales/             # catalogues fr et en, lus par Chrome lui-même

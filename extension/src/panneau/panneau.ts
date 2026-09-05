@@ -3,6 +3,7 @@
  * n'est jamais interprété comme du HTML. */
 
 import { msg, traduireDocument } from "../commun/i18n";
+import { deciderVeille } from "../commun/veille";
 import type {
   CarteAnalyse,
   CorrespondancePrefixe,
@@ -27,6 +28,14 @@ const DIMENSIONS: (keyof CarteAnalyse["dimensions"])[] =
 const app = document.getElementById("app") as HTMLElement;
 let ongletCourant: number | null = null;
 let intervalleMinuteur: ReturnType<typeof setInterval> | undefined;
+
+/** Numéro du rendu affiché. Deux sources décrivent l'état de l'onglet : les notifications du
+ * service worker, immédiates, et les réponses aux demandes d'état, qui arrivent après un
+ * aller-retour. Une réponse partie avant une notification décrit un état plus ancien, et
+ * l'appliquer ferait reculer le panneau. C'était le défaut observé : la carte s'affichait à
+ * l'ouverture du panneau puis le sablier la remplaçait, sans plus rien pour l'en sortir.
+ * Toute lecture asynchrone note donc ce numéro avant de partir et renonce s'il a changé. */
+let generationRendu = 0;
 
 function arreterMinuteur(): void {
   if (intervalleMinuteur !== undefined) {
@@ -173,7 +182,32 @@ function rendreAttente(phase: "extraction" | "analyse", depuis: number): void {
 
   intervalleMinuteur = setInterval(() => {
     minuteur.textContent = formaterDuree(Date.now() - depuis);
+    void veiller({ phase, depuis });
   }, 1000);
+}
+
+/** Battement de veille, tant que le panneau attend. Il rattrape une notification perdue et
+ * détecte un service worker arrêté puis relancé, cas où l'analyse est morte avec lui sans
+ * que rien ne le dise (cf. commun/veille.ts). Effet de bord recherché : ce message repousse
+ * le minuteur d'inactivité du service worker, qui survit donc à l'analyse qu'il conduit. */
+async function veiller(affiche: { phase: "extraction" | "analyse"; depuis: number }): Promise<void> {
+  if (ongletCourant === null) return;
+  const marque = generationRendu;
+  let recu: EtatOnglet | undefined;
+  try {
+    recu = (await chrome.runtime.sendMessage({
+      type: "lynceus:etat",
+      tabId: ongletCourant,
+    })) as EtatOnglet | undefined;
+  } catch {
+    return; // service worker en cours de redémarrage : le battement suivant retentera
+  }
+  if (generationRendu !== marque) return; // une notification a déjà fait mieux
+  const decision = deciderVeille(affiche, recu);
+  if (decision.action === "patienter") return;
+  rendre(decision.action === "perdue"
+    ? { phase: "erreur", erreur: msg("erreur_analyse_perdue") }
+    : decision.etat);
 }
 
 function rendreErreur(message: string): void {
@@ -397,6 +431,7 @@ function rendreTechnique(technique: Technique): HTMLElement {
 // ---------- orchestration ----------
 
 function rendre(etat: EtatOnglet): void {
+  generationRendu += 1;
   arreterMinuteur(); // ne persiste que le temps d'un rendu "extraction"/"analyse"
   switch (etat.phase) {
     case "repos": idAnalyseCourante = null; rendreRepos(etat.domaine); break;
@@ -412,10 +447,13 @@ async function rafraichir(): Promise<void> {
   const [onglet] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!onglet?.id) return;
   ongletCourant = onglet.id;
+  const marque = generationRendu;
   try {
     const etat = (await chrome.runtime.sendMessage({ type: "lynceus:etat", tabId: onglet.id })) as EtatOnglet;
+    if (generationRendu !== marque) return; // une notification est arrivée entre-temps
     rendre(etat ?? { phase: "repos" });
   } catch {
+    if (generationRendu !== marque) return;
     rendre({ phase: "repos" });
   }
 }

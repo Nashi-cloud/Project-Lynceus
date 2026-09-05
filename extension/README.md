@@ -56,6 +56,9 @@ src/
 │   ├── inscription.ts    # obtaining a key from a portal
 │   ├── reglages.ts       # storage.sync, badge OFF by default
 │   ├── i18n.ts           # chrome.i18n, French and English catalogues
+│   ├── generations.ts    # analyses in flight: a cancelled result never reaches the panel
+│   ├── troncature.ts     # shortening a page too long for the instance, and saying so
+│   ├── veille.ts         # the panel's watch: telling "still working" from "nobody left"
 │   ├── logo.svg          # logotype, single source (pages and icons)
 │   └── lynceus.css       # design tokens and interface parts, twins of the portal's
 ├── _locales/             # fr and en message catalogues, read by Chrome itself
