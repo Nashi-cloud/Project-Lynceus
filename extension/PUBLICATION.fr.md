@@ -1,6 +1,6 @@
 # Publier l'extension sur un magasin
 
-<!-- traduit-de: extension/PUBLICATION.md sha256:831553345312400b -->
+<!-- traduit-de: extension/PUBLICATION.md sha256:973b0fa7b759b935 -->
 
 Tout ce qu'il faut pour soumettre cette extension au Chrome Web Store, et les décisions qui
 donnent sa forme à la soumission. Les étapes qui exigent un compte, un paiement ou une capture
@@ -30,19 +30,30 @@ contenu des pages à cette instance. C'est modifiable dans les réglages, le cod
 les auto-hébergeurs gardent la voie du portail. Cela reste une centralisation, elle est
 délibérée, et elle est écrite ici pour qu'on ne la prenne pas pour un accident.
 
-## Construire le paquet
+## D'où vient le paquet
+
+**Le prendre sur la publication GitHub, pas d'une construction locale.** Pousser un tag
+`vX.Y.Z` fait construire les deux paquets par la forge et les attache à la publication
+(`.github/workflows/paquet.yml`) :
+
+| Fichier | Ce qu'il contient |
+|---|---|
+| `lynceus-extension-vX.Y.Z.zip` | Neutre, aucune adresse de portail. C'est ce que l'image embarque, et ce que chaque portail sert après y avoir glissé sa propre adresse. |
+| `lynceus-extension-vX.Y.Z-magasin.zip` | L'adresse compilée dedans, prise dans la variable de dépôt `PORTAIL_MAGASIN`. **C'est celui à déposer sur le magasin.** |
+
+Un paquet construit sur le poste d'un mainteneur n'a aucune provenance, ce qui est une piètre
+propriété pour un fichier qu'un magasin distribue ensuite à tous les utilisateurs. Le faire
+construire par la forge lui donne la même provenance que l'image.
+
+Les deux archives sont **reproductibles** : les horodatages sont figés, donc les mêmes sources
+donnent un fichier identique à l'octet près, et `SHA256SUMS.txt` est attaché à côté.
+`--portail=` fait partie des sources de ce point de vue : sans le même drapeau, l'empreinte
+diffère légitimement. Pour vérifier le paquet de magasin à la main :
 
 ```bash
-cd extension
-npm run icones                                        # seulement si le logotype a changé
+cd extension && npm ci
 node build.mjs --paquet --portail=https://lynx.nashi.cloud
 ```
-
-L'archive est **reproductible** : les horodatages sont figés, donc deux constructions des mêmes
-sources donnent un fichier identique à l'octet près. Publier son empreinte permet à n'importe
-qui de vérifier que le paquet distribué par le magasin est bien le code publié. À noter que
-`--portail=` fait partie des sources de ce point de vue : sans le même drapeau l'empreinte
-diffère, légitimement.
 
 Reconstruire `dist/` sans le drapeau ensuite (`npm run build`), pour que l'extension chargée
 localement revienne à ne proposer aucun portail.

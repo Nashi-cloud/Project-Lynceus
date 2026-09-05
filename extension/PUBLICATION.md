@@ -28,18 +28,30 @@ changeable in the settings, the source is public, and self-hosters keep the port
 still a centralisation, it is deliberate, and it is written here so that it is not mistaken for
 an accident.
 
-## Building the package
+## Where the package comes from
+
+**Take it from the GitHub release, not from a local build.** Pushing a `vX.Y.Z` tag makes the
+forge build both packages and attach them to the release
+(`.github/workflows/paquet.yml`):
+
+| File | What it holds |
+|---|---|
+| `lynceus-extension-vX.Y.Z.zip` | Neutral, no portal address. This is what the container image embeds, and what each portal serves after injecting its own address. |
+| `lynceus-extension-vX.Y.Z-magasin.zip` | The address compiled in, taken from the `PORTAIL_MAGASIN` repository variable. **This is the one to upload to the store.** |
+
+A package built on a maintainer's machine has no provenance, which is a poor property for a
+file a store then hands to every user. Building it in the forge gives it the same provenance as
+the image.
+
+Both archives are **reproducible**: timestamps are fixed, so the same sources give a
+byte-identical file, and `SHA256SUMS.txt` is attached alongside. `--portail=` counts as part of
+the sources for that purpose: without the same flag the fingerprint legitimately differs. To
+check the store package by hand:
 
 ```bash
-cd extension
-npm run icones                                        # only if the logotype changed
+cd extension && npm ci
 node build.mjs --paquet --portail=https://lynx.nashi.cloud
 ```
-
-The archive is **reproducible**: timestamps are fixed, so two builds of the same sources give a
-byte-identical file. Publishing its fingerprint lets anyone check that the package distributed
-by the store really is the published code. Note that `--portail=` is part of the sources for
-this purpose: without the same flag the fingerprint differs, legitimately.
 
 Rebuild `dist/` without the flag afterwards (`npm run build`) so that the locally loaded
 extension goes back to proposing no portal.
