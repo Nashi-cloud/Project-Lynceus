@@ -1,0 +1,22 @@
+# Les issues vides sont fermées : trois demandes sur quatre qui arrivent ici ne relèvent pas
+# du suivi de bogues, et les envoyer au bon endroit sert mieux leur auteur qu'un fil qui
+# s'éteint faute de réponse.
+blank_issues_enabled: false
+contact_links:
+  - name: An analysis you consider wrong, unfair or biased
+    url: https://lynx.nashi.cloud/contester
+    about: >
+      This is not a bug. Every card carries a "Dispute this analysis" link, and a dispute is
+      recorded, counted, and handed to the operator of the instance, whose decision is kept.
+      That channel exists for publishers of analysed sites too. An issue here would bypass it.
+  - name: A security flaw
+    url: https://github.com/Nashi-cloud/Project-Lynceus/security/advisories/new
+    about: >
+      Private vulnerability reporting opens a channel between you and the maintainer. Use it
+      even if you are unsure whether what you found counts. Never in a public issue.
+  - name: A third-party instance that is misconfigured
+    url: https://github.com/Nashi-cloud/Project-Lynceus/blob/main/SECURITY.md
+    about: >
+      Lynceus is self-hostable and has no central authority. An instance exposed without
+      access keys, or running a modified version, is the responsibility of whoever operates
+      it. Report it to them.
