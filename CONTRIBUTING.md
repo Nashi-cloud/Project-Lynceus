@@ -4,6 +4,8 @@
 
 Thank you for wanting to help. Every contribution counts: code, taxonomy, calibration corpus, translations, hosting instances.
 
+Taking part means accepting the [code of conduct](CODE_OF_CONDUCT.md). It is short, and it says where an analysis you disagree with goes, which is not an issue.
+
 ## Two things to know first
 
 **The code is in French.** Identifiers, comments and commit messages are written in French, and that is not going to change: rewriting a codebase that already holds together would cost far more than it would bring. The documentation, on the other hand, is in English. Issues and pull requests are welcome in either language, and nobody will be turned away for writing in one rather than the other.

@@ -169,6 +169,7 @@ LANGUE_FACADE = "en"
 FACADE = [
     "README.md",
     "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md",
     "INSTALLATION.md",
     "AUTHORS.md",
     "SECURITY.md",

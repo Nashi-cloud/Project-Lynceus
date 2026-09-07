@@ -1,0 +1,69 @@
+name: Bug report
+description: Something behaves differently from what the documentation says.
+labels: ["bogue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Write in French or in English, whichever you are more comfortable with.
+
+        **If the analysis of a page seems wrong to you, this is not the place**: use the
+        "Dispute this analysis" link on the card. That channel is recorded and answered; an
+        issue here is not.
+  - type: dropdown
+    id: livrable
+    attributes:
+      label: Where does it happen
+      options:
+        - The Chrome extension
+        - The instance (the analysis API)
+        - The portal (the public site)
+        - I do not know
+    validations:
+      required: true
+  - type: textarea
+    id: attendu
+    attributes:
+      label: What you expected, and what happened instead
+      description: Two sentences are enough. The gap between the two is the report.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduire
+    attributes:
+      label: How to reproduce it
+      description: >
+        The steps, in order. If a particular page triggers it, its address, unless you would
+        rather not share it.
+      placeholder: |
+        1. …
+        2. …
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: >
+        The extension version is at the bottom of its settings page. The instance version is
+        at `/v1/meta`, which also gives the prompt version, and the portal shows its own in
+        the page footer. Whichever you have.
+      placeholder: "extension 0.11.4 · instance 0.11.23 · prompt 0.1.7"
+    validations:
+      required: true
+  - type: input
+    id: instance
+    attributes:
+      label: Which instance
+      description: >
+        The public one, or your own. A self-hosted instance can run a different model, and
+        that changes what the analysis looks like.
+      placeholder: "lynx.nashi.cloud, or self-hosted"
+  - type: textarea
+    id: reste
+    attributes:
+      label: Anything else
+      description: >
+        Browser and version, a screenshot, the service worker console
+        (`chrome://extensions`, then "service worker"). Only what you have.
