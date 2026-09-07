@@ -1,10 +1,12 @@
 # Contribuer à Lynceus
 
-<!-- traduit-de: CONTRIBUTING.md sha256:64ea29adf52289e5 -->
+<!-- traduit-de: CONTRIBUTING.md sha256:3e24de0b09e2f43e -->
 
 [English](CONTRIBUTING.md) · **Français**
 
 Merci de vouloir aider ! Toute contribution compte : code, taxonomie, corpus de calibration, traductions, hébergement d'instances.
+
+Participer, c'est accepter le [code de conduite](CODE_OF_CONDUCT.fr.md). Il est court, et il dit où va une analyse qu'on conteste, ce qui n'est pas une issue.
 
 ## Modèle de branches
 
