@@ -1,0 +1,36 @@
+name: Proposal
+description: An idea, a change of direction, a use the project does not serve.
+labels: ["proposition"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Write in French or in English, whichever you are more comfortable with.
+
+        A proposal is welcome even without an implementation. What matters is the problem it
+        solves, which the project may be solving badly or not at all.
+  - type: textarea
+    id: probleme
+    attributes:
+      label: The problem
+      description: >
+        What is awkward today, for whom, and in what situation. Describe it before describing
+        the solution: a well-stated problem often has a smaller solution than the one that
+        came to mind first.
+    validations:
+      required: true
+  - type: textarea
+    id: proposition
+    attributes:
+      label: What you would do
+      description: If you have an idea of the shape it would take. Skip this if you do not.
+  - type: textarea
+    id: charte
+    attributes:
+      label: What it costs
+      description: >
+        The project has commitments that a good idea can conflict with: nothing leaves the
+        browser without an explicit gesture, methods are described rather than people, the
+        whole stack stays self-hostable, and every published figure comes from a recorded
+        measurement. See the [ethical charter](https://lynx.nashi.cloud/charte). If your
+        proposal touches one of them, say so: that is a discussion, not a rejection.
