@@ -1,6 +1,6 @@
 # Projet Lynceus 🔭
 
-<!-- traduit-de: README.md sha256:64eed777858fe514 -->
+<!-- traduit-de: README.md sha256:7b68df0e91af9e77 -->
 
 [English](README.md) · **Français**
 
@@ -116,6 +116,7 @@ Résumé de la [charte éthique](docs/ETHIQUE.md) :
 - [x] **Bilingue** : portail et extension en français et en anglais, analyse rédigée dans la langue de la page analysée
 - [x] **Phase 3c** : instance et portail de référence hébergés publiquement ([lynx.nashi.cloud](https://lynx.nashi.cloud))
 - [ ] **Phase 4, réseau** : fédération d'annuaires entre instances, autres langues, portage Firefox
+- [ ] **Phase 5, analyse composée** : analyseurs déterministes, encodeur de repérage, petit modèle de rédaction ; étude et étapes dans [docs/ARCHITECTURE-CIBLE.md](docs/ARCHITECTURE-CIBLE.md)
 
 ## Comment ce projet est fabriqué
 

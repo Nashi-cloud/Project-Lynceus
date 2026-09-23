@@ -117,6 +117,7 @@ The documents below are the ones that bind the project. The French text is the o
 - [x] **Bilingual**: portal and extension in French and English, analysis written in the language of the page analysed
 - [x] **Phase 3c**: reference instance and portal, publicly hosted ([lynx.nashi.cloud](https://lynx.nashi.cloud))
 - [ ] **Phase 4, network**: federation of directories between instances, further languages, Firefox port
+- [ ] **Phase 5, compound analysis**: deterministic analysers, spotting encoder, small writing model; study and steps in [docs/en/ARCHITECTURE-CIBLE.md](docs/en/ARCHITECTURE-CIBLE.md)
 
 ## How this project is built
 
