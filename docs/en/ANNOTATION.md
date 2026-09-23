@@ -1,4 +1,4 @@
-<!-- traduit-de: docs/ANNOTATION.md sha256:de7408580e52842a -->
+<!-- traduit-de: docs/ANNOTATION.md sha256:388e007874adff1c -->
 
 # Building the annotated evaluation set
 
@@ -122,12 +122,12 @@ handles well or badly. The reason for selection is written in `notes`.
 
 No page of the silver set (section 11) enters the test set either: models have already
 read it, and an encoder may learn from it. The list of these pages is published by
-lynx-corpus in `argent/deja-vus.txt`. Pointed to by `LYNCEUS_DEJA_VUS`, it makes
+lynx-corpus in `silver/deja-vus.txt`. Pointed to by `LYNCEUS_DEJA_VUS`, it makes
 `lynceus capturer` refuse such a page, and `lynceus mesurer` flag any test page that is
 already in it:
 
 ```bash
-export LYNCEUS_DEJA_VUS=../lynx-corpus/argent/deja-vus.txt
+export LYNCEUS_DEJA_VUS=../lynx-corpus/silver/deja-vus.txt
 lynceus capturer page.md --url https://example.org/article --vers corpus/captures
 lynceus mesurer corpus/evaluation.yaml
 ```
@@ -374,6 +374,11 @@ examples. Those come from a second set, the **silver set**, annotated by a panel
 language models and built in a separate repository,
 [lynx-corpus](https://github.com/Nashi-cloud/lynx-corpus). The two sets never mix.
 
+The name comes from machine learning vocabulary, which contrasts the *gold standard*, data
+annotated by humans that serves as reference, with the *silver standard*, data annotated by
+machines, more plentiful and less reliable. The test set is our gold standard; the silver
+set is useful, but never the reference.
+
 | | Test set | Silver set |
 |---|---|---|
 | Read by | humans, blind, without AI | two models, and a third that arbitrates |
@@ -403,7 +408,7 @@ how noisy it is.
 
 **Safeguards.**
 
-- Each silver annotation carries `origine: machine` and the annotator `panel-argent`, and
+- Each silver annotation carries `origine: machine` and the annotator `panel-silver`, and
   never enters `corpus/annotations/`.
 - Pages of the calibration corpus and of the test set are excluded from the silver set, by
   address and by fingerprint.

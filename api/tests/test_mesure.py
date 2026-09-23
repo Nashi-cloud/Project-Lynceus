@@ -465,15 +465,15 @@ def test_le_dossier_des_lectures_en_cours_n_est_pas_versionne():
     assert "corpus/annotations-en-cours/" in ignores
 
 
-# ---------- le jeu argent reste hors du jeu de test ----------
+# ---------- le jeu silver reste hors du jeu de test ----------
 
 def deja_vus(tmp_path, *lignes):
     chemin = tmp_path / "deja-vus.txt"
-    chemin.write_text("# Pages du jeu argent\n" + "".join(l + "\n" for l in lignes), encoding="utf-8")
+    chemin.write_text("# Pages du jeu silver\n" + "".join(l + "\n" for l in lignes), encoding="utf-8")
     return chemin
 
 
-def test_une_page_du_jeu_argent_se_reconnait_par_contenu_ou_par_adresse(tmp_path):
+def test_une_page_du_jeu_silver_se_reconnait_par_contenu_ou_par_adresse(tmp_path):
     vus = mesure.charger_deja_vus(deja_vus(tmp_path, f"{hacher_contenu(PAGE)} https://exemple.fr/a"))
     assert vus.motif(empreinte=hacher_contenu(PAGE)) is not None
     # L'adresse se compare normalisée : casse de l'hôte, traceurs, slash final.
@@ -486,7 +486,7 @@ def test_un_fichier_deja_vus_illisible_est_refuse(tmp_path):
         mesure.charger_deja_vus(deja_vus(tmp_path, "pas-une-empreinte https://exemple.fr"))
 
 
-def test_capturer_refuse_une_page_du_jeu_argent(tmp_path):
+def test_capturer_refuse_une_page_du_jeu_silver(tmp_path):
     texte = "Un texte assez long pour être capturé. " * 10
     source = tmp_path / "page.md"
     source.write_text(texte, encoding="utf-8")
@@ -496,7 +496,7 @@ def test_capturer_refuse_une_page_du_jeu_argent(tmp_path):
                                    "--vers", str(tmp_path / "captures"), "--deja-vus", str(liste)])
 
     assert resultat.exit_code == 2
-    assert "jeu argent" in resultat.output
+    assert "jeu silver" in resultat.output
     assert not (tmp_path / "captures").exists()
 
 

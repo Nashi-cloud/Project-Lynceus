@@ -63,7 +63,7 @@ mais il faut dire ce que cette phase mesure et ce qu'elle ne mesure pas.
 ## 3. Les règles qui ne se discutent pas
 
 1. **Annoter sans avoir vu de carte.** Ni celle de Lynceus, ni celle d'aucun autre outil,
-   ni l'annotation du jeu argent (section 11), ni avant ni pendant la lecture. Une annotation faite avec la réponse sous les yeux
+   ni l'annotation du jeu silver (section 11), ni avant ni pendant la lecture. Une annotation faite avec la réponse sous les yeux
    mesure l'accord avec le modèle, pas avec la page.
 2. **Annoter sans IA.** Aucun modèle de langage ne propose, ne complète ni ne relit une
    annotation. La [politique IA](IA-GENERATIVE.md) du projet s'applique ici sans exception,
@@ -119,14 +119,14 @@ choisissent par source, selon les quotas, sans regarder leur contenu au préalab
 Aucune page ne se choisit après l'avoir soumise à Lynceus : on retiendrait sans le
 vouloir celles qu'il traite bien ou mal. Le motif de sélection s'écrit dans `notes`.
 
-Aucune page du jeu argent (section 11) n'entre non plus dans le jeu de test : des modèles
+Aucune page du jeu silver (section 11) n'entre non plus dans le jeu de test : des modèles
 l'ont déjà lue, et un encodeur apprendra peut-être dessus. La liste de ces pages est
-publiée par lynx-corpus dans `argent/deja-vus.txt`. Désignée par `LYNCEUS_DEJA_VUS`, elle
+publiée par lynx-corpus dans `silver/deja-vus.txt`. Désignée par `LYNCEUS_DEJA_VUS`, elle
 fait refuser une telle page par `lynceus capturer`, et signaler par `lynceus mesurer` toute
 page du jeu de test qui y figurerait déjà :
 
 ```bash
-export LYNCEUS_DEJA_VUS=../lynx-corpus/argent/deja-vus.txt
+export LYNCEUS_DEJA_VUS=../lynx-corpus/silver/deja-vus.txt
 lynceus capturer page.md --url https://exemple.fr/article --vers corpus/captures
 lynceus mesurer corpus/evaluation.yaml
 ```
@@ -367,15 +367,20 @@ coauteur sur la forge. Toute réutilisation du jeu cite « Annotations Lynceus �
 
 **Reste ouvert** : le recrutement des bénévoles et d'un arbitre.
 
-## 11. Le jeu argent, annoté par des modèles
+## 11. Le jeu silver, annoté par des modèles
 
 Le jeu de test mesure ; il ne suffit pas à entraîner un encodeur, qui demande des
-milliers d'exemples. Ceux-là viennent d'un second jeu, le **jeu argent**, annoté par un
+milliers d'exemples. Ceux-là viennent d'un second jeu, le **jeu silver**, annoté par un
 panel de modèles de langage et construit dans un dépôt séparé,
 [lynx-corpus](https://github.com/Nashi-cloud/lynx-corpus). Les deux jeux ne se mélangent
 jamais.
 
-| | Jeu de test | Jeu argent |
+Le nom vient du vocabulaire de l'apprentissage automatique, qui oppose le *gold standard*,
+des données annotées par des humains et qui servent de référence, au *silver standard*,
+des données annotées par des machines, plus abondantes et moins sûres. Le jeu de test est
+notre étalon or ; le jeu silver n'en est que l'argent, utile mais jamais la référence.
+
+| | Jeu de test | Jeu silver |
 |---|---|---|
 | Lu par | des humains, à l'aveugle, sans IA | deux modèles, et un troisième qui arbitre |
 | Taille | 200 pages et plus | des milliers |
@@ -399,16 +404,16 @@ tromper ensemble.
 **Comment il est mesuré.** Par un audit à l'aveugle : une page sur dix, tirée au sort, est
 relue par un humain qui ne voit rien de ce que le panel en a dit. Le panel se mesure
 contre ces lectures comme une chaîne quelconque, avec les mesures de `lynceus mesurer`.
-S'il approche l'accord entre deux humains, le jeu argent est utilisable ; sinon, on sait
+S'il approche l'accord entre deux humains, le jeu silver est utilisable ; sinon, on sait
 de combien il est bruité.
 
 **Les garde-fous.**
 
-- Chaque annotation argent porte `origine: machine` et l'annotateur `panel-argent`, et
+- Chaque annotation silver porte `origine: machine` et l'annotateur `panel-silver`, et
   n'entre jamais dans `corpus/annotations/`.
-- Les pages du corpus de calibration et du jeu de test sont exclues du jeu argent, par
+- Les pages du corpus de calibration et du jeu de test sont exclues du jeu silver, par
   adresse et par empreinte.
-- Les pages du jeu argent sont exclues du jeu de test, par la liste `deja-vus.txt`
+- Les pages du jeu silver sont exclues du jeu de test, par la liste `deja-vus.txt`
   (section 4.3).
 - Aucune capture n'est versionnée, pas plus ici que là.
 
