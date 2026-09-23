@@ -343,3 +343,86 @@ def test_le_squelette_d_annotation_porte_la_bonne_empreinte(tmp_path):
     squelette = yaml.safe_load(resultat.output)
     assert squelette["content_hash"] == hacher_contenu(PAGE)
     assert squelette["annotateur"] == "une"
+    assert squelette["guide"] == mesure.GUIDE_ANNOTATION
+
+
+# ---------- arbitrage et catégories hybrides ----------
+
+def test_deux_lectures_divergentes_demandent_un_arbitre():
+    autre = annotation(annotateur="deux", categorie="opinion")
+    page = {**page_annotee(annotation(), autre), "cas": "specimens/x.md"}
+    assert mesure.a_arbitrer([page]) == ["specimens/x.md"]
+
+
+def test_un_passage_delimite_autrement_ne_demande_pas_d_arbitre():
+    """Même technique, bornes différentes : le recouvrement partiel le mesure déjà."""
+    autre = annotation(annotateur="deux", intervalles=[
+        {"extrait": "Les élites savent tout et vous cachent", "technique": "eux_contre_nous"}])
+    page = {**page_annotee(annotation(), autre), "cas": "specimens/x.md"}
+    assert mesure.a_arbitrer([page]) == []
+
+
+def test_l_arbitrage_devient_la_reference_et_sort_de_l_accord():
+    autre = annotation(annotateur="deux", categorie="opinion")
+    arbitre = annotation(annotateur="trois", role="arbitrage")
+    page = {**page_annotee(annotation(), autre, arbitre), "cas": "specimens/x.md"}
+    assert mesure.a_arbitrer([page]) == []
+    assert mesure.accord_annotateurs([page])["paires"] == 1
+    carte = {"categorie": "theorie_du_complot", "note": {"grade": "D"}, "techniques_detectees": []}
+    resultat = mesure.mesurer_contre_annotations([{**page, "carte": carte}])
+    assert resultat["categorie"] == 1.0  # mesurée contre l'arbitre seul, pas contre « opinion »
+
+
+def test_une_categorie_acceptable_compte_comme_juste_sans_changer_l_accord():
+    hybride = annotation(categories_acceptables=["opinion"])
+    carte = {"categorie": "opinion", "note": {"grade": "D"}, "techniques_detectees": []}
+    resultat = mesure.mesurer_contre_annotations([page_annotee(hybride, carte=carte)])
+    assert resultat["categorie"] == 1.0
+
+
+@pytest.mark.parametrize("surcharge, motif", [
+    ({"role": "relecture"}, "rôle inconnu"),
+    ({"categories_acceptables": ["rumeur"]}, "catégorie inconnue"),
+])
+def test_role_et_categories_acceptables_sont_controles(surcharge, motif):
+    with pytest.raises(mesure.AnnotationInvalide, match=motif):
+        mesure.verifier_annotation(annotation(**surcharge), PAGE, TECHNIQUES, CATEGORIES)
+
+
+def test_une_annotation_du_jeu_d_evaluation_est_reconnue(tmp_path):
+    """Les annotations se partagent entre les deux manifestes : mesurer le corpus de
+    calibration ne doit pas déclarer inconnu un cas du jeu d'évaluation."""
+    (tmp_path / "x.md").write_text(PAGE, encoding="utf-8")
+    (tmp_path / "corpus.yaml").write_text("[]", encoding="utf-8")
+    (tmp_path / "evaluation.yaml").write_text(yaml.safe_dump([{"fichier": "x.md"}]), encoding="utf-8")
+    (tmp_path / "annotations").mkdir()
+    brute = {k: v for k, v in annotation(cas="x.md").items() if k != "_fichier"}
+    (tmp_path / "annotations" / "x.yaml").write_text(yaml.safe_dump(brute), encoding="utf-8")
+
+    resultat = runner.invoke(app, ["mesurer", str(tmp_path / "corpus.yaml")])
+
+    assert resultat.exit_code == 0, resultat.output
+    assert "1 annotation(s)" in resultat.output
+
+
+def test_ecrire_est_refuse_hors_du_corpus_de_calibration(tmp_path):
+    (tmp_path / "evaluation.yaml").write_text("[]", encoding="utf-8")
+    resultat = runner.invoke(app, ["calibrer", str(tmp_path / "evaluation.yaml"), "--ecrire"])
+    assert resultat.exit_code == 2
+    assert "refusé" in resultat.output
+
+
+def test_un_extrait_trop_long_est_refuse():
+    """Un extrait de plus de 600 caractères n'est plus une citation courte (guide, règle 5)."""
+    longue = "mot " * 200
+    brute = annotation(content_hash=hacher_contenu(longue),
+                       intervalles=[{"extrait": longue, "technique": "ad_hominem"}])
+    with pytest.raises(mesure.AnnotationInvalide, match="600"):
+        mesure.verifier_annotation(brute, mesure.texte_de_reference(longue), TECHNIQUES, CATEGORIES)
+
+
+def test_la_version_du_guide_suit_le_document():
+    texte = (RACINE / "docs" / "ANNOTATION.md").read_text(encoding="utf-8")
+    assert f"Version du guide : **{mesure.GUIDE_ANNOTATION}**" in texte
+    assert f"## 5. Le guide d'annotation, version {mesure.GUIDE_ANNOTATION}" in texte
+    assert f'guide: "{mesure.GUIDE_ANNOTATION}"' in texte
