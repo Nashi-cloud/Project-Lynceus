@@ -463,3 +463,53 @@ def test_les_lectures_en_cours_se_mesurent_sans_etre_publiees(tmp_path):
 def test_le_dossier_des_lectures_en_cours_n_est_pas_versionne():
     ignores = (RACINE / ".gitignore").read_text(encoding="utf-8")
     assert "corpus/annotations-en-cours/" in ignores
+
+
+# ---------- le jeu argent reste hors du jeu de test ----------
+
+def deja_vus(tmp_path, *lignes):
+    chemin = tmp_path / "deja-vus.txt"
+    chemin.write_text("# Pages du jeu argent\n" + "".join(l + "\n" for l in lignes), encoding="utf-8")
+    return chemin
+
+
+def test_une_page_du_jeu_argent_se_reconnait_par_contenu_ou_par_adresse(tmp_path):
+    vus = mesure.charger_deja_vus(deja_vus(tmp_path, f"{hacher_contenu(PAGE)} https://exemple.fr/a"))
+    assert vus.motif(empreinte=hacher_contenu(PAGE)) is not None
+    # L'adresse se compare normalisée : casse de l'hôte, traceurs, slash final.
+    assert vus.motif(url="https://EXEMPLE.fr/a/?utm_source=x") is not None
+    assert vus.motif(empreinte="0" * 64, url="https://exemple.fr/b") is None
+
+
+def test_un_fichier_deja_vus_illisible_est_refuse(tmp_path):
+    with pytest.raises(ValueError, match="ligne 2"):
+        mesure.charger_deja_vus(deja_vus(tmp_path, "pas-une-empreinte https://exemple.fr"))
+
+
+def test_capturer_refuse_une_page_du_jeu_argent(tmp_path):
+    texte = "Un texte assez long pour être capturé. " * 10
+    source = tmp_path / "page.md"
+    source.write_text(texte, encoding="utf-8")
+    liste = deja_vus(tmp_path, f"{hacher_contenu(texte.strip())} https://ailleurs.fr/x")
+
+    resultat = runner.invoke(app, ["capturer", str(source), "--url", "https://exemple.fr/page",
+                                   "--vers", str(tmp_path / "captures"), "--deja-vus", str(liste)])
+
+    assert resultat.exit_code == 2
+    assert "jeu argent" in resultat.output
+    assert not (tmp_path / "captures").exists()
+
+
+def test_mesurer_signale_un_jeu_de_test_contamine(tmp_path):
+    (tmp_path / "corpus.yaml").write_text("[]", encoding="utf-8")
+    (tmp_path / "evaluation.yaml").write_text(yaml.safe_dump([
+        {"capture": "captures/a.md", "url": "https://exemple.fr/a", "content_hash": "1" * 64},
+        {"capture": "captures/b.md", "url": "https://exemple.fr/b", "content_hash": "2" * 64},
+    ]), encoding="utf-8")
+    liste = deja_vus(tmp_path, f"{'9' * 64} https://exemple.fr/b")
+
+    resultat = runner.invoke(app, ["mesurer", str(tmp_path / "corpus.yaml"), "--deja-vus", str(liste)])
+
+    assert resultat.exit_code == 1
+    assert "captures/b.md" in resultat.output
+    assert "captures/a.md" not in resultat.output

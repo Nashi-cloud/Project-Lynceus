@@ -1,4 +1,4 @@
-<!-- traduit-de: docs/ANNOTATION.md sha256:2e7f6edf0b11d7a9 -->
+<!-- traduit-de: docs/ANNOTATION.md sha256:de7408580e52842a -->
 
 # Building the annotated evaluation set
 
@@ -64,8 +64,8 @@ volunteers, but one must say what this phase measures and what it does not.
 
 ## 3. Rules that are not up for discussion
 
-1. **Annotate without having seen a card.** Neither Lynceus's nor any other tool's,
-   neither before nor during the reading. An annotation made with the answer in view
+1. **Annotate without having seen a card.** Neither Lynceus's nor any other tool's, nor
+   the silver set's annotation (section 11), neither before nor during the reading. An annotation made with the answer in view
    measures agreement with the model, not with the page.
 2. **Annotate without AI.** No language model suggests, completes or proofreads an
    annotation. The project's [AI policy](IA-GENERATIVE.md) applies here without exception,
@@ -120,7 +120,22 @@ according to the quotas, without looking at their content beforehand.
 No page is chosen after submitting it to Lynceus: one would unwittingly keep those it
 handles well or badly. The reason for selection is written in `notes`.
 
+No page of the silver set (section 11) enters the test set either: models have already
+read it, and an encoder may learn from it. The list of these pages is published by
+lynx-corpus in `argent/deja-vus.txt`. Pointed to by `LYNCEUS_DEJA_VUS`, it makes
+`lynceus capturer` refuse such a page, and `lynceus mesurer` flag any test page that is
+already in it:
+
+```bash
+export LYNCEUS_DEJA_VUS=../lynx-corpus/argent/deja-vus.txt
+lynceus capturer page.md --url https://example.org/article --vers corpus/captures
+lynceus mesurer corpus/evaluation.yaml
+```
+
 ## 5. The annotation guide, version 1.0
+
+<!-- Headings 5.1 to 5.4 of the French original are read by lynx-corpus, which turns them
+     into its panel's prompt: renaming them breaks that chain, and a lynx-corpus test says so. -->
 
 ### 5.1 Reading order
 
@@ -351,3 +366,48 @@ them as co-author on the forge. Any reuse of the set cites "Lynceus annotations"
 to the list of annotators.
 
 **Still open**: recruiting volunteers and an arbiter.
+
+## 11. The silver set, annotated by models
+
+The test set measures; it is not enough to train an encoder, which needs thousands of
+examples. Those come from a second set, the **silver set**, annotated by a panel of
+language models and built in a separate repository,
+[lynx-corpus](https://github.com/Nashi-cloud/lynx-corpus). The two sets never mix.
+
+| | Test set | Silver set |
+|---|---|---|
+| Read by | humans, blind, without AI | two models, and a third that arbitrates |
+| Size | 200 pages and more | thousands |
+| Used to | measure | train |
+| Where | `corpus/` in this repository | lynx-corpus |
+
+**The panel.** Three open-weight models from three different providers: two read each page
+independently, with this guide as instructions, and the third settles their disagreements
+without being able to add a passage. Open weights by choice: several providers of closed
+models forbid training a competing model on their outputs. Each model's licence is
+checked before anything is published.
+
+**The same check.** Each panel reading goes through the verification that human
+annotations go through: technique from the reference list, excerpt found word for word,
+fingerprint.
+
+**Why it is never a reference.** A reference written by models would make the measurement
+circular, since the chain being measured is itself a model. Different providers do not make
+errors independent: three models in agreement can be wrong together.
+
+**How it is measured.** By a blind audit: one page in ten, drawn at random, is read again by
+a human who sees nothing of what the panel said about it. The panel is measured against
+those readings like any chain, with the measurements of `lynceus mesurer`. If it
+approaches the agreement between two humans, the silver set is usable; otherwise, we know
+how noisy it is.
+
+**Safeguards.**
+
+- Each silver annotation carries `origine: machine` and the annotator `panel-argent`, and
+  never enters `corpus/annotations/`.
+- Pages of the calibration corpus and of the test set are excluded from the silver set, by
+  address and by fingerprint.
+- Pages of the silver set are excluded from the test set, through the `deja-vus.txt` list
+  (section 4.3).
+- No capture is versioned, here or there.
+
