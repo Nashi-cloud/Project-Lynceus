@@ -1,0 +1,15 @@
+# Jeu d'évaluation annoté (docs/ANNOTATION.md)
+#
+# Les pages lues par des annotateurs humains, contre lesquelles se mesure toute chaîne
+# d'analyse. Même format d'entrée que corpus.yaml, sans les attentes : l'annotation en tient
+# lieu, sous corpus/annotations/. Deux champs en plus :
+#
+#   lot     numéro du lot de sélection, pour suivre l'avancement
+#   partie  `test` (jamais montrée à une chaîne en cours de réglage, jamais apprise par un
+#           modèle) ou `reglage` (autorisée pour ajuster des seuils). Tirée au sort à la
+#           sélection, jamais choisie après avoir vu un résultat.
+#
+# Ne pas passer ce fichier à « lynceus calibrer --ecrire » : le tableau publié est celui du
+# corpus de calibration, et la commande le refuse.
+
+[]

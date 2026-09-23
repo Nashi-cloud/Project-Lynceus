@@ -34,6 +34,19 @@ from .normalisation import hacher_contenu, normaliser_texte
 
 GRADES = ("A", "B", "C", "D", "E")
 
+#: Une annotation ordinaire est une lecture indépendante. Un arbitrage tranche après coup
+#: les désaccords entre deux lectures : il devient alors la référence de la page, mais il
+#: n'entre pas dans l'accord entre annotateurs, qu'il fausserait en sa faveur.
+ROLES = ("annotation", "arbitrage")
+
+#: La version du guide d'annotation (docs/ANNOTATION.md §5). Le squelette la porte, et un
+#: test vérifie qu'elle suit celle du document.
+GUIDE_ANNOTATION = "1.0"
+
+#: Au-delà, un extrait n'est plus une citation courte à fin d'analyse mais un morceau de
+#: page republié : la règle 5 du guide, et la même borne que le schéma de la carte.
+EXTRAIT_MAX = 600
+
 
 # ---------------------------------------------------------------------------
 # Intervalles
@@ -231,8 +244,11 @@ def verifier_annotation(annotation: dict, reference: str, techniques: set[str],
         raise AnnotationInvalide(
             f"{fichier} : l'empreinte ne correspond plus au contenu du cas. La page a changé "
             "depuis l'annotation : il faut la relire, pas réestampiller.")
-    if annotation["categorie"] not in categories:
-        raise AnnotationInvalide(f"{fichier} : catégorie inconnue `{annotation['categorie']}`")
+    if annotation.get("role", "annotation") not in ROLES:
+        raise AnnotationInvalide(f"{fichier} : rôle inconnu `{annotation.get('role')}`")
+    for categorie in [annotation["categorie"], *(annotation.get("categories_acceptables") or [])]:
+        if categorie not in categories:
+            raise AnnotationInvalide(f"{fichier} : catégorie inconnue `{categorie}`")
     for grade in annotation.get("grade") or []:
         if grade not in GRADES:
             raise AnnotationInvalide(f"{fichier} : grade inconnu `{grade}`")
@@ -240,6 +256,9 @@ def verifier_annotation(annotation: dict, reference: str, techniques: set[str],
     intervalles = []
     for n, entree in enumerate(annotation.get("intervalles") or [], start=1):
         technique = entree.get("technique")
+        if len(_nettoyer_extrait(entree.get("extrait", ""))) > EXTRAIT_MAX:
+            raise AnnotationInvalide(f"{fichier}, intervalle {n} : extrait de plus de {EXTRAIT_MAX} "
+                                     "caractères, le découper ou le resserrer")
         if technique not in techniques:
             raise AnnotationInvalide(f"{fichier}, intervalle {n} : technique hors référentiel `{technique}`")
         try:
@@ -325,9 +344,10 @@ def mesurer_contre_annotations(pages: list[dict]) -> dict:
         extraits_perdus += perdus
         extraits_total += len(carte.get("techniques_detectees", []))
         grade = carte.get("note", {}).get("grade")
-        for annotation in page["annotations"]:
+        for annotation in references_de_la_page(page["annotations"]):
             categories_total += 1
-            categories_justes += carte.get("categorie") == annotation["categorie"]
+            acceptables = {annotation["categorie"], *(annotation.get("categories_acceptables") or [])}
+            categories_justes += carte.get("categorie") in acceptables
             if grade and annotation.get("grade"):
                 grades_total += 1
                 distance = distance_a_la_fourchette(grade, annotation["grade"])
@@ -348,6 +368,36 @@ def mesurer_contre_annotations(pages: list[dict]) -> dict:
     }
 
 
+def references_de_la_page(annotations: list[dict]) -> list[dict]:
+    """Contre quoi mesurer une chaîne sur une page : l'arbitrage s'il existe, sinon chaque
+    lecture indépendante. Deux lectures d'accord n'ont pas besoin d'arbitre."""
+    arbitrages = [a for a in annotations if a.get("role") == "arbitrage"]
+    return arbitrages or annotations
+
+
+def lectures(annotations: list[dict]) -> list[dict]:
+    return [a for a in annotations if a.get("role", "annotation") == "annotation"]
+
+
+def desaccord(a: dict, b: dict) -> bool:
+    """Deux lectures qui demandent un arbitre : catégorie différente, ou techniques relevées
+    différentes. Un passage délimité un peu autrement ne suffit pas à le demander : c'est le
+    recouvrement partiel qui en rend compte, pas l'arbitrage."""
+    return (a["categorie"] != b["categorie"]
+            or {i.technique for i in a["intervalles"]} != {i.technique for i in b["intervalles"]})
+
+
+def a_arbitrer(pages: list[dict]) -> list[str]:
+    """Les pages dont deux lectures divergent et qu'aucun arbitrage n'a encore tranchées."""
+    restantes = []
+    for page in pages:
+        if any(a.get("role") == "arbitrage" for a in page["annotations"]):
+            continue
+        if any(desaccord(a, b) for a, b in combinations(lectures(page["annotations"]), 2)):
+            restantes.append(page.get("cas", "?"))
+    return restantes
+
+
 def accord_annotateurs(pages: list[dict]) -> dict:
     """L'accord entre annotateurs, sur les pages lues par au moins deux d'entre eux.
 
@@ -359,7 +409,7 @@ def accord_annotateurs(pages: list[dict]) -> dict:
     intervalles, techniques = Comptes(), Comptes()
     paires = 0
     for page in pages:
-        for a, b in combinations(page["annotations"], 2):
+        for a, b in combinations(lectures(page["annotations"]), 2):
             paires += 1
             cat_a.append(a["categorie"])
             cat_b.append(b["categorie"])

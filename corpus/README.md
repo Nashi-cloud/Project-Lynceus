@@ -98,11 +98,14 @@ Three measurements:
 
 ### Annotating a page
 
-One YAML file per page and per annotator, under `annotations/<annotator>/`. `lynceus annoter <case> --annotateur <pseudonym>` prints the skeleton, fingerprint included. Annotators copy the excerpt, never a position: the position is derived from the text, counted on the normalised Markdown whose fingerprint is `content_hash`.
+The full procedure, from page selection to arbitration, is in [docs/en/ANNOTATION.md](../docs/en/ANNOTATION.md). In short:
+
+One YAML file per page and per annotator, under `annotations/<annotator>/`. `lynceus annoter <case> --annotateur <pseudonym>` prints the skeleton, fingerprint included. Annotators copy the excerpt, never a position: the position is derived from the text, counted on the normalised Markdown whose fingerprint is `content_hash`. The annotated pages are listed in `evaluation.yaml`, apart from the calibration cases: a calibration run costs one analysis per case, and the evaluation set is far larger.
 
 ```yaml
 cas: specimens/06-fictif-complotisme.md   # the case id, as in corpus.yaml
 annotateur: a-pseudonym
+guide: "1.0"                              # version of the annotation guide
 content_hash: 3f2a…                       # printed by « lynceus annoter »
 categorie: theorie_du_complot
 grade: [D, E]

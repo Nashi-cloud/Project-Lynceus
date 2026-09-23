@@ -287,6 +287,10 @@ def calibrer(
         console.print(f"[dim]Rapport détaillé écrit dans {json_sortie}[/dim]")
 
     if ecrire:
+        if fichier.name != "corpus.yaml":
+            console.print("[red]--ecrire refusé : seul corpus/corpus.yaml alimente le tableau "
+                          "publié. Le jeu d'évaluation se mesure avec « lynceus mesurer ».[/red]")
+            raise typer.Exit(2)
         if filtre:
             console.print("[red]--ecrire refusé avec --filtre : un tableau publié qui ne "
                           "porterait que sur une partie du corpus tromperait son lecteur.[/red]")
@@ -1036,15 +1040,21 @@ def annoter(
     cas: str = typer.Argument(help="identifiant du cas, tel que dans corpus.yaml (ex. specimens/06-fictif-complotisme.md)"),
     annotateur: str = typer.Option(..., "--annotateur", help="pseudonyme de l'annotateur"),
     corpus: Path = typer.Option(Path("corpus/corpus.yaml"), "--corpus", help="corpus de référence"),
+    arbitrage: bool = typer.Option(False, "--arbitrage", help="squelette d'arbitrage, qui tranche deux lectures"),
 ):
     """Affiche le squelette d'annotation d'un cas, empreinte comprise.
 
-    L'empreinte se calcule sur le texte réellement analysé, en-tête de spécimen retiré :
+    Procédure complète dans docs/ANNOTATION.md. L'empreinte se calcule sur le texte réellement analysé, en-tête de spécimen retiré :
     la calculer à la main donnerait presque toujours la mauvaise. Rediriger la sortie
     vers corpus/annotations/<annotateur>/<nom>.yaml, puis remplir."""
     import yaml
 
-    entrees = yaml.safe_load(corpus.read_text(encoding="utf-8")) or []
+    from . import mesure
+
+    entrees = []
+    for manifeste in dict.fromkeys([corpus, *(corpus.parent / nom for nom in MANIFESTES)]):
+        if manifeste.is_file():
+            entrees += yaml.safe_load(manifeste.read_text(encoding="utf-8")) or []
     entree = next((e for e in entrees if isinstance(e, dict) and _id_cas(e) == cas), None)
     if entree is None:
         console.print(f"[red]Cas inconnu du corpus : {cas}[/red]")
@@ -1060,13 +1070,16 @@ def annoter(
     squelette = {
         "cas": cas,
         "annotateur": annotateur,
+        **({"role": "arbitrage"} if arbitrage else {}),
+        "guide": mesure.GUIDE_ANNOTATION,
         "content_hash": hacher_contenu(corps["contenu_markdown"]),
         "categorie": "",
         "grade": [],
         "intervalles": [{"extrait": "", "technique": ""}],
         "notes": "",
     }
-    typer.echo("# Annoter AVANT de regarder la moindre carte, et sans lire l'autre annotateur.")
+    typer.echo("# Arbitrer en lisant les deux lectures, jamais une carte d'analyse." if arbitrage else
+               "# Annoter AVANT de regarder la moindre carte, et sans lire l'autre annotateur.")
     typer.echo(yaml.safe_dump(squelette, allow_unicode=True, sort_keys=False), nl=False)
 
 
@@ -1098,8 +1111,13 @@ def mesurer(
     from .moteur import prompt as moteur_prompt
 
     racine = corpus.parent
-    entrees = yaml.safe_load(corpus.read_text(encoding="utf-8")) or []
     resultats: dict = {}
+    # Les annotations se partagent entre le corpus de calibration et le jeu d'évaluation :
+    # un cas se cherche donc dans tous les manifestes du dossier, pas seulement celui-ci.
+    entrees = []
+    for manifeste in dict.fromkeys([corpus, *(racine / nom for nom in MANIFESTES)]):
+        if manifeste.is_file():
+            entrees += yaml.safe_load(manifeste.read_text(encoding="utf-8")) or []
 
     # 1. L'écart entre passes. Le journal suffit : c'est une mesure déjà payée.
     journal = racine / "passes.jsonl"
@@ -1152,16 +1170,22 @@ def mesurer(
         except mesure.AnnotationInvalide as exc:
             invalides.append(str(exc))
             continue
-        page = pages.setdefault(annotation["cas"], {"reference": reference, "annotations": []})
+        page = pages.setdefault(annotation["cas"], {"cas": annotation["cas"], "reference": reference,
+                                                     "annotations": []})
         page["annotations"].append({**annotation, "intervalles": intervalles})
 
-    annotateurs = sorted({a["annotateur"] for p in pages.values() for a in p["annotations"]})
+    annotateurs = sorted({a["annotateur"] for p in pages.values() for a in mesure.lectures(p["annotations"])})
     console.print(f"\n[bold]{sum(len(p['annotations']) for p in pages.values())} annotation(s)[/bold] "
                   f"sur {len(pages)} page(s), par {len(annotateurs)} annotateur(s).")
     for message in invalides:
         console.print(f"[red]{message}[/red]")
 
-    doubles = [p for p in pages.values() if len(p["annotations"]) >= 2]
+    doubles = [p for p in pages.values() if len(mesure.lectures(p["annotations"])) >= 2]
+    restantes = mesure.a_arbitrer(doubles)
+    resultats["a_arbitrer"] = restantes
+    if restantes:
+        console.print(f"[yellow]{len(restantes)} page(s) à arbitrer, les deux lectures divergent :[/yellow] "
+                      + ", ".join(restantes))
     if doubles:
         accord = mesure.accord_annotateurs(doubles)
         resultats["accord_annotateurs"] = accord
@@ -1200,6 +1224,13 @@ def mesurer(
         console.print(f"[dim]Mesures écrites dans {json_sortie}[/dim]")
     if invalides:
         raise typer.Exit(1)
+
+
+#: Les manifestes d'un dossier de corpus. `corpus.yaml` porte les cas de calibration, avec
+#: leurs attentes ; `evaluation.yaml` les pages du jeu annoté, sans attente puisque
+#: l'annotation en tient lieu. Le second est bien plus gros, et n'a pas sa place dans une
+#: passe de calibration, qui coûte une analyse par cas.
+MANIFESTES = ("corpus.yaml", "evaluation.yaml")
 
 
 def _pourcent(valeur: float | None) -> str:

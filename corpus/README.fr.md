@@ -1,6 +1,6 @@
 # Corpus de calibration
 
-<!-- traduit-de: corpus/README.md sha256:750ba1b15bf55407 -->
+<!-- traduit-de: corpus/README.md sha256:8bb19171ddf84a08 -->
 
 [English](README.md) · **Français**
 
@@ -100,11 +100,14 @@ Trois mesures :
 
 ### Annoter une page
 
-Un fichier YAML par page et par annotateur, sous `annotations/<annotateur>/`. `lynceus annoter <cas> --annotateur <pseudonyme>` en affiche le squelette, empreinte comprise. L'annotateur recopie l'extrait, jamais une position : la position se déduit du texte, comptée sur le Markdown normalisé dont `content_hash` est l'empreinte.
+La procédure complète, de la sélection des pages à l'arbitrage, est dans [docs/ANNOTATION.md](../docs/ANNOTATION.md). En bref :
+
+Un fichier YAML par page et par annotateur, sous `annotations/<annotateur>/`. `lynceus annoter <cas> --annotateur <pseudonyme>` en affiche le squelette, empreinte comprise. L'annotateur recopie l'extrait, jamais une position : la position se déduit du texte, comptée sur le Markdown normalisé dont `content_hash` est l'empreinte. Les pages annotées sont listées dans `evaluation.yaml`, à part des cas de calibration : une passe de calibration coûte une analyse par cas, et le jeu d'évaluation est bien plus gros.
 
 ```yaml
 cas: specimens/06-fictif-complotisme.md   # l'identifiant du cas, comme dans corpus.yaml
 annotateur: un-pseudonyme
+guide: "1.0"                              # version du guide d'annotation
 content_hash: 3f2a…                       # affichée par « lynceus annoter »
 categorie: theorie_du_complot
 grade: [D, E]

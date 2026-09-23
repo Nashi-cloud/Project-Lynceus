@@ -1,6 +1,6 @@
 # Target architecture for analysis: a compound pipeline
 
-<!-- traduit-de: docs/ARCHITECTURE-CIBLE.md sha256:a3b804cdad46063d -->
+<!-- traduit-de: docs/ARCHITECTURE-CIBLE.md sha256:6028b5547ccf052d -->
 
 Version: **draft**, September 2026. This document does not describe what Lynceus does,
 but where the analysis pipeline must go, and in what order. What is in service is
@@ -305,7 +305,7 @@ runs of prompt v0.1.7, at zero temperature:
 
 This is the measured starting point against which everything that follows will be judged.
 The annotated corpus itself remains to be built: that is human work, which the tooling does
-not replace.
+not replace, and its procedure is described in [ANNOTATION.md](ANNOTATION.md).
 
 ## 9. The roadmap
 

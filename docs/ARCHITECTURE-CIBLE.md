@@ -310,7 +310,8 @@ passes. Sur les trois passes du prompt v0.1.7, à température nulle :
 | Cas qui changent au moins une fois | 11 sur 15 | 0 |
 
 C'est le point de départ chiffré contre lequel toute la suite se jugera. Reste à constituer
-le corpus annoté lui-même : c'est un travail humain, que l'outillage ne remplace pas.
+le corpus annoté lui-même : c'est un travail humain, que l'outillage ne remplace pas, et sa
+procédure est décrite dans [ANNOTATION.md](ANNOTATION.md).
 
 ## 9. La feuille de route
 
