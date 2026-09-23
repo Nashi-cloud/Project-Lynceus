@@ -295,6 +295,23 @@ tirage. C'est l'étape zéro, et elle se fait avec la chaîne actuelle, avant to
   points reste du bruit. Les quinze cas actuels restent les sentinelles et les pièges,
   ils ne suffisent pas à évaluer.
 
+**Où l'on en est.** L'outillage existe depuis la version 0.11.27 : `lynceus mesurer` calcule
+les trois mesures, `lynceus annoter` prépare une annotation, et les tables de correspondance
+vers SemEval 2023 et FLICC sont publiées (voir [corpus/README.fr.md](../corpus/README.fr.md)).
+La première mesure ne demandait aucune annotation, puisqu'elle se lit dans le journal des
+passes. Sur les trois passes du prompt v0.1.7, à température nulle :
+
+| Mesure entre deux passes | Chaîne actuelle | Cible |
+|---|---|---|
+| Même catégorie | 87 % | 100 % |
+| Même grade | 78 % | 100 % |
+| Techniques en commun (Jaccard) | 0,85 | 1 |
+| Écart de score maximal | 27 points | 0 |
+| Cas qui changent au moins une fois | 11 sur 15 | 0 |
+
+C'est le point de départ chiffré contre lequel toute la suite se jugera. Reste à constituer
+le corpus annoté lui-même : c'est un travail humain, que l'outillage ne remplace pas.
+
 ## 9. La feuille de route
 
 Chaque étape produit quelque chose d'utile même si la suivante n'arrive jamais. Les

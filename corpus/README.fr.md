@@ -1,6 +1,6 @@
 # Corpus de calibration
 
-<!-- traduit-de: corpus/README.md sha256:673338a8a972cfb8 -->
+<!-- traduit-de: corpus/README.md sha256:750ba1b15bf55407 -->
 
 [English](README.md) · **Français**
 
@@ -81,6 +81,47 @@ lynceus analyser corpus/captures/article.md
 L'ordre compte : fixer une attente avant d'avoir vu le résultat revient à inventer une vérité de référence. Fixer l'attente après examen, c'est constater ce qui est défendable — et ne l'inscrire que si ça l'est.
 
 **Choisir les techniques attendues.** Les modèles varient dans leurs détections : n'exiger que les marqueurs **stables**, ceux que plusieurs modèles relèvent. Le cas SOTT du corpus n'exige qu'une seule technique (`verite_cachee`), la seule commune aux deux modèles testés — le reste variait.
+
+## Mesurer au-delà du conforme
+
+La calibration dit si une carte respecte ses attentes, cas par cas. Elle ne dit pas de combien une chaîne d'analyse en vaut une autre, ni si deux passes de la même chaîne rendent la même chose. C'est ce que [docs/ARCHITECTURE-CIBLE.md](../docs/ARCHITECTURE-CIBLE.md) appelle l'étape zéro, et `lynceus mesurer` la fournit sans lancer d'analyse :
+
+```bash
+lynceus mesurer corpus/corpus.yaml                          # écart entre passes, accord entre annotateurs
+lynceus calibrer corpus/corpus.yaml --json rapport.json
+lynceus mesurer corpus/corpus.yaml --rapport rapport.json   # + la chaîne contre les annotations
+```
+
+Trois mesures :
+
+- **L'écart entre passes**, lu dans `passes.jsonl` : même catégorie, même grade, écart de score, recouvrement des techniques relevées. La cible est un écart nul.
+- **L'accord entre annotateurs**, sur les pages lues par au moins deux d'entre eux. C'est le plafond raisonnable de toute machine.
+- **La chaîne contre les annotations** : catégorie, grade, techniques par page, intervalles avec recouvrement partiel comme dans SemEval 2020 tâche 11 et CheckThat! 2024 tâche 3, et part d'extraits retrouvés dans la page.
+
+### Annoter une page
+
+Un fichier YAML par page et par annotateur, sous `annotations/<annotateur>/`. `lynceus annoter <cas> --annotateur <pseudonyme>` en affiche le squelette, empreinte comprise. L'annotateur recopie l'extrait, jamais une position : la position se déduit du texte, comptée sur le Markdown normalisé dont `content_hash` est l'empreinte.
+
+```yaml
+cas: specimens/06-fictif-complotisme.md   # l'identifiant du cas, comme dans corpus.yaml
+annotateur: un-pseudonyme
+content_hash: 3f2a…                       # affichée par « lynceus annoter »
+categorie: theorie_du_complot
+grade: [D, E]
+intervalles:
+  - extrait: "ce qu'on ne vous dira jamais"
+    technique: verite_cachee
+  - extrait: "Coïncidence ?"
+    occurrence: 2                         # quand l'extrait figure plusieurs fois
+    technique: hyper_intentionnalisme
+notes: Texte libre, que l'annotateur suivant ne lit qu'après sa propre lecture.
+```
+
+Annoter **avant** de regarder la moindre carte, et sans lire le fichier de l'autre annotateur : une annotation faite avec la réponse sous les yeux mesure l'accord avec le modèle, pas avec la page. Une annotation fautive (empreinte changée, technique inconnue, extrait absent de la page) fait échouer `lynceus mesurer`, et les tests avec.
+
+### Corpus publics
+
+`correspondances/` fait correspondre les étiquettes des jeux de données publics à nos 31 techniques : SemEval 2023 tâche 3, dont l'inventaire est aussi celui de CheckThat! 2024 tâche 3, et FLICC. Chaque étiquette est `exact`, `partiel` (reprise, avec réserve), `revue` (un humain tranche entre des candidates) ou `aucun` (écartée). Les tests vérifient que toute étiquette est couverte et que toute cible existe dans le référentiel. Les jeux eux-mêmes ne sont pas dans le dépôt : chacun a sa propre licence.
 
 ## Résultats, et d'où viennent les chiffres
 

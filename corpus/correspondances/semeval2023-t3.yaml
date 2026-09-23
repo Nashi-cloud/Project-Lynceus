@@ -1,0 +1,107 @@
+# Correspondance : SemEval 2023 tâche 3 (sous-tâche 3) vers le référentiel Lynceus
+#
+# Ces 23 techniques sont aussi celles de CheckThat! 2024 tâche 3, annotée par intervalle :
+# une seule table sert donc aux deux campagnes. SemEval 2023 couvre neuf langues dont le
+# français, mais son annotation est au paragraphe ; CheckThat! 2024 est au caractère.
+#
+# Le lien dit ce qu'on peut faire de chaque étiquette :
+#   exact    même procédé, l'intervalle est repris tel quel
+#   partiel  procédé voisin, repris mais signalé : le chiffre d'une technique qui en reçoit
+#            doit être lu avec cette réserve
+#   revue    plusieurs cibles possibles selon le passage : un humain tranche, intervalle par
+#            intervalle, parmi les candidates listées
+#   aucun    pas d'équivalent dans le référentiel : l'intervalle est écarté. Certains
+#            relèvent de l'étage 0 (lexique, répétition) plutôt que d'une technique.
+#
+# Les étiquettes se comparent sans tenir compte de la casse, des espaces, tirets et soulignés :
+# « Straw_Man », « straw man » et « straw-man » désignent la même.
+#
+# Toute cible doit exister dans docs/TAXONOMIE.md : les tests le vérifient, et une technique
+# renommée casse la construction au lieu de fausser silencieusement une conversion.
+
+source: SemEval 2023 tâche 3, sous-tâche 3 ; CheckThat! 2024 tâche 3
+reference: https://aclanthology.org/2023.semeval-1.317/
+referentiel: "0.1.7"
+
+correspondances:
+  Appeal_to_Fear-Prejudice:
+    lien: partiel
+    vers: appel_a_la_peur
+    note: La moitié « préjugé » de l'étiquette n'a pas d'équivalent propre.
+  Appeal_to_Time:
+    lien: exact
+    vers: urgence_artificielle
+  Flag_Waving:
+    lien: partiel
+    vers: eux_contre_nous
+    note: Le drapeau exalte un « nous » ; notre technique exige aussi un « eux » désigné.
+  Straw_Man:
+    lien: exact
+    vers: epouvantail
+  Whataboutism:
+    lien: exact
+    vers: whataboutisme
+  Appeal_to_Hypocrisy:
+    lien: partiel
+    vers: whataboutisme
+    note: Le « tu quoque » retourne la critique contre son auteur, ce que notre whataboutisme couvre.
+  False_Dilemma-No_Choice:
+    lien: exact
+    vers: faux_dilemme
+  Consequential_Oversimplification:
+    lien: exact
+    vers: pente_glissante
+  Causal_Oversimplification:
+    lien: partiel
+    vers: correlation_causation
+    note: L'étiquette couvre aussi la cause unique sans corrélation invoquée.
+  Name_Calling-Labeling:
+    lien: revue
+    vers: [ad_hominem, deshumanisation]
+    note: Le surnom dégradant est une attaque personnelle ; appliqué à un groupe en termes animaux ou sanitaires, c'est une déshumanisation.
+  Questioning_the_Reputation:
+    lien: exact
+    vers: ad_hominem
+  Guilt_by_Association:
+    lien: partiel
+    vers: ad_hominem
+  Doubt:
+    lien: revue
+    vers: [ad_hominem, je_pose_des_questions, proces_d_intention]
+    note: Étiquette large, qui recouvre selon le passage trois de nos techniques ou aucune.
+  Appeal_to_Authority:
+    lien: revue
+    vers: [autorite_anonyme, faux_expert]
+    note: SemEval compte aussi l'autorité légitime invoquée comme seul argument, que nous ne relevons pas. Un passage qui cite une autorité réelle et compétente est écarté.
+  Obfuscation-Vagueness-Confusion:
+    lien: revue
+    vers: [jargon_pseudo_scientifique]
+    note: Seul le flou habillé de vocabulaire savant a un équivalent ; le reste est écarté.
+  Red_Herring:
+    lien: aucun
+    vers: null
+    note: La diversion n'a pas d'entrée propre. Le whataboutisme en est un cas particulier, déjà couvert par son étiquette.
+  Appeal_to_Popularity:
+    lien: aucun
+    vers: null
+    note: Candidat à une entrée future du référentiel (appel au nombre).
+  Appeal_to_Values:
+    lien: aucun
+    vers: null
+  Slogans:
+    lien: aucun
+    vers: null
+  Conversation_Killer:
+    lien: aucun
+    vers: null
+  Loaded_Language:
+    lien: aucun
+    vers: null
+    note: Relève du lexique émotionnel de l'étage 0, pas d'une technique.
+  Repetition:
+    lien: aucun
+    vers: null
+    note: Relève d'un compte de l'étage 0.
+  Exaggeration-Minimisation:
+    lien: aucun
+    vers: null

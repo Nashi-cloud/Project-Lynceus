@@ -80,6 +80,47 @@ The order matters: fixing an expectation before having seen the result amounts t
 
 **Choosing the expected techniques.** Models vary in what they detect: only require the **stable** markers, the ones several models pick up. The SOTT case in the corpus requires a single technique (`verite_cachee`), the only one common to both models tested; the rest varied.
 
+## Measuring beyond pass or fail
+
+Calibration says whether a card meets its expectations, case by case. It cannot say by how much one analysis chain beats another, nor whether two runs of the same chain return the same thing. That is what [docs/en/ARCHITECTURE-CIBLE.md](../docs/en/ARCHITECTURE-CIBLE.md) calls step zero, and `lynceus mesurer` provides it without running any analysis:
+
+```bash
+lynceus mesurer corpus/corpus.yaml                          # gap between runs, annotator agreement
+lynceus calibrer corpus/corpus.yaml --json rapport.json
+lynceus mesurer corpus/corpus.yaml --rapport rapport.json   # + the chain against the annotations
+```
+
+Three measurements:
+
+- **The gap between runs**, read from `passes.jsonl`: same category, same grade, score difference, and overlap of the detected techniques. The target is a zero gap.
+- **Agreement between annotators**, on pages read by at least two of them. It is the reasonable ceiling for any machine.
+- **The chain against the annotations**: category, grade, techniques per page, spans with partial overlap as in SemEval 2020 task 11 and CheckThat! 2024 task 3, and the share of excerpts found in the page.
+
+### Annotating a page
+
+One YAML file per page and per annotator, under `annotations/<annotator>/`. `lynceus annoter <case> --annotateur <pseudonym>` prints the skeleton, fingerprint included. Annotators copy the excerpt, never a position: the position is derived from the text, counted on the normalised Markdown whose fingerprint is `content_hash`.
+
+```yaml
+cas: specimens/06-fictif-complotisme.md   # the case id, as in corpus.yaml
+annotateur: a-pseudonym
+content_hash: 3f2a…                       # printed by « lynceus annoter »
+categorie: theorie_du_complot
+grade: [D, E]
+intervalles:
+  - extrait: "what they will never tell you"
+    technique: verite_cachee
+  - extrait: "Coincidence?"
+    occurrence: 2                         # when the excerpt appears several times
+    technique: hyper_intentionnalisme
+notes: Free text, read by the next annotator only after their own reading.
+```
+
+Annotate **before** looking at any card, and without looking at the other annotator's file: an annotation made with the answer in view measures agreement with the model, not the page. A faulty annotation (changed fingerprint, unknown technique, excerpt not in the page) makes `lynceus mesurer` fail, and the tests with it.
+
+### Public corpora
+
+`correspondances/` maps the labels of public datasets onto our 31 techniques: SemEval 2023 task 3, whose inventory is also that of CheckThat! 2024 task 3, and FLICC. Each label is `exact`, `partiel` (kept, with a caveat), `revue` (a human picks among candidates) or `aucun` (dropped). The tests check that every label is covered and every target exists in the reference list. The datasets themselves are not in the repository: each has its own licence.
+
 ## Results, and where the figures come from
 
 The table in [en/RESULTATS.md](en/RESULTATS.md) is not written by hand: it is **generated** from `passes.jsonl`, the journal of runs actually executed.

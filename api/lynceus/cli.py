@@ -252,6 +252,7 @@ def calibrer(
         table.add_row(etiquette, attendu, obtenu, verdict)
         rapport.append({
             "cas": etiquette,
+            "id": _id_cas(entree, etiquette),
             "attendu": {k: v for k, v in entree.items()
                         if k.endswith(("_attendue", "_attendu", "_attendues", "_interdites", "_min", "_acceptables"))},
             "obtenu": {
@@ -263,6 +264,9 @@ def calibrer(
             },
             "ecarts_graves": ecarts_graves,
             "ecarts_mineurs": ecarts_mineurs,
+            # La carte entière, pour que « lynceus mesurer » puisse situer chaque extrait
+            # dans la page et le comparer aux annotations.
+            "carte": carte,
         })
 
     console.print(table)
@@ -334,7 +338,7 @@ def _publier_la_passe(corpus: Path, entrees: list, resultats: list, conformes: i
     meta = httpx.get(f"{_api()}/v1/meta", timeout=30).json()
     cas = []
     for entree, resultat in zip(entrees, resultats):
-        identifiant = entree.get("fichier") or entree.get("capture") or entree.get("url") or resultat["etiquette"]
+        identifiant = _id_cas(entree, resultat["etiquette"])
         enregistrement = {
             "id": identifiant,
             "titre": entree.get("titre") or identifiant,
@@ -383,6 +387,12 @@ def _publier_la_passe(corpus: Path, entrees: list, resultats: list, conformes: i
         if calibration.remplacer_bloc(chemin, calibration.bloc(liste, langue)):
             console.print(f"[dim]Tableau réengendré dans {chemin}[/dim]")
     _restamper_traductions(corpus.parent)
+
+
+def _id_cas(entree: dict, repli: str = "") -> str:
+    """L'identifiant stable d'un cas : c'est lui que portent le journal, les rapports et les
+    annotations, et qui permet de les rapprocher."""
+    return entree.get("fichier") or entree.get("capture") or entree.get("url") or repli
 
 
 def _rapports_publies(dossier: Path) -> list[tuple[Path, str]]:
@@ -1019,6 +1029,187 @@ def calibration_publiee(
         raise typer.Exit(1)
     console.print(f"[green]v{version} : {len(liste)} passe(s) enregistrée(s) ({passes_str}), "
                   f"tableau publié conforme au journal.[/green]")
+
+
+@app.command("annoter")
+def annoter(
+    cas: str = typer.Argument(help="identifiant du cas, tel que dans corpus.yaml (ex. specimens/06-fictif-complotisme.md)"),
+    annotateur: str = typer.Option(..., "--annotateur", help="pseudonyme de l'annotateur"),
+    corpus: Path = typer.Option(Path("corpus/corpus.yaml"), "--corpus", help="corpus de référence"),
+):
+    """Affiche le squelette d'annotation d'un cas, empreinte comprise.
+
+    L'empreinte se calcule sur le texte réellement analysé, en-tête de spécimen retiré :
+    la calculer à la main donnerait presque toujours la mauvaise. Rediriger la sortie
+    vers corpus/annotations/<annotateur>/<nom>.yaml, puis remplir."""
+    import yaml
+
+    entrees = yaml.safe_load(corpus.read_text(encoding="utf-8")) or []
+    entree = next((e for e in entrees if isinstance(e, dict) and _id_cas(e) == cas), None)
+    if entree is None:
+        console.print(f"[red]Cas inconnu du corpus : {cas}[/red]")
+        raise typer.Exit(2)
+    try:
+        corps = _corps_demande(entree, corpus.parent)
+    except CaptureManquante as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2)
+    if not corps or not corps.get("contenu_markdown"):
+        console.print("[red]Ce cas n'a pas de contenu local : il ne s'annote pas.[/red]")
+        raise typer.Exit(2)
+    squelette = {
+        "cas": cas,
+        "annotateur": annotateur,
+        "content_hash": hacher_contenu(corps["contenu_markdown"]),
+        "categorie": "",
+        "grade": [],
+        "intervalles": [{"extrait": "", "technique": ""}],
+        "notes": "",
+    }
+    typer.echo("# Annoter AVANT de regarder la moindre carte, et sans lire l'autre annotateur.")
+    typer.echo(yaml.safe_dump(squelette, allow_unicode=True, sort_keys=False), nl=False)
+
+
+@app.command("mesurer")
+def mesurer(
+    corpus: Path = typer.Argument(Path("corpus/corpus.yaml"), help="corpus de référence"),
+    rapport: Path = typer.Option(
+        None, "--rapport",
+        help="rapport d'une passe (« lynceus calibrer --json ») à comparer aux annotations",
+    ),
+    version: str = typer.Option(
+        None, "--version",
+        help="version de prompt dont comparer les passes (par défaut, celle de la dernière passe)",
+    ),
+    json_sortie: Path = typer.Option(None, "--json", help="écrire les mesures en JSON"),
+):
+    """Mesure une chaîne d'analyse au-delà du conforme ou non conforme.
+
+    Trois mesures, sans relancer d'analyse (docs/ARCHITECTURE-CIBLE.md §8) :
+
+    - l'écart entre deux passes de la même chaîne, tiré du journal des passes ;
+    - l'accord entre annotateurs, sur les pages lues par au moins deux d'entre eux ;
+    - avec --rapport, la chaîne contre les annotations : catégorie, grade, techniques,
+      intervalles avec recouvrement partiel, et part d'extraits retrouvés dans la page.
+    """
+    import yaml
+
+    from . import calibration, mesure
+    from .moteur import prompt as moteur_prompt
+
+    racine = corpus.parent
+    entrees = yaml.safe_load(corpus.read_text(encoding="utf-8")) or []
+    resultats: dict = {}
+
+    # 1. L'écart entre passes. Le journal suffit : c'est une mesure déjà payée.
+    journal = racine / "passes.jsonl"
+    toutes = calibration.passes(journal)
+    version = version or (toutes[-1]["prompt_version"] if toutes else "")
+    liste = calibration.passes_courantes(journal, version, calibration.empreinte(corpus)) if version else []
+    ecart = mesure.ecart_entre_passes(liste)
+    resultats["ecart_entre_passes"] = {"prompt_version": version, **ecart}
+
+    table = Table(title=f"Écart entre passes, prompt v{version or '?'}", show_header=True,
+                  header_style="bold")
+    table.add_column("Mesure")
+    table.add_column("Valeur", justify="right")
+    table.add_row("Passes comparées", str(ecart["passes"]))
+    table.add_row("Comparaisons (cas × paires de passes)", str(ecart["comparaisons"]))
+    table.add_row("Même catégorie", _pourcent(ecart["meme_categorie"]))
+    table.add_row("Même grade", _pourcent(ecart["meme_grade"]))
+    table.add_row("Techniques en commun (Jaccard)", _decimal(ecart["techniques_jaccard"]))
+    table.add_row("Écart de score moyen", _decimal(ecart["ecart_score_moyen"]))
+    table.add_row("Écart de score maximal", _decimal(ecart["ecart_score_max"]))
+    console.print(table)
+    if ecart["passes"] < 2:
+        console.print("[yellow]Moins de deux passes sur cette version : pas d'écart à mesurer.[/yellow]")
+    elif ecart["cas_instables"]:
+        console.print(f"[dim]Cas qui changent d'une passe à l'autre : "
+                      f"{', '.join(ecart['cas_instables'])}[/dim]")
+
+    # 2. Les annotations, contrôlées une à une contre la page qu'elles décrivent.
+    taxonomie = set(moteur_prompt.charger_taxonomie())
+    categories = set(moteur_prompt.charger_schema_carte()["properties"]["categorie"]["enum"])
+    par_id = {_id_cas(e): e for e in entrees if isinstance(e, dict)}
+    pages: dict[str, dict] = {}
+    invalides = []
+    for annotation in mesure.charger_annotations(racine / "annotations"):
+        entree = par_id.get(annotation.get("cas"))
+        if entree is None:
+            invalides.append(f"{annotation['_fichier']} : cas inconnu du corpus `{annotation.get('cas')}`")
+            continue
+        try:
+            corps = _corps_demande(entree, racine)
+        except CaptureManquante as exc:
+            console.print(f"[dim]Annotation ignorée faute de capture : {exc}[/dim]")
+            continue
+        if not corps or not corps.get("contenu_markdown"):
+            invalides.append(f"{annotation['_fichier']} : le cas n'a pas de contenu local à annoter")
+            continue
+        reference = mesure.texte_de_reference(corps["contenu_markdown"])
+        try:
+            intervalles = mesure.verifier_annotation(annotation, reference, taxonomie, categories)
+        except mesure.AnnotationInvalide as exc:
+            invalides.append(str(exc))
+            continue
+        page = pages.setdefault(annotation["cas"], {"reference": reference, "annotations": []})
+        page["annotations"].append({**annotation, "intervalles": intervalles})
+
+    annotateurs = sorted({a["annotateur"] for p in pages.values() for a in p["annotations"]})
+    console.print(f"\n[bold]{sum(len(p['annotations']) for p in pages.values())} annotation(s)[/bold] "
+                  f"sur {len(pages)} page(s), par {len(annotateurs)} annotateur(s).")
+    for message in invalides:
+        console.print(f"[red]{message}[/red]")
+
+    doubles = [p for p in pages.values() if len(p["annotations"]) >= 2]
+    if doubles:
+        accord = mesure.accord_annotateurs(doubles)
+        resultats["accord_annotateurs"] = accord
+        console.print(
+            f"Accord entre annotateurs sur {accord['paires']} paire(s) : catégorie "
+            f"{_pourcent(accord['categorie_accord'])} (kappa {_decimal(accord['categorie_kappa'])}), "
+            f"techniques F1 {_decimal(accord['techniques_f1'])}, "
+            f"intervalles F1 {_decimal(accord['intervalles_f1'])}.")
+
+    # 3. La chaîne contre les annotations.
+    if rapport:
+        cartes = {r["id"]: r["carte"] for r in json.loads(rapport.read_text(encoding="utf-8"))
+                  if r.get("id") and r.get("carte")}
+        if not cartes:
+            console.print("[red]Ce rapport ne porte pas de cartes. Le produire avec une version "
+                          "récente de « lynceus calibrer --json ».[/red]")
+            raise typer.Exit(2)
+        mesurables = [{**page, "carte": cartes[cas]} for cas, page in pages.items() if cas in cartes]
+        chaine = mesure.mesurer_contre_annotations(mesurables)
+        resultats["contre_annotations"] = chaine
+        table = Table(title=f"Chaîne contre annotations, {chaine['pages']} page(s)",
+                      show_header=True, header_style="bold")
+        for colonne in ("Mesure", "Précision", "Rappel", "F1 ou taux"):
+            table.add_column(colonne, justify="right")
+        table.add_row("Catégorie", "", "", _pourcent(chaine["categorie"]))
+        table.add_row("Grade dans la fourchette", "", "", _pourcent(chaine["grade_dans_la_fourchette"]))
+        table.add_row("Grade à un cran près", "", "", _pourcent(chaine["grade_a_un_cran"]))
+        for nom, cle in (("Techniques (page)", "techniques"), ("Intervalles", "intervalles")):
+            c = chaine[cle]
+            table.add_row(nom, _decimal(c["precision"]), _decimal(c["rappel"]), _decimal(c["f1"]))
+        table.add_row("Extraits retrouvés dans la page", "", "", _pourcent(chaine["extraits_verbatim"]))
+        console.print(table)
+
+    if json_sortie:
+        json_sortie.write_text(json.dumps(resultats, ensure_ascii=False, indent=2), encoding="utf-8")
+        console.print(f"[dim]Mesures écrites dans {json_sortie}[/dim]")
+    if invalides:
+        raise typer.Exit(1)
+
+
+def _pourcent(valeur: float | None) -> str:
+    return "—" if valeur is None else f"{valeur * 100:.0f} %"
+
+
+def _decimal(valeur) -> str:
+    if valeur is None:
+        return "—"
+    return f"{valeur:.2f}" if isinstance(valeur, float) else str(valeur)
 
 
 @app.command("env")

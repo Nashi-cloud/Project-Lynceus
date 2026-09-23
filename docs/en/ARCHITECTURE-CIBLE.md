@@ -1,6 +1,6 @@
 # Target architecture for analysis: a compound pipeline
 
-<!-- traduit-de: docs/ARCHITECTURE-CIBLE.md sha256:99d70a1ce7ec2691 -->
+<!-- traduit-de: docs/ARCHITECTURE-CIBLE.md sha256:a3b804cdad46063d -->
 
 Version: **draft**, September 2026. This document does not describe what Lynceus does,
 but where the analysis pipeline must go, and in what order. What is in service is
@@ -288,6 +288,24 @@ step zero, and it is done with the current pipeline, before any model.
 - **Size**: two hundred pages is the threshold below which a difference of a few points
   remains noise. The current fifteen cases remain the sentinels and the traps; they are
   not enough to evaluate.
+
+**Where things stand.** The tooling exists since version 0.11.27: `lynceus mesurer` computes
+the three measurements, `lynceus annoter` prepares an annotation, and the mapping tables to
+SemEval 2023 and FLICC are published (see [corpus/README.md](../../corpus/README.md)). The
+first measurement needed no annotation, since it reads from the run journal. Over the three
+runs of prompt v0.1.7, at zero temperature:
+
+| Measurement between two runs | Current chain | Target |
+|---|---|---|
+| Same category | 87% | 100% |
+| Same grade | 78% | 100% |
+| Techniques in common (Jaccard) | 0.85 | 1 |
+| Largest score difference | 27 points | 0 |
+| Cases that change at least once | 11 of 15 | 0 |
+
+This is the measured starting point against which everything that follows will be judged.
+The annotated corpus itself remains to be built: that is human work, which the tooling does
+not replace.
 
 ## 9. The roadmap
 
