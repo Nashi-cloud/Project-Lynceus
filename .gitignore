@@ -48,3 +48,7 @@ api/paquets/*
 # Captures de pages réelles : non versionnées (droit d'auteur).
 # Seul le manifeste corpus/corpus.yaml l'est ; recréez-les avec `lynceus capturer`.
 corpus/captures/*.md
+
+# Lectures d'une page pas encore close (docs/ANNOTATION.md) : publiées avec le lot, pas avant,
+# pour qu'un second annotateur ne lise pas la première avant de faire la sienne.
+corpus/annotations-en-cours/

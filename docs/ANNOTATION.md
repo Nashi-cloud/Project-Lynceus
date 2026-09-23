@@ -36,6 +36,30 @@ incrémente ce numéro.
 Profils recherchés pour l'annotation : éducation aux médias, journalisme, vérification
 des faits, enseignement, documentation. Aucune compétence technique n'est nécessaire.
 
+### 2.1 La phase de démarrage : un seul annotateur
+
+Au départ, le mainteneur coordonne et annote seul. Le travail n'attend pas les bénévoles,
+mais il faut dire ce que cette phase mesure et ce qu'elle ne mesure pas.
+
+- **Ce qui ne se mesure pas encore** : l'accord entre deux personnes, qui seul dit si le
+  guide se lit d'une seule façon. `lynceus mesurer` signale les pages qui n'ont qu'une
+  lecture, et tout chiffre publié sur elles le dit.
+- **Ce qui le remplace en partie** : la relecture. Une page sur dix, tirée au sort, est
+  relue par le même annotateur au moins quatre semaines plus tard, sans rouvrir sa
+  première lecture (`lynceus annoter --relecture`). L'accord d'un annotateur avec
+  lui-même est publié sous ce nom, jamais comme un accord entre annotateurs.
+- **Sélectionner avant de lire.** Qui choisit les pages et les annote risque de choisir
+  celles qu'il sait lire. Un lot se sélectionne donc en entier, selon les quotas, avant
+  la première lecture, et le motif de chaque page s'écrit dans `notes`.
+- **Garder les lectures pour les suivants.** Les lectures de la partie `test` restent dans
+  `corpus/annotations-en-cours/`, que git ignore, jusqu'à ce qu'une seconde personne ait
+  lu la page. Publiées plus tôt, elles seraient sous les yeux du second annotateur, et sa
+  lecture ne serait plus indépendante. Les pages de la partie `reglage` peuvent être
+  publiées dès leur première lecture.
+- **Arbitrer sans tiers.** Quand un bénévole a fait la seconde lecture et qu'aucune
+  troisième personne n'est disponible, les deux lecteurs arbitrent ensemble, en séance,
+  et l'arbitrage le mentionne dans `notes`. C'est moins solide qu'un tiers, et cela se dit.
+
 ## 3. Les règles qui ne se discutent pas
 
 1. **Annoter sans avoir vu de carte.** Ni celle de Lynceus, ni celle d'aucun autre outil,
@@ -207,6 +231,12 @@ Vingt pages, toutes lues par deux annotateurs. Chaque désaccord est discuté en
 et le guide est révisé en conséquence : c'est ce qui fait passer la version à 1.1. Les
 pages du pilote vont en partie `reglage`, puisqu'elles ont été discutées.
 
+En phase de démarrage, le pilote se fait seul : vingt pages lues, puis toutes relues
+quatre semaines plus tard. Chaque écart entre les deux lectures pointe une règle du guide
+à préciser. Chaque nouveau bénévole fait ensuite son propre pilote sur ces vingt pages,
+dont les lectures sont publiées puisqu'elles sont en partie `reglage`, et compare après
+coup.
+
 ### 6.3 Production, par lots de vingt pages
 
 1. **Sélection et capture** par la coordination : chaque page est capturée avec
@@ -217,16 +247,19 @@ pages du pilote vont en partie `reglage`, puisqu'elles ont été discutées.
 2. **Distribution** des captures aux deux annotateurs de chaque page, hors du dépôt.
 3. **Lecture** indépendante. Chaque annotateur remet ses fichiers à la coordination, hors
    du dépôt : une lecture publiée avant que l'autre soit faite serait visible de tous.
-4. **Contrôle** : la coordination place les lectures du lot dans `corpus/annotations/`
-   et lance `lynceus mesurer corpus/evaluation.yaml`. Une annotation fautive (empreinte,
+4. **Contrôle** : la coordination place les lectures du lot dans
+   `corpus/annotations-en-cours/<pseudonyme>/`, que git ignore, et lance
+   `lynceus mesurer corpus/evaluation.yaml`, qui lit les deux dossiers. Une annotation fautive (empreinte,
    technique, extrait introuvable) est renvoyée à son auteur. La commande liste les pages
    à arbitrer.
 5. **Arbitrage** des pages listées : l'arbitre lit la page, puis les deux lectures, et
    écrit la sienne avec `lynceus annoter --arbitrage`. Il ne consulte aucune carte.
    Un désaccord de bornes sur la même technique ne demande pas d'arbitre : le recouvrement
    partiel en rend compte.
-6. **Publication** du lot en une seule demande de fusion : entrées du manifeste, lectures
-   et arbitrages. Le message de commit donne l'accord entre annotateurs du lot.
+6. **Publication** du lot en une seule demande de fusion : les pages closes passent de
+   `annotations-en-cours/` à `annotations/`, avec les entrées du manifeste et les
+   arbitrages. Le message de commit donne l'accord entre annotateurs du lot, et crédite
+   chaque bénévole par une ligne `Co-authored-by:` (section 10).
 
 ### 6.4 Surveillance de l'accord
 
@@ -243,7 +276,7 @@ guide qui manque ou qui se lit de deux façons.
 
 ### 6.5 Gel et première mesure
 
-Quand la partie `test` atteint 200 pages :
+Quand la partie `test` atteint 200 pages lues chacune par deux personnes :
 
 1. Étiquette git `evaluation-v1` sur le commit qui contient le dernier lot.
 2. Publication de l'accord entre annotateurs sur l'ensemble.
@@ -265,7 +298,8 @@ Elle se fait sur une instance de développement, jamais sur la production.
 | Manifeste du jeu | `corpus/evaluation.yaml` | Oui |
 | Lectures et arbitrages publiés | `corpus/annotations/<pseudonyme>/` | Oui |
 | Captures | Archive privée de la coordination, sauvegardée | Non |
-| Lectures en cours | Chez l'annotateur, puis la coordination | Non, jusqu'à publication du lot |
+| Lectures en cours | Chez l'annotateur, puis `corpus/annotations-en-cours/` chez la coordination | Non, jusqu'à ce que la page soit close |
+| Liste des annotateurs et licence | `corpus/annotations/README.md` | Oui |
 | Déclarations de liens des annotateurs | Coordination | Non |
 
 ## 8. Le temps nécessaire
@@ -294,14 +328,26 @@ français.
 L'outil de conversion reste à écrire. La licence de chaque jeu est vérifiée avant tout
 import, et aucun de ces jeux n'entre dans le dépôt.
 
-## 10. À décider avant le premier lot
+## 10. Licence, accord et crédit
 
-- **La licence des annotations.** Versionnées dans le dépôt, elles relèvent par défaut de
-  l'AGPL-3.0, qui n'est pas faite pour des données. Une licence de données, comme
-  CC BY-SA 4.0, faciliterait leur réutilisation par d'autres projets.
-- **L'accord écrit de chaque annotateur.** Seule la coordination publie, et son
-  `Signed-off-by` engage sa responsabilité sur des lectures qu'elle n'a pas écrites. Il
-  faut donc l'accord de chaque annotateur pour publier son travail sous la licence
-  retenue, et sous son pseudonyme.
-- **Le recrutement** des annotateurs et de l'arbitre, bénévoles ou rémunérés.
-- **La mention** des annotateurs : pseudonyme par défaut, nom sur demande.
+**La licence.** Les annotations et le manifeste du jeu d'évaluation sont publiés sous
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.fr), et non sous
+l'AGPL-3.0 du code, qui n'est pas faite pour des données. Chacun peut les réutiliser, y
+compris pour entraîner un modèle, à condition de citer la source et de partager ses
+propres annotations dérivées sous la même licence. La notice figure dans
+`corpus/annotations/README.md`.
+
+**L'accord de chaque annotateur.** Un bénévole rejoint le jeu par une première demande de
+fusion, qui ajoute sa ligne à la liste des annotateurs de `corpus/annotations/README.md`.
+Son commit porte son propre `Signed-off-by` : il certifie ainsi, selon le
+[DCO](../DCO.txt), qu'il a le droit de publier ses lectures sous la licence indiquée dans
+ce dossier. C'est son accord écrit, daté, public, et il ne dépend pas de la coordination.
+Aucune de ses lectures n'est publiée avant.
+
+**Le crédit.** Le pseudonyme d'annotateur est l'identifiant GitHub, et l'on sait qu'il
+peut révéler un nom. Chaque commit qui publie des lectures d'un bénévole porte une ligne
+`Co-authored-by:` à son nom, avec l'adresse de son commit d'entrée, ce qui l'inscrit comme
+coauteur sur la forge. Toute réutilisation du jeu cite « Annotations Lynceus » et renvoie
+à la liste des annotateurs.
+
+**Reste ouvert** : le recrutement des bénévoles et d'un arbitre.

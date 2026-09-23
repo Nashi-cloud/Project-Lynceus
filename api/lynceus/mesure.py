@@ -36,8 +36,15 @@ GRADES = ("A", "B", "C", "D", "E")
 
 #: Une annotation ordinaire est une lecture indépendante. Un arbitrage tranche après coup
 #: les désaccords entre deux lectures : il devient alors la référence de la page, mais il
-#: n'entre pas dans l'accord entre annotateurs, qu'il fausserait en sa faveur.
-ROLES = ("annotation", "arbitrage")
+#: n'entre pas dans l'accord entre annotateurs, qu'il fausserait en sa faveur. Une relecture
+#: est la même personne qui relit une page des semaines plus tard sans revoir sa première
+#: lecture : elle mesure la constance d'un annotateur seul, et n'est jamais une référence.
+ROLES = ("annotation", "arbitrage", "relecture")
+
+#: Les dossiers d'annotations d'un corpus. Le premier est publié ; le second ne l'est pas
+#: (.gitignore) et garde les lectures d'une page tant qu'elle n'est pas close, pour qu'un
+#: second annotateur ne puisse pas lire la première avant de faire la sienne.
+DOSSIERS_ANNOTATIONS = ("annotations", "annotations-en-cours")
 
 #: La version du guide d'annotation (docs/ANNOTATION.md §5). Le squelette la porte, et un
 #: test vérifie qu'elle suit celle du document.
@@ -216,14 +223,13 @@ class AnnotationInvalide(ValueError):
     pass
 
 
-def charger_annotations(dossier: Path) -> list[dict]:
-    """Toutes les annotations d'un dossier, un fichier YAML par page et par annotateur."""
+def charger_annotations(*dossiers: Path) -> list[dict]:
+    """Toutes les annotations des dossiers donnés, un fichier YAML par page et par lecture."""
     import yaml
 
-    if not dossier.is_dir():
-        return []
     annotations = []
-    for chemin in sorted(dossier.rglob("*.yaml")):
+    fichiers = sorted(c for d in dossiers if d.is_dir() for c in d.rglob("*.yaml"))
+    for chemin in fichiers:
         donnees = yaml.safe_load(chemin.read_text(encoding="utf-8"))
         if isinstance(donnees, dict):
             annotations.append({**donnees, "_fichier": str(chemin)})
@@ -372,7 +378,7 @@ def references_de_la_page(annotations: list[dict]) -> list[dict]:
     """Contre quoi mesurer une chaîne sur une page : l'arbitrage s'il existe, sinon chaque
     lecture indépendante. Deux lectures d'accord n'ont pas besoin d'arbitre."""
     arbitrages = [a for a in annotations if a.get("role") == "arbitrage"]
-    return arbitrages or annotations
+    return arbitrages or lectures(annotations)
 
 
 def lectures(annotations: list[dict]) -> list[dict]:
@@ -396,6 +402,33 @@ def a_arbitrer(pages: list[dict]) -> list[str]:
         if any(desaccord(a, b) for a, b in combinations(lectures(page["annotations"]), 2)):
             restantes.append(page.get("cas", "?"))
     return restantes
+
+
+def accord_intra(pages: list[dict]) -> dict:
+    """La constance d'un annotateur avec lui-même : sa lecture contre sa relecture.
+
+    C'est la seule mesure de fiabilité possible tant qu'une seule personne annote. Elle ne
+    remplace pas l'accord entre deux personnes, qui seul dit si le guide se lit d'une seule
+    façon ; elle dit au moins si son auteur le lit toujours de la même."""
+    cat_a, cat_b = [], []
+    intervalles, techniques = Comptes(), Comptes()
+    for page in pages:
+        premieres = {a["annotateur"]: a for a in lectures(page["annotations"])}
+        for relecture in (a for a in page["annotations"] if a.get("role") == "relecture"):
+            premiere = premieres.get(relecture["annotateur"])
+            if premiere is None:
+                continue
+            cat_a.append(premiere["categorie"])
+            cat_b.append(relecture["categorie"])
+            intervalles += comptes_intervalles(premiere["intervalles"], relecture["intervalles"])
+            techniques += comptes_techniques({i.technique for i in premiere["intervalles"]},
+                                             {i.technique for i in relecture["intervalles"]})
+    return {
+        "paires": len(cat_a),
+        "categorie_accord": _taux(sum(x == y for x, y in zip(cat_a, cat_b)), len(cat_a)),
+        "techniques_f1": _arrondi(techniques.f1),
+        "intervalles_f1": _arrondi(intervalles.f1),
+    }
 
 
 def accord_annotateurs(pages: list[dict]) -> dict:

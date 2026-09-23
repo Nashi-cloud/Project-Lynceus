@@ -381,7 +381,7 @@ def test_une_categorie_acceptable_compte_comme_juste_sans_changer_l_accord():
 
 
 @pytest.mark.parametrize("surcharge, motif", [
-    ({"role": "relecture"}, "rôle inconnu"),
+    ({"role": "correction"}, "rôle inconnu"),
     ({"categories_acceptables": ["rumeur"]}, "catégorie inconnue"),
 ])
 def test_role_et_categories_acceptables_sont_controles(surcharge, motif):
@@ -426,3 +426,40 @@ def test_la_version_du_guide_suit_le_document():
     assert f"Version du guide : **{mesure.GUIDE_ANNOTATION}**" in texte
     assert f"## 5. Le guide d'annotation, version {mesure.GUIDE_ANNOTATION}" in texte
     assert f'guide: "{mesure.GUIDE_ANNOTATION}"' in texte
+
+
+# ---------- phase de démarrage : un seul annotateur ----------
+
+def test_la_relecture_mesure_la_constance_et_n_est_jamais_une_reference():
+    relue = annotation(role="relecture", categorie="opinion")
+    page = {**page_annotee(annotation(), relue), "cas": "specimens/x.md"}
+    intra = mesure.accord_intra([page])
+    assert intra["paires"] == 1
+    assert intra["categorie_accord"] == 0.0
+    assert intra["techniques_f1"] == 1.0
+    # Ni arbitrage demandé, ni accord entre annotateurs : il n'y a qu'une personne.
+    assert mesure.a_arbitrer([page]) == []
+    assert mesure.accord_annotateurs([page])["paires"] == 0
+    carte = {"categorie": "theorie_du_complot", "note": {"grade": "D"}, "techniques_detectees": []}
+    assert mesure.mesurer_contre_annotations([{**page, "carte": carte}])["categorie"] == 1.0
+
+
+def test_les_lectures_en_cours_se_mesurent_sans_etre_publiees(tmp_path):
+    """Une page pas encore close vit dans annotations-en-cours/, que git ignore : elle doit
+    quand même compter pour la coordination qui la mesure."""
+    (tmp_path / "x.md").write_text(PAGE, encoding="utf-8")
+    (tmp_path / "corpus.yaml").write_text(yaml.safe_dump([{"fichier": "x.md"}]), encoding="utf-8")
+    brute = {k: v for k, v in annotation(cas="x.md").items() if k != "_fichier"}
+    (tmp_path / "annotations-en-cours" / "une").mkdir(parents=True)
+    (tmp_path / "annotations-en-cours" / "une" / "x.yaml").write_text(yaml.safe_dump(brute), encoding="utf-8")
+
+    resultat = runner.invoke(app, ["mesurer", str(tmp_path / "corpus.yaml")])
+
+    assert resultat.exit_code == 0, resultat.output
+    assert "1 annotation(s)" in resultat.output
+    assert "qu'une lecture" in resultat.output
+
+
+def test_le_dossier_des_lectures_en_cours_n_est_pas_versionne():
+    ignores = (RACINE / ".gitignore").read_text(encoding="utf-8")
+    assert "corpus/annotations-en-cours/" in ignores
