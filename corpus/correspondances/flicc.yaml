@@ -1,0 +1,54 @@
+# Correspondance : jeu FLICC (Zanartu et al., 2024) vers le référentiel Lynceus
+#
+# 2 509 énoncés anglais sur le climat, douze sophismes de la taxonomie FLICC de John Cook.
+# L'annotation est à l'énoncé, pas au caractère : elle sert à la classification des
+# techniques, pas au repérage des intervalles. Le référentiel s'est construit en partie sur
+# FLICC, d'où une table plus directe que celle de SemEval.
+#
+# Même convention que semeval2023-t3.yaml pour le champ `lien` et la comparaison des étiquettes.
+
+source: FLICC (Zanartu, Cook, Wagner, Garcia, 2024)
+reference: https://github.com/fzanart/FLICC
+referentiel: "0.1.7"
+
+correspondances:
+  ad hominem:
+    lien: exact
+    vers: ad_hominem
+  anecdote:
+    lien: exact
+    vers: preuve_anecdotique
+  cherry picking:
+    lien: exact
+    vers: cherry_picking
+  fake experts:
+    lien: exact
+    vers: faux_expert
+  false choice:
+    lien: exact
+    vers: faux_dilemme
+  impossible expectations:
+    lien: exact
+    vers: attentes_impossibles
+  conspiracy theory:
+    lien: revue
+    vers: [verite_cachee, eux_contre_nous, hyper_intentionnalisme]
+    note: Nous découpons le récit complotiste en procédés distincts ; l'énoncé dit lequel.
+  single cause:
+    lien: partiel
+    vers: correlation_causation
+  slothful induction:
+    lien: partiel
+    vers: cherry_picking
+    note: Ignorer les preuves disponibles plutôt que choisir les favorables ; voisin, pas identique.
+  false equivalence:
+    lien: revue
+    vers: [faux_equilibre]
+    note: Chez Cook, comparer deux choses incomparables ; chez nous, donner le même poids à un consensus et à une position marginale. Seul ce second cas se reprend.
+  misrepresentation:
+    lien: revue
+    vers: [epouvantail, cherry_picking]
+  oversimplification:
+    lien: revue
+    vers: [correlation_causation]
+    note: La plupart des énoncés simplifient sans procédé de notre liste ; ils sont alors écartés.
