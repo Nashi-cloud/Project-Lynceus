@@ -1,6 +1,6 @@
 # Projet Lynceus 🔭
 
-<!-- traduit-de: README.md sha256:7b68df0e91af9e77 -->
+<!-- traduit-de: README.md sha256:82232919920726bc -->
 
 [English](README.md) · **Français**
 
@@ -146,7 +146,8 @@ entrepreneur individuel) et vise un réseau mondial et bénévole de vérificati
 
 Publié sous **AGPL-3.0-or-later** (voir [LICENSE](LICENSE) et [AUTHORS.md](AUTHORS.fr.md)).
 Les contributions relèvent du [Developer Certificate of Origin](DCO.txt) : chacun conserve
-ses droits sur son apport.
+ses droits sur son apport. Les annotations faites à la main du jeu d'évaluation sont des
+données, publiées sous **CC BY-SA 4.0** (voir [corpus/annotations/](corpus/annotations/)).
 
 L'analyse de conformité du projet, ce qui est traité, transmis et conservé, figure dans
 [docs/CONFORMITE.md](docs/CONFORMITE.md).

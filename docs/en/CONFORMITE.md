@@ -1,6 +1,6 @@
 # Regulatory compliance
 
-<!-- traduit-de: docs/CONFORMITE.md sha256:e70cd6ee17fe00b4 -->
+<!-- traduit-de: docs/CONFORMITE.md sha256:f389bdd8c09dd3ba -->
 
 > Translation for information. The French version, `docs/CONFORMITE.md`, is the one that binds the project: should the two ever diverge, it is the one that counts.
 
@@ -113,6 +113,9 @@ to be confirmed by a professional** before any public communication relies on it
 
 - The project is published under **AGPL-3.0**. Any modified version made available over a
   network must publish its sources.
+- The **annotations** of the evaluation set and its manifest are data, and fall under
+  another licence: **CC BY-SA 4.0** ([corpus/annotations/](../../corpus/annotations/),
+  [ANNOTATION.md](ANNOTATION.md) §10). Each annotator consents to it through a signed commit.
 - The rights holder is named in [AUTHORS.md](../../AUTHORS.md).
 - Outside contributions fall under the **Developer Certificate of Origin**: every
   contributor certifies that they have the right to contribute their code under this

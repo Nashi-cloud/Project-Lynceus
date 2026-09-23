@@ -1,4 +1,4 @@
-<!-- traduit-de: docs/ANNOTATION.md sha256:7045fce9384e28fe -->
+<!-- traduit-de: docs/ANNOTATION.md sha256:2e7f6edf0b11d7a9 -->
 
 # Building the annotated evaluation set
 
@@ -37,6 +37,30 @@ number.
 
 Profiles sought for annotation: media literacy education, journalism, fact-checking,
 teaching, documentation. No technical skill is needed.
+
+### 2.1 The start-up phase: a single annotator
+
+At first, the maintainer coordinates and annotates alone. The work does not wait for
+volunteers, but one must say what this phase measures and what it does not.
+
+- **What cannot be measured yet**: agreement between two people, which alone says whether
+  the guide reads only one way. `lynceus mesurer` flags the pages that have only one
+  reading, and any figure published on them says so.
+- **What partly replaces it**: re-reading. One page in ten, drawn at random, is read again
+  by the same annotator at least four weeks later, without reopening their first reading
+  (`lynceus annoter --relecture`). An annotator's agreement with themselves is published
+  under that name, never as an agreement between annotators.
+- **Select before reading.** Whoever chooses the pages and annotates them risks choosing
+  those they know how to read. A batch is therefore selected in full, according to the
+  quotas, before the first reading, and each page's reason is written in `notes`.
+- **Keep the readings for those who follow.** Readings of the `test` part stay in
+  `corpus/annotations-en-cours/`, which git ignores, until a second person has read the
+  page. Published earlier, they would be in front of the second annotator, whose reading
+  would no longer be independent. Pages of the `reglage` part may be published as soon as
+  they are first read.
+- **Arbitrating without a third party.** When a volunteer has made the second reading and
+  no third person is available, the two readers arbitrate together, in a session, and the
+  arbitration says so in `notes`. It is less solid than a third party, and that is stated.
 
 ## 3. Rules that are not up for discussion
 
@@ -209,6 +233,11 @@ Twenty pages, all read by two annotators. Each disagreement is discussed in a se
 the guide is revised accordingly: this is what moves the version to 1.1. The pilot pages go
 to the `reglage` part, since they have been discussed.
 
+In the start-up phase, the pilot is done alone: twenty pages read, then all read again four
+weeks later. Each gap between the two readings points at a rule of the guide that needs
+sharpening. Each new volunteer then does their own pilot on those twenty pages, whose
+readings are published since they belong to the `reglage` part, and compares afterwards.
+
 ### 6.3 Production, in batches of twenty pages
 
 1. **Selection and capture** by the coordination: each page is captured with
@@ -220,16 +249,19 @@ to the `reglage` part, since they have been discussed.
 3. **Reading**, independently. Each annotator hands their files to the coordination,
    outside the repository: a reading published before the other one is done would be
    visible to all.
-4. **Checking**: the coordination places the batch's readings in `corpus/annotations/` and
-   runs `lynceus mesurer corpus/evaluation.yaml`. A faulty annotation (fingerprint,
+4. **Checking**: the coordination places the batch's readings in
+   `corpus/annotations-en-cours/<pseudonym>/`, which git ignores, and runs
+   `lynceus mesurer corpus/evaluation.yaml`, which reads both folders. A faulty annotation (fingerprint,
    technique, excerpt not found) is sent back to its author. The command lists the pages to
    arbitrate.
 5. **Arbitration** of the listed pages: the arbiter reads the page, then the two readings,
    and writes their own with `lynceus annoter --arbitrage`. They consult no card. A
    disagreement on the boundaries of the same technique needs no arbiter: partial overlap
    accounts for it.
-6. **Publication** of the batch in a single pull request: manifest entries, readings and
-   arbitrations. The commit message gives the batch's inter-annotator agreement.
+6. **Publication** of the batch in a single pull request: closed pages move from
+   `annotations-en-cours/` to `annotations/`, with the manifest entries and the
+   arbitrations. The commit message gives the batch's inter-annotator agreement, and credits
+   each volunteer with a `Co-authored-by:` line (section 10).
 
 ### 6.4 Watching agreement
 
@@ -246,7 +278,7 @@ is missing or that can be read two ways.
 
 ### 6.5 Freeze and first measurement
 
-When the `test` part reaches 200 pages:
+When the `test` part reaches 200 pages, each read by two people:
 
 1. Git tag `evaluation-v1` on the commit that contains the last batch.
 2. Publication of the inter-annotator agreement over the whole set.
@@ -268,7 +300,8 @@ a development instance, never on production.
 | Manifest of the set | `corpus/evaluation.yaml` | Yes |
 | Published readings and arbitrations | `corpus/annotations/<pseudonym>/` | Yes |
 | Captures | The coordination's private archive, backed up | No |
-| Readings in progress | With the annotator, then the coordination | No, until the batch is published |
+| Readings in progress | With the annotator, then `corpus/annotations-en-cours/` with the coordination | No, until the page is closed |
+| List of annotators and licence | `corpus/annotations/README.md` | Yes |
 | Annotators' declarations of ties | Coordination | No |
 
 ## 8. The time needed
@@ -296,14 +329,25 @@ set: their annotation guidelines are not ours, and most are not in French.
 The conversion tool remains to be written. Each dataset's licence is checked before any
 import, and none of these datasets enters the repository.
 
-## 10. To decide before the first batch
+## 10. Licence, agreement and credit
 
-- **The licence of the annotations.** Versioned in the repository, they fall by default
-  under the AGPL-3.0, which is not designed for data. A data licence such as CC BY-SA 4.0
-  would make their reuse by other projects easier.
-- **Each annotator's written agreement.** Only the coordination publishes, and its
-  `Signed-off-by` commits it to readings it did not write. Each annotator's agreement is
-  therefore needed to publish their work under the chosen licence, and under their
-  pseudonym.
-- **Recruiting** the annotators and the arbiter, volunteer or paid.
-- **Crediting** the annotators: pseudonym by default, name on request.
+**The licence.** The annotations and the manifest of the evaluation set are published under
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), not under the code's
+AGPL-3.0, which is not designed for data. Anyone may reuse them, including to train a model,
+provided they cite the source and share their own derived annotations under the same
+licence. The notice is in `corpus/annotations/README.md`.
+
+**Each annotator's agreement.** A volunteer joins the set through a first pull request,
+which adds their line to the list of annotators in `corpus/annotations/README.md`. Their
+commit carries their own `Signed-off-by`: under the [DCO](../../DCO.txt), they thereby
+certify that they have the right to publish their readings under the licence stated in
+that folder. That is their written agreement, dated, public, and it does not depend on the
+coordination. None of their readings is published before it.
+
+**Credit.** The annotator pseudonym is the GitHub handle, and it is known that it can
+reveal a name. Each commit that publishes a volunteer's readings carries a
+`Co-authored-by:` line in their name, with the address of their joining commit, which lists
+them as co-author on the forge. Any reuse of the set cites "Lynceus annotations" and links
+to the list of annotators.
+
+**Still open**: recruiting volunteers and an arbiter.

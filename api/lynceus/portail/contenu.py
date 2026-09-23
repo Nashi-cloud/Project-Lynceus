@@ -181,6 +181,7 @@ FACADE = [
     "extension/PUBLICATION.md",
     "corpus/README.md",
     "corpus/specimens/README.md",
+    "corpus/annotations/README.md",
 ]
 
 _EMPREINTE = re.compile(r"traduit-de:\s*(\S+)\s+sha256:([0-9a-f]+)")

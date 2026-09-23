@@ -1041,6 +1041,7 @@ def annoter(
     annotateur: str = typer.Option(..., "--annotateur", help="pseudonyme de l'annotateur"),
     corpus: Path = typer.Option(Path("corpus/corpus.yaml"), "--corpus", help="corpus de référence"),
     arbitrage: bool = typer.Option(False, "--arbitrage", help="squelette d'arbitrage, qui tranche deux lectures"),
+    relecture: bool = typer.Option(False, "--relecture", help="squelette de relecture, par le même annotateur des semaines plus tard"),
 ):
     """Affiche le squelette d'annotation d'un cas, empreinte comprise.
 
@@ -1070,7 +1071,7 @@ def annoter(
     squelette = {
         "cas": cas,
         "annotateur": annotateur,
-        **({"role": "arbitrage"} if arbitrage else {}),
+        **({"role": "arbitrage"} if arbitrage else {"role": "relecture"} if relecture else {}),
         "guide": mesure.GUIDE_ANNOTATION,
         "content_hash": hacher_contenu(corps["contenu_markdown"]),
         "categorie": "",
@@ -1078,8 +1079,12 @@ def annoter(
         "intervalles": [{"extrait": "", "technique": ""}],
         "notes": "",
     }
-    typer.echo("# Arbitrer en lisant les deux lectures, jamais une carte d'analyse." if arbitrage else
-               "# Annoter AVANT de regarder la moindre carte, et sans lire l'autre annotateur.")
+    if arbitrage:
+        typer.echo("# Arbitrer en lisant les deux lectures, jamais une carte d'analyse.")
+    elif relecture:
+        typer.echo("# Relire SANS rouvrir sa première lecture ni aucune carte d'analyse.")
+    else:
+        typer.echo("# Annoter AVANT de regarder la moindre carte, et sans lire l'autre annotateur.")
     typer.echo(yaml.safe_dump(squelette, allow_unicode=True, sort_keys=False), nl=False)
 
 
@@ -1151,7 +1156,7 @@ def mesurer(
     par_id = {_id_cas(e): e for e in entrees if isinstance(e, dict)}
     pages: dict[str, dict] = {}
     invalides = []
-    for annotation in mesure.charger_annotations(racine / "annotations"):
+    for annotation in mesure.charger_annotations(*(racine / d for d in mesure.DOSSIERS_ANNOTATIONS)):
         entree = par_id.get(annotation.get("cas"))
         if entree is None:
             invalides.append(f"{annotation['_fichier']} : cas inconnu du corpus `{annotation.get('cas')}`")
@@ -1181,6 +1186,20 @@ def mesurer(
         console.print(f"[red]{message}[/red]")
 
     doubles = [p for p in pages.values() if len(mesure.lectures(p["annotations"])) >= 2]
+    uniques = len(pages) - len(doubles)
+    resultats["pages_a_lecture_unique"] = uniques
+    if uniques:
+        console.print(f"[dim]{uniques} page(s) n'ont encore qu'une lecture : elles se mesurent, "
+                      "mais leur référence n'a été vérifiée par personne d'autre.[/dim]")
+    relues = [p for p in pages.values() if any(a.get("role") == "relecture" for a in p["annotations"])]
+    if relues:
+        intra = mesure.accord_intra(relues)
+        resultats["accord_intra"] = intra
+        console.print(
+            f"Constance d'un annotateur avec lui-même sur {intra['paires']} relecture(s) : "
+            f"catégorie {_pourcent(intra['categorie_accord'])}, "
+            f"techniques F1 {_decimal(intra['techniques_f1'])}, "
+            f"intervalles F1 {_decimal(intra['intervalles_f1'])}.")
     restantes = mesure.a_arbitrer(doubles)
     resultats["a_arbitrer"] = restantes
     if restantes:

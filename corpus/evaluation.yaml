@@ -9,6 +9,9 @@
 #           modèle) ou `reglage` (autorisée pour ajuster des seuils). Tirée au sort à la
 #           sélection, jamais choisie après avoir vu un résultat.
 #
+# Licence : CC BY-SA 4.0, comme les annotations (corpus/annotations/README.md), et non
+# l'AGPL-3.0 du code.
+#
 # Ne pas passer ce fichier à « lynceus calibrer --ecrire » : le tableau publié est celui du
 # corpus de calibration, et la commande le refuse.
 

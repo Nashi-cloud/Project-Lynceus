@@ -24,6 +24,11 @@ cost of ever being able to sell exceptions to the licence.
 
 <!-- Add yourself here with your first contribution, in alphabetical order. -->
 
+## Annotations
+
+The hand annotations of the evaluation set are published under CC BY-SA 4.0, and their
+annotators are listed with them in [corpus/annotations/](corpus/annotations/README.md).
+
 ## Embedded third-party resources
 
 | Resource | Licence | Notice |
