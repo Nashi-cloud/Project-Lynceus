@@ -30,7 +30,7 @@ from itertools import combinations
 from pathlib import Path
 
 from .moteur.validation import _nettoyer_extrait
-from .normalisation import hacher_contenu, normaliser_texte
+from .normalisation import hacher_contenu, normaliser_texte, normaliser_url
 
 GRADES = ("A", "B", "C", "D", "E")
 
@@ -273,6 +273,49 @@ def verifier_annotation(annotation: dict, reference: str, techniques: set[str],
             raise AnnotationInvalide(f"{fichier}, intervalle {n} : {exc}") from exc
         intervalles.append(Intervalle(debut, fin, technique))
     return intervalles
+
+
+# ---------------------------------------------------------------------------
+# Pages déjà lues par des modèles
+# ---------------------------------------------------------------------------
+
+@dataclass
+class DejaVus:
+    """Les pages du jeu argent (docs/ANNOTATION.md §11), à tenir hors du jeu de test.
+
+    Une page que des modèles ont annotée, et sur laquelle un encodeur apprendra peut-être,
+    ne peut pas servir à le mesurer : il aurait vu la réponse. Le fichier vient du dépôt
+    lynx-corpus, une ligne par page : empreinte de contenu, puis adresse normalisée."""
+    empreintes: set[str]
+    adresses: set[str]
+
+    def motif(self, *, empreinte: str | None = None, url: str | None = None) -> str | None:
+        """Pourquoi une page est exclue, ou None si elle ne l'est pas."""
+        if empreinte and empreinte in self.empreintes:
+            return "même contenu qu'une page du jeu argent"
+        if url:
+            try:
+                adresse = normaliser_url(url)
+            except ValueError:
+                return None
+            if adresse in self.adresses:
+                return "même adresse qu'une page du jeu argent"
+        return None
+
+
+def charger_deja_vus(chemin: Path) -> DejaVus:
+    empreintes, adresses = set(), set()
+    for numero, ligne in enumerate(chemin.read_text(encoding="utf-8").splitlines(), start=1):
+        ligne = ligne.strip()
+        if not ligne or ligne.startswith("#"):
+            continue
+        morceaux = ligne.split(maxsplit=1)
+        if len(morceaux[0]) != 64 or any(c not in "0123456789abcdef" for c in morceaux[0]):
+            raise ValueError(f"{chemin.name}, ligne {numero} : empreinte illisible")
+        empreintes.add(morceaux[0])
+        if len(morceaux) == 2:
+            adresses.add(morceaux[1].strip())
+    return DejaVus(empreintes, adresses)
 
 
 # ---------------------------------------------------------------------------

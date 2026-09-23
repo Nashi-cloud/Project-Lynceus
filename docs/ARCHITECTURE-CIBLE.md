@@ -172,12 +172,15 @@ plus précieux :
   à écrire et à publier ; ce qui ne se correspond pas reste hors entraînement. L'anglais
   se transfère au français par traduction du jeu d'entraînement, procédé éprouvé sur ces
   campagnes.
-- **Supervision produite par la chaîne actuelle, filtrée par la machine** : chaque carte
-  déjà validée (schéma respecté, identifiants dans le référentiel, extraits vérifiés
-  sous-chaîne) est un exemple d'entraînement dont les positions se déduisent de
-  l'extrait. Le contrôle verbatim existant devient un filtre de supervision. Ces exemples
-  sont bruités par les défauts du modèle actuel ; ils servent à pré-entraîner, pas à
-  évaluer.
+- **Supervision produite par des modèles, filtrée par la machine** : le **jeu argent**,
+  des milliers de pages lues chacune par deux modèles à poids ouverts de fournisseurs
+  différents, un troisième arbitrant leurs désaccords. Chaque lecture passe les contrôles
+  existants (référentiel, extraits vérifiés sous-chaîne), qui deviennent un filtre de
+  supervision, et les positions se déduisent des extraits. Ces exemples restent bruités
+  par les défauts des modèles ; ils servent à entraîner, jamais à évaluer, et un audit
+  humain à l'aveugle d'une page sur dix dit de combien ils le sont. Le jeu se construit
+  dans un dépôt séparé, lynx-corpus, et ses pages sont exclues du jeu de test
+  ([ANNOTATION.md](ANNOTATION.md) §11).
 - **Corpus annoté à la main**, cible de l'ordre de deux à trois cents pages en français et
   en anglais, annotées par intervalle par au moins deux personnes, avec un accord
   inter-annotateurs publié. C'est le seul jeu qui permet d'évaluer. Il se publie sans

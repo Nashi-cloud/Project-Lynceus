@@ -1,6 +1,6 @@
 # Target architecture for analysis: a compound pipeline
 
-<!-- traduit-de: docs/ARCHITECTURE-CIBLE.md sha256:6028b5547ccf052d -->
+<!-- traduit-de: docs/ARCHITECTURE-CIBLE.md sha256:71da0ad5489db9ae -->
 
 Version: **draft**, September 2026. This document does not describe what Lynceus does,
 but where the analysis pipeline must go, and in what order. What is in service is
@@ -171,11 +171,14 @@ most immediate to the most valuable:
   explanation). A mapping table from their labels to our identifiers is to be written and
   published; what does not map stays out of training. English transfers to French by
   translating the training set, a procedure proven on these campaigns.
-- **Supervision produced by the current pipeline, machine-filtered**: every card already
-  validated (schema respected, identifiers in the reference list, excerpts checked as
-  substrings) is a training example whose positions follow from the excerpt. The
-  existing verbatim check becomes a supervision filter. These examples carry the current
-  model's flaws as noise; they serve for pre-training, not for evaluation.
+- **Supervision produced by models, machine-filtered**: the **silver set**, thousands of
+  pages each read by two open-weight models from different providers, a third settling
+  their disagreements. Each reading goes through the existing checks (reference list,
+  excerpts checked as substrings), which become a supervision filter, and positions follow
+  from the excerpts. These examples remain noisy with the models' flaws; they serve for
+  training, never for evaluation, and a blind human audit of one page in ten says how
+  noisy they are. The set is built in a separate repository, lynx-corpus, and its pages are
+  excluded from the test set ([ANNOTATION.md](ANNOTATION.md) §11).
 - **Hand-annotated corpus**, targeting on the order of two to three hundred pages in
   French and English, span-annotated by at least two people, with a published
   inter-annotator agreement. It is the only set that allows evaluation. It can be

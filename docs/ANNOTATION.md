@@ -63,7 +63,7 @@ mais il faut dire ce que cette phase mesure et ce qu'elle ne mesure pas.
 ## 3. Les règles qui ne se discutent pas
 
 1. **Annoter sans avoir vu de carte.** Ni celle de Lynceus, ni celle d'aucun autre outil,
-   ni avant ni pendant la lecture. Une annotation faite avec la réponse sous les yeux
+   ni l'annotation du jeu argent (section 11), ni avant ni pendant la lecture. Une annotation faite avec la réponse sous les yeux
    mesure l'accord avec le modèle, pas avec la page.
 2. **Annoter sans IA.** Aucun modèle de langage ne propose, ne complète ni ne relit une
    annotation. La [politique IA](IA-GENERATIVE.md) du projet s'applique ici sans exception,
@@ -119,7 +119,22 @@ choisissent par source, selon les quotas, sans regarder leur contenu au préalab
 Aucune page ne se choisit après l'avoir soumise à Lynceus : on retiendrait sans le
 vouloir celles qu'il traite bien ou mal. Le motif de sélection s'écrit dans `notes`.
 
+Aucune page du jeu argent (section 11) n'entre non plus dans le jeu de test : des modèles
+l'ont déjà lue, et un encodeur apprendra peut-être dessus. La liste de ces pages est
+publiée par lynx-corpus dans `argent/deja-vus.txt`. Désignée par `LYNCEUS_DEJA_VUS`, elle
+fait refuser une telle page par `lynceus capturer`, et signaler par `lynceus mesurer` toute
+page du jeu de test qui y figurerait déjà :
+
+```bash
+export LYNCEUS_DEJA_VUS=../lynx-corpus/argent/deja-vus.txt
+lynceus capturer page.md --url https://exemple.fr/article --vers corpus/captures
+lynceus mesurer corpus/evaluation.yaml
+```
+
 ## 5. Le guide d'annotation, version 1.0
+
+<!-- Les titres 5.1 à 5.4 sont lus par lynx-corpus, qui en fait le prompt de son panel :
+     les renommer casse cette chaîne, et un test de lynx-corpus le signale. -->
 
 ### 5.1 L'ordre de lecture
 
@@ -351,3 +366,49 @@ coauteur sur la forge. Toute réutilisation du jeu cite « Annotations Lynceus �
 à la liste des annotateurs.
 
 **Reste ouvert** : le recrutement des bénévoles et d'un arbitre.
+
+## 11. Le jeu argent, annoté par des modèles
+
+Le jeu de test mesure ; il ne suffit pas à entraîner un encodeur, qui demande des
+milliers d'exemples. Ceux-là viennent d'un second jeu, le **jeu argent**, annoté par un
+panel de modèles de langage et construit dans un dépôt séparé,
+[lynx-corpus](https://github.com/Nashi-cloud/lynx-corpus). Les deux jeux ne se mélangent
+jamais.
+
+| | Jeu de test | Jeu argent |
+|---|---|---|
+| Lu par | des humains, à l'aveugle, sans IA | deux modèles, et un troisième qui arbitre |
+| Taille | 200 pages et plus | des milliers |
+| Sert à | mesurer | entraîner |
+| Où | `corpus/` de ce dépôt | lynx-corpus |
+
+**Le panel.** Trois modèles à poids ouverts de trois fournisseurs différents : deux lisent
+chaque page indépendamment, avec ce guide pour consigne, et le troisième tranche leurs
+désaccords sans pouvoir ajouter de passage. Des poids ouverts par choix : plusieurs
+fournisseurs de modèles fermés interdisent d'entraîner un modèle concurrent sur leurs
+sorties. La licence de chaque modèle est vérifiée avant toute publication.
+
+**Le même contrôle.** Chaque lecture du panel passe par la vérification que passent les
+annotations humaines : technique du référentiel, extrait retrouvé mot pour mot, empreinte.
+
+**Pourquoi il n'est jamais une référence.** Une référence écrite par des modèles rendrait
+la mesure circulaire, puisque la chaîne mesurée est elle-même un modèle. Des fournisseurs
+différents ne rendent pas les erreurs indépendantes : trois modèles d'accord peuvent se
+tromper ensemble.
+
+**Comment il est mesuré.** Par un audit à l'aveugle : une page sur dix, tirée au sort, est
+relue par un humain qui ne voit rien de ce que le panel en a dit. Le panel se mesure
+contre ces lectures comme une chaîne quelconque, avec les mesures de `lynceus mesurer`.
+S'il approche l'accord entre deux humains, le jeu argent est utilisable ; sinon, on sait
+de combien il est bruité.
+
+**Les garde-fous.**
+
+- Chaque annotation argent porte `origine: machine` et l'annotateur `panel-argent`, et
+  n'entre jamais dans `corpus/annotations/`.
+- Les pages du corpus de calibration et du jeu de test sont exclues du jeu argent, par
+  adresse et par empreinte.
+- Les pages du jeu argent sont exclues du jeu de test, par la liste `deja-vus.txt`
+  (section 4.3).
+- Aucune capture n'est versionnée, pas plus ici que là.
+
