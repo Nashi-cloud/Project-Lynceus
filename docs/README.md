@@ -12,6 +12,7 @@ enough to know exactly what the project promises.
 | Methodology | [en/METHODOLOGIE.md](en/METHODOLOGIE.md) | [METHODOLOGIE.md](METHODOLOGIE.md) | Categories, dimensions, scale, how the grade is computed, special cases. |
 | Taxonomy | [en/TAXONOMIE.md](en/TAXONOMIE.md) | [TAXONOMIE.md](TAXONOMIE.md) | The 31 detectable techniques, documented and sourced. A closed list. |
 | Architecture | [en/ARCHITECTURE.md](en/ARCHITECTURE.md) | [ARCHITECTURE.md](ARCHITECTURE.md) | API, data model, deduplication, LLM layer, federation. |
+| Target architecture | [en/ARCHITECTURE-CIBLE.md](en/ARCHITECTURE-CIBLE.md) | [ARCHITECTURE-CIBLE.md](ARCHITECTURE-CIBLE.md) | Where the analysis pipeline is going: deterministic analysers, spotting encoder, small writing model, and the measured steps to get there. |
 | Compliance | [en/CONFORMITE.md](en/CONFORMITE.md) | [CONFORMITE.md](CONFORMITE.md) | What is processed, transmitted and kept, and under which legal basis. |
 | Generative AI | [en/IA-GENERATIVE.md](en/IA-GENERATIVE.md) | [IA-GENERATIVE.md](IA-GENERATIVE.md) | How generative AI is used to build the project, and what is asked of contributions. |
 
