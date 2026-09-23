@@ -397,7 +397,7 @@ def _id_cas(entree: dict, repli: str = "") -> str:
     """L'identifiant stable d'un cas : c'est lui que portent le journal, les rapports et les
     annotations, et qui permet de les rapprocher.
 
-    Utilisée par lynx-corpus, qui construit le jeu argent : la renommer casse ce dépôt."""
+    Utilisée par lynx-corpus, qui construit le jeu silver : la renommer casse ce dépôt."""
     return entree.get("fichier") or entree.get("capture") or entree.get("url") or repli
 
 
@@ -471,7 +471,7 @@ def _lire_capture(entree: dict, racine: Path) -> str:
 def _corps_demande(entree: dict, racine: Path) -> dict | None:
     """Construit le corps POST /v1/analyses depuis une entrée de corpus.
 
-    Utilisée par lynx-corpus, qui construit le jeu argent : la renommer casse ce dépôt."""
+    Utilisée par lynx-corpus, qui construit le jeu silver : la renommer casse ce dépôt."""
     if entree.get("capture"):
         return {
             "contenu_markdown": _lire_capture(entree, racine),
@@ -701,7 +701,7 @@ def capturer(
     nom: str = typer.Option(None, help="nom du fichier de capture (déduit de l'URL sinon)"),
     deja_vus: Path = typer.Option(
         None, "--deja-vus", envvar="LYNCEUS_DEJA_VUS",
-        help="argent/deja-vus.txt de lynx-corpus : refuser une page déjà lue par le panel",
+        help="silver/deja-vus.txt de lynx-corpus : refuser une page déjà lue par le panel",
     ),
 ):
     """Enregistre une capture de page réelle pour le corpus, et affiche l'entrée à ajouter.
@@ -717,7 +717,7 @@ def capturer(
         console.print("[red]Contenu trop court[/red] (200 caractères minimum) pour une analyse fiable.")
         raise typer.Exit(2)
 
-    # Une page du jeu argent a été lue par des modèles, et un encodeur apprendra peut-être
+    # Une page du jeu silver a été lue par des modèles, et un encodeur apprendra peut-être
     # dessus : elle ne peut pas entrer dans le jeu de test (docs/ANNOTATION.md §4.3).
     if deja_vus:
         from . import mesure
@@ -1121,7 +1121,7 @@ def mesurer(
     json_sortie: Path = typer.Option(None, "--json", help="écrire les mesures en JSON"),
     deja_vus: Path = typer.Option(
         None, "--deja-vus", envvar="LYNCEUS_DEJA_VUS",
-        help="argent/deja-vus.txt de lynx-corpus : vérifier qu'aucune page du jeu de test n'y figure",
+        help="silver/deja-vus.txt de lynx-corpus : vérifier qu'aucune page du jeu de test n'y figure",
     ),
 ):
     """Mesure une chaîne d'analyse au-delà du conforme ou non conforme.
@@ -1202,7 +1202,7 @@ def mesurer(
                                                      "annotations": []})
         page["annotations"].append({**annotation, "intervalles": intervalles})
 
-    # Aucune page du jeu de test ne doit avoir été lue par le panel du jeu argent. La
+    # Aucune page du jeu de test ne doit avoir été lue par le panel du jeu silver. La
     # capture le refuse déjà ; ce contrôle rattrape une page entrée avant que la liste
     # ne la contienne, ou capturée sans elle.
     contaminees = []
@@ -1218,7 +1218,7 @@ def mesurer(
             console.print(f"[red]Jeu de test contaminé, {message}. Retirer la page du jeu de test.[/red]")
         if not contaminees:
             console.print(f"[dim]Aucune page du jeu de test parmi les {len(vus.empreintes)} "
-                          "pages du jeu argent.[/dim]")
+                          "pages du jeu silver.[/dim]")
 
     annotateurs = sorted({a["annotateur"] for p in pages.values() for a in mesure.lectures(p["annotations"])})
     console.print(f"\n[bold]{sum(len(p['annotations']) for p in pages.values())} annotation(s)[/bold] "

@@ -172,7 +172,7 @@ plus précieux :
   à écrire et à publier ; ce qui ne se correspond pas reste hors entraînement. L'anglais
   se transfère au français par traduction du jeu d'entraînement, procédé éprouvé sur ces
   campagnes.
-- **Supervision produite par des modèles, filtrée par la machine** : le **jeu argent**,
+- **Supervision produite par des modèles, filtrée par la machine** : le **jeu silver**,
   des milliers de pages lues chacune par deux modèles à poids ouverts de fournisseurs
   différents, un troisième arbitrant leurs désaccords. Chaque lecture passe les contrôles
   existants (référentiel, extraits vérifiés sous-chaîne), qui deviennent un filtre de

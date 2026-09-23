@@ -281,7 +281,7 @@ def verifier_annotation(annotation: dict, reference: str, techniques: set[str],
 
 @dataclass
 class DejaVus:
-    """Les pages du jeu argent (docs/ANNOTATION.md §11), à tenir hors du jeu de test.
+    """Les pages du jeu silver (docs/ANNOTATION.md §11), à tenir hors du jeu de test.
 
     Une page que des modèles ont annotée, et sur laquelle un encodeur apprendra peut-être,
     ne peut pas servir à le mesurer : il aurait vu la réponse. Le fichier vient du dépôt
@@ -292,14 +292,14 @@ class DejaVus:
     def motif(self, *, empreinte: str | None = None, url: str | None = None) -> str | None:
         """Pourquoi une page est exclue, ou None si elle ne l'est pas."""
         if empreinte and empreinte in self.empreintes:
-            return "même contenu qu'une page du jeu argent"
+            return "même contenu qu'une page du jeu silver"
         if url:
             try:
                 adresse = normaliser_url(url)
             except ValueError:
                 return None
             if adresse in self.adresses:
-                return "même adresse qu'une page du jeu argent"
+                return "même adresse qu'une page du jeu silver"
         return None
 
 

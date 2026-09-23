@@ -1,6 +1,6 @@
 # Target architecture for analysis: a compound pipeline
 
-<!-- traduit-de: docs/ARCHITECTURE-CIBLE.md sha256:71da0ad5489db9ae -->
+<!-- traduit-de: docs/ARCHITECTURE-CIBLE.md sha256:ccb7814f682aa43e -->
 
 Version: **draft**, September 2026. This document does not describe what Lynceus does,
 but where the analysis pipeline must go, and in what order. What is in service is
