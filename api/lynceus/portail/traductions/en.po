@@ -1029,3 +1029,21 @@ msgstr "With a local model, nothing leaves your machine"
 
 msgid "Ollama tourne alors sur votre ordinateur, l'analyse ne coûte rien, et le texte des pages que vous lisez ne quitte pas la machine. C'est la seule configuration qui tienne entièrement la promesse de vie privée de ce projet, et c'est pour ça qu'elle figure ici plutôt qu'en note de bas de page. Contrepartie honnête : un modèle qui tourne chez vous est plus lent, et souvent moins fin qu'un gros modèle distant."
 msgstr "Ollama then runs on your own computer, the analysis costs nothing, and the text of the pages you read never leaves the machine. It is the only configuration that fully keeps this project's privacy promise, which is why it appears here rather than in a footnote. An honest trade-off: a model running at home is slower, and often less subtle than a large remote one."
+
+msgid "<strong>Mesure d'audience du site</strong><br>pages de ce portail uniquement"
+msgstr "<strong>Site audience measurement</strong><br>pages of this portal only"
+
+msgid "La page consultée, celle d'où vous venez, la langue et le navigateur que celui-ci déclare, le pays déduit de votre adresse IP. L'adresse elle-même sert à calculer un identifiant pseudonyme, renouvelé chaque jour, et n'est pas conservée."
+msgstr "The page viewed, the one you came from, the language and browser the latter declares, the country derived from your IP address. The address itself is used to compute a pseudonymous identifier, renewed every day, and is not kept."
+
+msgid "Intérêt légitime : savoir si ce site est lu, et quelles pages le sont."
+msgstr "Legitimate interest: knowing whether this site is read, and which pages are."
+
+msgid "Pages vues et identifiant pseudonyme du jour, dans un outil libre (Umami) hébergé par l'exploitant. Ni l'annuaire, ni les analyses, ni l'extension ne sont comptés : ces requêtes ne passent pas par la mesure."
+msgstr "Page views and the day's pseudonymous identifier, in a free tool (Umami) hosted by the operator. Neither the directory, nor the analyses, nor the extension are counted: those requests do not go through the measurement."
+
+msgid "Aucune donnée n'est vendue, échangée, ni transmise à des fins publicitaires. Il n'y a pas de régie, pas de mesure d'audience tierce, pas de traceur chez vous : la mesure décrite plus haut est faite par ce serveur, dans un outil que l'exploitant héberge lui-même."
+msgstr "No data is sold, exchanged, or passed on for advertising. There is no ad network, no third-party analytics, no tracker on your side: the measurement described above is done by this server, in a tool the operator hosts themselves."
+
+msgid "La mesure d'audience ne fait pas exception : le serveur signale lui-même la page qu'il vient de vous servir, sans cookie ni script, et vous ne la verrez donc pas dans votre navigateur. Elle ne concerne que les pages de ce site, jamais l'annuaire ni l'extension."
+msgstr "Audience measurement is no exception: the server itself reports the page it has just served you, with no cookie and no script, so you will not see it in your browser. It only covers the pages of this site, never the directory nor the extension."

@@ -62,6 +62,14 @@
       <td>{{ _("Intérêt légitime : instruire une contestation et permettre un droit de réponse.") }}</td>
       <td>{{ _("Conservée tant que l'analyse contestée est publiée, la décision devant rester auditable.") }}</td>
     </tr>
+    {% if mesure_audience %}
+    <tr>
+      <td>{{ _("<strong>Mesure d'audience du site</strong><br>pages de ce portail uniquement") }}</td>
+      <td>{{ _("La page consultée, celle d'où vous venez, la langue et le navigateur que celui-ci déclare, le pays déduit de votre adresse IP. L'adresse elle-même sert à calculer un identifiant pseudonyme, renouvelé chaque jour, et n'est pas conservée.") }}</td>
+      <td>{{ _("Intérêt légitime : savoir si ce site est lu, et quelles pages le sont.") }}</td>
+      <td>{{ _("Pages vues et identifiant pseudonyme du jour, dans un outil libre (Umami) hébergé par l'exploitant. Ni l'annuaire, ni les analyses, ni l'extension ne sont comptés : ces requêtes ne passent pas par la mesure.") }}</td>
+    </tr>
+    {% endif %}
     <tr>
       <td>{{ _("<strong>Délivrance d'une clé d'accès</strong>") }}</td>
       <td>{{ _("Aucune. La clé ne porte qu'une date d'expiration et un quota.") }}</td>
@@ -79,10 +87,17 @@
     {% if legal.hebergeur.nom %}<li>{{ _("<strong>%(hebergeur)s</strong>, hébergeur des serveurs.", hebergeur=legal.hebergeur.nom) }}</li>{% endif %}
     <li>{{ _("Le cas échéant, le fournisseur du tunnel qui achemine les requêtes vers ce serveur, qui voit passer les adresses IP des visiteurs.") }}</li>
   </ul>
+  {% if mesure_audience %}
+  <p>{{ _("Aucune donnée n'est vendue, échangée, ni transmise à des fins publicitaires. Il n'y a pas de régie, pas de mesure d'audience tierce, pas de traceur chez vous : la mesure décrite plus haut est faite par ce serveur, dans un outil que l'exploitant héberge lui-même.") }}</p>
+  {% else %}
   <p>{{ _("Aucune donnée n'est vendue, échangée, ni transmise à des fins publicitaires. Il n'y a pas de régie, pas de mesure d'audience tierce, pas de traceur.") }}</p>
+  {% endif %}
 
   <h2>{{ _("Cookies et traceurs") }}</h2>
   <p>{{ _("Ce site <strong>ne dépose aucun cookie</strong> et ne charge aucune ressource depuis un domaine tiers. Les polices de caractères, les feuilles de style et les scripts sont servis par ce serveur. C'est pourquoi vous n'avez pas vu de bandeau de consentement : il n'y a rien à consentir.") }}</p>
+  {% if mesure_audience %}
+  <p>{{ _("La mesure d'audience ne fait pas exception : le serveur signale lui-même la page qu'il vient de vous servir, sans cookie ni script, et vous ne la verrez donc pas dans votre navigateur. Elle ne concerne que les pages de ce site, jamais l'annuaire ni l'extension.") }}</p>
+  {% endif %}
 
   <h2>{{ _("Ce que l'extension envoie, et quand") }}</h2>
   <p>{{ _("L'extension ne transmet rien tant que vous ne le demandez pas. Le contenu d'une page part uniquement quand vous cliquez sur « Analyser cette page ». La reconnaissance automatique, si vous l'activez, n'envoie que quelques caractères d'empreinte, ce qui correspond à plus d'un million d'adresses possibles : le serveur ne peut pas déterminer la page que vous lisez.") }}</p>

@@ -36,7 +36,8 @@ def parametres_portail_test(**surcharges) -> ParametresPortail:
                    editeur_nom="", editeur_statut="", editeur_adresse="",
                    editeur_identifiant="", editeur_directeur="", editeur_contact="",
                    hebergeur_nom="", hebergeur_adresse="", hebergeur_site="",
-                   droit_applicable="", depot="", depot_fichiers="")
+                   droit_applicable="", depot="", depot_fichiers="",
+                   umami_url="", umami_site="")
     defauts.update(surcharges)
     return ParametresPortail(**defauts)
 

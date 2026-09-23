@@ -80,6 +80,11 @@ services:
       # Derrière Cloudflare Tunnel, sans cet en-tête toutes les requêtes portent l'adresse
       # du tunnel. À ne définir QUE si le portail n'est joignable que par le tunnel.
       LYNCEUS_PORTAIL_ENTETE_IP_REELLE: ${LYNCEUS_PORTAIL_ENTETE_IP_REELLE:-}
+
+      # --- Mesure d'audience (facultatif) ---
+      # Signalée à Umami par le serveur, sans script chez le visiteur. Vide = pas de mesure.
+      LYNCEUS_PORTAIL_UMAMI_URL: ${LYNCEUS_PORTAIL_UMAMI_URL:-}
+      LYNCEUS_PORTAIL_UMAMI_SITE: ${LYNCEUS_PORTAIL_UMAMI_SITE:-}
     volumes:
       # Facultatif : des archives lynceus-extension-v*.zip produites par `npm run paquet`.
       # L'image en embarque déjà une ; ce dossier ne sert qu'à publier une version plus

@@ -33,7 +33,7 @@ from .. import __version__
 from ..annuaire import LONGUEUR_PREFIXE
 from ..cles import emettre
 from ..normalisation import extraire_domaine, hacher_url, normaliser_url
-from . import contenu, i18n
+from . import audience as mesure, contenu, i18n
 from .i18n import N_
 from .. import noms
 from ..config import trouver_racine
@@ -198,11 +198,18 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
             file=sys.stderr,
         )
 
+    audience = mesure.Audience(url=p.umami_url, site=p.umami_site)
+
     @asynccontextmanager
     async def cycle_de_vie(app: FastAPI):
-        async with httpx.AsyncClient(timeout=p.delai_instance_s) as client:
-            app.state.client = client
-            yield
+        audience.ouvrir()
+        app.state.audience = audience
+        try:
+            async with httpx.AsyncClient(timeout=p.delai_instance_s) as client:
+                app.state.client = client
+                yield
+        finally:
+            await audience.fermer()
 
     app = FastAPI(title=f"Portail {p.nom}", version=__version__, lifespan=cycle_de_vie)
     app.add_middleware(
@@ -211,6 +218,10 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
         allow_methods=["GET", "POST"],
         allow_headers=["*"],
     )
+    # Sous LangueDansLURL (ajouté avant lui, donc plus près du routeur) : la mesure
+    # travaille sur le chemin sans préfixe de langue, celui que nomment ses exclusions.
+    app.add_middleware(mesure.MesureAudience, audience=audience,
+                       adresse_de=mesure.adresse_reelle(p.entete_ip_reelle))
     app.add_middleware(LangueDansLURL)
     app.mount("/statique", StaticFiles(directory=RACINE / "statique"), name="statique")
 
@@ -227,6 +238,7 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
             inscription_ouverte=bool(p.cle_privee and instance_publique),
             nb_techniques=contenu.nb_techniques(),
             legal=legal,
+            mesure_audience=audience.active,
             depot=p.depot.rstrip("/"),
             forge=forge_de(p.depot),
             langue=code,
