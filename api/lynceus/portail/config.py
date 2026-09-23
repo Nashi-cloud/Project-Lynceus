@@ -109,6 +109,15 @@ class ParametresPortail(ReglagesTolerants):
     entete_ip_reelle: str = deux_noms("LYNCEUS_PORTAIL_ENTETE_IP_REELLE", "LYNCEUS_PORTAL_REAL_IP_HEADER", "")
     delai_instance_s: float = deux_noms("LYNCEUS_PORTAIL_DELAI_INSTANCE_S", "LYNCEUS_PORTAL_INSTANCE_TIMEOUT_S", 5.0)
 
+    # --- Mesure d'audience ---
+    # Adresse d'une instance Umami et identifiant du site qu'elle attribue au portail. Les
+    # deux renseignés = chaque page rendue est signalée à Umami PAR LE SERVEUR, sans script
+    # ni cookie chez le visiteur (portail/audience.py). L'un des deux vide = rien ne part,
+    # et la page de confidentialité ne mentionne aucune mesure. Umami peut vivre sur un
+    # réseau interne : seul le portail lui parle.
+    umami_url: str = deux_noms("LYNCEUS_PORTAIL_UMAMI_URL", "LYNCEUS_PORTAL_UMAMI_URL", "")
+    umami_site: str = deux_noms("LYNCEUS_PORTAIL_UMAMI_SITE", "LYNCEUS_PORTAL_UMAMI_SITE", "")
+
 
 @lru_cache
 def parametres_portail() -> ParametresPortail:

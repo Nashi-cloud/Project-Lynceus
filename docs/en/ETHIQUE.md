@@ -1,6 +1,6 @@
 # Lynceus ethical charter
 
-<!-- traduit-de: docs/ETHIQUE.md sha256:8aa471a51c8942a1 -->
+<!-- traduit-de: docs/ETHIQUE.md sha256:4d027c91136009ab -->
 
 > Translation for information. The French version, `docs/ETHIQUE.md`, is the one that binds the project: should the two ever diverge, it is the one that counts.
 
@@ -32,7 +32,7 @@ You cannot denounce opacity while being opaque.
 ## 4. Privacy
 
 - **The server stores no browsing history.** Lookups are not logged with identifiers (no IP and URL pair is kept).
-- No account required, no tracker, no hidden telemetry.
+- No account required, no tracker on the user's side, no hidden telemetry. An instance may measure its portal's audience, but server-side, with no cookie and no script, never on the directory nor on the analyses, and by saying so on its privacy page.
 - The passive lookup works **under k-anonymity** (the HaveIBeenPwned technique): only the first 5 characters of the URL hash are sent, and the final match is made in the browser. The server cannot determine which page is being read. The historical mode (full hash) survives only for instances that do not advertise this capability.
 - **What this promise does not cover, and must be said.** Analysing a page means sending its text to the model provider configured by the instance, which may be established outside the European Union. It is the most significant data transfer in the system, and the only one a user of the hosted service cannot avoid. A charter that praised k-anonymity without mentioning that flow would be misleading by omission, exactly the technique this project teaches people to spot.
 - **The remedy exists and is part of what is delivered**: a self-hosted instance with a local model lets no text leave the machine. Full self-hosting is a first-class right, and the server “kit” is a deliverable of the project, not a second-rate option.
