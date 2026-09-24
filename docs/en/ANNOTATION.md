@@ -1,8 +1,8 @@
-<!-- traduit-de: docs/ANNOTATION.md sha256:6b4a97fbbd3e699a -->
+<!-- traduit-de: docs/ANNOTATION.md sha256:fe6dfaed5accd8d8 -->
 
 # Building the annotated evaluation set
 
-Guide version: **1.1**, September 2026.
+Guide version: **1.2**, September 2026.
 
 This document describes how the set of hand-annotated pages is built, against which every
 Lynceus analysis chain is measured. It is step zero of the
@@ -132,10 +132,15 @@ lynceus capturer page.md --url https://example.org/article --vers corpus/capture
 lynceus mesurer corpus/evaluation.yaml
 ```
 
-## 5. The annotation guide, version 1.1
+## 5. The annotation guide, version 1.2
 
 <!-- Headings 5.1 to 5.4 of the French original are read by lynx-corpus, which turns them
      into its panel's prompt: renaming them breaks that chain, and a lynx-corpus test says so. -->
+
+**What changed in 1.2.** A revision drawn from the first batch audited under 1.1: home
+pages (category and titles), the grade of religious content, the grade of a commercial
+page. It resolves a conflict between two rules of 1.1 and another between 1.1 and the
+methodology.
 
 **What changed in 1.1.** A revision drawn from the pilot and the first audits of the silver
 set (37 pages): the thesis prevails over the form, the boundary between opinion and
@@ -171,7 +176,11 @@ The **dominant nature** of the content, according to [METHODOLOGIE.md](METHODOLO
   for a text that examines a question without pleading, with a visible method, or for
   popular science. `information` is for an account of facts.
 - **Home pages and tables of contents.** A page made mostly of links and teasers to other
-  pages is `autre`, whatever the nature of the site.
+  pages is `autre`, whatever the nature of the site: its articles have not been read, and
+  giving it the category of a thesis would label the whole site. When all the visible
+  content shares one nature, satire or conspiracy for instance, that category goes into
+  `categories_acceptables`. This is the only exception to "the thesis prevails over the
+  form".
 
 `categories_acceptables` is for true hybrids, where two labels are equally defensible: the
 typical example is pseudo-medical discourse that sells its remedy. It is not for hedging
@@ -203,9 +212,12 @@ the truth of the facts.
 - **Faith.** A statement of faith is not a technique (charter, [ETHIQUE.md](ETHIQUE.md)).
 - **Style.** A lively tone or strong vocabulary are not techniques. The emotional lexicon
   belongs to an automatic count, not to annotation.
-- **Titles of other pages.** An article title quoted in a table of contents, a list of
-  links or a "read also" box belongs to the other page. The page's own title and subheadings
-  are marked like the rest of the text.
+- **Titles of other pages, in a page that has its own text.** In an article or a
+  newsletter, a title quoted in a table of contents, a list of links or a "read also" box
+  belongs to the other page. The page's own title and subheadings are marked like the rest
+  of the text. On a home page or a table of contents, however, the titles are the page's
+  own content and are marked: its nature shows in the techniques of its titles and in its
+  grade, not in its category.
 
 **Techniques of absence.** `absence_de_sources` is marked **at most once** per page, on the
 most important claim, and only if the page presents as established verifiable facts that
@@ -231,6 +243,13 @@ One or two **adjacent** letters, never more. Reason through the four dimensions 
 [METHODOLOGIE.md](METHODOLOGIE.md) §2: sources, factuality, tone, transparency. The range
 says where one would place the page, not where one thinks Lynceus will place it.
 
+- **Religious content.** Faith carries no weight: not judging it means taking nothing
+  away from it. A page of faith with no factual claim and no technique is placed at A or
+  B. Only factual claims (health, science, history) and the techniques marked lower it.
+- **Commercial page.** Selling does not lower the grade. Only disguise (advertising
+  presented as information), unsupported factual claims and the techniques marked count.
+  An openly commercial page that sources what it claims is placed at the top of the scale.
+
 ### 5.5 The file
 
 `lynceus annoter` prepares the skeleton, with the right fingerprint:
@@ -243,7 +262,7 @@ lynceus annoter captures/name-of-the-page.md --annotateur my-pseudonym \
 ```yaml
 cas: captures/name-of-the-page.md
 annotateur: my-pseudonym
-guide: "1.1"
+guide: "1.2"
 content_hash: 5c1e…
 categorie: pseudo_science
 categories_acceptables: [publicite_sponsorise]   # only for a true hybrid

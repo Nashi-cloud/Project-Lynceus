@@ -1,6 +1,6 @@
 # Constituer le jeu d'évaluation annoté
 
-Version du guide : **1.1**, septembre 2026.
+Version du guide : **1.2**, septembre 2026.
 
 Ce document dit comment se construit le jeu de pages annotées à la main contre lequel se
 mesure toute chaîne d'analyse de Lynceus. C'est l'étape zéro de
@@ -131,10 +131,15 @@ lynceus capturer page.md --url https://exemple.fr/article --vers corpus/captures
 lynceus mesurer corpus/evaluation.yaml
 ```
 
-## 5. Le guide d'annotation, version 1.1
+## 5. Le guide d'annotation, version 1.2
 
 <!-- Les titres 5.1 à 5.4 sont lus par lynx-corpus, qui en fait le prompt de son panel :
      les renommer casse cette chaîne, et un test de lynx-corpus le signale. -->
+
+**Ce qui a changé en 1.2.** Révision tirée du premier lot audité sous 1.1 : pages
+d'accueil (catégorie et titres), grade d'un contenu confessionnel, grade d'une page
+commerciale. Elle résout un conflit entre deux règles de la 1.1 et un autre entre la 1.1
+et la méthodologie.
 
 **Ce qui a changé en 1.1.** Révision tirée du pilote et des premiers audits du jeu silver
 (37 pages) : la thèse l'emporte sur la forme, frontière opinion et analyse, pages
@@ -170,7 +175,11 @@ qualité. Quelques règles de départage :
   est pour un texte qui examine une question sans plaider, avec une méthode visible, ou
   pour une vulgarisation. `information` est pour le compte rendu de faits.
 - **Pages d'accueil et sommaires.** Une page faite surtout de liens et d'accroches vers
-  d'autres pages est `autre`, quelle que soit la nature du site.
+  d'autres pages est `autre`, quelle que soit la nature du site : on n'en a pas lu les
+  articles, et lui donner la catégorie d'une thèse reviendrait à étiqueter le site entier.
+  Quand tous les contenus visibles partagent une même nature, satire ou complot par
+  exemple, cette catégorie entre dans `categories_acceptables`. C'est la seule exception à
+  « la thèse l'emporte sur la forme ».
 
 `categories_acceptables` sert aux vrais hybrides, où deux étiquettes sont également
 défendables : l'exemple type est le discours pseudo-médical qui vend son remède. Il ne
@@ -202,9 +211,12 @@ jugement sur la véracité des faits.
 - **La foi.** Une affirmation de foi n'est pas un procédé (charte, [ETHIQUE.md](ETHIQUE.md)).
 - **Le style.** Un ton vif ou un vocabulaire fort ne sont pas des techniques. Le lexique
   émotionnel relève d'un compte automatique, pas de l'annotation.
-- **Les titres d'autres pages.** Un titre d'article cité dans un sommaire, une liste de
-  liens ou un encadré « à lire aussi » appartient à l'autre page. Le titre et les
-  intertitres de la page elle-même se marquent comme le reste du texte.
+- **Les titres d'autres pages, dans une page qui a son propre texte.** Dans un article ou
+  une lettre d'information, un titre cité dans un sommaire, une liste de liens ou un
+  encadré « à lire aussi » appartient à l'autre page. Le titre et les intertitres de la
+  page elle-même se marquent comme le reste du texte. Sur une page d'accueil ou un
+  sommaire, en revanche, les titres sont le contenu propre de la page et se marquent : sa
+  nature se lit dans les procédés de ses titres et dans son grade, pas dans sa catégorie.
 
 **Les techniques d'absence.** `absence_de_sources` se marque **une fois au plus** par page,
 sur l'affirmation la plus importante, et seulement si la page présente comme établis des
@@ -229,6 +241,14 @@ Une ou deux lettres **adjacentes**, jamais plus. Raisonner par les quatre dimens
 [METHODOLOGIE.md](METHODOLOGIE.md) §2 : sources, factualité, ton, transparence. La
 fourchette dit où l'on placerait la page, pas où l'on pense que Lynceus la placera.
 
+- **Contenu confessionnel.** La foi ne pèse pas : ne pas la juger, c'est ne rien lui
+  retirer. Une page de foi sans affirmation de fait ni procédé se place en A ou B. Seules
+  font baisser les affirmations de fait (santé, science, histoire) et les procédés relevés.
+- **Page commerciale.** Vendre ne fait pas baisser le grade. Seuls comptent le
+  déguisement (publicité présentée comme information), les affirmations de fait sans
+  appui et les procédés relevés. Une page de vente assumée qui source ce qu'elle affirme
+  se place en haut de l'échelle.
+
 ### 5.5 Le fichier
 
 `lynceus annoter` prépare le squelette, avec la bonne empreinte :
@@ -241,7 +261,7 @@ lynceus annoter captures/nom-de-la-page.md --annotateur mon-pseudonyme \
 ```yaml
 cas: captures/nom-de-la-page.md
 annotateur: mon-pseudonyme
-guide: "1.1"
+guide: "1.2"
 content_hash: 5c1e…
 categorie: pseudo_science
 categories_acceptables: [publicite_sponsorise]   # seulement pour un vrai hybride
