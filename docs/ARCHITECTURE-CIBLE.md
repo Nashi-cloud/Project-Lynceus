@@ -178,7 +178,10 @@ plus précieux :
   existants (référentiel, extraits vérifiés sous-chaîne), qui deviennent un filtre de
   supervision, et les positions se déduisent des extraits. Ces exemples restent bruités
   par les défauts des modèles ; ils servent à entraîner, jamais à évaluer, et un audit
-  humain à l'aveugle d'une page sur dix dit de combien ils le sont. Le jeu se construit
+  humain à l'aveugle d'une page sur dix dit de combien ils le sont. Le guide d'annotation
+  ne marque qu'une occurrence par technique : à l'entraînement, les autres passages d'une
+  technique présente sur la page sont inconnus, pas négatifs, sans quoi l'encodeur
+  apprendrait à ignorer la deuxième occurrence. Le jeu se construit
   dans un dépôt séparé, lynx-corpus, et ses pages sont exclues du jeu de test
   ([ANNOTATION.md](ANNOTATION.md) §11).
 - **Corpus annoté à la main**, cible de l'ordre de deux à trois cents pages en français et

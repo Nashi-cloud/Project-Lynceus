@@ -1,6 +1,6 @@
 # Constituer le jeu d'évaluation annoté
 
-Version du guide : **1.0**, septembre 2026.
+Version du guide : **1.1**, septembre 2026.
 
 Ce document dit comment se construit le jeu de pages annotées à la main contre lequel se
 mesure toute chaîne d'analyse de Lynceus. C'est l'étape zéro de
@@ -131,10 +131,16 @@ lynceus capturer page.md --url https://exemple.fr/article --vers corpus/captures
 lynceus mesurer corpus/evaluation.yaml
 ```
 
-## 5. Le guide d'annotation, version 1.0
+## 5. Le guide d'annotation, version 1.1
 
 <!-- Les titres 5.1 à 5.4 sont lus par lynx-corpus, qui en fait le prompt de son panel :
      les renommer casse cette chaîne, et un test de lynx-corpus le signale. -->
+
+**Ce qui a changé en 1.1.** Révision tirée du pilote et des premiers audits du jeu silver
+(37 pages) : la thèse l'emporte sur la forme, frontière opinion et analyse, pages
+d'accueil, titres d'autres pages, une occurrence par technique, `absence_de_sources`
+resserrée, portée de la règle du doute. Les lectures faites en 1.0 restent valides mais se
+relisent à la lumière de ces règles avant publication.
 
 ### 5.1 L'ordre de lecture
 
@@ -155,8 +161,16 @@ qualité. Quelques règles de départage :
   s'il se présente comme une information.
 - `satire` seulement si la page ou le site s'annonce comme tel, ou si l'outrance rend
   l'intention parodique évidente à un lecteur attentif.
-- `analyse_expertise` pour une analyse fouillée ou une vulgarisation ; `information` pour
-  le compte rendu de faits.
+- **La thèse l'emporte sur la forme.** Un texte qui défend une thèse pseudo-scientifique
+  ou complotiste est `pseudo_science` ou `theorie_du_complot`, même s'il se présente comme
+  une opinion. `opinion` est pour un point de vue assumé dont la thèse n'est ni l'une ni
+  l'autre.
+- **Opinion ou analyse.** Un texte qui conclut sur une position à adopter est une
+  `opinion`, même chiffré : tribune, note de think tank, plaidoyer. `analyse_expertise`
+  est pour un texte qui examine une question sans plaider, avec une méthode visible, ou
+  pour une vulgarisation. `information` est pour le compte rendu de faits.
+- **Pages d'accueil et sommaires.** Une page faite surtout de liens et d'accroches vers
+  d'autres pages est `autre`, quelle que soit la nature du site.
 
 `categories_acceptables` sert aux vrais hybrides, où deux étiquettes sont également
 défendables : l'exemple type est le discours pseudo-médical qui vend son remède. Il ne
@@ -176,8 +190,9 @@ jugement sur la véracité des faits.
   s'étend sur deux phrases éloignées, faire deux passages.
 - Quand le même texte apparaît plusieurs fois dans la page, préciser `occurrence`.
 - Un même passage peut porter deux techniques : on l'inscrit deux fois.
-- Une technique qui revient : marquer chaque occurrence nette, et au-delà de cinq, les
-  cinq plus nettes avec une note.
+- **Une occurrence par technique** : la première qui est nette, en lisant la page dans
+  l'ordre. Les suivantes ne se marquent pas, même plus nettes ; une note peut dire que
+  le procédé revient.
 
 **Ce qui ne se marque pas.**
 
@@ -187,15 +202,24 @@ jugement sur la véracité des faits.
 - **La foi.** Une affirmation de foi n'est pas un procédé (charte, [ETHIQUE.md](ETHIQUE.md)).
 - **Le style.** Un ton vif ou un vocabulaire fort ne sont pas des techniques. Le lexique
   émotionnel relève d'un compte automatique, pas de l'annotation.
+- **Les titres d'autres pages.** Un titre d'article cité dans un sommaire, une liste de
+  liens ou un encadré « à lire aussi » appartient à l'autre page. Le titre et les
+  intertitres de la page elle-même se marquent comme le reste du texte.
 
-**Les techniques d'absence.** `absence_de_sources` se marque sur l'affirmation factuelle
-importante qui n'est pas sourcée, la plus importante d'abord. `conflit_interet_commercial`
-se marque sur le passage où apparaît la vente, l'affiliation ou l'appel au don lié au
-discours.
+**Les techniques d'absence.** `absence_de_sources` se marque **une fois au plus** par page,
+sur l'affirmation la plus importante, et seulement si la page présente comme établis des
+faits vérifiables qui portent sa conclusion. Elle ne se marque pas sur une opinion, un
+témoignage ou une page commerciale ordinaire. Une source nommée est une source, même sans
+lien : « selon l'Insee » est sourcé. `conflit_interet_commercial` se marque sur le passage
+où apparaît la vente, l'affiliation ou l'appel au don lié au discours.
 
 **Dans le doute, ne pas marquer.** Marquer ce qu'un lecteur attentif relèverait à coup
 sûr. Un passage douteux va dans les notes, avec la technique envisagée. Une annotation
 prudente et stable vaut mieux qu'une annotation exhaustive que personne ne reproduit.
+
+Le doute porte sur un passage isolé, pas sur un procédé qui porte la page entière. Celui-là
+se marque toujours, sur le passage qui le montre le mieux : la solution miracle d'une page
+de vente, le témoignage qui sert de seule preuve.
 
 La gravité n'est pas demandée dans cette version du guide.
 
@@ -217,7 +241,7 @@ lynceus annoter captures/nom-de-la-page.md --annotateur mon-pseudonyme \
 ```yaml
 cas: captures/nom-de-la-page.md
 annotateur: mon-pseudonyme
-guide: "1.0"
+guide: "1.1"
 content_hash: 5c1e…
 categorie: pseudo_science
 categories_acceptables: [publicite_sponsorise]   # seulement pour un vrai hybride

@@ -1,6 +1,6 @@
 # Target architecture for analysis: a compound pipeline
 
-<!-- traduit-de: docs/ARCHITECTURE-CIBLE.md sha256:ccb7814f682aa43e -->
+<!-- traduit-de: docs/ARCHITECTURE-CIBLE.md sha256:65d6049e78406a88 -->
 
 Version: **draft**, September 2026. This document does not describe what Lynceus does,
 but where the analysis pipeline must go, and in what order. What is in service is
@@ -177,7 +177,9 @@ most immediate to the most valuable:
   excerpts checked as substrings), which become a supervision filter, and positions follow
   from the excerpts. These examples remain noisy with the models' flaws; they serve for
   training, never for evaluation, and a blind human audit of one page in ten says how
-  noisy they are. The set is built in a separate repository, lynx-corpus, and its pages are
+  noisy they are. The annotation guide marks only one occurrence per technique: in
+  training, the other passages of a technique present on the page are unknown, not
+  negative, otherwise the encoder would learn to ignore the second occurrence. The set is built in a separate repository, lynx-corpus, and its pages are
   excluded from the test set ([ANNOTATION.md](ANNOTATION.md) §11).
 - **Hand-annotated corpus**, targeting on the order of two to three hundred pages in
   French and English, span-annotated by at least two people, with a published
