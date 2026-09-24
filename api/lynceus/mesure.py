@@ -48,7 +48,7 @@ DOSSIERS_ANNOTATIONS = ("annotations", "annotations-en-cours")
 
 #: La version du guide d'annotation (docs/ANNOTATION.md §5). Le squelette la porte, et un
 #: test vérifie qu'elle suit celle du document.
-GUIDE_ANNOTATION = "1.1"
+GUIDE_ANNOTATION = "1.2"
 
 #: Au-delà, un extrait n'est plus une citation courte à fin d'analyse mais un morceau de
 #: page republié : la règle 5 du guide, et la même borne que le schéma de la carte.
