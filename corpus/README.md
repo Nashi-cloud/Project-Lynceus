@@ -105,7 +105,7 @@ One YAML file per page and per annotator, under `annotations/<annotator>/`. `lyn
 ```yaml
 cas: specimens/06-fictif-complotisme.md   # the case id, as in corpus.yaml
 annotateur: a-pseudonym
-guide: "1.2"                              # version of the annotation guide
+guide: "1.3"                              # version of the annotation guide
 content_hash: 3f2a…                       # printed by « lynceus annoter »
 categorie: theorie_du_complot
 grade: [D, E]

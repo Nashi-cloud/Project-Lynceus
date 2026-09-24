@@ -1,6 +1,6 @@
 # Constituer le jeu d'évaluation annoté
 
-Version du guide : **1.2**, septembre 2026.
+Version du guide : **1.3**, septembre 2026.
 
 Ce document dit comment se construit le jeu de pages annotées à la main contre lequel se
 mesure toute chaîne d'analyse de Lynceus. C'est l'étape zéro de
@@ -131,10 +131,14 @@ lynceus capturer page.md --url https://exemple.fr/article --vers corpus/captures
 lynceus mesurer corpus/evaluation.yaml
 ```
 
-## 5. Le guide d'annotation, version 1.2
+## 5. Le guide d'annotation, version 1.3
 
 <!-- Les titres 5.1 à 5.4 sont lus par lynx-corpus, qui en fait le prompt de son panel :
      les renommer casse cette chaîne, et un test de lynx-corpus le signale. -->
+
+**Ce qui a changé en 1.3.** `conflit_interet_commercial` ne se marque plus sur une page
+ouvertement commerciale sans procédé, conformément aux spécimens de calibration « publicité
+déguisée » et « commerce honnête ». Révision tirée du lot 4 du jeu silver.
 
 **Ce qui a changé en 1.2.** Révision tirée du premier lot audité sous 1.1 : pages
 d'accueil (catégorie et titres), grade d'un contenu confessionnel, grade d'une page
@@ -222,8 +226,17 @@ jugement sur la véracité des faits.
 sur l'affirmation la plus importante, et seulement si la page présente comme établis des
 faits vérifiables qui portent sa conclusion. Elle ne se marque pas sur une opinion, un
 témoignage ou une page commerciale ordinaire. Une source nommée est une source, même sans
-lien : « selon l'Insee » est sourcé. `conflit_interet_commercial` se marque sur le passage
-où apparaît la vente, l'affiliation ou l'appel au don lié au discours.
+lien : « selon l'Insee » est sourcé.
+
+`conflit_interet_commercial` se marque dans deux cas seulement :
+
+- **l'intérêt commercial est déguisé** : la page vend sous la forme d'une information,
+  d'un conseil ou d'un témoignage, **même si un lien partenaire est déclaré** ;
+- **le discours qui pousse à l'achat est alarmiste ou miraculeux.**
+
+Il ne se marque pas sur une page qui s'annonce comme commerciale et vante son produit
+sans procédé : vendre n'est pas un conflit d'intérêt. Le passage marqué est celui où
+apparaît la vente, l'affiliation ou l'appel au don lié au discours.
 
 **Dans le doute, ne pas marquer.** Marquer ce qu'un lecteur attentif relèverait à coup
 sûr. Un passage douteux va dans les notes, avec la technique envisagée. Une annotation
@@ -261,7 +274,7 @@ lynceus annoter captures/nom-de-la-page.md --annotateur mon-pseudonyme \
 ```yaml
 cas: captures/nom-de-la-page.md
 annotateur: mon-pseudonyme
-guide: "1.2"
+guide: "1.3"
 content_hash: 5c1e…
 categorie: pseudo_science
 categories_acceptables: [publicite_sponsorise]   # seulement pour un vrai hybride
