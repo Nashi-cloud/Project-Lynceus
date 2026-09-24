@@ -1,8 +1,8 @@
-<!-- traduit-de: docs/ANNOTATION.md sha256:fe6dfaed5accd8d8 -->
+<!-- traduit-de: docs/ANNOTATION.md sha256:b7767b61cb24d182 -->
 
 # Building the annotated evaluation set
 
-Guide version: **1.2**, September 2026.
+Guide version: **1.3**, September 2026.
 
 This document describes how the set of hand-annotated pages is built, against which every
 Lynceus analysis chain is measured. It is step zero of the
@@ -132,10 +132,14 @@ lynceus capturer page.md --url https://example.org/article --vers corpus/capture
 lynceus mesurer corpus/evaluation.yaml
 ```
 
-## 5. The annotation guide, version 1.2
+## 5. The annotation guide, version 1.3
 
 <!-- Headings 5.1 to 5.4 of the French original are read by lynx-corpus, which turns them
      into its panel's prompt: renaming them breaks that chain, and a lynx-corpus test says so. -->
+
+**What changed in 1.3.** `conflit_interet_commercial` is no longer marked on an openly
+commercial page without techniques, in line with the "disguised advertising" and "honest
+commerce" calibration specimens. A revision drawn from batch 4 of the silver set.
 
 **What changed in 1.2.** A revision drawn from the first batch audited under 1.1: home
 pages (category and titles), the grade of religious content, the grade of a commercial
@@ -223,9 +227,17 @@ the truth of the facts.
 most important claim, and only if the page presents as established verifiable facts that
 carry its conclusion. It is not marked on an opinion, a testimony or an ordinary
 commercial page. A named source is a source, even without a link: "according to the
-national statistics office" is sourced. `conflit_interet_commercial` is marked on the
-passage where the sale, the affiliation or the call for donations tied to the discourse
-appears.
+national statistics office" is sourced.
+
+`conflit_interet_commercial` is marked in two cases only:
+
+- **the commercial interest is disguised**: the page sells in the form of information,
+  advice or a testimony, **even if a partner link is disclosed**;
+- **the discourse that pushes the purchase is alarmist or miraculous.**
+
+It is not marked on a page that announces itself as commercial and praises its product
+without techniques: selling is not a conflict of interest. The passage marked is the one
+where the sale, the affiliation or the call for donations tied to the discourse appears.
 
 **When in doubt, do not mark.** Mark what a careful reader would certainly point out. A
 doubtful passage goes into the notes, with the technique considered. A cautious and stable
@@ -262,7 +274,7 @@ lynceus annoter captures/name-of-the-page.md --annotateur my-pseudonym \
 ```yaml
 cas: captures/name-of-the-page.md
 annotateur: my-pseudonym
-guide: "1.2"
+guide: "1.3"
 content_hash: 5c1e…
 categorie: pseudo_science
 categories_acceptables: [publicite_sponsorise]   # only for a true hybrid
