@@ -1,8 +1,8 @@
-<!-- traduit-de: docs/ANNOTATION.md sha256:388e007874adff1c -->
+<!-- traduit-de: docs/ANNOTATION.md sha256:6b4a97fbbd3e699a -->
 
 # Building the annotated evaluation set
 
-Guide version: **1.0**, September 2026.
+Guide version: **1.1**, September 2026.
 
 This document describes how the set of hand-annotated pages is built, against which every
 Lynceus analysis chain is measured. It is step zero of the
@@ -132,10 +132,16 @@ lynceus capturer page.md --url https://example.org/article --vers corpus/capture
 lynceus mesurer corpus/evaluation.yaml
 ```
 
-## 5. The annotation guide, version 1.0
+## 5. The annotation guide, version 1.1
 
 <!-- Headings 5.1 to 5.4 of the French original are read by lynx-corpus, which turns them
      into its panel's prompt: renaming them breaks that chain, and a lynx-corpus test says so. -->
+
+**What changed in 1.1.** A revision drawn from the pilot and the first audits of the silver
+set (37 pages): the thesis prevails over the form, the boundary between opinion and
+analysis, home pages, titles of other pages, one occurrence per technique, a narrower
+`absence_de_sources`, the scope of the doubt rule. Readings made under 1.0 remain valid but
+are read again in the light of these rules before publication.
 
 ### 5.1 Reading order
 
@@ -156,8 +162,16 @@ The **dominant nature** of the content, according to [METHODOLOGIE.md](METHODOLO
   it presents itself as information.
 - `satire` only if the page or the site announces itself as such, or if the excess makes
   the parodic intent obvious to a careful reader.
-- `analyse_expertise` for an in-depth analysis or popular science; `information` for an
-  account of facts.
+- **The thesis prevails over the form.** A text that defends a pseudo-scientific or
+  conspiracist thesis is `pseudo_science` or `theorie_du_complot`, even if it presents
+  itself as an opinion. `opinion` is for an openly held point of view whose thesis is
+  neither.
+- **Opinion or analysis.** A text that concludes on a position to adopt is an `opinion`,
+  even with figures: an op-ed, a think tank note, an advocacy piece. `analyse_expertise` is
+  for a text that examines a question without pleading, with a visible method, or for
+  popular science. `information` is for an account of facts.
+- **Home pages and tables of contents.** A page made mostly of links and teasers to other
+  pages is `autre`, whatever the nature of the site.
 
 `categories_acceptables` is for true hybrids, where two labels are equally defensible: the
 typical example is pseudo-medical discourse that sells its remedy. It is not for hedging
@@ -177,8 +191,9 @@ the truth of the facts.
   sentences, make two passages.
 - When the same text appears several times in the page, specify `occurrence`.
 - The same passage may carry two techniques: it is entered twice.
-- A recurring technique: mark each clear occurrence, and beyond five, the five clearest
-  with a note.
+- **One occurrence per technique**: the first clear one, reading the page in order. The
+  following ones are not marked, even clearer ones; a note may say that the technique
+  recurs.
 
 **What is not marked.**
 
@@ -188,15 +203,25 @@ the truth of the facts.
 - **Faith.** A statement of faith is not a technique (charter, [ETHIQUE.md](ETHIQUE.md)).
 - **Style.** A lively tone or strong vocabulary are not techniques. The emotional lexicon
   belongs to an automatic count, not to annotation.
+- **Titles of other pages.** An article title quoted in a table of contents, a list of
+  links or a "read also" box belongs to the other page. The page's own title and subheadings
+  are marked like the rest of the text.
 
-**Techniques of absence.** `absence_de_sources` is marked on the important factual claim
-that is not sourced, the most important first. `conflit_interet_commercial` is marked on
-the passage where the sale, the affiliation or the call for donations tied to the
-discourse appears.
+**Techniques of absence.** `absence_de_sources` is marked **at most once** per page, on the
+most important claim, and only if the page presents as established verifiable facts that
+carry its conclusion. It is not marked on an opinion, a testimony or an ordinary
+commercial page. A named source is a source, even without a link: "according to the
+national statistics office" is sourced. `conflit_interet_commercial` is marked on the
+passage where the sale, the affiliation or the call for donations tied to the discourse
+appears.
 
 **When in doubt, do not mark.** Mark what a careful reader would certainly point out. A
 doubtful passage goes into the notes, with the technique considered. A cautious and stable
 annotation is worth more than an exhaustive one that nobody reproduces.
+
+Doubt concerns an isolated passage, not a technique that carries the whole page. That one
+is always marked, on the passage that shows it best: the miracle cure of a sales page, the
+testimony used as the only evidence.
 
 Severity is not requested in this version of the guide.
 
@@ -218,7 +243,7 @@ lynceus annoter captures/name-of-the-page.md --annotateur my-pseudonym \
 ```yaml
 cas: captures/name-of-the-page.md
 annotateur: my-pseudonym
-guide: "1.0"
+guide: "1.1"
 content_hash: 5c1e…
 categorie: pseudo_science
 categories_acceptables: [publicite_sponsorise]   # only for a true hybrid
