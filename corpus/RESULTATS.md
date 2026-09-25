@@ -32,6 +32,8 @@ Trois passes indépendantes sur analyses neuves, sur les **quinze cas** de la ve
 
 Les sentinelles de [docs/METHODOLOGIE.md](../docs/METHODOLOGIE.md) §7 tiennent aux trois passes, catégorie et fourchette, **sauf une** : la page en anglais a reçu deux fois sur trois une analyse rédigée en français. Ce n'était jamais arrivé dans aucune passe enregistrée. Quatre tirages de contrôle faits aussitôt sur ce seul cas l'ont rendue en anglais aux trois tirages aboutis, le quatrième ayant échoué au transport, et quatre tirages sous v0.1.7 aussi. Rien dans le v0.1.8 ne touche à la langue. L'écart reste consigné tel quel : c'est à la prochaine mesure de dire s'il revient.
 
+Un remède a été essayé puis écarté. Le prompt et le cadre du message sont en français, seule la page est en anglais : une ligne rappelant la langue de rédaction, placée après le contenu, a rendu l'analyse en anglais aux six tirages, mais la catégorie est passée à `opinion` cinq fois sur six. Cinq tirages sous v0.1.8 le même jour donnaient `theorie_du_complot` et l'anglais aux cinq. Une variante plus discrète, la langue de rédaction dans l'en-tête, donnait encore `opinion` deux fois sur cinq. Le rappel corrigeait un écart qui ne se reproduisait pas au prix d'un écart qui se reproduisait : il n'a pas été retenu. L'essai est gardé sur la branche `feat/prompt-0.1.9`.
+
 ### Vendre n'est pas un procédé (v0.1.8)
 
 La définition de `conflit_interet_commercial` ne couvrait qu'un « discours alarmiste ou miraculeux » dont l'auteur tire profit. Le spécimen 08, des conseils de sommeil qui débouchent sur un matelas avec lien partenaire signalé, n'a rien d'alarmiste : le modèle le détectait en débordant la définition, **onze fois sur dix-huit** depuis le v0.1.3, et rien ne lui disait où s'arrêter.
