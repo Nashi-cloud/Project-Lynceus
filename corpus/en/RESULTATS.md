@@ -1,6 +1,6 @@
 # Calibration results
 
-<!-- traduit-de: corpus/RESULTATS.md sha256:907f2818f82f1bea -->
+<!-- traduit-de: corpus/RESULTATS.md sha256:018bf738efa4866b -->
 
 > Translation for information. The French version, `corpus/RESULTATS.md`, is the record of reference: should the two ever diverge, it is the one that counts.
 
@@ -35,6 +35,8 @@ Latest run: **2026-09-25** · model `z-ai/glm-5.2` (through openrouter.ai) · pr
 Three independent runs on fresh analyses, on the **fifteen cases** of the previous version, expectations unchanged.
 
 The sentinels of [docs/METHODOLOGIE.md](../../docs/METHODOLOGIE.md) §7 hold across all three runs, category and range alike, **except one**: the English page received an analysis written in French in two runs out of three. This had never happened in any recorded run. Four control draws made right away on that case alone returned it in English in all three draws that completed, the fourth having failed in transport, and so did four draws under v0.1.7. Nothing in v0.1.8 touches language. The gap is recorded as it is: the next measurement will tell whether it comes back.
+
+A remedy was tried and set aside. The prompt and the frame of the message are in French, only the page is in English: a line restating the writing language, placed after the content, returned the analysis in English in all six draws, but the category moved to `opinion` five times out of six. Five draws under v0.1.8 on the same day gave `theorie_du_complot` and English in all five. A more discreet variant, the writing language in the header, still gave `opinion` twice out of five. The reminder fixed a gap that did not reproduce at the cost of one that did: it was not kept. The attempt is kept on the `feat/prompt-0.1.9` branch.
 
 ### Selling is not a technique (v0.1.8)
 
