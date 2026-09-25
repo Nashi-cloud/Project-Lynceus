@@ -1,8 +1,8 @@
-<!-- traduit-de: docs/ANNOTATION.md sha256:b7767b61cb24d182 -->
+<!-- traduit-de: docs/ANNOTATION.md sha256:92a50e22cd86e2c7 -->
 
 # Building the annotated evaluation set
 
-Guide version: **1.3**, September 2026.
+Guide version: **1.4**, September 2026.
 
 This document describes how the set of hand-annotated pages is built, against which every
 Lynceus analysis chain is measured. It is step zero of the
@@ -132,10 +132,15 @@ lynceus capturer page.md --url https://example.org/article --vers corpus/capture
 lynceus mesurer corpus/evaluation.yaml
 ```
 
-## 5. The annotation guide, version 1.3
+## 5. The annotation guide, version 1.4
 
 <!-- Headings 5.1 to 5.4 of the French original are read by lynx-corpus, which turns them
      into its panel's prompt: renaming them breaks that chain, and a lynx-corpus test says so. -->
+
+**What changed in 1.4.** Four points that the confrontation of batch 7 of the silver set
+left undecided: `conflit_interet_commercial` requires money at stake; a faith page that
+claims physical effects; the category of an account without sources; and telling
+neighbouring techniques apart.
 
 **What changed in 1.3.** `conflit_interet_commercial` is no longer marked on an openly
 commercial page without techniques, in line with the "disguised advertising" and "honest
@@ -185,6 +190,16 @@ The **dominant nature** of the content, according to [METHODOLOGIE.md](METHODOLO
   content shares one nature, satire or conspiracy for instance, that category goes into
   `categories_acceptables`. This is the only exception to "the thesis prevails over the
   form".
+- **An account without sources.** The absence of sources does not change the category: it
+  describes the quality of the text, and shows in the grade. A text that reports facts and
+  whose judgements remain incidental is `information`. If the judgements carry the
+  conclusion, if the text ends by saying what to think, it is an `opinion`.
+  `analyse_expertise` requires a visible method or data: without them it is `information`,
+  or `opinion` if the text pleads.
+- **Faith and health claims.** A faith page that claims effects on health, the body or
+  matter follows "the thesis prevails over the form": `pseudo_science` if these claims
+  carry the page, `contenu_confessionnel` if they are incidental. When both truly hold,
+  both go into `categories_acceptables`.
 
 `categories_acceptables` is for true hybrids, where two labels are equally defensible: the
 typical example is pseudo-medical discourse that sells its remedy. It is not for hedging
@@ -214,6 +229,10 @@ the truth of the facts.
   apart does not use hidden truth. Only what the page does counts, not what it describes.
 - **The parodied technique.** In satire, the techniques being mocked are not marked.
 - **Faith.** A statement of faith is not a technique (charter, [ETHIQUE.md](ETHIQUE.md)).
+  The limit is what can be verified: "prayer soothes the soul" is faith and is not marked;
+  "this holy water cures arthritis" is a claim about the physical world, and is marked as
+  anywhere else, `absence_de_sources`, `correlation_causation` or
+  `jargon_pseudo_scientifique`, even in a faith text.
 - **Style.** A lively tone or strong vocabulary are not techniques. The emotional lexicon
   belongs to an automatic count, not to annotation.
 - **Titles of other pages, in a page that has its own text.** In an article or a
@@ -229,7 +248,9 @@ carry its conclusion. It is not marked on an opinion, a testimony or an ordinary
 commercial page. A named source is a source, even without a link: "according to the
 national statistics office" is sourced.
 
-`conflit_interet_commercial` is marked in two cases only:
+`conflit_interet_commercial` requires **money at stake**: a paid offer, an affiliate link
+or a call for donations. Capturing a free audience, a feed, a free newsletter, a social
+media follow, is not one. It is then marked in two cases only:
 
 - **the commercial interest is disguised**: the page sells in the form of information,
   advice or a testimony, **even if a partner link is disclosed**;
@@ -238,6 +259,16 @@ national statistics office" is sourced.
 It is not marked on a page that announces itself as commercial and praises its product
 without techniques: selling is not a conflict of interest. The passage marked is the one
 where the sale, the affiliation or the call for donations tied to the discourse appears.
+
+**Neighbouring techniques.** Some techniques overlap. Each has its criterion:
+
+- `hyper_intentionnalisme`: an event or a series of events explained by a coordinated
+  plan, nothing being left to chance, error or incompetence;
+- `proces_d_intention`: a hidden and malicious motive attributed to an identified actor,
+  with no overall plan;
+- `ad_hominem`: discrediting a person in order to dismiss what they say.
+
+The criterion decides. A passage that clearly does two of these things is marked twice.
 
 **When in doubt, do not mark.** Mark what a careful reader would certainly point out. A
 doubtful passage goes into the notes, with the technique considered. A cautious and stable
@@ -274,7 +305,7 @@ lynceus annoter captures/name-of-the-page.md --annotateur my-pseudonym \
 ```yaml
 cas: captures/name-of-the-page.md
 annotateur: my-pseudonym
-guide: "1.3"
+guide: "1.4"
 content_hash: 5c1e…
 categorie: pseudo_science
 categories_acceptables: [publicite_sponsorise]   # only for a true hybrid

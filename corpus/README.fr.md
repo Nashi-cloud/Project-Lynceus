@@ -1,6 +1,6 @@
 # Corpus de calibration
 
-<!-- traduit-de: corpus/README.md sha256:2b2682d058bb5f3a -->
+<!-- traduit-de: corpus/README.md sha256:471f2278208be420 -->
 
 [English](README.md) · **Français**
 
@@ -107,7 +107,7 @@ Un fichier YAML par page et par annotateur, sous `annotations/<annotateur>/`. `l
 ```yaml
 cas: specimens/06-fictif-complotisme.md   # l'identifiant du cas, comme dans corpus.yaml
 annotateur: un-pseudonyme
-guide: "1.3"                              # version du guide d'annotation
+guide: "1.4"                              # version du guide d'annotation
 content_hash: 3f2a…                       # affichée par « lynceus annoter »
 categorie: theorie_du_complot
 grade: [D, E]
