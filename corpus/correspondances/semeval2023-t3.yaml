@@ -21,7 +21,7 @@
 
 source: SemEval 2023 tâche 3, sous-tâche 3 ; CheckThat! 2024 tâche 3
 reference: https://aclanthology.org/2023.semeval-1.317/
-referentiel: "0.1.7"
+referentiel: "0.1.8"
 
 correspondances:
   Appeal_to_Fear-Prejudice:

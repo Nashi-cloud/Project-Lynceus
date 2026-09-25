@@ -1,6 +1,6 @@
 # Taxonomie des techniques — référentiel Lynceus
 
-Version : **0.1.7** — 31 techniques. Ce référentiel est la **liste fermée** des techniques détectables : toute détection dans une carte d'analyse doit porter un `id` de cette liste (validé par le serveur) et un extrait verbatim de la page.
+Version : **0.1.8** — 31 techniques. Ce référentiel est la **liste fermée** des techniques détectables : toute détection dans une carte d'analyse doit porter un `id` de cette liste (validé par le serveur) et un extrait verbatim de la page.
 
 Chaque entrée : définition, indices de détection, mécanisme psychologique. Alignée sur la taxonomie **FLICC** (John Cook), le *Debunking Handbook 2020* et les travaux sur l'inoculation (van der Linden). La gravité indiquée est *indicative* : le contexte prime.
 
@@ -164,9 +164,9 @@ Désigner un groupe par un vocabulaire qui le prive de son humanité ou le rédu
 ## Famille F — Conflits d'intérêt
 
 ### `conflit_interet_commercial` — Conflit d'intérêt commercial · gravité haute
-Diffuser un discours alarmiste ou miraculeux dont l'auteur tire un profit direct.
-**Indices :** article « santé » débouchant sur une boutique, lien d'affiliation, formation payante, dons sollicités par la peur.
-**Mécanisme :** le modèle économique classique de la désinformation : la peur est l'entonnoir, le produit est la sortie. Suivre l'argent.
+Tirer un profit direct d'un contenu qui se présente comme autre chose qu'une offre (information, conseil, témoignage), même si un lien partenaire est signalé, ou d'un discours alarmiste ou miraculeux qui pousse à l'achat. Une page qui s'annonce comme commerciale et vante son offre sans autre procédé n'en relève pas.
+**Indices :** article « santé » débouchant sur une boutique, conseils ou témoignage menant à un lien d'affiliation, formation payante, dons sollicités par la peur.
+**Mécanisme :** le modèle économique classique de la désinformation : la peur est l'entonnoir, le produit est la sortie. Suivre l'argent. Vendre n'est pas un conflit d'intérêt : c'est le déguisement ou la peur qui en font un.
 
 ### `solution_miracle` — Solution miracle · gravité haute
 Promettre un remède ou une solution simple, unique et cachée à un problème complexe.
