@@ -1,12 +1,12 @@
 # Catalogue of techniques — the Lynceus reference list
 
-<!-- traduit-de: docs/TAXONOMIE.md sha256:381e3a38a6e24b75 -->
+<!-- traduit-de: docs/TAXONOMIE.md sha256:24097a16578bb00f -->
 
 > Translation for information. The French version, `docs/TAXONOMIE.md`, is the list the
 > engine applies, and the only one injected into the prompt: should the two ever diverge,
 > it is the one that counts. The `ids` never change, in any language.
 
-Version: **0.1.7** — 31 techniques. This catalogue is the **closed list** of detectable techniques: every detection in an analysis card must carry an `id` from this list (validated by the server) and a verbatim excerpt from the page.
+Version: **0.1.8** — 31 techniques. This catalogue is the **closed list** of detectable techniques: every detection in an analysis card must carry an `id` from this list (validated by the server) and a verbatim excerpt from the page.
 
 Each entry: definition, detection cues, psychological mechanism. Aligned with the **FLICC** taxonomy (John Cook), the *Debunking Handbook 2020*, and the work on inoculation (van der Linden). The severity given is *indicative*: context prevails.
 
@@ -170,9 +170,9 @@ Naming a group with vocabulary that strips it of humanity or reduces it to a thr
 ## Family F — Conflicts of interest
 
 ### `conflit_interet_commercial` — Commercial conflict of interest · high severity
-Spreading an alarmist or miraculous message from which the author directly profits.
-**Cues:** a “health” article ending at a shop, an affiliate link, a paid course, donations solicited through fear.
-**Mechanism:** the classic business model of disinformation: fear is the funnel, the product is the exit. Follow the money.
+Profiting directly from content that presents itself as something other than an offer (information, advice, testimony), even when a partner link is disclosed, or from an alarmist or miraculous message that pushes a purchase. A page that announces itself as commercial and promotes its offer with no other technique does not fall under it.
+**Cues:** a “health” article ending at a shop, advice or a testimony leading to an affiliate link, a paid course, donations solicited through fear.
+**Mechanism:** the classic business model of disinformation: fear is the funnel, the product is the exit. Follow the money. Selling is not a conflict of interest: the disguise or the fear is what makes it one.
 
 ### `solution_miracle` — Miracle cure · high severity
 Promising a simple, unique and hidden remedy or solution to a complex problem.

@@ -1,10 +1,10 @@
 # Analysis methodology
 
-<!-- traduit-de: docs/METHODOLOGIE.md sha256:e2083849eb72059a -->
+<!-- traduit-de: docs/METHODOLOGIE.md sha256:69378dbe99a890f2 -->
 
 > Translation for information. The French version, `docs/METHODOLOGIE.md`, is the one the project applies: should the two ever diverge, it is the one that counts.
 
-Version: **0.1.7**. Any change to this document or to the prompts increments `prompt_version` (semver) and triggers a run against the [calibration corpus](../../corpus/).
+Version: **0.1.8**. Any change to this document or to the prompts increments `prompt_version` (semver) and triggers a run against the [calibration corpus](../../corpus/).
 
 ## Overview
 
@@ -95,6 +95,7 @@ The **confidence index** (0 to 1, supplied by the model) is shown separately: it
 - **Opinion / editorial**: assessed on the honesty of its argument (sources for the facts invoked, absence of unfair techniques), **never on the position it defends**.
 - **Religious content**: faith is not graded. Only factual claims (health, science, history) and any manipulation techniques (fear, urgency, isolation) are.
 - **Index page** (home page, section front, discussion thread, shop): category `autre`, lowered confidence, and a warning saying that the analysis covers an index. An index is recognised by its shape, a run of headlines announcing content that is not there, and not by its address, which the engine does not always have. **The analysis covers what the page itself does**, its presentation choices and the wording of its headlines, never the content of the articles it announces, which has not been read. The rule used to say “non-textual page”, which the home page of a newspaper is not: measured over three runs before the correction, it came out `information`, `information`, `autre`, the same index being filed twice out of three as an article, then `autre` three times out of three once the rule was stated by shape.
+- **Commercial page**: selling is not a conflict of interest. `conflit_interet_commercial` is detected when the commercial interest is disguised as information, advice or testimony, even when a partner link is disclosed, or when an alarmist or miraculous message pushes a purchase. A page that announces itself as commercial and promotes its offer with no other technique does not fall under it. Up to 0.1.7 the definition only covered the alarmist or miraculous message: disguised advice was detected only because the model went beyond the definition, and annotation guide 1.3 had already settled the question this way.
 - **Short or truncated content** (paywall, excerpt): lowered confidence index plus an explicit warning.
 - **Foreign language**: analysed in the language of the content where the model allows, otherwise a warning.
 
