@@ -1,6 +1,6 @@
 # Constituer le jeu d'évaluation annoté
 
-Version du guide : **1.3**, septembre 2026.
+Version du guide : **1.4**, septembre 2026.
 
 Ce document dit comment se construit le jeu de pages annotées à la main contre lequel se
 mesure toute chaîne d'analyse de Lynceus. C'est l'étape zéro de
@@ -131,10 +131,15 @@ lynceus capturer page.md --url https://exemple.fr/article --vers corpus/captures
 lynceus mesurer corpus/evaluation.yaml
 ```
 
-## 5. Le guide d'annotation, version 1.3
+## 5. Le guide d'annotation, version 1.4
 
 <!-- Les titres 5.1 à 5.4 sont lus par lynx-corpus, qui en fait le prompt de son panel :
      les renommer casse cette chaîne, et un test de lynx-corpus le signale. -->
+
+**Ce qui a changé en 1.4.** Quatre points que la confrontation du lot 7 du jeu silver
+laissait indécis : `conflit_interet_commercial` demande de l'argent en jeu ; une page de foi
+qui affirme des effets physiques ; la catégorie d'un compte rendu sans sources ; et le
+départage entre procédés voisins.
 
 **Ce qui a changé en 1.3.** `conflit_interet_commercial` ne se marque plus sur une page
 ouvertement commerciale sans procédé, conformément aux spécimens de calibration « publicité
@@ -184,6 +189,16 @@ qualité. Quelques règles de départage :
   Quand tous les contenus visibles partagent une même nature, satire ou complot par
   exemple, cette catégorie entre dans `categories_acceptables`. C'est la seule exception à
   « la thèse l'emporte sur la forme ».
+- **Compte rendu sans sources.** L'absence de sources ne change pas la catégorie : elle
+  décrit la qualité du texte, et se lit dans le grade. Un texte qui rapporte des faits et
+  dont les jugements restent incidents est `information`. Si les jugements portent la
+  conclusion, si le texte finit par dire quoi penser, c'est une `opinion`.
+  `analyse_expertise` demande une méthode ou des données visibles : sans elles, c'est
+  `information`, ou `opinion` si le texte plaide.
+- **Foi et affirmations de santé.** Une page de foi qui avance des effets sur la santé, le
+  corps ou la matière suit « la thèse l'emporte sur la forme » : `pseudo_science` si ces
+  affirmations portent la page, `contenu_confessionnel` si elles sont accessoires. Quand les
+  deux se tiennent vraiment, les deux vont dans `categories_acceptables`.
 
 `categories_acceptables` sert aux vrais hybrides, où deux étiquettes sont également
 défendables : l'exemple type est le discours pseudo-médical qui vend son remède. Il ne
@@ -213,6 +228,10 @@ jugement sur la véracité des faits.
   n'emploie pas la vérité cachée. Seul compte ce que la page fait, pas ce qu'elle décrit.
 - **Le procédé parodié.** Dans une satire, les procédés moqués ne se marquent pas.
 - **La foi.** Une affirmation de foi n'est pas un procédé (charte, [ETHIQUE.md](ETHIQUE.md)).
+  La limite est ce qui se vérifie : « la prière apaise l'âme » est de la foi et ne se marque
+  pas ; « cette eau bénite guérit l'arthrose » est une affirmation sur le monde physique, et
+  se marque comme partout ailleurs, `absence_de_sources`, `correlation_causation` ou
+  `jargon_pseudo_scientifique`, même dans un texte de foi.
 - **Le style.** Un ton vif ou un vocabulaire fort ne sont pas des techniques. Le lexique
   émotionnel relève d'un compte automatique, pas de l'annotation.
 - **Les titres d'autres pages, dans une page qui a son propre texte.** Dans un article ou
@@ -228,7 +247,9 @@ faits vérifiables qui portent sa conclusion. Elle ne se marque pas sur une opin
 témoignage ou une page commerciale ordinaire. Une source nommée est une source, même sans
 lien : « selon l'Insee » est sourcé.
 
-`conflit_interet_commercial` se marque dans deux cas seulement :
+`conflit_interet_commercial` demande **de l'argent en jeu** : une offre payante, un lien
+d'affiliation ou un appel au don. Capter une audience gratuite, flux, lettre d'information
+gratuite, abonnement à un réseau, n'en est pas. Il se marque alors dans deux cas seulement :
 
 - **l'intérêt commercial est déguisé** : la page vend sous la forme d'une information,
   d'un conseil ou d'un témoignage, **même si un lien partenaire est déclaré** ;
@@ -237,6 +258,16 @@ lien : « selon l'Insee » est sourcé.
 Il ne se marque pas sur une page qui s'annonce comme commerciale et vante son produit
 sans procédé : vendre n'est pas un conflit d'intérêt. Le passage marqué est celui où
 apparaît la vente, l'affiliation ou l'appel au don lié au discours.
+
+**Procédés voisins.** Quelques procédés se recouvrent. Chacun a son critère :
+
+- `hyper_intentionnalisme` : un événement ou une suite d'événements expliqués par un plan
+  coordonné, rien n'étant laissé au hasard, à l'erreur ou à l'incompétence ;
+- `proces_d_intention` : un mobile caché et malveillant prêté à un acteur identifié, sans
+  plan d'ensemble ;
+- `ad_hominem` : discréditer une personne pour écarter ce qu'elle dit.
+
+Le critère départage. Un passage qui fait nettement deux de ces choses se marque deux fois.
 
 **Dans le doute, ne pas marquer.** Marquer ce qu'un lecteur attentif relèverait à coup
 sûr. Un passage douteux va dans les notes, avec la technique envisagée. Une annotation
@@ -274,7 +305,7 @@ lynceus annoter captures/nom-de-la-page.md --annotateur mon-pseudonyme \
 ```yaml
 cas: captures/nom-de-la-page.md
 annotateur: mon-pseudonyme
-guide: "1.3"
+guide: "1.4"
 content_hash: 5c1e…
 categorie: pseudo_science
 categories_acceptables: [publicite_sponsorise]   # seulement pour un vrai hybride
