@@ -374,6 +374,8 @@ def _publier_la_passe(corpus: Path, entrees: list, resultats: list, conformes: i
         "modele": meta["modele"],
         "fournisseur": meta.get("fournisseur") or "",
         "temperature": meta.get("temperature", 0),
+        "raisonnement": meta.get("raisonnement") or "",
+        "hebergeurs": meta.get("hebergeurs") or [],
         "prompt_version": meta["prompt_version"],
         "corpus": calibration.empreinte(corpus),
         "conformes": conformes,

@@ -97,6 +97,8 @@ def test_meta(appli):
     assert meta["prompt_version"] == module_prompt.resoudre_version("latest")
     assert meta["taxonomie"]["nb_techniques"] == 31
     assert meta["modele"] == "test/modele"
+    # Réglages qui changent la note : publiés, vides quand ils sont laissés au fournisseur.
+    assert meta["raisonnement"] == "" and meta["hebergeurs"] == []
 
 
 def test_erreurs_entree(appli):
