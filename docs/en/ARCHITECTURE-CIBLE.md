@@ -1,6 +1,6 @@
 # Target architecture for analysis: a compound pipeline
 
-<!-- traduit-de: docs/ARCHITECTURE-CIBLE.md sha256:65d6049e78406a88 -->
+<!-- traduit-de: docs/ARCHITECTURE-CIBLE.md sha256:a5fbfdf9dee2dd0b -->
 
 Version: **draft**, September 2026. This document does not describe what Lynceus does,
 but where the analysis pipeline must go, and in what order. What is in service is
@@ -311,6 +311,64 @@ runs of prompt v0.1.7, at zero temperature:
 This is the measured starting point against which everything that follows will be judged.
 The annotated corpus itself remains to be built: that is human work, which the tooling does
 not replace, and its procedure is described in [ANNOTATION.md](ANNOTATION.md).
+
+### What the silver set can already train
+
+The silver set ([ANNOTATION.md](ANNOTATION.md) §11) has been used to train eight models, in
+the lynx-corpus repository, whose full summary is in its `rapports/MODELES.md`. The figures
+below are measured on 80 to 117 pages read by a single human and held out from training:
+this is a development bench, not the test set of section 4 of
+[ANNOTATION.md](ANNOTATION.md), which remains to be built. They are given against the
+reference corrected after confrontation with the panel, which is not blind; the blind
+reading alone gives lower figures, stated where they matter.
+
+| On 80 pages | Category | F1 of techniques present |
+|---|---|---|
+| The model panel that wrote the set, as a ceiling | 0.96 | 0.88 |
+| EuroBERT-610m, 8,192 tokens, 840 pages | 0.78 | 0.58 |
+| EuroBERT-610m, 8,192 tokens, 1,613 pages | 0.76 | 0.60 |
+| Fine-tuned Qwen3-4B (QLoRA), generative, 840 pages | 0.79 | 0.51 |
+
+What this means for stage 1:
+
+- **Data is the only lever that paid off in every trial**: about +0.06 F1 on techniques
+  each time the set doubles. A larger encoder (EuroBERT-2.1B) brought nothing, nor did a
+  threshold tuned per technique. Reading the whole page (8,192 tokens against 2,048) brings
+  +0.04.
+- **No model comes close to the panel**, and none yet points to passages: they say which
+  techniques the page contains, not where. Stage 1 as section 5 describes it is therefore
+  not reached. The small generative model does quote excerpts found word for word in 88 to
+  94 % of cases, with no invented passage found, but it marks too little.
+- **The category plateaus around 0.78**, whatever the model. The errors fell on boundaries
+  the guide did not settle, since settled by guide 1.4.
+
+### The detection pre-filter
+
+A simpler task is within reach: telling whether a page uses **at least one** technique, to
+decide whether it is worth analysing. EuroBERT-610m, trained on 1,936 silver pages, reaches
+an area under the ROC curve of **0.90 against the blind reading** and 0.96 against the
+corrected reference, on 117 pages. At the 0.05 threshold, it keeps 95 to 98 % of the pages
+with techniques while sending only about half of the pages to the full analysis. It mostly
+misses an isolated technique in a text with no other signal, a rumour on a satirical site,
+a faith text making health claims. It is meant to run on a CPU, but its speed has not been
+measured yet, on the server or in the browser.
+
+It is a way to reduce cost, not an analysis, and three rules follow:
+
+- **A low score means "not analysed", never "no technique".** The model lets through a few
+  pages with techniques in a hundred: showing an absence on its word alone would deliver a
+  verdict that nobody has established. A page set aside by the pre-filter has no card, not
+  an empty card.
+- **The pre-filter never blocks a requested analysis.** It serves what the instance does
+  on its own, the passive badge and background analyses; a reader who asks for a page to
+  be analysed gets the analysis, whatever the score.
+- **Its score is not shown, not stored as a rating, and not used to rank pages or
+  sources.** Lynceus describes techniques in a page; a pre-filter score aggregated by site
+  would be the reputation list that section 10 rules out.
+
+The model is not yet integrated into Lynceus; its publication is being prepared in
+lynx-corpus, under the Apache 2.0 licence like EuroBERT, with these three rules at the top
+of its card.
 
 ## 9. The roadmap
 
