@@ -1,6 +1,11 @@
 # Journal des versions de l'extension Lynceus
 
-Le numéro de version se voit dans `chrome://extensions` (mode développeur) et en bas de la page **Réglages** de l'extension : utile pour vérifier qu'un rebuild a bien été rechargé.
+Le numéro de version se voit dans `chrome://extensions` (mode développeur), en bas de la page **Réglages** et en pied de panneau : utile pour vérifier qu'un rebuild a bien été rechargé.
+
+## 0.11.5 (2026-09-27)
+
+- **feat** : la version installée s'affiche en pied de panneau. Elle ne se lisait que dans les réglages et sur la page d'accueil, là où personne ne regarde quand il se demande si un rechargement a bien pris.
+- **feat** : avis de mise à jour. Une extension installée depuis l'archive du portail ne se met jamais à jour seule, et rien ne le disait. Le panneau demande désormais au portail (`GET /v1/extension`), au plus une fois par jour, quelle version il distribue, et affiche un avis discret avec le lien de téléchargement quand elle est plus récente. L'avis se masque, et ne revient qu'à la version suivante. Rien n'est demandé pour une extension installée depuis un magasin, que le navigateur met à jour lui-même, ni sans portail connu. La réponse du portail est traitée comme une donnée non fiable : une version qui n'en a pas la forme, ou un lien qui mène hors du portail, et rien n'est affiché.
 
 ## 0.11.4 (2026-09-05)
 

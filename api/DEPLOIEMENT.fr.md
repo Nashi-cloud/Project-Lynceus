@@ -1,6 +1,6 @@
 # Déployer une instance Lynceus
 
-<!-- traduit-de: api/DEPLOIEMENT.md sha256:0879584035fb766c -->
+<!-- traduit-de: api/DEPLOIEMENT.md sha256:ab7bbc4ebda01e14 -->
 
 [English](DEPLOIEMENT.md) · **Français**
 
@@ -398,7 +398,7 @@ Trois conteneurs, trois cycles de vie indépendants. Mettre l'un à jour n'inter
 
 Le site et l'API partagent la même image mais pas le même conteneur : redéployer le portail laisse l'API analyser sans s'en apercevoir, et inversement. Pendant un redémarrage de l'instance, le portail continue de servir ses pages et signale simplement l'annuaire comme injoignable.
 
-> **Une extension installée ne se met pas à jour toute seule.** Chargée en mode développeur, elle reste à sa version tant que la personne ne la recharge pas. Publier un nouveau zip met la nouvelle version à disposition, cela ne l'installe chez personne.
+> **Une extension installée ne se met pas à jour toute seule.** Chargée en mode développeur, elle reste à sa version tant que la personne ne la recharge pas. Publier un nouveau zip met la nouvelle version à disposition, cela ne l'installe chez personne. Depuis la version 0.11.5, l'extension le dit au moins : elle demande à son portail (`GET /v1/extension`) quelle version il distribue, et son panneau affiche un avis discret, avec le lien de téléchargement, quand cette version est plus récente que la sienne.
 
 ### Ce que l'inscription délivre, et ce qu'elle ne retient pas
 
