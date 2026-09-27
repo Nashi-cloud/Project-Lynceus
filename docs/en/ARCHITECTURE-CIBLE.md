@@ -1,6 +1,6 @@
 # Target architecture for analysis: a compound pipeline
 
-<!-- traduit-de: docs/ARCHITECTURE-CIBLE.md sha256:a5fbfdf9dee2dd0b -->
+<!-- traduit-de: docs/ARCHITECTURE-CIBLE.md sha256:ee8a92e660a739d1 -->
 
 Version: **draft**, September 2026. This document does not describe what Lynceus does,
 but where the analysis pipeline must go, and in what order. What is in service is
@@ -314,7 +314,8 @@ not replace, and its procedure is described in [ANNOTATION.md](ANNOTATION.md).
 
 ### What the silver set can already train
 
-The silver set ([ANNOTATION.md](ANNOTATION.md) §11) has been used to train eight models, in
+The silver set ([ANNOTATION.md](ANNOTATION.md) §11, published on
+[Hugging Face](https://huggingface.co/datasets/nashicloud/lynceus-silver)) has been used to train eight models, in
 the lynx-corpus repository, whose full summary is in its `rapports/MODELES.md`. The figures
 below are measured on 80 to 117 pages read by a single human and held out from training:
 this is a development bench, not the test set of section 4 of
