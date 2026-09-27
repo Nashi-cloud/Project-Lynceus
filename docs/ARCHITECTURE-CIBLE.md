@@ -319,6 +319,65 @@ C'est le point de départ chiffré contre lequel toute la suite se jugera. Reste
 le corpus annoté lui-même : c'est un travail humain, que l'outillage ne remplace pas, et sa
 procédure est décrite dans [ANNOTATION.md](ANNOTATION.md).
 
+### Ce que le jeu silver permet déjà d'entraîner
+
+Le jeu silver ([ANNOTATION.md](ANNOTATION.md) §11) a servi à entraîner huit modèles, dans le
+dépôt lynx-corpus, dont la synthèse complète est dans son `rapports/MODELES.md`. Les chiffres
+qui suivent sont mesurés sur 80 à 117 pages relues par un seul humain et retirées de
+l'entraînement : c'est un banc de développement, pas le jeu de test de la section 4 de
+[ANNOTATION.md](ANNOTATION.md), qui reste à constituer. Ils sont donnés contre la référence
+corrigée après confrontation avec le panel, qui n'est pas aveugle ; la lecture à l'aveugle
+seule donne des chiffres plus bas, indiqués quand ils comptent.
+
+| Sur 80 pages | Catégorie | F1 des techniques présentes |
+|---|---|---|
+| Le panel de modèles qui a écrit le jeu, pour plafond | 0,96 | 0,88 |
+| EuroBERT-610m, 8 192 jetons, 840 pages | 0,78 | 0,58 |
+| EuroBERT-610m, 8 192 jetons, 1 613 pages | 0,76 | 0,60 |
+| Qwen3-4B affiné (QLoRA), génératif, 840 pages | 0,79 | 0,51 |
+
+Ce qu'on en retient pour l'étage 1 :
+
+- **Les données sont le seul levier qui a payé à chaque essai** : environ +0,06 de F1 sur
+  les techniques à chaque doublement du jeu. Un encodeur plus grand (EuroBERT-2.1B) n'a rien
+  apporté, pas plus qu'un seuil réglé par technique. Lire la page entière (8 192 jetons
+  contre 2 048) apporte +0,04.
+- **Aucun modèle n'approche le panel**, et aucun ne désigne encore les passages : ils disent
+  quelles techniques la page contient, pas où. L'étage 1 tel que la section 5 le décrit
+  n'est donc pas atteint. Le petit modèle génératif, lui, cite des extraits exacts mot pour
+  mot dans 88 à 94 % des cas, sans aucun passage inventé relevé, mais il marque trop peu.
+- **La catégorie plafonne vers 0,78**, quel que soit le modèle. Les erreurs tombaient sur
+  des frontières que le guide ne tranchait pas, réglées depuis par le guide 1.4.
+
+### Le pré-tri de détection
+
+Une tâche plus simple est, elle, à portée : dire si une page emploie **au moins un**
+procédé, pour décider s'il vaut la peine de l'analyser. EuroBERT-610m, entraîné sur
+1 936 pages silver, y atteint une aire sous la courbe ROC de **0,90 contre la lecture à
+l'aveugle** et de 0,96 contre la référence corrigée, sur 117 pages. Au seuil 0,05, il garde
+95 à 98 % des pages à procédés en n'envoyant qu'environ la moitié des pages à l'analyse
+complète. Il manque surtout un procédé isolé dans un texte sans autre signal, une rumeur
+sur un site satirique, un texte de foi qui fait des affirmations de santé. Il est prévu
+pour tourner sur processeur, mais sa vitesse n'est pas encore mesurée, ni sur le serveur
+ni dans le navigateur.
+
+C'est un moyen de réduire le coût, pas une analyse, et trois règles en découlent :
+
+- **Un score bas veut dire « non analysée », jamais « aucun procédé ».** Le modèle laisse
+  passer quelques pages à procédés sur cent : afficher une absence sur sa seule foi serait
+  rendre un verdict que personne n'a établi. Une page écartée par le pré-tri n'a pas de
+  carte, elle n'a pas une carte vide.
+- **Le pré-tri ne bloque jamais une analyse demandée.** Il sert à ce que l'instance fait
+  d'elle-même, le badge passif et les analyses de fond ; un lecteur qui demande l'analyse
+  d'une page l'obtient, quel que soit le score.
+- **Son score ne se montre pas, ne se stocke pas comme une note, et ne sert à classer ni
+  les pages ni les sources.** Lynceus décrit des procédés dans une page ; un score de
+  pré-tri agrégé par site serait la liste de réputation que la section 10 écarte.
+
+Le modèle n'est pas encore intégré à Lynceus ; sa publication est préparée dans
+lynx-corpus, sous licence Apache 2.0 comme EuroBERT, avec ces trois règles en tête de sa
+fiche.
+
 ## 9. La feuille de route
 
 Chaque étape produit quelque chose d'utile même si la suivante n'arrive jamais. Les
