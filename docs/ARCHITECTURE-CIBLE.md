@@ -321,7 +321,8 @@ procédure est décrite dans [ANNOTATION.md](ANNOTATION.md).
 
 ### Ce que le jeu silver permet déjà d'entraîner
 
-Le jeu silver ([ANNOTATION.md](ANNOTATION.md) §11) a servi à entraîner huit modèles, dans le
+Le jeu silver ([ANNOTATION.md](ANNOTATION.md) §11, publié sur
+[Hugging Face](https://huggingface.co/datasets/nashicloud/lynceus-silver)) a servi à entraîner huit modèles, dans le
 dépôt lynx-corpus, dont la synthèse complète est dans son `rapports/MODELES.md`. Les chiffres
 qui suivent sont mesurés sur 80 à 117 pages relues par un seul humain et retirées de
 l'entraînement : c'est un banc de développement, pas le jeu de test de la section 4 de

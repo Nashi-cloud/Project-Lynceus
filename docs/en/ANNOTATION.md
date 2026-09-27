@@ -1,4 +1,4 @@
-<!-- traduit-de: docs/ANNOTATION.md sha256:92a50e22cd86e2c7 -->
+<!-- traduit-de: docs/ANNOTATION.md sha256:e1506521e53bcdf3 -->
 
 # Building the annotated evaluation set
 
@@ -472,6 +472,13 @@ set is useful, but never the reference.
 | Size | 200 pages and more | thousands |
 | Used to | measure | train |
 | Where | `corpus/` in this repository | lynx-corpus |
+
+**Where to find it.** The set is published on Hugging Face, [nashicloud/lynceus-silver](https://huggingface.co/datasets/nashicloud/lynceus-silver),
+under CC BY-SA 4.0. It contains no text from the pages: each passage is given by its
+position and a hash, and a script downloads the pages again, respecting their
+`robots.txt`, to rebuild the excerpts. Its card describes the right of reply and the
+procedure for removing a page. The bench of human-read pages that comes with it is a
+development bench, not the test set.
 
 **The panel.** Three open-weight models from three different providers: two read each page
 independently, with this guide as instructions, and the third settles their disagreements

@@ -475,6 +475,13 @@ notre étalon or ; le jeu silver n'en est que l'argent, utile mais jamais la ré
 | Sert à | mesurer | entraîner |
 | Où | `corpus/` de ce dépôt | lynx-corpus |
 
+**Où le trouver.** Le jeu est publié sur Hugging Face, [nashicloud/lynceus-silver](https://huggingface.co/datasets/nashicloud/lynceus-silver),
+sous CC BY-SA 4.0. Il ne contient aucun texte des pages : chaque passage est donné par sa
+position et une empreinte, et un script retélécharge les pages, en respectant leur
+`robots.txt`, pour recomposer les extraits. Sa fiche décrit le droit de réponse et la
+procédure de retrait d'une page. Le banc de pages relues par un humain qui l'accompagne
+est un banc de développement, pas le jeu de test.
+
 **Le panel.** Trois modèles à poids ouverts de trois fournisseurs différents : deux lisent
 chaque page indépendamment, avec ce guide pour consigne, et le troisième tranche leurs
 désaccords sans pouvoir ajouter de passage. Des poids ouverts par choix : plusieurs
