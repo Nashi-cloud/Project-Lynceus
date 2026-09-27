@@ -436,5 +436,14 @@
   },
   "accueil_pied": {
     "message": "The instance address and the key can be changed at any time in the"
+  },
+  "panneau_maj_disponible": {
+    "message": "Version $1 available."
+  },
+  "panneau_maj_telecharger": {
+    "message": "Download"
+  },
+  "panneau_maj_masquer": {
+    "message": "Hide this notice"
   }
 }

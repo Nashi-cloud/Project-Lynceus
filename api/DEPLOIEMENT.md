@@ -395,7 +395,7 @@ Three containers, three independent life cycles. Updating one does not interrupt
 
 The site and the API share the same image but not the same container: redeploying the portal leaves the API analysing without noticing, and the other way round. While the instance restarts, the portal keeps serving its pages and simply reports the directory as unreachable.
 
-> **An installed extension does not update itself.** Loaded in developer mode, it stays at its version until the person reloads it. Publishing a new zip makes the new version available; it installs it on nobody.
+> **An installed extension does not update itself.** Loaded in developer mode, it stays at its version until the person reloads it. Publishing a new zip makes the new version available; it installs it on nobody. From version 0.11.5 on, the extension at least says so: it asks its portal (`GET /v1/extension`) which version it distributes, and its panel shows a discreet notice with the download link when that version is newer than its own.
 
 ### What sign-up issues, and what it does not keep
 
