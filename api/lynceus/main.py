@@ -558,6 +558,10 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             # Publiée parce qu'elle change la reproductibilité de la note, et que le
             # rapport de calibration doit pouvoir dire sous quel réglage il a été mesuré.
             "temperature": p.llm_temperature,
+            # Même raison : le raisonnement demandé et les hébergeurs imposés changent la
+            # note autant que la température. Vides = laissés au fournisseur.
+            "raisonnement": p.llm_raisonnement.strip().lower(),
+            "hebergeurs": llm.liste_hebergeurs(p.llm_hebergeurs),
             # Le texte analysé quitte-t-il l'instance ? C'est ce que le portail annonce sur
             # sa page de confidentialité, et la réponse change tout pour le lecteur.
             "fournisseur_distant": distant,

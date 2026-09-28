@@ -142,6 +142,8 @@ L'étape 5 inclut la **vérification anti-hallucination des extraits** : tout `e
 | `LYNCEUS_LLM_TEMPERATURE` | `0` | Zéro par défaut : la note doit être reproductible. Mesuré, voir [corpus/RESULTATS.md](../corpus/RESULTATS.md) |
 | `LYNCEUS_LLM_CACHE_PROMPT` | `false` | Marque le prompt système comme réutilisable. Inutile chez un fournisseur qui met en cache seul, nécessaire chez ceux qui exigent un point de césure explicite |
 | `LYNCEUS_LLM_RAISONNEMENT` | *(défaut du fournisseur)* | `off`, `low`, `medium`, `high`. Le raisonnement est facturé en sortie puis jeté : c'est le premier poste de dépense |
+| `LYNCEUS_LLM_HEBERGEURS` | *(le routeur choisit)* | Hébergeurs imposés derrière un routeur comme OpenRouter, dans l'ordre (`z-ai`, `deepinfra`…). Un même modèle y est servi à des prix et des précisions très différents, et la note change avec l'hébergeur |
+| `LYNCEUS_LLM_HEBERGEURS_REPLI` | `true` | Si les hébergeurs listés sont indisponibles, le routeur peut en prendre un autre. `false` pour une passe de calibration, qui doit mesurer l'hébergeur annoncé |
 | `LYNCEUS_CONTENU_MAX_CARS` | `60000` | Garde-fou taille (≈ tokens × 4) |
 | `LYNCEUS_RATE_LIMIT` | `10/minute` | Par IP, sur `/v1/analyses` |
 

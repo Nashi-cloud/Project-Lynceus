@@ -1,6 +1,6 @@
 # Méthodologie d'analyse
 
-Version : **0.1.7**. Toute modification de ce document ou des prompts incrémente `prompt_version` (semver) et déclenche une passe sur le [corpus de calibration](../corpus/).
+Version : **0.1.8**. Toute modification de ce document ou des prompts incrémente `prompt_version` (semver) et déclenche une passe sur le [corpus de calibration](../corpus/).
 
 ## Vue d'ensemble
 
@@ -91,6 +91,7 @@ L'**indice de confiance** (0–1, fourni par le LLM) est affiché séparément :
 - **Opinion / éditorial** : évalué sur l'honnêteté argumentative (sources des faits invoqués, absence de techniques déloyales), **jamais sur la position défendue**.
 - **Contenu confessionnel** : la foi n'est pas notée. Seules le sont les affirmations factuelles (santé, science, histoire) et les techniques de manipulation éventuelles (peur, urgence, isolement).
 - **Sommaire** (page d'accueil, rubrique, fil de discussion, boutique) : catégorie `autre`, confiance abaissée, avertissement disant que l'analyse porte sur un sommaire. Un sommaire se reconnaît à sa forme, une suite de titres annonçant des contenus qui ne sont pas là, et non à son adresse, dont le moteur ne dispose pas toujours. **L'analyse porte sur ce que la page fait elle-même**, ses choix de présentation et la formulation de ses titres, jamais sur le contenu des articles annoncés, qui n'a pas été lu. La règle disait auparavant « page non textuelle », ce qu'une page d'accueil de journal n'est pas : mesurée sur trois passes avant correction, elle sortait `information`, `information`, `autre`, le même sommaire étant classé deux fois sur trois comme un article, puis `autre` trois fois sur trois une fois la règle énoncée par la forme.
+- **Page commerciale** : vendre n'est pas un conflit d'intérêt. `conflit_interet_commercial` se détecte quand l'intérêt commercial est déguisé en information, en conseil ou en témoignage, même si un lien partenaire est signalé, ou quand un discours alarmiste ou miraculeux pousse à l'achat. Une page qui s'annonce comme commerciale et vante son offre sans autre procédé n'en relève pas. La définition ne couvrait jusqu'en 0.1.7 que le discours alarmiste ou miraculeux : le cas du conseil déguisé n'était détecté que parce que le modèle débordait la définition, et le guide d'annotation 1.3 tranchait déjà dans ce sens.
 - **Contenu court ou tronqué** (paywall, extrait) : indice de confiance abaissé + avertissement explicite.
 - **Langue étrangère** : analyse dans la langue du contenu si le modèle le permet, sinon avertissement.
 

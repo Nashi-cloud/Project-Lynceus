@@ -436,5 +436,14 @@
   },
   "accueil_pied": {
     "message": "L'adresse de l'instance et la clé sont modifiables à tout moment dans les"
+  },
+  "panneau_maj_disponible": {
+    "message": "Version $1 disponible."
+  },
+  "panneau_maj_telecharger": {
+    "message": "Télécharger"
+  },
+  "panneau_maj_masquer": {
+    "message": "Masquer cet avis"
   }
 }

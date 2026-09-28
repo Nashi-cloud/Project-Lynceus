@@ -151,11 +151,13 @@ DOCUMENTS_PUBLIES = [
     ("corpus/RESULTATS.md", "/calibration"),
 ]
 
-# Deux documents du dépôt ne sont pas publiés par le portail mais se traduisent quand même :
-# personne ne lira la conformité ou l'architecture en français par hasard. Ils suivent la
+# D'autres documents du dépôt ne sont pas publiés par le portail mais se traduisent quand
+# même : personne ne lira la conformité ou l'architecture en français par hasard. Ils suivent la
 # même règle et le même contrôle de fraîcheur que les autres.
 DOCUMENTS_NON_PUBLIES = [
     "docs/ARCHITECTURE.md",
+    "docs/ARCHITECTURE-CIBLE.md",
+    "docs/ANNOTATION.md",
     "docs/CONFORMITE.md",
     "docs/IA-GENERATIVE.md",
 ]
@@ -179,6 +181,7 @@ FACADE = [
     "extension/PUBLICATION.md",
     "corpus/README.md",
     "corpus/specimens/README.md",
+    "corpus/annotations/README.md",
 ]
 
 _EMPREINTE = re.compile(r"traduit-de:\s*(\S+)\s+sha256:([0-9a-f]+)")

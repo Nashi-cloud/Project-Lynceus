@@ -423,6 +423,20 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
             headers={"content-disposition": f'attachment; filename="{paquet["nom"]}"'},
         )
 
+    @app.get("/v1/extension")
+    def version_extension(requete: Request):
+        """La version de l'extension que ce portail distribue, et où la télécharger.
+
+        Une extension installée depuis l'archive ne se met jamais à jour seule : c'est ici
+        qu'elle apprend qu'une version plus récente existe. La réponse ne dépend de rien
+        de ce que l'extension envoie, et rien n'en est conservé. Sans paquet publié, 404 :
+        l'extension n'annonce alors rien plutôt que de deviner."""
+        paquet = paquet_courant()
+        if paquet is None:
+            raise HTTPException(404, "Aucun paquet n'est publié sur ce portail.")
+        return {"version": paquet["version"],
+                "telechargement": f"{adresse_portail(requete)}/telecharger"}
+
     # ------------------------------------------------------- inscription
 
     @app.post("/v1/inscription")

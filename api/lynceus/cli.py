@@ -252,6 +252,7 @@ def calibrer(
         table.add_row(etiquette, attendu, obtenu, verdict)
         rapport.append({
             "cas": etiquette,
+            "id": _id_cas(entree, etiquette),
             "attendu": {k: v for k, v in entree.items()
                         if k.endswith(("_attendue", "_attendu", "_attendues", "_interdites", "_min", "_acceptables"))},
             "obtenu": {
@@ -263,6 +264,9 @@ def calibrer(
             },
             "ecarts_graves": ecarts_graves,
             "ecarts_mineurs": ecarts_mineurs,
+            # La carte entière, pour que « lynceus mesurer » puisse situer chaque extrait
+            # dans la page et le comparer aux annotations.
+            "carte": carte,
         })
 
     console.print(table)
@@ -283,6 +287,10 @@ def calibrer(
         console.print(f"[dim]Rapport détaillé écrit dans {json_sortie}[/dim]")
 
     if ecrire:
+        if fichier.name != "corpus.yaml":
+            console.print("[red]--ecrire refusé : seul corpus/corpus.yaml alimente le tableau "
+                          "publié. Le jeu d'évaluation se mesure avec « lynceus mesurer ».[/red]")
+            raise typer.Exit(2)
         if filtre:
             console.print("[red]--ecrire refusé avec --filtre : un tableau publié qui ne "
                           "porterait que sur une partie du corpus tromperait son lecteur.[/red]")
@@ -334,7 +342,7 @@ def _publier_la_passe(corpus: Path, entrees: list, resultats: list, conformes: i
     meta = httpx.get(f"{_api()}/v1/meta", timeout=30).json()
     cas = []
     for entree, resultat in zip(entrees, resultats):
-        identifiant = entree.get("fichier") or entree.get("capture") or entree.get("url") or resultat["etiquette"]
+        identifiant = _id_cas(entree, resultat["etiquette"])
         enregistrement = {
             "id": identifiant,
             "titre": entree.get("titre") or identifiant,
@@ -366,6 +374,8 @@ def _publier_la_passe(corpus: Path, entrees: list, resultats: list, conformes: i
         "modele": meta["modele"],
         "fournisseur": meta.get("fournisseur") or "",
         "temperature": meta.get("temperature", 0),
+        "raisonnement": meta.get("raisonnement") or "",
+        "hebergeurs": meta.get("hebergeurs") or [],
         "prompt_version": meta["prompt_version"],
         "corpus": calibration.empreinte(corpus),
         "conformes": conformes,
@@ -383,6 +393,14 @@ def _publier_la_passe(corpus: Path, entrees: list, resultats: list, conformes: i
         if calibration.remplacer_bloc(chemin, calibration.bloc(liste, langue)):
             console.print(f"[dim]Tableau réengendré dans {chemin}[/dim]")
     _restamper_traductions(corpus.parent)
+
+
+def _id_cas(entree: dict, repli: str = "") -> str:
+    """L'identifiant stable d'un cas : c'est lui que portent le journal, les rapports et les
+    annotations, et qui permet de les rapprocher.
+
+    Utilisée par lynx-corpus, qui construit le jeu silver : la renommer casse ce dépôt."""
+    return entree.get("fichier") or entree.get("capture") or entree.get("url") or repli
 
 
 def _rapports_publies(dossier: Path) -> list[tuple[Path, str]]:
@@ -453,7 +471,9 @@ def _lire_capture(entree: dict, racine: Path) -> str:
 
 
 def _corps_demande(entree: dict, racine: Path) -> dict | None:
-    """Construit le corps POST /v1/analyses depuis une entrée de corpus."""
+    """Construit le corps POST /v1/analyses depuis une entrée de corpus.
+
+    Utilisée par lynx-corpus, qui construit le jeu silver : la renommer casse ce dépôt."""
     if entree.get("capture"):
         return {
             "contenu_markdown": _lire_capture(entree, racine),
@@ -681,6 +701,10 @@ def capturer(
     titre: str = typer.Option(None, help="titre de la page"),
     vers: Path = typer.Option(Path("corpus/captures"), help="dossier des captures"),
     nom: str = typer.Option(None, help="nom du fichier de capture (déduit de l'URL sinon)"),
+    deja_vus: Path = typer.Option(
+        None, "--deja-vus", envvar="LYNCEUS_DEJA_VUS",
+        help="silver/deja-vus.txt de lynx-corpus : refuser une page déjà lue par le panel",
+    ),
 ):
     """Enregistre une capture de page réelle pour le corpus, et affiche l'entrée à ajouter.
 
@@ -694,6 +718,17 @@ def capturer(
     if len(contenu) < 200:
         console.print("[red]Contenu trop court[/red] (200 caractères minimum) pour une analyse fiable.")
         raise typer.Exit(2)
+
+    # Une page du jeu silver a été lue par des modèles, et un encodeur apprendra peut-être
+    # dessus : elle ne peut pas entrer dans le jeu de test (docs/ANNOTATION.md §4.3).
+    if deja_vus:
+        from . import mesure
+
+        motif = mesure.charger_deja_vus(deja_vus).motif(empreinte=hacher_contenu(contenu), url=url)
+        if motif:
+            console.print(f"[red]Page refusée : {motif}.[/red] Elle ne peut pas entrer dans le "
+                          "jeu de test, qui doit rester inconnu de tout modèle.")
+            raise typer.Exit(2)
 
     if not nom:
         morceaux = [m for m in url.split("/") if m and "." not in m[:4]]
@@ -1019,6 +1054,255 @@ def calibration_publiee(
         raise typer.Exit(1)
     console.print(f"[green]v{version} : {len(liste)} passe(s) enregistrée(s) ({passes_str}), "
                   f"tableau publié conforme au journal.[/green]")
+
+
+@app.command("annoter")
+def annoter(
+    cas: str = typer.Argument(help="identifiant du cas, tel que dans corpus.yaml (ex. specimens/06-fictif-complotisme.md)"),
+    annotateur: str = typer.Option(..., "--annotateur", help="pseudonyme de l'annotateur"),
+    corpus: Path = typer.Option(Path("corpus/corpus.yaml"), "--corpus", help="corpus de référence"),
+    arbitrage: bool = typer.Option(False, "--arbitrage", help="squelette d'arbitrage, qui tranche deux lectures"),
+    relecture: bool = typer.Option(False, "--relecture", help="squelette de relecture, par le même annotateur des semaines plus tard"),
+):
+    """Affiche le squelette d'annotation d'un cas, empreinte comprise.
+
+    Procédure complète dans docs/ANNOTATION.md. L'empreinte se calcule sur le texte réellement analysé, en-tête de spécimen retiré :
+    la calculer à la main donnerait presque toujours la mauvaise. Rediriger la sortie
+    vers corpus/annotations/<annotateur>/<nom>.yaml, puis remplir."""
+    import yaml
+
+    from . import mesure
+
+    entrees = []
+    for manifeste in dict.fromkeys([corpus, *(corpus.parent / nom for nom in MANIFESTES)]):
+        if manifeste.is_file():
+            entrees += yaml.safe_load(manifeste.read_text(encoding="utf-8")) or []
+    entree = next((e for e in entrees if isinstance(e, dict) and _id_cas(e) == cas), None)
+    if entree is None:
+        console.print(f"[red]Cas inconnu du corpus : {cas}[/red]")
+        raise typer.Exit(2)
+    try:
+        corps = _corps_demande(entree, corpus.parent)
+    except CaptureManquante as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(2)
+    if not corps or not corps.get("contenu_markdown"):
+        console.print("[red]Ce cas n'a pas de contenu local : il ne s'annote pas.[/red]")
+        raise typer.Exit(2)
+    squelette = {
+        "cas": cas,
+        "annotateur": annotateur,
+        **({"role": "arbitrage"} if arbitrage else {"role": "relecture"} if relecture else {}),
+        "guide": mesure.GUIDE_ANNOTATION,
+        "content_hash": hacher_contenu(corps["contenu_markdown"]),
+        "categorie": "",
+        "grade": [],
+        "intervalles": [{"extrait": "", "technique": ""}],
+        "notes": "",
+    }
+    if arbitrage:
+        typer.echo("# Arbitrer en lisant les deux lectures, jamais une carte d'analyse.")
+    elif relecture:
+        typer.echo("# Relire SANS rouvrir sa première lecture ni aucune carte d'analyse.")
+    else:
+        typer.echo("# Annoter AVANT de regarder la moindre carte, et sans lire l'autre annotateur.")
+    typer.echo(yaml.safe_dump(squelette, allow_unicode=True, sort_keys=False), nl=False)
+
+
+@app.command("mesurer")
+def mesurer(
+    corpus: Path = typer.Argument(Path("corpus/corpus.yaml"), help="corpus de référence"),
+    rapport: Path = typer.Option(
+        None, "--rapport",
+        help="rapport d'une passe (« lynceus calibrer --json ») à comparer aux annotations",
+    ),
+    version: str = typer.Option(
+        None, "--version",
+        help="version de prompt dont comparer les passes (par défaut, celle de la dernière passe)",
+    ),
+    json_sortie: Path = typer.Option(None, "--json", help="écrire les mesures en JSON"),
+    deja_vus: Path = typer.Option(
+        None, "--deja-vus", envvar="LYNCEUS_DEJA_VUS",
+        help="silver/deja-vus.txt de lynx-corpus : vérifier qu'aucune page du jeu de test n'y figure",
+    ),
+):
+    """Mesure une chaîne d'analyse au-delà du conforme ou non conforme.
+
+    Trois mesures, sans relancer d'analyse (docs/ARCHITECTURE-CIBLE.md §8) :
+
+    - l'écart entre deux passes de la même chaîne, tiré du journal des passes ;
+    - l'accord entre annotateurs, sur les pages lues par au moins deux d'entre eux ;
+    - avec --rapport, la chaîne contre les annotations : catégorie, grade, techniques,
+      intervalles avec recouvrement partiel, et part d'extraits retrouvés dans la page.
+    """
+    import yaml
+
+    from . import calibration, mesure
+    from .moteur import prompt as moteur_prompt
+
+    racine = corpus.parent
+    resultats: dict = {}
+    # Les annotations se partagent entre le corpus de calibration et le jeu d'évaluation :
+    # un cas se cherche donc dans tous les manifestes du dossier, pas seulement celui-ci.
+    entrees = []
+    for manifeste in dict.fromkeys([corpus, *(racine / nom for nom in MANIFESTES)]):
+        if manifeste.is_file():
+            entrees += yaml.safe_load(manifeste.read_text(encoding="utf-8")) or []
+
+    # 1. L'écart entre passes. Le journal suffit : c'est une mesure déjà payée.
+    journal = racine / "passes.jsonl"
+    toutes = calibration.passes(journal)
+    version = version or (toutes[-1]["prompt_version"] if toutes else "")
+    liste = calibration.passes_courantes(journal, version, calibration.empreinte(corpus)) if version else []
+    ecart = mesure.ecart_entre_passes(liste)
+    resultats["ecart_entre_passes"] = {"prompt_version": version, **ecart}
+
+    table = Table(title=f"Écart entre passes, prompt v{version or '?'}", show_header=True,
+                  header_style="bold")
+    table.add_column("Mesure")
+    table.add_column("Valeur", justify="right")
+    table.add_row("Passes comparées", str(ecart["passes"]))
+    table.add_row("Comparaisons (cas × paires de passes)", str(ecart["comparaisons"]))
+    table.add_row("Même catégorie", _pourcent(ecart["meme_categorie"]))
+    table.add_row("Même grade", _pourcent(ecart["meme_grade"]))
+    table.add_row("Techniques en commun (Jaccard)", _decimal(ecart["techniques_jaccard"]))
+    table.add_row("Écart de score moyen", _decimal(ecart["ecart_score_moyen"]))
+    table.add_row("Écart de score maximal", _decimal(ecart["ecart_score_max"]))
+    console.print(table)
+    if ecart["passes"] < 2:
+        console.print("[yellow]Moins de deux passes sur cette version : pas d'écart à mesurer.[/yellow]")
+    elif ecart["cas_instables"]:
+        console.print(f"[dim]Cas qui changent d'une passe à l'autre : "
+                      f"{', '.join(ecart['cas_instables'])}[/dim]")
+
+    # 2. Les annotations, contrôlées une à une contre la page qu'elles décrivent.
+    taxonomie = set(moteur_prompt.charger_taxonomie())
+    categories = set(moteur_prompt.charger_schema_carte()["properties"]["categorie"]["enum"])
+    par_id = {_id_cas(e): e for e in entrees if isinstance(e, dict)}
+    pages: dict[str, dict] = {}
+    invalides = []
+    for annotation in mesure.charger_annotations(*(racine / d for d in mesure.DOSSIERS_ANNOTATIONS)):
+        entree = par_id.get(annotation.get("cas"))
+        if entree is None:
+            invalides.append(f"{annotation['_fichier']} : cas inconnu du corpus `{annotation.get('cas')}`")
+            continue
+        try:
+            corps = _corps_demande(entree, racine)
+        except CaptureManquante as exc:
+            console.print(f"[dim]Annotation ignorée faute de capture : {exc}[/dim]")
+            continue
+        if not corps or not corps.get("contenu_markdown"):
+            invalides.append(f"{annotation['_fichier']} : le cas n'a pas de contenu local à annoter")
+            continue
+        reference = mesure.texte_de_reference(corps["contenu_markdown"])
+        try:
+            intervalles = mesure.verifier_annotation(annotation, reference, taxonomie, categories)
+        except mesure.AnnotationInvalide as exc:
+            invalides.append(str(exc))
+            continue
+        page = pages.setdefault(annotation["cas"], {"cas": annotation["cas"], "reference": reference,
+                                                     "annotations": []})
+        page["annotations"].append({**annotation, "intervalles": intervalles})
+
+    # Aucune page du jeu de test ne doit avoir été lue par le panel du jeu silver. La
+    # capture le refuse déjà ; ce contrôle rattrape une page entrée avant que la liste
+    # ne la contienne, ou capturée sans elle.
+    contaminees = []
+    if deja_vus:
+        vus = mesure.charger_deja_vus(deja_vus)
+        manifeste = racine / "evaluation.yaml"
+        for entree in (yaml.safe_load(manifeste.read_text(encoding="utf-8")) or []) if manifeste.is_file() else []:
+            motif = vus.motif(empreinte=entree.get("content_hash"), url=entree.get("url"))
+            if motif:
+                contaminees.append(f"{_id_cas(entree)} : {motif}")
+        resultats["pages_vues_par_le_panel"] = contaminees
+        for message in contaminees:
+            console.print(f"[red]Jeu de test contaminé, {message}. Retirer la page du jeu de test.[/red]")
+        if not contaminees:
+            console.print(f"[dim]Aucune page du jeu de test parmi les {len(vus.empreintes)} "
+                          "pages du jeu silver.[/dim]")
+
+    annotateurs = sorted({a["annotateur"] for p in pages.values() for a in mesure.lectures(p["annotations"])})
+    console.print(f"\n[bold]{sum(len(p['annotations']) for p in pages.values())} annotation(s)[/bold] "
+                  f"sur {len(pages)} page(s), par {len(annotateurs)} annotateur(s).")
+    for message in invalides:
+        console.print(f"[red]{message}[/red]")
+
+    doubles = [p for p in pages.values() if len(mesure.lectures(p["annotations"])) >= 2]
+    uniques = len(pages) - len(doubles)
+    resultats["pages_a_lecture_unique"] = uniques
+    if uniques:
+        console.print(f"[dim]{uniques} page(s) n'ont encore qu'une lecture : elles se mesurent, "
+                      "mais leur référence n'a été vérifiée par personne d'autre.[/dim]")
+    relues = [p for p in pages.values() if any(a.get("role") == "relecture" for a in p["annotations"])]
+    if relues:
+        intra = mesure.accord_intra(relues)
+        resultats["accord_intra"] = intra
+        console.print(
+            f"Constance d'un annotateur avec lui-même sur {intra['paires']} relecture(s) : "
+            f"catégorie {_pourcent(intra['categorie_accord'])}, "
+            f"techniques F1 {_decimal(intra['techniques_f1'])}, "
+            f"intervalles F1 {_decimal(intra['intervalles_f1'])}.")
+    restantes = mesure.a_arbitrer(doubles)
+    resultats["a_arbitrer"] = restantes
+    if restantes:
+        console.print(f"[yellow]{len(restantes)} page(s) à arbitrer, les deux lectures divergent :[/yellow] "
+                      + ", ".join(restantes))
+    if doubles:
+        accord = mesure.accord_annotateurs(doubles)
+        resultats["accord_annotateurs"] = accord
+        console.print(
+            f"Accord entre annotateurs sur {accord['paires']} paire(s) : catégorie "
+            f"{_pourcent(accord['categorie_accord'])} (kappa {_decimal(accord['categorie_kappa'])}), "
+            f"techniques F1 {_decimal(accord['techniques_f1'])}, "
+            f"intervalles F1 {_decimal(accord['intervalles_f1'])}.")
+
+    # 3. La chaîne contre les annotations.
+    if rapport:
+        cartes = {r["id"]: r["carte"] for r in json.loads(rapport.read_text(encoding="utf-8"))
+                  if r.get("id") and r.get("carte")}
+        if not cartes:
+            console.print("[red]Ce rapport ne porte pas de cartes. Le produire avec une version "
+                          "récente de « lynceus calibrer --json ».[/red]")
+            raise typer.Exit(2)
+        mesurables = [{**page, "carte": cartes[cas]} for cas, page in pages.items() if cas in cartes]
+        chaine = mesure.mesurer_contre_annotations(mesurables)
+        resultats["contre_annotations"] = chaine
+        table = Table(title=f"Chaîne contre annotations, {chaine['pages']} page(s)",
+                      show_header=True, header_style="bold")
+        for colonne in ("Mesure", "Précision", "Rappel", "F1 ou taux"):
+            table.add_column(colonne, justify="right")
+        table.add_row("Catégorie", "", "", _pourcent(chaine["categorie"]))
+        table.add_row("Grade dans la fourchette", "", "", _pourcent(chaine["grade_dans_la_fourchette"]))
+        table.add_row("Grade à un cran près", "", "", _pourcent(chaine["grade_a_un_cran"]))
+        for nom, cle in (("Techniques (page)", "techniques"), ("Intervalles", "intervalles")):
+            c = chaine[cle]
+            table.add_row(nom, _decimal(c["precision"]), _decimal(c["rappel"]), _decimal(c["f1"]))
+        table.add_row("Extraits retrouvés dans la page", "", "", _pourcent(chaine["extraits_verbatim"]))
+        console.print(table)
+
+    if json_sortie:
+        json_sortie.write_text(json.dumps(resultats, ensure_ascii=False, indent=2), encoding="utf-8")
+        console.print(f"[dim]Mesures écrites dans {json_sortie}[/dim]")
+    if invalides or contaminees:
+        raise typer.Exit(1)
+
+
+#: Les manifestes d'un dossier de corpus. `corpus.yaml` porte les cas de calibration, avec
+#: leurs attentes ; `evaluation.yaml` les pages du jeu annoté, sans attente puisque
+#: l'annotation en tient lieu. Le second est bien plus gros, et n'a pas sa place dans une
+#: passe de calibration, qui coûte une analyse par cas.
+MANIFESTES = ("corpus.yaml", "evaluation.yaml")
+
+
+def _pourcent(valeur: float | None) -> str:
+    return "—" if valeur is None else f"{valeur * 100:.0f} %"
+
+
+def _decimal(valeur) -> str:
+    if valeur is None:
+        return "—"
+    return f"{valeur:.2f}" if isinstance(valeur, float) else str(valeur)
 
 
 @app.command("env")

@@ -1,6 +1,6 @@
 # Déployer une instance Lynceus
 
-<!-- traduit-de: api/DEPLOIEMENT.md sha256:0879584035fb766c -->
+<!-- traduit-de: api/DEPLOIEMENT.md sha256:b17c3d2303403f42 -->
 
 [English](DEPLOIEMENT.md) · **Français**
 
@@ -91,6 +91,8 @@ y est imbriquée, l'effet est le même.
 | `LYNCEUS_ENTETE_IP_REELLE` | `LYNCEUS_REAL_IP_HEADER` |
 | `LYNCEUS_LLM_FOURNISSEUR` | `LYNCEUS_LLM_PROVIDER` |
 | `LYNCEUS_LLM_RAISONNEMENT` | `LYNCEUS_LLM_REASONING` |
+| `LYNCEUS_LLM_HEBERGEURS` | `LYNCEUS_LLM_PROVIDERS` |
+| `LYNCEUS_LLM_HEBERGEURS_REPLI` | `LYNCEUS_LLM_PROVIDERS_FALLBACK` |
 | `LYNCEUS_PORTAIL_ADRESSE` | `LYNCEUS_PORTAL_ADDRESS` |
 | `LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR` | `LYNCEUS_PORTAL_KEYS_PER_IP_DAY` |
 | `LYNCEUS_PORTAIL_CLE_PRIVEE` | `LYNCEUS_PORTAL_PRIVATE_KEY` |
@@ -398,7 +400,7 @@ Trois conteneurs, trois cycles de vie indépendants. Mettre l'un à jour n'inter
 
 Le site et l'API partagent la même image mais pas le même conteneur : redéployer le portail laisse l'API analyser sans s'en apercevoir, et inversement. Pendant un redémarrage de l'instance, le portail continue de servir ses pages et signale simplement l'annuaire comme injoignable.
 
-> **Une extension installée ne se met pas à jour toute seule.** Chargée en mode développeur, elle reste à sa version tant que la personne ne la recharge pas. Publier un nouveau zip met la nouvelle version à disposition, cela ne l'installe chez personne.
+> **Une extension installée ne se met pas à jour toute seule.** Chargée en mode développeur, elle reste à sa version tant que la personne ne la recharge pas. Publier un nouveau zip met la nouvelle version à disposition, cela ne l'installe chez personne. Depuis la version 0.11.5, l'extension le dit au moins : elle demande à son portail (`GET /v1/extension`) quelle version il distribue, et son panneau affiche un avis discret, avec le lien de téléchargement, quand cette version est plus récente que la sienne.
 
 ### Ce que l'inscription délivre, et ce qu'elle ne retient pas
 

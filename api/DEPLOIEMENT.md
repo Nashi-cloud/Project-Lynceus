@@ -89,6 +89,8 @@ there is nested, and the effect is the same.
 | `LYNCEUS_ENTETE_IP_REELLE` | `LYNCEUS_REAL_IP_HEADER` |
 | `LYNCEUS_LLM_FOURNISSEUR` | `LYNCEUS_LLM_PROVIDER` |
 | `LYNCEUS_LLM_RAISONNEMENT` | `LYNCEUS_LLM_REASONING` |
+| `LYNCEUS_LLM_HEBERGEURS` | `LYNCEUS_LLM_PROVIDERS` |
+| `LYNCEUS_LLM_HEBERGEURS_REPLI` | `LYNCEUS_LLM_PROVIDERS_FALLBACK` |
 | `LYNCEUS_PORTAIL_ADRESSE` | `LYNCEUS_PORTAL_ADDRESS` |
 | `LYNCEUS_PORTAIL_CLES_PAR_IP_JOUR` | `LYNCEUS_PORTAL_KEYS_PER_IP_DAY` |
 | `LYNCEUS_PORTAIL_CLE_PRIVEE` | `LYNCEUS_PORTAL_PRIVATE_KEY` |
@@ -395,7 +397,7 @@ Three containers, three independent life cycles. Updating one does not interrupt
 
 The site and the API share the same image but not the same container: redeploying the portal leaves the API analysing without noticing, and the other way round. While the instance restarts, the portal keeps serving its pages and simply reports the directory as unreachable.
 
-> **An installed extension does not update itself.** Loaded in developer mode, it stays at its version until the person reloads it. Publishing a new zip makes the new version available; it installs it on nobody.
+> **An installed extension does not update itself.** Loaded in developer mode, it stays at its version until the person reloads it. Publishing a new zip makes the new version available; it installs it on nobody. From version 0.11.5 on, the extension at least says so: it asks its portal (`GET /v1/extension`) which version it distributes, and its panel shows a discreet notice with the download link when that version is newer than its own.
 
 ### What sign-up issues, and what it does not keep
 
