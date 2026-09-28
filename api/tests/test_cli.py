@@ -496,7 +496,7 @@ def test_env_interactif_reporte_les_reponses():
 
     assert variables["LYNCEUS_IMAGE"] == "registre.test/lynceus-api:latest"
     assert variables["LYNCEUS_LLM_API_KEY"] == "sk-fournisseur"
-    assert variables["LYNCEUS_LLM_MODEL"] == "z-ai/glm-5.2"  # défaut accepté
+    assert variables["LYNCEUS_LLM_MODEL"] == "z-ai/glm-5.3"  # défaut accepté
     assert variables["LYNCEUS_LLM_BASE_URL"] == "https://openrouter.ai/api/v1"  # défaut accepté
     assert variables["LYNCEUS_LLM_FOURNISSEUR"] == "Fournisseur de recette"
     assert variables["LYNCEUS_PORTAIL_INSTANCE"] == "https://api.test"
@@ -678,14 +678,24 @@ def test_le_filtre_cherche_aussi_dans_le_chemin(corpus, monkeypatch):
     assert "0/0 conformes" in runner.invoke(app, ["calibrer", str(corpus), "--filtre", "absent"]).stdout
 
 
-def test_env_expose_les_reglages_de_facture_sans_les_choisir():
-    """Un réglage qu'on ne voit pas dans son .env n'existe pas pour l'exploitant.
-
-    Ils sortent vides : ils changent ce que l'instance demande au fournisseur, et un
-    défaut posé par le générateur serait un choix fait à la place de celui qui paie."""
+def test_env_propose_le_reglage_calibre_avec_le_modele_calibre():
+    """Le modèle par défaut ne vaut les résultats publiés qu'avec les réglages de sa
+    calibration : les omettre donnerait une instance qui ne tient pas ce qui est affiché."""
     for cible in ("production", "recette"):
         sortie = runner.invoke(app, ["env", cible]).stdout
         variables = _variables(sortie)
-        assert variables["LYNCEUS_LLM_RAISONNEMENT"] == ""
-        assert variables["LYNCEUS_LLM_CACHE_PROMPT"] == ""
+        assert variables["LYNCEUS_LLM_MODEL"] == "z-ai/glm-5.3"
+        assert variables["LYNCEUS_LLM_RAISONNEMENT"] == "low"
+        assert variables["LYNCEUS_LLM_HEBERGEURS"] == "mistral"
+        assert variables["LYNCEUS_LLM_CACHE_PROMPT"] == "true"
         assert "low / medium / high" in sortie, "le mode d'emploi accompagne le réglage"
+
+
+def test_env_ne_choisit_rien_pour_un_autre_modele():
+    """Pour un modèle non calibré, un défaut posé par le générateur serait un choix fait
+    à la place de celui qui paie : les réglages sortent vides, mais visibles."""
+    reponses = REPONSES_PRODUCTION.replace("\n\nFournisseur de recette", "\nautre/modele\nFournisseur de recette", 1)
+    variables = _variables(runner.invoke(app, ["env", "production", "--questions"], input=reponses).stdout)
+    assert variables["LYNCEUS_LLM_MODEL"] == "autre/modele"
+    for nom in ("LYNCEUS_LLM_RAISONNEMENT", "LYNCEUS_LLM_HEBERGEURS", "LYNCEUS_LLM_CACHE_PROMPT"):
+        assert variables[nom] == "", nom

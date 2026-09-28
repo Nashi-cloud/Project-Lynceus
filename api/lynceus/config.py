@@ -75,7 +75,8 @@ class Parametres(ReglagesTolerants):
     # cher des hébergeurs de GLM-5.3 coûtait 0,06 de F1 sur les techniques.
     #
     # Vide = le routeur choisit. Sinon des identifiants séparés par des virgules, ceux du
-    # routeur (« z-ai », « deepinfra »…). Un endpoint qui n'est pas un routeur ne reçoit rien.
+    # routeur (« mistral », « deepinfra »…). Z.AI, hébergeur officiel de GLM, filtre certains
+    # contenus. Un endpoint qui n'est pas un routeur ne reçoit rien.
     llm_hebergeurs: str = deux_noms("LYNCEUS_LLM_HEBERGEURS", "LYNCEUS_LLM_PROVIDERS", "")
     # Si les hébergeurs listés sont indisponibles, laisser le routeur en prendre un autre.
     # Vrai par défaut : une analyse servie ailleurs vaut mieux qu'une erreur. Faux pour une

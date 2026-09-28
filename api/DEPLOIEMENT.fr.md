@@ -1,6 +1,6 @@
 # Déployer une instance Lynceus
 
-<!-- traduit-de: api/DEPLOIEMENT.md sha256:b17c3d2303403f42 -->
+<!-- traduit-de: api/DEPLOIEMENT.md sha256:0305cc3954fe49c3 -->
 
 [English](DEPLOIEMENT.md) · **Français**
 
@@ -572,3 +572,5 @@ docker exec lynceus-db psql -U lynceus -c \
 ```
 
 Multipliez par le tarif de votre modèle. Rappel utile : **une page n'est analysée qu'une fois** pour tous les utilisateurs, donc le coût décroît naturellement à mesure que l'annuaire se remplit.
+
+Pour un ordre de grandeur, mesuré le 2026-09-28 : avec le réglage calibré (GLM-5.3, raisonnement `low`, hébergeur Mistral, cache activé), une analyse coûte environ **0,4 centime** une fois le prompt système dans le cache de l'hébergeur, et environ 1 centime sans. Laissé aux défauts du fournisseur, le raisonnement seul la portait de 0,9 à 2,2 centimes. Le détail est dans [corpus/RESULTATS.md](../corpus/RESULTATS.md).
