@@ -1,6 +1,6 @@
 # Technical architecture
 
-<!-- traduit-de: docs/ARCHITECTURE.md sha256:6b227ee8957e6356 -->
+<!-- traduit-de: docs/ARCHITECTURE.md sha256:254b08ba5a618b65 -->
 
 > Translation for information. The French version, `docs/ARCHITECTURE.md`, is the one the project follows: should the two ever diverge, it is the one that counts.
 
@@ -146,7 +146,7 @@ Step 5 includes the **anti-hallucination check on quoted passages**: every `extr
 | `LYNCEUS_LLM_TEMPERATURE` | `0` | Zero by default: the grade has to be reproducible. Measured, see [corpus/RESULTATS.md](../../corpus/en/RESULTATS.md) |
 | `LYNCEUS_LLM_CACHE_PROMPT` | `false` | Marks the system prompt as reusable. Pointless with a provider that caches on its own, needed with those requiring an explicit breakpoint |
 | `LYNCEUS_LLM_RAISONNEMENT` | *(provider default)* | `off`, `low`, `medium`, `high`. Reasoning is billed as output and then discarded: it is the biggest cost item |
-| `LYNCEUS_LLM_HEBERGEURS` | *(the router chooses)* | Hosts imposed behind a router such as OpenRouter, in order (`z-ai`, `deepinfra`…). The same model is served there at very different prices and precisions, and the rating changes with the host |
+| `LYNCEUS_LLM_HEBERGEURS` | *(the router chooses)* | Hosts imposed behind a router such as OpenRouter, in order (`mistral`, `deepinfra`…). Z.AI, GLM's official host, filters some content: avoid it. The same model is served there at very different prices and precisions, and the rating changes with the host |
 | `LYNCEUS_LLM_HEBERGEURS_REPLI` | `true` | If the listed hosts are unavailable, the router may pick another. `false` for a calibration run, which must measure the announced host |
 | `LYNCEUS_CONTENU_MAX_CARS` | `60000` | Size guardrail (roughly tokens × 4) |
 | `LYNCEUS_RATE_LIMIT` | `10/minute` | Per IP, on `/v1/analyses` |

@@ -627,6 +627,9 @@ async def _meta_instance(client: httpx.AsyncClient, instance: str) -> dict | Non
         # traitée comme envoyant le texte au dehors. Promettre l'inverse à tort ferait
         # de la page de confidentialité un mensonge.
         "distant": donnees.get("fournisseur_distant", True),
+        # Derrière un routeur, le texte va aussi chez l'hébergeur qui exécute le modèle.
+        # Le taire serait nommer l'intermédiaire et cacher le destinataire.
+        "hebergeurs": [h for h in donnees.get("hebergeurs") or [] if isinstance(h, str)],
         "contenu_max_cars": donnees.get("limites", {}).get("contenu_max_cars"),
     }
 
