@@ -354,6 +354,17 @@ def test_la_confidentialite_nomme_le_fournisseur_annonce_par_l_instance(portail,
     assert "transmis à un fournisseur de modèle de langage tiers" in html
 
 
+def test_la_confidentialite_nomme_aussi_l_hebergeur_derriere_le_routeur(portail, tmp_path):
+    """Derrière OpenRouter, le texte va aussi chez l'hébergeur qui exécute le modèle.
+    Nommer l'intermédiaire en taisant le destinataire serait une omission trompeuse."""
+    client, _ = portail
+    api = creer_application(parametres_test(tmp_path, llm_hebergeurs="mistral"))
+    brancher_sur(client, api)
+    html = client.get("/confidentialite").text
+    assert "confie l'exécution du modèle à mistral" in html
+    assert "peut lui-même confier l'exécution du modèle à un autre" not in html
+
+
 def test_un_modele_auto_heberge_ne_fait_plus_de_promesse_de_transfert(portail, tmp_path):
     """Chez un auto-hébergeur, le texte ne sort pas : annoncer un transfert vers un tiers
     serait faux, et l'inverse de ce que le projet dit de l'auto-hébergement."""
@@ -732,6 +743,26 @@ def test_le_telechargement_sert_l_archive(tmp_path):
     assert reponse.status_code == 200
     assert reponse.headers["content-type"] == "application/zip"
     assert 'filename="lynceus-extension-v1.2.3.zip"' in reponse.headers["content-disposition"]
+
+
+def test_le_portail_annonce_la_version_qu_il_distribue(tmp_path):
+    """Une extension installée depuis l'archive ne se met pas à jour seule : elle apprend
+    ici qu'une version plus récente existe, et où la prendre."""
+    _archive(tmp_path / "lynceus-extension-v1.2.3.zip")
+    _archive(tmp_path / "lynceus-extension-v1.10.0.zip")
+    p = parametres_portail_test(paquets=str(tmp_path), adresse="https://portail.test/")
+    with TestClient(creer_portail(p)) as client:
+        reponse = client.get("/v1/extension", headers={"origin": "chrome-extension://abc"})
+    assert reponse.status_code == 200
+    assert reponse.json() == {"version": "1.10.0",
+                              "telechargement": "https://portail.test/telecharger"}
+    # L'extension l'appelle depuis chrome-extension://<id> : sans CORS, rien ne passerait.
+    assert reponse.headers["access-control-allow-origin"] in ("*", "chrome-extension://abc")
+
+
+def test_sans_paquet_le_portail_n_annonce_aucune_version(portail):
+    client, _ = portail
+    assert client.get("/v1/extension").status_code == 404
 
 
 # ------------------------------------------------------- mise en page

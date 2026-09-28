@@ -423,6 +423,20 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
             headers={"content-disposition": f'attachment; filename="{paquet["nom"]}"'},
         )
 
+    @app.get("/v1/extension")
+    def version_extension(requete: Request):
+        """La version de l'extension que ce portail distribue, et où la télécharger.
+
+        Une extension installée depuis l'archive ne se met jamais à jour seule : c'est ici
+        qu'elle apprend qu'une version plus récente existe. La réponse ne dépend de rien
+        de ce que l'extension envoie, et rien n'en est conservé. Sans paquet publié, 404 :
+        l'extension n'annonce alors rien plutôt que de deviner."""
+        paquet = paquet_courant()
+        if paquet is None:
+            raise HTTPException(404, "Aucun paquet n'est publié sur ce portail.")
+        return {"version": paquet["version"],
+                "telechargement": f"{adresse_portail(requete)}/telecharger"}
+
     # ------------------------------------------------------- inscription
 
     @app.post("/v1/inscription")
@@ -613,6 +627,9 @@ async def _meta_instance(client: httpx.AsyncClient, instance: str) -> dict | Non
         # traitée comme envoyant le texte au dehors. Promettre l'inverse à tort ferait
         # de la page de confidentialité un mensonge.
         "distant": donnees.get("fournisseur_distant", True),
+        # Derrière un routeur, le texte va aussi chez l'hébergeur qui exécute le modèle.
+        # Le taire serait nommer l'intermédiaire et cacher le destinataire.
+        "hebergeurs": [h for h in donnees.get("hebergeurs") or [] if isinstance(h, str)],
         "contenu_max_cars": donnees.get("limites", {}).get("contenu_max_cars"),
     }
 

@@ -270,3 +270,26 @@ def test_le_tableau_ne_melange_pas_deux_modeles(tmp_path):
     courantes = calibration.passes_courantes(journal, "0.1.2")
     assert [p["modele"] for p in courantes] == ["nouveau/modele"] * 2
     assert "ancien/modele" not in calibration.bloc(courantes)
+
+
+def test_le_tableau_ne_melange_pas_deux_reglages_du_meme_modele(tmp_path):
+    """Le même modèle, raisonnant peu ou servi par un autre hébergeur, ne rend pas les
+    mêmes notes. Une passe sans ces champs est antérieure à leur existence : elle avait
+    tout laissé au fournisseur."""
+    journal = tmp_path / "passes.jsonl"
+    calibration.enregistrer(journal, passe())
+    calibration.enregistrer(journal, passe(raisonnement="low", hebergeurs=["z-ai"]))
+    calibration.enregistrer(journal, passe(raisonnement="low", hebergeurs=["z-ai"], date="2026-08-28"))
+
+    courantes = calibration.passes_courantes(journal, "0.1.2")
+    assert len(courantes) == 2
+    entete = calibration.bloc(courantes).splitlines()[2]
+    assert "raisonnement **low**" in entete and "hébergeur **z-ai**" in entete
+    assert "reasoning **low**" in calibration.bloc(courantes, "en")
+
+
+def test_une_passe_sans_reglage_n_en_affiche_aucun(tmp_path):
+    journal = tmp_path / "passes.jsonl"
+    calibration.enregistrer(journal, passe())
+    entete = calibration.bloc(calibration.passes_courantes(journal, "0.1.2")).splitlines()[2]
+    assert "raisonnement" not in entete and "hébergeur" not in entete
