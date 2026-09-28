@@ -1,36 +1,62 @@
 # Calibration results
 
-<!-- traduit-de: corpus/RESULTATS.md sha256:018bf738efa4866b -->
+<!-- traduit-de: corpus/RESULTATS.md sha256:34fe64c03626fdc5 -->
 
 > Translation for information. The French version, `corpus/RESULTATS.md`, is the record of reference: should the two ever diverge, it is the one that counts.
 
 <!-- calibration:début (engendré par « lynceus calibrer --ecrire », ne pas modifier à la main) -->
 
-Latest run: **2026-09-25** · model `z-ai/glm-5.2` (through openrouter.ai) · prompt **v0.1.8** · temperature **0**
+Latest run: **2026-09-28** · model `z-ai/glm-5.3` (through openrouter.ai) · prompt **v0.1.8** · temperature **0** · reasoning **low** · host **mistral**
 
-**3 runs** recorded on this prompt version: **12/15, 11/15, 13/15** conforming. A single run would say nothing solid, since the model does not return the same analysis of the same text twice.
+**3 runs** recorded on this prompt version: **13/15, 13/15, 12/15** conforming. A single run would say nothing solid, since the model does not return the same analysis of the same text twice.
 
 | Case | Category | Grade | Score | Discrepancies |
 |---|---|---|---|---|
-| The council votes unanimously against unanimity | satire | A | 84 to 92 | — |
-| Why I think our town has it wrong about paid parking | opinion | A | 81 to 86 | — |
-| The forgotten root the laboratories would rather you did not know about | publicite_sponsorise | E | 4 to 12 | — |
-| The Vieille-Écluse bridge closed for works from 3 to 28 March | information | B A A | 78 to 80 | — |
-| Advent meditation: waiting as a path | contenu_confessionnel | A | 85 to 92 | — |
-| The November power cut: three awkward questions | theorie_du_complot | E | 7 to 14 | technique missing: `hyper_intentionnalisme` (1 of 3 runs) |
-| What They Won't Tell You About the New Water Treatment Plant | theorie_du_complot | E | 12 to 14 | analysis written in fr instead of en (2 of 3 runs) |
-| Five evening habits for better sleep | publicite_sponsorise | C | 55 to 64 | — |
-| Water fluoridation: the debate is still open | opinion / information | D D C | 42 to 50 | — |
-| Why the sky is blue, and why that explanation is incomplete | analyse_expertise | A B B | 70 to 80 | — |
-| What three years of medical wandering taught me | temoignage | A | 82 to 84 | grade A outside the expected range B, C, D ; technique missing: `preuve_anecdotique` |
-| Confirmation bias — Wikipedia | information / analyse_expertise | A | 88 to 90 | — |
-| SOTT Earth Changes Summary - June 2026 | opinion / pseudo_science | D | 39 to 42 | category `opinion` instead of theorie_du_complot, pseudo_science (2 of 3 runs) ; technique missing: `verite_cachee` (2 of 3 runs) |
-| Atelier du Guidon, bicycle repairs | autre | A | 90 to 94 | — |
-| La Gazette de Saint-Aubin, the homepage | autre | A B B | 76 to 84 | — |
+| The council votes unanimously against unanimity | satire | A | 90 | — |
+| Why I think our town has it wrong about paid parking | opinion | A | 86 to 89 | — |
+| The forgotten root the laboratories would rather you did not know about | publicite_sponsorise | E | 14 to 16 | technique missing: `solution_miracle` (1 of 3 runs) |
+| The Vieille-Écluse bridge closed for works from 3 to 28 March | information | A | 80 to 82 | — |
+| Advent meditation: waiting as a path | contenu_confessionnel | A | 89 | — |
+| The November power cut: three awkward questions | theorie_du_complot | E | 10 to 11 | — |
+| What They Won't Tell You About the New Water Treatment Plant | theorie_du_complot | E | 19 to 20 | — |
+| Five evening habits for better sleep | publicite_sponsorise | C | 56 to 58 | — |
+| Water fluoridation: the debate is still open | information | C | 60 to 64 | — |
+| Why the sky is blue, and why that explanation is incomplete | analyse_expertise | A B B | 74 to 80 | — |
+| What three years of medical wandering taught me | temoignage | A | 82 to 86 | grade A outside the expected range B, C, D ; technique missing: `preuve_anecdotique` |
+| Confirmation bias — Wikipedia | analyse_expertise | A | 89 | — |
+| SOTT Earth Changes Summary - June 2026 | pseudo_science / opinion | D | 34 to 40 | technique missing: `verite_cachee` ; category `opinion` instead of theorie_du_complot, pseudo_science (1 of 3 runs) |
+| Atelier du Guidon, bicycle repairs | publicite_sponsorise | A | 92 | — |
+| La Gazette de Saint-Aubin, the homepage | autre | A | 80 to 84 | — |
 
 <!-- calibration:fin -->
 
 ## How to read it
+
+### GLM-5.3 with “low” reasoning, served by Mistral (2026-09-28)
+
+Same prompt v0.1.8, same fifteen cases, another model and another setting: GLM-5.3 instead of GLM-5.2, reasoning set to “low” instead of the provider default, and a host imposed without fallback, instead of whichever one the router picks for each call. The table above covers these three runs; those of GLM-5.2, described below, remain in the journal.
+
+**Conformity does not move**, 13/15, 13/15, 12/15 against 12/15, 11/15, 13/15: at this corpus size, the difference cannot be read. The English page is answered in English in all three runs.
+
+**Stability, on the other hand, clearly improves.** Measured between runs with `lynceus mesurer`, over 45 comparisons:
+
+| Between two runs | GLM-5.2, defaults | GLM-5.3 “low”, Mistral |
+|---|---|---|
+| Same category | 87 % | 96 % |
+| Same grade | 82 % | 96 % |
+| Techniques in common (Jaccard) | 0.87 | 0.92 |
+| Mean score difference | 3.8 points | 1.6 points |
+| Largest score difference | 10 points | 6 points |
+
+“Low” reasoning probably accounts for much of it: a model that thinks little drifts little. So does the imposed host, since the router used to serve the same model in fp8 or fp4 depending on the call.
+
+**The cost drops by about 70 %.** The three runs cost $0.18, or 0.4 cent per analysis, the system prompt being read back from the host's cache. Measured on three specimens with the previous settings, analyses cost 0.9 to 2.2 cents.
+
+**Why Mistral.** The model's official host, Z.AI, was tried first: it refuses the SOTT capture and returns an empty answer, reason “sensitive”, in all six runs where it received it. A host that filters content does not suit a tool that must be able to analyse all of it. Nine other hosts analysed the same page. Mistral was chosen because it is a European company, with no data retention on this endpoint. This does not remove the transfer that [docs/ETHIQUE.md](../../docs/ETHIQUE.md) requires us to name: the text still goes through OpenRouter, based in the United States, before reaching Mistral. Only a direct call to a European host would remove it. Its base price is among the highest, but its cache makes it among the cheapest in use.
+
+**What remains.** The personal account still misses `preuve_anecdotique` and comes out at A, as under GLM-5.2. The SOTT summary misses `verite_cachee` in all three runs, and comes out once as `opinion`. The pseudo-medical sentinel detects the conflict of interest in all three runs, but misses `solution_miracle` once.
+
+### Prompt v0.1.8 under GLM-5.2
 
 Three independent runs on fresh analyses, on the **fifteen cases** of the previous version, expectations unchanged.
 
@@ -125,6 +151,7 @@ The lines predating the journal were noted by hand, before `lynceus calibrer --e
 
 | Date | Prompt | Temperature | Result |
 |---|---|---|---|
+| 2026-09-28 | v0.1.8 | 0 | 13/15, 13/15, 12/15; GLM-5.3 “low” served by Mistral, much more stable between runs, 70 % cheaper |
 | 2026-09-25 | v0.1.8 | 0 | 12/15, 11/15, 13/15; sponsored advice detected in all three runs, English page rendered twice in French |
 | 2026-09-05 | v0.1.7 | 0 | 10/15, 13/15, 13/15; encyclopaedia expectation corrected, the SOTT summary flips to `opinion` in all three runs |
 | 2026-09-05 | v0.1.7 | 0 | 12/15, 11/15, 12/15; corpus at 15 cases, index page added and fixed in all three runs |
