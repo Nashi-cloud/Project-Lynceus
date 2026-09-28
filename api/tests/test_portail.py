@@ -354,6 +354,17 @@ def test_la_confidentialite_nomme_le_fournisseur_annonce_par_l_instance(portail,
     assert "transmis à un fournisseur de modèle de langage tiers" in html
 
 
+def test_la_confidentialite_nomme_aussi_l_hebergeur_derriere_le_routeur(portail, tmp_path):
+    """Derrière OpenRouter, le texte va aussi chez l'hébergeur qui exécute le modèle.
+    Nommer l'intermédiaire en taisant le destinataire serait une omission trompeuse."""
+    client, _ = portail
+    api = creer_application(parametres_test(tmp_path, llm_hebergeurs="mistral"))
+    brancher_sur(client, api)
+    html = client.get("/confidentialite").text
+    assert "confie l'exécution du modèle à mistral" in html
+    assert "peut lui-même confier l'exécution du modèle à un autre" not in html
+
+
 def test_un_modele_auto_heberge_ne_fait_plus_de_promesse_de_transfert(portail, tmp_path):
     """Chez un auto-hébergeur, le texte ne sort pas : annoncer un transfert vers un tiers
     serait faux, et l'inverse de ce que le projet dit de l'auto-hébergement."""

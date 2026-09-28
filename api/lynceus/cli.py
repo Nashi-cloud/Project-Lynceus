@@ -1305,6 +1305,12 @@ def _decimal(valeur) -> str:
     return f"{valeur:.2f}" if isinstance(valeur, float) else str(valeur)
 
 
+
+# Le réglage sur lequel les résultats publiés ont été mesurés (corpus/RESULTATS.md). Les
+# compose de production et de recette en font leur défaut, `lynceus env` aussi.
+REGLAGE_CALIBRE = {"modele": "z-ai/glm-5.3", "raisonnement": "low",
+                   "hebergeurs": "mistral", "cache": "true"}
+
 @app.command("env")
 def env(
     cible: CibleEnv = typer.Argument(CibleEnv.production, help="Environnement à configurer."),
@@ -1377,7 +1383,7 @@ def env(
         base_llm = demande.texte("Adresse du fournisseur de modèle (API compatible OpenAI)",
                                  defaut="https://openrouter.ai/api/v1")
         cle_llm = demande.texte("Clé du fournisseur de modèle", secret=True)
-        modele = demande.texte("Modèle d'analyse", defaut="z-ai/glm-5.2")
+        modele = demande.texte("Modèle d'analyse", defaut=REGLAGE_CALIBRE["modele"])
         # Ce nom est publié : /v1/meta, chaque analyse de l'annuaire, la page de
         # confidentialité du portail. Vide, il est déduit de l'adresse, ce qui donne le nom
         # d'hôte, faux dès qu'il y a un intermédiaire.
@@ -1436,6 +1442,8 @@ def env(
         )
     )
 
+    # Le réglage calibré n'accompagne que le modèle calibré.
+    calibre = REGLAGE_CALIBRE if modele == REGLAGE_CALIBRE["modele"] else {}
     bloc_llm = [
         "# Chaque variable répond aussi à un nom anglais : LYNCEUS_LLM_FOURNISSEUR accepte",
         "# LYNCEUS_LLM_PROVIDER, LYNCEUS_CLE_PUBLIQUE accepte LYNCEUS_PUBLIC_KEY, et ainsi",
@@ -1451,11 +1459,12 @@ def env(
                  note="Nom du fournisseur tel qu'il sera publié : /v1/meta, chaque analyse,\n"
                       "et les pages légales du portail. Vide = déduit de l'adresse, ce qui\n"
                       "donne « modèle auto-hébergé » sur une adresse privée."),
-        # Les deux réglages de facture sortent vides : ils changent ce que l'instance
-        # demande au fournisseur, et un défaut posé par le générateur serait un choix fait
-        # à la place de l'exploitant. Ils figurent quand même, avec leur mode d'emploi,
-        # parce qu'un réglage qu'on ne voit pas dans son .env n'existe pas.
-        Variable("LYNCEUS_LLM_RAISONNEMENT",
+        # Ces réglages changent les notes. Ils ne sont remplis que pour le modèle calibré,
+        # avec les valeurs de sa calibration : ce modèle ne vaut les résultats publiés
+        # qu'avec elles. Pour tout autre modèle ils sortent vides, un défaut posé par le
+        # générateur étant alors un choix fait à la place de l'exploitant. Ils figurent
+        # toujours, avec leur mode d'emploi : un réglage qu'on ne voit pas n'existe pas.
+        Variable("LYNCEUS_LLM_RAISONNEMENT", calibre.get("raisonnement", ""),
                  note="Ce que le modèle « pense » avant de répondre est facturé en sortie\n"
                       "puis jeté : mesuré à 2 331 tokens pour une carte qui en fait moins de\n"
                       "1 500, soit le premier poste de dépense. Vide = défaut du fournisseur.\n"
@@ -1463,10 +1472,16 @@ def env(
                       "À ne changer qu'avec une passe de calibration à l'appui : sur une\n"
                       "passe unique, couper divise le coût par 2,8 et la latence par 2, mais\n"
                       "coûte un cas conforme."),
-        Variable("LYNCEUS_LLM_CACHE_PROMPT",
+        Variable("LYNCEUS_LLM_HEBERGEURS", calibre.get("hebergeurs", ""),
+                 note="Hébergeurs imposés derrière un routeur comme OpenRouter, dans l'ordre.\n"
+                      "Un même modèle y est servi à des prix et des précisions très\n"
+                      "différents, et la note change avec l'hébergeur. Vide = le routeur\n"
+                      "choisit à chaque appel. Z.AI, hébergeur officiel de GLM, filtre\n"
+                      "certains contenus : ne pas l'employer."),
+        Variable("LYNCEUS_LLM_CACHE_PROMPT", calibre.get("cache", ""),
                  note="Marque le prompt système comme réutilisable. Inutile chez un\n"
-                      "fournisseur qui met en cache de lui-même, ce que fait OpenRouter ;\n"
-                      "nécessaire chez ceux qui exigent un point de césure explicite.\n"
+                      "hébergeur qui met en cache de lui-même, nécessaire chez ceux qui\n"
+                      "exigent un point de césure explicite, comme Mistral.\n"
                       "À laisser vide devant un endpoint auto-hébergé minimal, qui peut\n"
                       "refuser un contenu découpé en blocs."),
     ]

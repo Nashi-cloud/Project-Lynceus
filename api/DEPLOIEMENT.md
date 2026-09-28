@@ -568,3 +568,5 @@ docker exec lynceus-db psql -U lynceus -c \
 ```
 
 Multiply by your model's rate. A useful reminder: **a page is only analysed once** for all users, so the cost naturally falls as the directory fills up.
+
+For an order of magnitude, measured on 2026-09-28: with the calibrated setting (GLM-5.3, `low` reasoning, Mistral host, cache on), an analysis costs about **0.4 cent** once the system prompt is in the host's cache, and about 1 cent without it. Left to the provider's defaults, reasoning alone brought it to 0.9 to 2.2 cents. The details are in [corpus/RESULTATS.md](../corpus/en/RESULTATS.md).
