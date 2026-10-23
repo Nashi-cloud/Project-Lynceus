@@ -101,7 +101,7 @@ def analyser(
     url: str = typer.Option(None, help="URL d'origine si la cible est un fichier"),
     titre: str = typer.Option(None, help="Titre de la page"),
 ):
-    """Analyse une page (URL) ou un contenu local (fichier .md) via l'API."""
+    """Analyse une page (URL, téléchargée localement) ou un contenu local (fichier .md) via l'API."""
     corps: dict = {"titre": titre}
     if cible == "-":
         corps["contenu_markdown"] = sys.stdin.read()
@@ -110,7 +110,18 @@ def analyser(
         corps["contenu_markdown"] = Path(cible).read_text(encoding="utf-8")
         corps["url"] = url
     elif cible.startswith(("http://", "https://")):
+        # Téléchargée ici, sur la machine de l'utilisateur, comme le fait l'extension :
+        # l'instance n'en télécharge aucune.
+        from .extraction import ErreurExtraction, recuperer_markdown
+
+        try:
+            with console.status("Téléchargement de la page…"):
+                titre_extrait, corps["contenu_markdown"] = recuperer_markdown(cible)
+        except ErreurExtraction as exc:
+            console.print(f"[red]Extraction impossible :[/red] {exc}")
+            raise typer.Exit(1)
         corps["url"] = cible
+        corps["titre"] = titre or titre_extrait
     else:
         console.print(f"[red]Cible invalide :[/red] {cible} (URL http(s) ou fichier existant attendu)")
         raise typer.Exit(2)
