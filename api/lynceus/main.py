@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
-from . import VERSION_SCHEMA, __version__, annuaire, cles, extraction
+from . import VERSION_SCHEMA, __version__, annuaire, cles
 from . import noms
 from .config import Parametres, parametres
 from .migrations import appliquer as appliquer_migrations
@@ -106,7 +106,10 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
     appliquer_migrations(moteur_bdd)
     fabrique = sessionmaker(bind=moteur_bdd, expire_on_commit=False)
 
-    app = FastAPI(title="Lynceus API", version=__version__)
+    # Ni /docs, ni /redoc, ni /openapi.json : aucun client ne s'en sert, le contrat est publié
+    # dans docs/ARCHITECTURE.md, et la page /docs chargerait Swagger UI depuis un CDN tiers.
+    app = FastAPI(title="Lynceus API", version=__version__,
+                  docs_url=None, redoc_url=None, openapi_url=None)
     app.state.parametres = p
     app.state.acces_analyses = {}
 
@@ -161,7 +164,7 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
         return requete.client.host if requete.client else "inconnue"
 
     def verifier_limite(requete: Request) -> None:
-        """Limiteur de débit par adresse, sur le travail coûteux (fetch serveur, appel LLM).
+        """Limiteur de débit par adresse, sur le travail coûteux (l'appel LLM).
 
         Fenêtre glissante d'une minute, comptée EN MÉMOIRE : rien n'est journalisé, ce que
         la charte (§4) impose, et le compteur repart de zéro à chaque redémarrage — sans
@@ -415,7 +418,7 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
             except ValueError as exc:
                 raise HTTPException(400, str(exc)) from exc
 
-        # Le travail coûteux (fetch serveur, LLM) n'est décompté qu'une fois par requête.
+        # Le travail coûteux (l'appel LLM) n'est décompté qu'une fois par requête.
         # Une réponse servie depuis l'annuaire ne consomme donc NI limite NI quota : elle
         # ne coûte rien, et pénaliser sa mutualisation irait contre l'intérêt du réseau.
         limite_verifiee = False
@@ -439,8 +442,10 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
                     )
             limite_verifiee = True
 
-        # 1. Contenu : fourni par le client (chemin principal) ou récupéré par le serveur (fallback).
-        #    URL seule → on regarde d'abord l'annuaire par URL : pas de fetch si la page est déjà connue.
+        # 1. Contenu : toujours fourni par le client. L'instance ne télécharge jamais une page
+        #    elle-même : une adresse choisie par le client lui ferait joindre ce que seul le
+        #    serveur voit (localhost, réseau interne, métadonnées de l'hébergeur), et le texte
+        #    obtenu finirait en extraits sur une carte publique. URL seule → l'annuaire seul.
         titre, contenu = demande.titre, demande.contenu_markdown
         if contenu is None:
             with fabrique() as session:
@@ -449,12 +454,12 @@ def creer_application(p: Parametres | None = None) -> FastAPI:
                     analyse = session.get(Analyse, page.analyse_courante_id)
                     if analyse is not None and analyse.prompt_version == version:
                         return {"en_cache": True, "carte": analyse.carte}
-            limiter()
-            try:
-                titre_extrait, contenu = extraction.recuperer_markdown(url_brute)
-                titre = titre or titre_extrait
-            except extraction.ErreurExtraction as exc:
-                raise HTTPException(502, str(exc)) from exc
+            raise HTTPException(
+                400,
+                "Page absente de l'annuaire : envoyer son texte dans contenu_markdown. "
+                "L'instance ne télécharge pas les pages ; l'extension et "
+                "« lynceus analyser <url> » extraient le texte sur la machine de l'utilisateur.",
+            )
 
         if len(contenu) < p.contenu_min_cars:
             raise HTTPException(400, f"Contenu trop court pour une analyse fiable (< {p.contenu_min_cars} caractères).")

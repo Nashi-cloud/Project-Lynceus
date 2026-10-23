@@ -1,6 +1,6 @@
 # Lynceus API — le « kit » serveur
 
-<!-- traduit-de: api/README.md sha256:e9581cd8521dd3d6 -->
+<!-- traduit-de: api/README.md sha256:1f310b7c2e71ff1d -->
 
 [English](README.md) · **Français**
 
@@ -52,7 +52,7 @@ lynceus/
 ├── normalisation.py        # URL → url_hash · Markdown → content_hash (les 2 clés de l'annuaire)
 ├── modeles.py              # SQLAlchemy : analyses, pages, domaines
 ├── annuaire.py             # résolution cache/dédup, profils de domaines
-├── extraction.py           # fallback fetch serveur (trafilatura) pour le flux « URL seule »
+├── extraction.py           # téléchargement d'une page pour la CLI, sur la machine de l'utilisateur (l'instance ne télécharge rien)
 ├── moteur/
 │   ├── prompt.py           # prompts versionnés + taxonomie + schémas (tout vient des fichiers publics)
 │   ├── llm.py              # adapter compatible OpenAI (OpenRouter, Ollama, vLLM…)
