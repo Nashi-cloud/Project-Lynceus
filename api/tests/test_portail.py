@@ -1072,3 +1072,32 @@ def test_la_liste_blanche_des_langues_ne_derive_pas():
 
     assert set(i18n.CODES_SERVIS) == set(i18n.LANGUES)
     assert all(code == valeur for code, valeur in i18n.CODES_SERVIS.items())
+
+
+@pytest.mark.parametrize("chemin", ["/docs", "/docs/oauth2-redirect", "/redoc", "/openapi.json"])
+def test_le_portail_ne_publie_aucune_documentation_automatique(portail, chemin):
+    """FastAPI les publie d'office ; /docs chargerait Swagger UI depuis un CDN tiers, ce que
+    la page de confidentialité ne dit pas."""
+    client, _ = portail
+    assert client.get(chemin).status_code == 404
+
+
+@pytest.mark.parametrize("chemin", ["/", "/en/charte", "/inexistante", "/sante"])
+def test_le_portail_envoie_ses_en_tetes_de_securite(portail, chemin):
+    from lynceus.portail import ENTETES_DE_SECURITE
+
+    client, _ = portail
+    reponse = client.get(chemin)
+    for nom, valeur in ENTETES_DE_SECURITE.items():
+        assert reponse.headers.get(nom) == valeur, nom
+    assert len(reponse.headers.get_list("x-frame-options")) == 1
+
+
+def test_les_en_tetes_de_securite_couvrent_les_fichiers_statiques(portail):
+    from lynceus.portail import ENTETES_DE_SECURITE
+
+    client, _ = portail
+    feuille = next((RACINE / "statique").rglob("*.css"))
+    reponse = client.get("/statique/" + feuille.relative_to(RACINE / "statique").as_posix())
+    assert reponse.status_code == 200
+    assert reponse.headers.get("x-content-type-options") == ENTETES_DE_SECURITE["x-content-type-options"]

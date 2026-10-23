@@ -96,6 +96,43 @@ def forge_de(depot: str) -> str:
     return ""
 
 
+ENTETES_DE_SECURITE = {
+    # Le navigateur s'en tient au type annoncé : un fichier servi comme texte ne peut pas
+    # être interprété comme un script.
+    "x-content-type-options": "nosniff",
+    # Un lien vers un autre site ne lui dit pas de quelle page du portail on vient.
+    "referrer-policy": "same-origin",
+    # Aucun site ne peut afficher le portail dans un cadre, et faire cliquer à l'insu de la
+    # personne sur « Contester » ou sur l'inscription. Les deux formes : X-Frame-Options
+    # pour les navigateurs anciens, frame-ancestors pour les autres.
+    "x-frame-options": "DENY",
+    "content-security-policy": "frame-ancestors 'none'",
+}
+
+
+class EntetesDeSecurite:
+    """Ajoute les en-têtes de ENTETES_DE_SECURITE à toute réponse, erreurs et fichiers
+    statiques compris. Une réponse qui en fixe déjà un garde le sien."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+
+        async def envoyer(message):
+            if message["type"] == "http.response.start":
+                presents = {nom.lower() for nom, _ in message.get("headers", [])}
+                ajouts = [(nom.encode(), valeur.encode())
+                          for nom, valeur in ENTETES_DE_SECURITE.items()
+                          if nom.encode() not in presents]
+                message = dict(message, headers=[*message.get("headers", []), *ajouts])
+            await send(message)
+
+        await self.app(scope, receive, envoyer)
+
+
 class LangueDansLURL:
     """Retire le préfixe de langue du chemin avant que le routeur ne le voie.
 
@@ -211,7 +248,11 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
         finally:
             await audience.fermer()
 
-    app = FastAPI(title=f"Portail {p.nom}", version=__version__, lifespan=cycle_de_vie)
+    # Ni /docs, ni /redoc, ni /openapi.json : le portail sert des pages, pas une API à
+    # explorer, et /docs chargerait Swagger UI depuis un CDN tiers, ce que la page de
+    # confidentialité ne dit pas.
+    app = FastAPI(title=f"Portail {p.nom}", version=__version__, lifespan=cycle_de_vie,
+                  docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[o.strip() for o in p.cors_origins.split(",") if o.strip()],
@@ -223,6 +264,8 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
     app.add_middleware(mesure.MesureAudience, audience=audience,
                        adresse_de=mesure.adresse_reelle(p.entete_ip_reelle))
     app.add_middleware(LangueDansLURL)
+    # Ajouté en dernier, donc le plus à l'extérieur : il couvre aussi les réponses des autres.
+    app.add_middleware(EntetesDeSecurite)
     app.mount("/statique", StaticFiles(directory=RACINE / "statique"), name="statique")
 
     # Un environnement par langue : les gabarits sont compilés une fois, et rien de ce qui

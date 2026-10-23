@@ -50,7 +50,7 @@ lynceus/
 ├── normalisation.py        # URL → url_hash · Markdown → content_hash (the directory's two keys)
 ├── modeles.py              # SQLAlchemy: analyses, pages, domains
 ├── annuaire.py             # cache and dedup resolution, domain profiles
-├── extraction.py           # server-side fetch fallback (trafilatura) for the "URL only" flow
+├── extraction.py           # page download for the CLI, on the user's machine (the instance downloads nothing)
 ├── moteur/
 │   ├── prompt.py           # versioned prompts, taxonomy and schemas (all read from the public files)
 │   ├── llm.py              # OpenAI-compatible adapter (OpenRouter, Ollama, vLLM…)

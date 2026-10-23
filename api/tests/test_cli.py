@@ -699,3 +699,53 @@ def test_env_ne_choisit_rien_pour_un_autre_modele():
     assert variables["LYNCEUS_LLM_MODEL"] == "autre/modele"
     for nom in ("LYNCEUS_LLM_RAISONNEMENT", "LYNCEUS_LLM_HEBERGEURS", "LYNCEUS_LLM_CACHE_PROMPT"):
         assert variables[nom] == "", nom
+
+
+def test_analyser_une_url_la_telecharge_sur_la_machine_de_l_utilisateur(monkeypatch):
+    """L'instance ne télécharge aucune page : la CLI envoie le texte, comme l'extension."""
+    envoye = {}
+    rendue = carte() | {
+        "dimensions": {nom: {"score": 70, "detail": "."}
+                       for nom in ("sources", "factualite", "ton", "transparence")},
+        "points_positifs": [],
+        "questions_a_se_poser": [],
+        "resume_neutre": ".",
+        "meta": {"modele": "test/modele", "prompt_version": "0.1.8", "analyse_le": "2026-10-23"},
+    }
+
+    class Reponse:
+        status_code = 200
+        text = ""
+
+        def json(self):
+            return {"carte": rendue, "en_cache": False}
+
+    def poster(adresse, json=None, **kwargs):
+        envoye.update(json)
+        return Reponse()
+
+    monkeypatch.setattr("lynceus.extraction.recuperer_markdown",
+                        lambda url: ("Titre local", "Texte extrait en local."))
+    monkeypatch.setattr("httpx.post", poster)
+
+    resultat = runner.invoke(app, ["analyser", "https://exemple.fr/article"])
+    assert resultat.exit_code == 0, resultat.output
+    assert envoye == {"url": "https://exemple.fr/article", "titre": "Titre local",
+                      "contenu_markdown": "Texte extrait en local."}
+
+
+def test_analyser_une_url_injoignable_le_dit_sans_appeler_l_instance(monkeypatch):
+    from lynceus.extraction import ErreurExtraction
+
+    def echec(url):
+        raise ErreurExtraction("Téléchargement impossible (ConnectError) : " + url)
+
+    def poster(*args, **kwargs):
+        raise AssertionError("rien à envoyer sans contenu")
+
+    monkeypatch.setattr("lynceus.extraction.recuperer_markdown", echec)
+    monkeypatch.setattr("httpx.post", poster)
+
+    resultat = runner.invoke(app, ["analyser", "https://injoignable.exemple/"])
+    assert resultat.exit_code == 1
+    assert "Extraction impossible" in resultat.output

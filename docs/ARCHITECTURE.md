@@ -30,7 +30,7 @@ Trois livrables : **`api/`** (le kit serveur auto-hébergeable, Docker Compose),
 
 ## Choix structurants
 
-1. **Extraction côté client.** L'extension extrait le texte localement (Readability.js, le moteur du mode lecture de Firefox, puis conversion Markdown via Turndown). Avantages : fonctionne derrière paywall/login et sur les pages JS ; pas d'infra de scraping ; un site ne peut pas servir un contenu différent à l'analyseur (cloaking). Un fetch serveur (trafilatura) reste disponible en fallback pour l'usage API pur / CLI.
+1. **Extraction côté client.** L'extension extrait le texte localement (Readability.js, le moteur du mode lecture de Firefox, puis conversion Markdown via Turndown). Avantages : fonctionne derrière paywall/login et sur les pages JS ; pas d'infra de scraping ; un site ne peut pas servir un contenu différent à l'analyseur (cloaking). **L'instance ne télécharge jamais une page elle-même** : une adresse choisie par le client lui ferait joindre ce que seul le serveur voit (localhost, réseau interne, métadonnées de l'hébergeur), et le texte obtenu finirait en extraits sur une carte publique. La CLI télécharge donc la page sur la machine de l'utilisateur (trafilatura), puis envoie son texte, comme l'extension.
 2. **La note est calculée par le serveur**, pas par le LLM (pondérations publiées dans [METHODOLOGIE.md](METHODOLOGIE.md)) : déterminisme, auditabilité, cohérence entre instances.
 3. **Couche LLM = un seul adapter, compatible OpenAI** (`POST {base_url}/chat/completions`). Couvre OpenRouter (dev/prod), Ollama et vLLM (auto-hébergement, gratuit), LiteLLM (passerelle multi-fournisseurs). Le choix du fournisseur/modèle appartient à chaque instance.
 4. **Prompts versionnés dans le dépôt** ([prompts/](../prompts/)) : chargés depuis les fichiers, jamais codés en dur.
@@ -40,7 +40,7 @@ Trois livrables : **`api/`** (le kit serveur auto-hébergeable, Docker Compose),
 | Méthode | Route | Rôle |
 |---|---|---|
 | `GET` | `/v1/lookup?url_hash={sha256}` | Consultation annuaire. Réponse : `{ statut: "connue"\|"inconnue", carte?, domaine? }`. Jamais journalisé avec identifiants. |
-| `POST` | `/v1/analyses` | Corps : `{ url?, contenu_markdown?, titre?, langue? }`. Cache hit → `200` + carte. Sinon analyse (synchrone au MVP, ~10–30 s) → `200` + carte. `url` seul → fetch serveur fallback. |
+| `POST` | `/v1/analyses` | Corps : `{ url?, contenu_markdown?, titre?, langue? }`. Cache hit → `200` + carte. Sinon analyse (synchrone au MVP, ~10–30 s) → `200` + carte. `url` seul → la carte de l'annuaire si la page y est, sinon `400` : l'instance ne télécharge rien. |
 | `GET` | `/v1/analyses/{id}` | Récupération d'une carte par id. |
 | `GET` | `/v1/domaines/{domaine}` | Profil agrégé : nb d'analyses, score moyen, distribution des grades. |
 | `GET` | `/v1/lookup-prefixe?prefixe={5 hex}` | **Consultation k-anonyme** : le client n'envoie que les 5 premiers caractères du hash et fait la correspondance finale localement. Réponse : suffixes + résumés (grade, catégorie, score, id). Le serveur ne peut pas savoir quelle page est consultée. |
@@ -155,6 +155,9 @@ L'étape 5 inclut la **vérification anti-hallucination des extraits** : tout `e
 - **Le badge ne coûte rien en confidentialité** : le préfixe suffit à afficher la note et le contour. La carte complète n'est demandée (`/v1/analyses/{id}`) que si le panneau est réellement ouvert.
 - Contenu soumis = donnée non fiable : jamais interprété comme instruction (le prompt le délimite explicitement), taille bornée, HTML refusé (Markdown uniquement).
 - CORS restreint à l'extension + configurable par instance.
+- **Aucun téléchargement côté serveur** (voir les choix structurants, point 1).
+- **Pas de `/docs`, `/redoc` ni `/openapi.json`**, que FastAPI publie d'office : le contrat est ici, et `/docs` chargerait Swagger UI depuis un CDN tiers.
+- **En-têtes de sécurité sur le portail** : `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`, et l'interdiction d'être affiché dans un cadre (`X-Frame-Options: DENY`, `frame-ancestors 'none'`). Le HSTS revient au proxy qui termine le HTTPS.
 
 ## Fédération (phase 4, esquisse)
 

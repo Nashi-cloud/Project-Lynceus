@@ -1,9 +1,12 @@
-"""Extraction serveur (fallback) — quand le client n'envoie qu'une URL, sans contenu.
+"""Extraction pour la CLI : `lynceus analyser <url>` télécharge la page sur la machine de
+l'utilisateur, puis envoie son texte à l'instance.
 
-Le chemin principal reste l'extraction locale par l'extension (cf. docs/ARCHITECTURE.md) :
-le navigateur de l'utilisateur passe les protections anti-robots, un serveur non. On tente
-ici trafilatura puis httpx avec des en-têtes de navigateur, et on échoue HONNÊTEMENT
-(cause + remèdes) plutôt que de jouer à contourner les protections."""
+L'instance, elle, ne télécharge jamais rien (cf. docs/ARCHITECTURE.md) : une adresse choisie
+par le client lui ferait joindre ce que seul le serveur voit. Ce module ne sert donc que du
+côté client. Le chemin principal reste l'extension : le navigateur de l'utilisateur passe les
+protections anti-robots, un script non. On tente ici trafilatura puis httpx avec des en-têtes
+de navigateur, et on échoue HONNÊTEMENT (cause + remèdes) plutôt que de jouer à contourner
+les protections."""
 
 from __future__ import annotations
 
@@ -23,10 +26,10 @@ _ENTETES_NAVIGATEUR = {
 
 _CONSEIL_BLOCAGE = (
     "Ce site bloque le téléchargement automatique (protection anti-robots). "
-    "L'extension navigateur (phase 2) analysera ces pages sans difficulté : l'extraction s'y fera "
-    "localement, après que VOTRE navigateur a passé la protection. En attendant : copier le contenu "
-    "dans un fichier puis « lynceus analyser fichier.md --url <url> », ou le coller sur l'entrée "
-    "standard : « lynceus analyser - --url <url> »."
+    "L'extension navigateur analyse ces pages sans difficulté : l'extraction s'y fait après que "
+    "VOTRE navigateur a passé la protection. Sinon : copier le contenu dans un fichier puis "
+    "« lynceus analyser fichier.md --url <url> », ou le coller sur l'entrée standard : "
+    "« lynceus analyser - --url <url> »."
 )
 
 
