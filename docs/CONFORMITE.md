@@ -112,6 +112,9 @@ communication publique s'en prévalant.
 
 - Le projet est publié sous **AGPL-3.0**. Toute version modifiée mise à disposition par le
   réseau doit publier ses sources.
+- Les **annotations** du jeu d'évaluation et son manifeste sont des données, et relèvent
+  d'une autre licence : **CC BY-SA 4.0** ([corpus/annotations/](../corpus/annotations/),
+  [ANNOTATION.md](ANNOTATION.md) §10). Chaque annotateur y consent par un commit signé.
 - Le titulaire des droits est indiqué dans [AUTHORS.md](../AUTHORS.md).
 - Les contributions extérieures relèvent du **Developer Certificate of Origin** : chaque
   contributeur certifie avoir le droit d'apporter son code sous cette licence

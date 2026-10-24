@@ -67,6 +67,9 @@ def parametres_test(tmp_path, **surcharges) -> Parametres:
         llm_model="test/modele",
         llm_temperature=0.2,
         llm_response_format="none",
+        llm_raisonnement="",
+        llm_hebergeurs="",
+        llm_hebergeurs_repli=True,
         admin_token="",  # modération fermée sauf mention contraire du test
         prompt_version="latest",
         rate_limit_analyses=100,

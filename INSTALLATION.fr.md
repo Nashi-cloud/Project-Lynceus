@@ -1,6 +1,6 @@
 # Installer Lynceus
 
-<!-- traduit-de: INSTALLATION.md sha256:7b538860179faf2d -->
+<!-- traduit-de: INSTALLATION.md sha256:5495e985ddf37e9b -->
 
 [English](INSTALLATION.md) · **Français**
 
@@ -54,8 +54,13 @@ Ouvrez `.env` dans un éditeur de texte et renseignez au minimum votre clé :
 ```ini
 LYNCEUS_LLM_API_KEY=votre-clé-ici
 LYNCEUS_LLM_BASE_URL=https://openrouter.ai/api/v1
-LYNCEUS_LLM_MODEL=z-ai/glm-5.2
+LYNCEUS_LLM_MODEL=z-ai/glm-5.3
+LYNCEUS_LLM_RAISONNEMENT=low
+LYNCEUS_LLM_HEBERGEURS=mistral
+LYNCEUS_LLM_CACHE_PROMPT=true
 ```
+
+Les trois dernières lignes sont le réglage sur lequel les [résultats de calibration](corpus/RESULTATS.md) ont été mesurés : un raisonnement court, un hébergeur fixe plutôt que celui que le routeur choisit à chaque appel, et le prompt système mis en cache. Sans elles, l'analyse fonctionne, mais coûte plus cher et varie davantage d'une fois sur l'autre.
 
 *Avec Ollama à la place :*
 

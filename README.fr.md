@@ -1,6 +1,6 @@
 # Projet Lynceus 🔭
 
-<!-- traduit-de: README.md sha256:64eed777858fe514 -->
+<!-- traduit-de: README.md sha256:82232919920726bc -->
 
 [English](README.md) · **Français**
 
@@ -116,6 +116,7 @@ Résumé de la [charte éthique](docs/ETHIQUE.md) :
 - [x] **Bilingue** : portail et extension en français et en anglais, analyse rédigée dans la langue de la page analysée
 - [x] **Phase 3c** : instance et portail de référence hébergés publiquement ([lynx.nashi.cloud](https://lynx.nashi.cloud))
 - [ ] **Phase 4, réseau** : fédération d'annuaires entre instances, autres langues, portage Firefox
+- [ ] **Phase 5, analyse composée** : analyseurs déterministes, encodeur de repérage, petit modèle de rédaction ; étude et étapes dans [docs/ARCHITECTURE-CIBLE.md](docs/ARCHITECTURE-CIBLE.md)
 
 ## Comment ce projet est fabriqué
 
@@ -145,7 +146,8 @@ entrepreneur individuel) et vise un réseau mondial et bénévole de vérificati
 
 Publié sous **AGPL-3.0-or-later** (voir [LICENSE](LICENSE) et [AUTHORS.md](AUTHORS.fr.md)).
 Les contributions relèvent du [Developer Certificate of Origin](DCO.txt) : chacun conserve
-ses droits sur son apport.
+ses droits sur son apport. Les annotations faites à la main du jeu d'évaluation sont des
+données, publiées sous **CC BY-SA 4.0** (voir [corpus/annotations/](corpus/annotations/)).
 
 L'analyse de conformité du projet, ce qui est traité, transmis et conservé, figure dans
 [docs/CONFORMITE.md](docs/CONFORMITE.md).

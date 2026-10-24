@@ -55,7 +55,14 @@ services:
 
       LYNCEUS_LLM_BASE_URL: ${LYNCEUS_LLM_BASE_URL:-https://openrouter.ai/api/v1}
       LYNCEUS_LLM_API_KEY: ${LYNCEUS_LLM_API_KEY:?clé du fournisseur LLM requise}
-      LYNCEUS_LLM_MODEL: ${LYNCEUS_LLM_MODEL:-z-ai/glm-5.2}
+      LYNCEUS_LLM_MODEL: ${LYNCEUS_LLM_MODEL:-z-ai/glm-5.3}
+      # Réglage calibré le 2026-09-28 (corpus/RESULTATS.md) : changer l'un de ces quatre
+      # réglages change les notes, et demande une nouvelle passe de calibration. Z.AI,
+      # l'hébergeur officiel de GLM, filtre certains contenus : ne pas l'employer.
+      LYNCEUS_LLM_RAISONNEMENT: ${LYNCEUS_LLM_RAISONNEMENT:-low}
+      LYNCEUS_LLM_HEBERGEURS: ${LYNCEUS_LLM_HEBERGEURS:-mistral}
+      LYNCEUS_LLM_HEBERGEURS_REPLI: ${LYNCEUS_LLM_HEBERGEURS_REPLI:-true}
+      LYNCEUS_LLM_CACHE_PROMPT: ${LYNCEUS_LLM_CACHE_PROMPT:-true}
       # Nom publié du fournisseur (/v1/meta, analyses, pages légales du portail).
       # Vide = déduit de l'adresse : nom d'hôte, ou « modèle auto-hébergé » si elle est privée.
       LYNCEUS_LLM_FOURNISSEUR: ${LYNCEUS_LLM_FOURNISSEUR:-}

@@ -1021,8 +1021,8 @@ msgstr "Would you rather start from the sources, to read them or to change them?
 msgid "Si vous modifiez le code et que votre instance est joignable par d'autres, la licence vous demande de publier vos sources et d'annoncer votre dépôt : c'est la contrepartie de la liberté qu'elle vous donne."
 msgstr "If you modify the code and your instance is reachable by others, the licence asks you to publish your sources and to announce your repository: that is the counterpart of the freedom it grants you."
 
-msgid "Les trois lignes du fournisseur sont les seules à changer si vous en préférez un autre : n'importe quel service exposant une API compatible OpenAI convient, et le modèle montré ici est simplement celui sur lequel les résultats de calibration publiés ont été mesurés."
-msgstr "The three provider lines are the only ones to change if you prefer another one: any service exposing an OpenAI-compatible API will do, and the model shown here is simply the one the published calibration figures were measured on."
+msgid "Les lignes du modèle sont les seules à changer si vous en préférez un autre : n'importe quel service exposant une API compatible OpenAI convient. Le modèle et les trois réglages montrés ici sont ceux sur lesquels les résultats de calibration publiés ont été mesurés : un raisonnement court, un hébergeur fixe, le prompt système en cache. Pour un autre modèle, retirez les trois réglages."
+msgstr "The model lines are the only ones to change if you prefer another one: any service exposing an OpenAI-compatible API will do. The model and the three settings shown here are the ones the published calibration figures were measured on: short reasoning, a fixed host, the system prompt cached. For another model, remove the three settings."
 
 msgid "Avec un modèle local, rien ne sort de votre machine"
 msgstr "With a local model, nothing leaves your machine"
@@ -1047,3 +1047,9 @@ msgstr "No data is sold, exchanged, or passed on for advertising. There is no ad
 
 msgid "La mesure d'audience ne fait pas exception : le serveur signale lui-même la page qu'il vient de vous servir, sans cookie ni script, et vous ne la verrez donc pas dans votre navigateur. Elle ne concerne que les pages de ce site, jamais l'annuaire ni l'extension."
 msgstr "Audience measurement is no exception: the server itself reports the page it has just served you, with no cookie and no script, so you will not see it in your browser. It only covers the pages of this site, never the directory nor the extension."
+
+msgid "Ce fournisseur est un intermédiaire : il confie l'exécution du modèle à %(hebergeurs)s, qui reçoit donc lui aussi le texte. L'un comme l'autre peut être établi hors de l'Union européenne."
+msgstr "This provider is an intermediary: it hands the running of the model to %(hebergeurs)s, which therefore receives the text too. Either may be based outside the European Union."
+
+msgid "puis"
+msgstr "then"

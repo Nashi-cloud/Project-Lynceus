@@ -19,7 +19,7 @@
     <p>{{ _("Quand vous demandez l'analyse d'une page, son texte est traité par un modèle <strong>hébergé par cette instance</strong> (%(fournisseur)s, modèle <code>%(modele)s</code>). Il n'est transmis à aucun fournisseur tiers et ne quitte pas l'infrastructure de l'exploitant.", fournisseur=moteur.fournisseur, modele=moteur.modele) }}</p>
     <p style="margin-bottom:0">{{ _("Reste ce que l'exploitant lui-même voit passer, décrit plus bas. Et cette page ne vaut que pour cette instance : une autre peut faire un tout autre choix, c'est à elle de le dire sur sa propre page.") }}</p>
     {% else %}
-    <p>{{ _("Quand vous demandez l'analyse d'une page, <strong>le texte de cette page est transmis à un fournisseur de modèle de langage tiers</strong>") }}{% if moteur and moteur.fournisseur %} {{ _("(actuellement %(fournisseur)s, modèle <code>%(modele)s</code>)", fournisseur=moteur.fournisseur, modele=moteur.modele) }}{% endif %}. {{ _("Ce fournisseur peut être établi hors de l'Union européenne, et peut lui-même confier l'exécution du modèle à un autre.") }}</p>
+    <p>{{ _("Quand vous demandez l'analyse d'une page, <strong>le texte de cette page est transmis à un fournisseur de modèle de langage tiers</strong>") }}{% if moteur and moteur.fournisseur %} {{ _("(actuellement %(fournisseur)s, modèle <code>%(modele)s</code>)", fournisseur=moteur.fournisseur, modele=moteur.modele) }}{% endif %}. {% if moteur and moteur.hebergeurs %}{{ _("Ce fournisseur est un intermédiaire : il confie l'exécution du modèle à %(hebergeurs)s, qui reçoit donc lui aussi le texte. L'un comme l'autre peut être établi hors de l'Union européenne.", hebergeurs=moteur.hebergeurs|join(", ")) }}{% else %}{{ _("Ce fournisseur peut être établi hors de l'Union européenne, et peut lui-même confier l'exécution du modèle à un autre.") }}{% endif %}</p>
     <p style="margin-bottom:0">{{ _("C'est le transfert le plus important du système, et le seul que vous ne pouvez pas éviter en utilisant ce service. Si cela ne vous convient pas, <a href=\"%(auto)s\">hébergez votre propre instance</a> avec un modèle local : le texte ne quitte alors pas votre machine, et le logiciel est conçu pour ça.", auto=u('/auto-hebergement')) }}</p>
     {% endif %}
   </div>
@@ -82,7 +82,7 @@
   <h2>{{ _("Destinataires") }}</h2>
   <ul>
     {% if not (moteur and moteur.fournisseur and not moteur.distant) %}
-    <li>{{ _("<strong>Le fournisseur de modèle de langage</strong>") }}{% if moteur and moteur.fournisseur %} ({{ moteur.fournisseur }}){% endif %}, {{ _("qui reçoit le texte des pages analysées. Voir l'encadré en tête de page.") }}</li>
+    <li>{{ _("<strong>Le fournisseur de modèle de langage</strong>") }}{% if moteur and moteur.fournisseur %} ({{ moteur.fournisseur }}{% if moteur.hebergeurs %}, {{ _("puis") }} {{ moteur.hebergeurs|join(", ") }}{% endif %}){% endif %}, {{ _("qui reçoit le texte des pages analysées. Voir l'encadré en tête de page.") }}</li>
     {% endif %}
     {% if legal.hebergeur.nom %}<li>{{ _("<strong>%(hebergeur)s</strong>, hébergeur des serveurs.", hebergeur=legal.hebergeur.nom) }}</li>{% endif %}
     <li>{{ _("Le cas échéant, le fournisseur du tunnel qui achemine les requêtes vers ce serveur, qui voit passer les adresses IP des visiteurs.") }}</li>

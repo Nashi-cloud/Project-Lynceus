@@ -68,6 +68,20 @@ class Parametres(ReglagesTolerants):
     # coûter en justesse, et ce projet ne troque pas de la qualité d'analyse contre des
     # centimes sans l'avoir mesuré.
     llm_raisonnement: str = deux_noms("LYNCEUS_LLM_RAISONNEMENT", "LYNCEUS_LLM_REASONING", "")
+    # Hébergeurs à employer, dans l'ordre, derrière un routeur comme OpenRouter : un même
+    # modèle y est servi par des dizaines d'hébergeurs, à des prix qui varient de 1 à 4 et
+    # dans des précisions différentes (fp8, fp4). Laissé au routeur, l'hébergeur change
+    # d'un appel à l'autre, et la note avec lui : mesuré dans lynx-corpus, forcer le moins
+    # cher des hébergeurs de GLM-5.3 coûtait 0,06 de F1 sur les techniques.
+    #
+    # Vide = le routeur choisit. Sinon des identifiants séparés par des virgules, ceux du
+    # routeur (« mistral », « deepinfra »…). Z.AI, hébergeur officiel de GLM, filtre certains
+    # contenus. Un endpoint qui n'est pas un routeur ne reçoit rien.
+    llm_hebergeurs: str = deux_noms("LYNCEUS_LLM_HEBERGEURS", "LYNCEUS_LLM_PROVIDERS", "")
+    # Si les hébergeurs listés sont indisponibles, laisser le routeur en prendre un autre.
+    # Vrai par défaut : une analyse servie ailleurs vaut mieux qu'une erreur. Faux pour une
+    # passe de calibration, qui doit mesurer l'hébergeur annoncé et aucun autre.
+    llm_hebergeurs_repli: bool = deux_noms("LYNCEUS_LLM_HEBERGEURS_REPLI", "LYNCEUS_LLM_PROVIDERS_FALLBACK", True)
 
     # Garde-fous
     # Analyses menées de front. Chacune mobilise un thread pendant tout l'appel au modèle

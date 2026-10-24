@@ -4,6 +4,7 @@
 
 import { msg, traduireDocument } from "../commun/i18n";
 import { deciderVeille } from "../commun/veille";
+import { masquerAnnonce, verifierMiseAJour } from "../commun/mise-a-jour";
 import type {
   CarteAnalyse,
   CorrespondancePrefixe,
@@ -469,5 +470,26 @@ document.getElementById("lien-options")?.addEventListener("click", (evenement) =
   chrome.runtime.openOptionsPage();
 });
 
+/** Le pied : la version installée, et l'avis de mise à jour si le portail en distribue
+ * une plus récente (commun/mise-a-jour.ts). */
+async function afficherPied(): Promise<void> {
+  const zoneVersion = document.getElementById("version");
+  if (zoneVersion) zoneVersion.textContent = msg("options_version", chrome.runtime.getManifest().version);
+
+  const annonce = await verifierMiseAJour();
+  const zone = document.getElementById("mise-a-jour");
+  const texte = document.getElementById("mise-a-jour-texte");
+  const lien = document.getElementById("mise-a-jour-lien") as HTMLAnchorElement | null;
+  if (!annonce || !zone || !texte || !lien) return;
+  texte.textContent = msg("panneau_maj_disponible", annonce.version);
+  lien.href = annonce.telechargement;
+  zone.hidden = false;
+  document.getElementById("mise-a-jour-fermer")?.addEventListener("click", () => {
+    zone.hidden = true;
+    void masquerAnnonce(annonce.version);
+  });
+}
+
 traduireDocument();
 void rafraichir();
+void afficherPied();

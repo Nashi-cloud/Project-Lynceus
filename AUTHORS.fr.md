@@ -1,6 +1,6 @@
 # Auteurs et titulaires des droits
 
-<!-- traduit-de: AUTHORS.md sha256:b3e877c6e478f5fc -->
+<!-- traduit-de: AUTHORS.md sha256:5a27333aa1cc431d -->
 
 [English](AUTHORS.md) · **Français**
 
@@ -25,6 +25,11 @@ chaque contributeur. C'est un choix, pas un oubli. Il rend la contribution plus 
 prix de la possibilité de vendre des exceptions à la licence.
 
 <!-- Ajoutez-vous ici lors de votre première contribution, ordre alphabétique. -->
+
+## Annotations
+
+Les annotations faites à la main du jeu d'évaluation sont publiées sous CC BY-SA 4.0, et
+leurs annotateurs sont listés avec elles dans [corpus/annotations/](corpus/annotations/README.fr.md).
 
 ## Ressources tierces embarquées
 

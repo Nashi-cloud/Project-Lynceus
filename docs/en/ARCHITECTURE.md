@@ -1,6 +1,6 @@
 # Technical architecture
 
-<!-- traduit-de: docs/ARCHITECTURE.md sha256:994b3d017eb45f48 -->
+<!-- traduit-de: docs/ARCHITECTURE.md sha256:c13b554a7d69248c -->
 
 > Translation for information. The French version, `docs/ARCHITECTURE.md`, is the one the project follows: should the two ever diverge, it is the one that counts.
 
@@ -34,7 +34,7 @@ Three deliverables: **`api/`** (the self-hostable server kit, Docker Compose), *
 
 ## Structural choices
 
-1. **Extraction on the client side.** The extension extracts the text locally (Readability.js, the engine behind Firefox's reader mode, then conversion to Markdown with Turndown). The benefits: it works behind a paywall or a login and on JavaScript-heavy pages; there is no scraping infrastructure to run; and a site cannot serve different content to the analyser than to the reader (cloaking). A server-side fetch (trafilatura) remains available as a fallback for pure API and CLI use.
+1. **Extraction on the client side.** The extension extracts the text locally (Readability.js, the engine behind Firefox's reader mode, then conversion to Markdown with Turndown). The benefits: it works behind a paywall or a login and on JavaScript-heavy pages; there is no scraping infrastructure to run; and a site cannot serve different content to the analyser than to the reader (cloaking). **The instance never downloads a page itself**: an address chosen by the client would let it reach what only the server can see (localhost, the internal network, the host's metadata service), and the text it got would end up as excerpts on a public card. The CLI therefore downloads the page on the user's machine (trafilatura), then sends its text, as the extension does.
 2. **The grade is computed by the server**, not by the LLM (weightings published in [METHODOLOGIE.md](METHODOLOGIE.md)): determinism, auditability, consistency between instances.
 3. **The LLM layer is a single OpenAI-compatible adapter** (`POST {base_url}/chat/completions`). It covers OpenRouter (development and production), Ollama and vLLM (self-hosting, free of charge), and LiteLLM (a multi-provider gateway). The choice of provider and model belongs to each instance.
 4. **Prompts versioned in the repository** ([prompts/](../../prompts/)): loaded from the files, never hard-coded.
@@ -44,7 +44,7 @@ Three deliverables: **`api/`** (the self-hostable server kit, Docker Compose), *
 | Method | Route | Role |
 |---|---|---|
 | `GET` | `/v1/lookup?url_hash={sha256}` | Directory lookup. Response: `{ statut: "connue"\|"inconnue", carte?, domaine? }`. Never logged with identifiers. |
-| `POST` | `/v1/analyses` | Body: `{ url?, contenu_markdown?, titre?, langue? }`. Cache hit gives `200` and the card. Otherwise an analysis is run (synchronous in the MVP, roughly 10 to 30 s) and returns `200` and the card. A bare `url` falls back to a server-side fetch. |
+| `POST` | `/v1/analyses` | Body: `{ url?, contenu_markdown?, titre?, langue? }`. Cache hit gives `200` and the card. Otherwise an analysis is run (synchronous in the MVP, roughly 10 to 30 s) and returns `200` and the card. A bare `url` returns the directory's card if the page is there, `400` otherwise: the instance downloads nothing. |
 | `GET` | `/v1/analyses/{id}` | Fetch a card by id. |
 | `GET` | `/v1/domaines/{domaine}` | Aggregated profile: number of analyses, mean score, distribution of grades. |
 | `GET` | `/v1/lookup-prefixe?prefixe={5 hex}` | **K-anonymous lookup**: the client sends only the first 5 characters of the hash and does the final match locally. Response: suffixes plus summaries (grade, category, score, id). The server cannot tell which page is being read. |
@@ -146,6 +146,8 @@ Step 5 includes the **anti-hallucination check on quoted passages**: every `extr
 | `LYNCEUS_LLM_TEMPERATURE` | `0` | Zero by default: the grade has to be reproducible. Measured, see [corpus/RESULTATS.md](../../corpus/en/RESULTATS.md) |
 | `LYNCEUS_LLM_CACHE_PROMPT` | `false` | Marks the system prompt as reusable. Pointless with a provider that caches on its own, needed with those requiring an explicit breakpoint |
 | `LYNCEUS_LLM_RAISONNEMENT` | *(provider default)* | `off`, `low`, `medium`, `high`. Reasoning is billed as output and then discarded: it is the biggest cost item |
+| `LYNCEUS_LLM_HEBERGEURS` | *(the router chooses)* | Hosts imposed behind a router such as OpenRouter, in order (`mistral`, `deepinfra`…). Z.AI, GLM's official host, filters some content: avoid it. The same model is served there at very different prices and precisions, and the rating changes with the host |
+| `LYNCEUS_LLM_HEBERGEURS_REPLI` | `true` | If the listed hosts are unavailable, the router may pick another. `false` for a calibration run, which must measure the announced host |
 | `LYNCEUS_CONTENU_MAX_CARS` | `60000` | Size guardrail (roughly tokens × 4) |
 | `LYNCEUS_RATE_LIMIT` | `10/minute` | Per IP, on `/v1/analyses` |
 
@@ -157,6 +159,9 @@ Step 5 includes the **anti-hallucination check on quoted passages**: every `extr
 - **The badge costs nothing in privacy**: the prefix is enough to display the grade and the page border. The full card is only requested (`/v1/analyses/{id}`) if the panel is actually open.
 - Submitted content is untrusted data: never interpreted as an instruction (the prompt delimits it explicitly), bounded in size, HTML refused (Markdown only).
 - CORS restricted to the extension, and configurable per instance.
+- **No server-side download** (see the structural choices, point 1).
+- **No `/docs`, `/redoc` or `/openapi.json`**, which FastAPI publishes by default: the contract is here, and `/docs` would load Swagger UI from a third-party CDN.
+- **Security headers on the portal**: `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`, and a ban on being shown in a frame (`X-Frame-Options: DENY`, `frame-ancestors 'none'`). HSTS is left to the proxy that terminates HTTPS.
 
 ## Federation (phase 4, sketch)
 

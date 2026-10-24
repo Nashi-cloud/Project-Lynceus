@@ -96,6 +96,43 @@ def forge_de(depot: str) -> str:
     return ""
 
 
+ENTETES_DE_SECURITE = {
+    # Le navigateur s'en tient au type annoncé : un fichier servi comme texte ne peut pas
+    # être interprété comme un script.
+    "x-content-type-options": "nosniff",
+    # Un lien vers un autre site ne lui dit pas de quelle page du portail on vient.
+    "referrer-policy": "same-origin",
+    # Aucun site ne peut afficher le portail dans un cadre, et faire cliquer à l'insu de la
+    # personne sur « Contester » ou sur l'inscription. Les deux formes : X-Frame-Options
+    # pour les navigateurs anciens, frame-ancestors pour les autres.
+    "x-frame-options": "DENY",
+    "content-security-policy": "frame-ancestors 'none'",
+}
+
+
+class EntetesDeSecurite:
+    """Ajoute les en-têtes de ENTETES_DE_SECURITE à toute réponse, erreurs et fichiers
+    statiques compris. Une réponse qui en fixe déjà un garde le sien."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+
+        async def envoyer(message):
+            if message["type"] == "http.response.start":
+                presents = {nom.lower() for nom, _ in message.get("headers", [])}
+                ajouts = [(nom.encode(), valeur.encode())
+                          for nom, valeur in ENTETES_DE_SECURITE.items()
+                          if nom.encode() not in presents]
+                message = dict(message, headers=[*message.get("headers", []), *ajouts])
+            await send(message)
+
+        await self.app(scope, receive, envoyer)
+
+
 class LangueDansLURL:
     """Retire le préfixe de langue du chemin avant que le routeur ne le voie.
 
@@ -211,7 +248,11 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
         finally:
             await audience.fermer()
 
-    app = FastAPI(title=f"Portail {p.nom}", version=__version__, lifespan=cycle_de_vie)
+    # Ni /docs, ni /redoc, ni /openapi.json : le portail sert des pages, pas une API à
+    # explorer, et /docs chargerait Swagger UI depuis un CDN tiers, ce que la page de
+    # confidentialité ne dit pas.
+    app = FastAPI(title=f"Portail {p.nom}", version=__version__, lifespan=cycle_de_vie,
+                  docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[o.strip() for o in p.cors_origins.split(",") if o.strip()],
@@ -223,6 +264,8 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
     app.add_middleware(mesure.MesureAudience, audience=audience,
                        adresse_de=mesure.adresse_reelle(p.entete_ip_reelle))
     app.add_middleware(LangueDansLURL)
+    # Ajouté en dernier, donc le plus à l'extérieur : il couvre aussi les réponses des autres.
+    app.add_middleware(EntetesDeSecurite)
     app.mount("/statique", StaticFiles(directory=RACINE / "statique"), name="statique")
 
     # Un environnement par langue : les gabarits sont compilés une fois, et rien de ce qui
@@ -423,6 +466,20 @@ def creer_portail(p: ParametresPortail | None = None) -> FastAPI:
             headers={"content-disposition": f'attachment; filename="{paquet["nom"]}"'},
         )
 
+    @app.get("/v1/extension")
+    def version_extension(requete: Request):
+        """La version de l'extension que ce portail distribue, et où la télécharger.
+
+        Une extension installée depuis l'archive ne se met jamais à jour seule : c'est ici
+        qu'elle apprend qu'une version plus récente existe. La réponse ne dépend de rien
+        de ce que l'extension envoie, et rien n'en est conservé. Sans paquet publié, 404 :
+        l'extension n'annonce alors rien plutôt que de deviner."""
+        paquet = paquet_courant()
+        if paquet is None:
+            raise HTTPException(404, "Aucun paquet n'est publié sur ce portail.")
+        return {"version": paquet["version"],
+                "telechargement": f"{adresse_portail(requete)}/telecharger"}
+
     # ------------------------------------------------------- inscription
 
     @app.post("/v1/inscription")
@@ -613,6 +670,9 @@ async def _meta_instance(client: httpx.AsyncClient, instance: str) -> dict | Non
         # traitée comme envoyant le texte au dehors. Promettre l'inverse à tort ferait
         # de la page de confidentialité un mensonge.
         "distant": donnees.get("fournisseur_distant", True),
+        # Derrière un routeur, le texte va aussi chez l'hébergeur qui exécute le modèle.
+        # Le taire serait nommer l'intermédiaire et cacher le destinataire.
+        "hebergeurs": [h for h in donnees.get("hebergeurs") or [] if isinstance(h, str)],
         "contenu_max_cars": donnees.get("limites", {}).get("contenu_max_cars"),
     }
 

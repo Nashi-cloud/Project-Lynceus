@@ -1,6 +1,6 @@
+import pytest
 from fastapi.testclient import TestClient
 
-from lynceus import extraction
 from lynceus.main import AVERTISSEMENT_IA, creer_application
 from lynceus.moteur import llm
 from lynceus.normalisation import hacher_url
@@ -97,6 +97,8 @@ def test_meta(appli):
     assert meta["prompt_version"] == module_prompt.resoudre_version("latest")
     assert meta["taxonomie"]["nb_techniques"] == 31
     assert meta["modele"] == "test/modele"
+    # Réglages qui changent la note : publiés, vides quand ils sont laissés au fournisseur.
+    assert meta["raisonnement"] == "" and meta["hebergeurs"] == []
 
 
 def test_erreurs_entree(appli):
@@ -122,27 +124,43 @@ def test_rate_limit(tmp_path, monkeypatch):
     assert r3.status_code == 200 and r3.json()["en_cache"] is True
 
 
-def test_url_seule_avec_fetch_serveur(appli, monkeypatch):
+def test_url_seule_inconnue_refusee_sans_rien_telecharger(appli, monkeypatch):
+    """Une adresse choisie par le client ferait joindre au serveur ce que lui seul voit
+    (localhost, réseau interne, métadonnées de l'hébergeur) : l'instance ne télécharge rien."""
+    import httpx
+
     client, compteur = appli
-    telechargements = {"n": 0}
 
-    def faux_fetch(url):
-        telechargements["n"] += 1
-        return "Titre extrait", CONTENU_TEST + " Version distante."
+    def interdit(*args, **kwargs):
+        raise AssertionError("l'instance ne doit télécharger aucune page")
 
-    monkeypatch.setattr(extraction, "recuperer_markdown", faux_fetch)
+    monkeypatch.setattr(httpx, "get", interdit)
+    monkeypatch.setattr("trafilatura.fetch_url", interdit)
 
-    r1 = client.post("/v1/analyses", json={"url": "https://distant.exemple/article"})
-    assert r1.status_code == 200
-    assert r1.json()["en_cache"] is False
-    assert r1.json()["carte"]["titre"] == "Titre extrait"
-    assert telechargements["n"] == 1
+    for url in ("http://127.0.0.1:9000/interne", "http://169.254.169.254/latest/meta-data/",
+                "https://distant.exemple/article"):
+        reponse = client.post("/v1/analyses", json={"url": url})
+        assert reponse.status_code == 400
+        assert "contenu_markdown" in reponse.json()["detail"]
+    assert compteur["appels"] == 0
 
-    # URL déjà connue → réponse annuaire, AUCUN nouveau téléchargement ni appel LLM
-    r2 = client.post("/v1/analyses", json={"url": "https://distant.exemple/article"})
-    assert r2.json()["en_cache"] is True
-    assert telechargements["n"] == 1
+
+def test_url_seule_connue_servie_par_l_annuaire(appli):
+    client, compteur = appli
+    url = "https://distant.exemple/article"
+    assert client.post("/v1/analyses", json={"url": url, "contenu_markdown": CONTENU_TEST}).status_code == 200
+
+    reponse = client.post("/v1/analyses", json={"url": url})
+    assert reponse.status_code == 200
+    assert reponse.json()["en_cache"] is True
     assert compteur["appels"] == 1
+
+
+@pytest.mark.parametrize("chemin", ["/docs", "/docs/oauth2-redirect", "/redoc", "/openapi.json"])
+def test_aucune_documentation_automatique_publiee(tmp_path, chemin):
+    """FastAPI les publie d'office ; /docs chargerait Swagger UI depuis un CDN tiers."""
+    client = TestClient(creer_application(parametres_test(tmp_path)))
+    assert client.get(chemin).status_code == 404
 
 
 def test_retry_sur_json_invalide(tmp_path, monkeypatch):

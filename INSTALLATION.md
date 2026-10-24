@@ -52,8 +52,13 @@ Open `.env` in a text editor and fill in at least your key:
 ```ini
 LYNCEUS_LLM_API_KEY=your-key-here
 LYNCEUS_LLM_BASE_URL=https://openrouter.ai/api/v1
-LYNCEUS_LLM_MODEL=z-ai/glm-5.2
+LYNCEUS_LLM_MODEL=z-ai/glm-5.3
+LYNCEUS_LLM_RAISONNEMENT=low
+LYNCEUS_LLM_HEBERGEURS=mistral
+LYNCEUS_LLM_CACHE_PROMPT=true
 ```
+
+The last three lines are the setting the [calibration results](corpus/en/RESULTATS.md) were measured with: short reasoning, a fixed host rather than whichever one the router picks for each call, and the system prompt cached. Without them the analysis works, but costs more and varies more from one run to the next.
 
 *With Ollama instead:*
 

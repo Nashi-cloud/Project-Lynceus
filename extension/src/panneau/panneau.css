@@ -149,3 +149,17 @@ details[open] summary { border-bottom: 1px solid var(--trait); }
 .meta { color: var(--encre-2); font-size: 11.5px; margin-top: 10px;
         border-top: 1px solid var(--trait); padding-top: 8px; }
 .badge-cache { font-size: 11.5px; color: var(--encre-2); }
+
+/* Pied : la version, et l'avis de mise à jour quand il y en a un. Discret par principe :
+   il ne doit jamais disputer l'attention à la carte d'analyse. */
+.pied { padding: 10px 14px 14px; color: var(--encre-2); font-size: 11.5px; }
+.pied p { margin: 0; }
+.mise-a-jour {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 8px !important; padding: 7px 10px;
+  border: 1px solid var(--trait); border-radius: 6px; background: var(--fond-2);
+}
+.mise-a-jour-fermer {
+  margin-left: auto; border: 0; background: none; color: var(--encre-2);
+  font-size: 15px; line-height: 1; cursor: pointer; padding: 0 2px;
+}

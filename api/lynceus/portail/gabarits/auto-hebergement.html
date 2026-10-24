@@ -22,13 +22,16 @@
   <p>{{ _("L'image est publiée : une instance d'essai tient vraiment en une commande, sur SQLite, sans rien à cloner ni à construire.") }}</p>
   <pre><code>docker run -d -p 8000:8000 \
   -e LYNCEUS_LLM_BASE_URL=https://openrouter.ai/api/v1 \
-  -e LYNCEUS_LLM_MODEL=z-ai/glm-5.2 \
+  -e LYNCEUS_LLM_MODEL=z-ai/glm-5.3 \
+  -e LYNCEUS_LLM_RAISONNEMENT=low \
+  -e LYNCEUS_LLM_HEBERGEURS=mistral \
+  -e LYNCEUS_LLM_CACHE_PROMPT=true \
   -e LYNCEUS_LLM_API_KEY=<var>{{ _("votre-clé") }}</var> \
   -e LYNCEUS_DATABASE_URL=sqlite:////donnees/lynceus.sqlite3 \
   -v lynceus:/donnees \
   ghcr.io/nashi-cloud/lynceus-api:latest</code></pre>
   <p>{{ _("Il ne reste qu'à indiquer <code>http://localhost:8000</code> dans les réglages de l'extension. Le volume garde l'annuaire d'une relance à l'autre : sans lui, les analyses déjà payées disparaîtraient avec le conteneur.") }}</p>
-  <p>{{ _("Les trois lignes du fournisseur sont les seules à changer si vous en préférez un autre : n'importe quel service exposant une API compatible OpenAI convient, et le modèle montré ici est simplement celui sur lequel les résultats de calibration publiés ont été mesurés.") }}</p>
+  <p>{{ _("Les lignes du modèle sont les seules à changer si vous en préférez un autre : n'importe quel service exposant une API compatible OpenAI convient. Le modèle et les trois réglages montrés ici sont ceux sur lesquels les résultats de calibration publiés ont été mesurés : un raisonnement court, un hébergeur fixe, le prompt système en cache. Pour un autre modèle, retirez les trois réglages.") }}</p>
 
   <h3>{{ _("Avec un modèle local, rien ne sort de votre machine") }}</h3>
   <pre><code>docker run -d -p 8000:8000 \

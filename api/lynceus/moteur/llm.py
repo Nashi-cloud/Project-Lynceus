@@ -109,6 +109,15 @@ def reglage_raisonnement(demande: str) -> dict | None:
     return _RAISONNEMENT.get(demande.strip().lower())
 
 
+def liste_hebergeurs(reglage: str) -> list[str]:
+    """Les hébergeurs demandés, dans l'ordre, sans blancs ni doublons."""
+    vus: list[str] = []
+    for nom in (n.strip() for n in reglage.split(",")):
+        if nom and nom not in vus:
+            vus.append(nom)
+    return vus
+
+
 def appeler(messages: list[dict], p: Parametres, schema_json: dict | None = None) -> str:
     """Retourne le texte de la réponse du modèle. Lève ErreurLLM en cas d'échec."""
     charge: dict = {
@@ -119,6 +128,9 @@ def appeler(messages: list[dict], p: Parametres, schema_json: dict | None = None
     raisonnement = reglage_raisonnement(p.llm_raisonnement)
     if raisonnement is not None:
         charge["reasoning"] = raisonnement
+    hebergeurs = liste_hebergeurs(p.llm_hebergeurs)
+    if hebergeurs:
+        charge["provider"] = {"order": hebergeurs, "allow_fallbacks": p.llm_hebergeurs_repli}
 
     if p.llm_response_format == "json_object":
         charge["response_format"] = {"type": "json_object"}
@@ -148,9 +160,19 @@ def appeler(messages: list[dict], p: Parametres, schema_json: dict | None = None
         raise ErreurLLM(f"Fournisseur LLM : HTTP {reponse.status_code}{precision} — {reponse.text[:300]}")
 
     try:
-        return reponse.json()["choices"][0]["message"]["content"]
+        choix = reponse.json()["choices"][0]
+        contenu = choix["message"]["content"]
     except (KeyError, IndexError, TypeError, json.JSONDecodeError) as exc:
         raise ErreurLLM(f"Réponse LLM inattendue : {reponse.text[:300]}") from exc
+    if not isinstance(contenu, str) or not contenu.strip():
+        # Une réponse vide n'est pas une carte. Le cas rencontré : l'hébergeur officiel de
+        # GLM filtre certains contenus et rend une réponse vide, raison « sensitive ». Le
+        # dire en clair, parce qu'un hébergeur qui censure des pages ne convient pas à un
+        # outil qui doit pouvoir les analyser toutes.
+        raison = choix.get("native_finish_reason") or choix.get("finish_reason") or "inconnue"
+        raise ErreurLLM(f"Réponse vide du fournisseur (raison : {raison}). Un hébergeur qui "
+                        "filtre les contenus peut en être la cause : voir LYNCEUS_LLM_HEBERGEURS.")
+    return contenu
 
 
 def extraire_json(texte: str) -> dict:

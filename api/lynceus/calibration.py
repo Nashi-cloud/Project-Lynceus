@@ -29,8 +29,10 @@ MARQUE_FIN = "<!-- calibration:fin -->"
 # la mesure : il ne reste ici que la charpente, et elle tient en une poignée de lignes.
 PHRASES = {
     "fr": {
-        "entete": "Dernière passe : **{date}** · modèle `{modele}`{fournisseur} · prompt **v{version}** · température **{temperature}**",
+        "entete": "Dernière passe : **{date}** · modèle `{modele}`{fournisseur} · prompt **v{version}** · température **{temperature}**{reglages}",
         "via": " (via {nom})",
+        "raisonnement": " · raisonnement **{valeur}**",
+        "hebergeurs": " · hébergeur **{valeur}**",
         "passes_1": "**Une passe** enregistrée sur cette version du prompt : **{scores}** conformes. Une passe unique ne dit rien de solide, puisque le modèle ne rend pas deux fois la même analyse du même texte.",
         "passes_n": "**{nombre} passes** enregistrées sur cette version du prompt : **{scores}** conformes. Une passe unique ne dirait rien de solide, puisque le modèle ne rend pas deux fois la même analyse du même texte.",
         "colonnes": ("Cas", "Catégorie", "Grade", "Score", "Écarts relevés"),
@@ -47,7 +49,9 @@ PHRASES = {
         "non_mesure": "cas non mesuré : {detail}",
     },
     "en": {
-        "entete": "Latest run: **{date}** · model `{modele}`{fournisseur} · prompt **v{version}** · temperature **{temperature}**",
+        "entete": "Latest run: **{date}** · model `{modele}`{fournisseur} · prompt **v{version}** · temperature **{temperature}**{reglages}",
+        "raisonnement": " · reasoning **{valeur}**",
+        "hebergeurs": " · host **{valeur}**",
         "via": " (through {nom})",
         "passes_1": "**One run** recorded on this prompt version: **{scores}** conforming. A single run says nothing solid, since the model does not return the same analysis of the same text twice.",
         "passes_n": "**{nombre} runs** recorded on this prompt version: **{scores}** conforming. A single run would say nothing solid, since the model does not return the same analysis of the same text twice.",
@@ -117,7 +121,17 @@ def passes_courantes(journal: Path, version_prompt: str, empreinte_corpus: str =
         toutes = [p for p in toutes if p.get("corpus") == empreinte_corpus]
     if not toutes:
         return []
-    return [p for p in toutes if p.get("modele") == toutes[-1].get("modele")]
+    derniere = reglage(toutes[-1])
+    return [p for p in toutes if reglage(p) == derniere]
+
+
+def reglage(passe: dict) -> tuple:
+    """Ce qui fait qu'une passe se compare à une autre : le modèle, le raisonnement demandé
+    et les hébergeurs imposés. Un même modèle raisonnant peu ou beaucoup, ou servi en fp4
+    plutôt qu'en fp8, ne rend pas les mêmes notes. Une passe antérieure à ces réglages n'en
+    porte pas la trace : elle avait laissé les deux au fournisseur, ce que disent les
+    valeurs vides."""
+    return (passe.get("modele"), passe.get("raisonnement") or "", tuple(passe.get("hebergeurs") or ()))
 
 
 def _texte(ecart: dict, mots: dict) -> str:
@@ -173,6 +187,8 @@ def bloc(liste_passes: list[dict], langue: str = "fr") -> str:
         fournisseur=mots["via"].format(nom=derniere["fournisseur"]) if derniere.get("fournisseur") else "",
         version=derniere["prompt_version"],
         temperature=_temperature(derniere.get("temperature", 0)),
+        reglages=(mots["raisonnement"].format(valeur=derniere["raisonnement"]) if derniere.get("raisonnement") else "")
+        + (mots["hebergeurs"].format(valeur=", ".join(derniere["hebergeurs"])) if derniere.get("hebergeurs") else ""),
     ))
     lignes.append("")
 

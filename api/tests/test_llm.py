@@ -13,7 +13,8 @@ def _client_simule(monkeypatch, statut: int, corps: str = '{"error": "simulée"}
 
 
 def _p(**kw) -> Parametres:
-    defauts = dict(llm_api_key="cle-test", llm_model="test/modele")
+    defauts = dict(llm_api_key="cle-test", llm_model="test/modele", llm_raisonnement="",
+                   llm_hebergeurs="", llm_hebergeurs_repli=True)
     defauts.update(kw)
     return Parametres(**defauts)
 
@@ -165,3 +166,38 @@ def test_un_reglage_inconnu_est_ignore_plutot_que_fatal(monkeypatch):
     charge = _charge_envoyee(monkeypatch, [{"role": "user", "content": "x"}],
                              _p(llm_raisonnement="beaucoup"))
     assert "reasoning" not in charge
+
+
+# ---------- choix des hébergeurs ----------
+
+def test_sans_hebergeur_le_routeur_choisit(monkeypatch):
+    charge = _charge_envoyee(monkeypatch, [{"role": "user", "content": "x"}], _p())
+    assert "provider" not in charge
+
+
+def test_les_hebergeurs_sont_demandes_dans_l_ordre(monkeypatch):
+    charge = _charge_envoyee(monkeypatch, [{"role": "user", "content": "x"}],
+                             _p(llm_hebergeurs=" z-ai, deepinfra ,z-ai,"))
+    assert charge["provider"] == {"order": ["z-ai", "deepinfra"], "allow_fallbacks": True}
+
+
+def test_une_calibration_peut_interdire_le_repli(monkeypatch):
+    """Une passe de calibration mesure l'hébergeur annoncé : servie ailleurs en silence,
+    elle mesurerait autre chose que ce que le rapport affiche."""
+    charge = _charge_envoyee(monkeypatch, [{"role": "user", "content": "x"}],
+                             _p(llm_hebergeurs="z-ai", llm_hebergeurs_repli=False))
+    assert charge["provider"] == {"order": ["z-ai"], "allow_fallbacks": False}
+
+
+def test_une_reponse_vide_est_une_erreur_expliquee(monkeypatch):
+    """Rencontré en calibration : l'hébergeur officiel de GLM refuse certaines pages et rend
+    un contenu nul, raison « sensitive ». Le serveur plantait (500) au lieu de le dire."""
+    class Reponse:
+        status_code = 200
+        text = ""
+        def json(self):
+            return {"choices": [{"message": {"content": None}, "finish_reason": "stop",
+                                 "native_finish_reason": "sensitive"}]}
+    monkeypatch.setattr(llm.httpx, "post", lambda *a, **k: Reponse())
+    with pytest.raises(llm.ErreurLLM, match="sensitive"):
+        llm.appeler([{"role": "user", "content": "x"}], _p())
