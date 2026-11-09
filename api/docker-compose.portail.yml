@@ -110,7 +110,7 @@ services:
       - lynceus-portail-net
 
   tunnel:
-    image: cloudflare/cloudflared:latest
+    image: cloudflare/cloudflared:2026.10.3@sha256:faa8e0a1475f137c910be6025f43c8e4092fdd35461b31e19fd1390657a1ff39
     container_name: lynceus-portail-tunnel${LYNCEUS_SUFFIXE:-${LYNCEUS_SUFFIX:-}}
     profiles: [tunnel]
     command: tunnel --no-autoupdate run
