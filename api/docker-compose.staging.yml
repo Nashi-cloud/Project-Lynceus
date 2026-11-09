@@ -30,7 +30,7 @@ services:
     # Versions épinglées avec leur empreinte, suivies par Renovate (renovate.json) : hors de
     # Portainer, une étiquette mouvante ne serait plus jamais re-téléchargée, et une étiquette
     # republiée changerait la construction de l'image sans changer de version.
-    image: postgres:16.15-alpine@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+    image: postgres:16.15-alpine@sha256:aa6cb33cf4c19c765cefcf48d96176258800870a9a1e930ad126200f9d825139
     container_name: lynceus-db${LYNCEUS_SUFFIXE:--staging}
     environment:
       POSTGRES_DB: lynceus
@@ -167,7 +167,7 @@ services:
   # aux variables de la stack. Si votre version l'ignore, déclarez le tunnel comme une
   # petite stack à part plutôt que de retirer le profil d'ici.
   tunnel:
-    image: cloudflare/cloudflared:2026.10.3@sha256:faa8e0a1475f137c910be6025f43c8e4092fdd35461b31e19fd1390657a1ff39
+    image: cloudflare/cloudflared:2026.10.7@sha256:4955524aeaa379e154023d5a027c250f7b35041a2e7e950cf13f144bc9b9c5ba
     container_name: lynceus-tunnel${LYNCEUS_SUFFIXE:--staging}
     profiles: [tunnel]
     command: tunnel --no-autoupdate run
