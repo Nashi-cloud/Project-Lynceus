@@ -1,0 +1,29 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "baseBranchPatterns": [
+    "dev"
+  ],
+  "enabledManagers": [
+    "docker-compose"
+  ],
+  "includePaths": [
+    "api/docker-compose.prod.yml",
+    "api/docker-compose.portail.yml",
+    "api/docker-compose.staging.yml"
+  ],
+  "minimumReleaseAge": "7 days",
+  "packageRules": [
+    {
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "matchPackageNames": [
+        "ghcr.io/nashi-cloud/**"
+      ],
+      "enabled": false
+    }
+  ]
+}
