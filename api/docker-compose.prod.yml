@@ -20,7 +20,9 @@
 
 services:
   db:
-    image: postgres:16-alpine
+    # Versions épinglées, suivies par Renovate (renovate.json) : une étiquette mouvante
+    # ne serait plus jamais re-téléchargée hors de Portainer.
+    image: postgres:16.15-alpine
     container_name: lynceus-db${LYNCEUS_SUFFIXE:-${LYNCEUS_SUFFIX:-}}
     environment:
       POSTGRES_DB: lynceus
@@ -103,7 +105,7 @@ services:
   # Le routage (nom d'hôte -> http://api:8000) se configure dans le tableau de bord
   # Cloudflare Zero Trust, qui fournit en retour le jeton à placer dans .env.
   tunnel:
-    image: cloudflare/cloudflared:latest
+    image: cloudflare/cloudflared:2026.10.3
     container_name: lynceus-tunnel${LYNCEUS_SUFFIXE:-${LYNCEUS_SUFFIX:-}}
     profiles: [tunnel]
     command: tunnel --no-autoupdate run
